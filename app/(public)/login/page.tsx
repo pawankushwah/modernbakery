@@ -46,7 +46,7 @@ const LoginPage = () => {
                             </p>
                         </div>
 
-                        <div className="flex flex-col gap-[24px]">
+                        <div className="flex flex-col gap-[24px] m-[20px] lg:m-0">
                             <div className="flex flex-col gap-[20px]">
                                 <CustomTextInput
                                     label="User ID"
