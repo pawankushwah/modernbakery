@@ -15,7 +15,7 @@ export default function CustomPasswordInput({label, value, onChange}: {label: st
             <label htmlFor="password" className="text-sm text-gray-700">
                 {label}
             </label>
-            <div className="relative mt-[6px]">
+            <div className="relative mt-[6px] h-fit">
                 <input
                     type={isPasswordVisible ? "text" : "password"}
                     id="password"
@@ -25,7 +25,7 @@ export default function CustomPasswordInput({label, value, onChange}: {label: st
                     placeholder="••••••••"
                 />
                 <div
-                    className="absolute right-3.5 top-3.5 cursor-pointer flex items-center justify-center"
+                    className="absolute cursor-pointer text-[#717680] h-full flex items-center top-1/2 -translate-y-1/2 right-[14px]"
                     onClick={togglePasswordVisibility}
                 >
                     {isPasswordVisible ? (
