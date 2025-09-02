@@ -29,9 +29,9 @@ export default function CustomPasswordInput({label, value, onChange}: {label: st
                     onClick={togglePasswordVisibility}
                 >
                     {isPasswordVisible ? (
-                        <Icon icon="mdi-light:eye-off" width={25} />
+                        <Icon icon="mdi-light:eye-off" width={16} />
                     ) : (
-                        <Icon icon="mdi-light:eye" width={25} />
+                        <Icon icon="mdi-light:eye" width={16} />
                     )}
                 </div>
             </div>
