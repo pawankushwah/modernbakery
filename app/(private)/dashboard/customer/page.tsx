@@ -7,6 +7,7 @@ import { useState } from "react";
 import CustomDropdown from "@/app/components/customDropdown";
 import FilterDropdown from "@/app/components/filterDropdown";
 import CustomCheckbox from "@/app/components/customCheckbox";
+import Link from "next/link";
 
 type RowProps = {
     id: number;
@@ -78,7 +79,7 @@ export default function Customer() {
     return (
         <>
             <div className="flex justify-between items-center mb-[20px]">
-                <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center">
+                <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
                     Customer
                 </h1>
                 <div className="flex gap-[12px] relative">
@@ -123,18 +124,20 @@ export default function Customer() {
                         <div className="w-[320px]">
                             <SearchBar />
                         </div>
-                        <button
-                            className="rounded-lg bg-[#EA0A2A] text-white px-4 py-[10px] flex items-center gap-[8px]"
-                            onClick={() => alert("Add Customer")}
-                        >
-                            <Icon icon="tabler:plus" width={20} />
-                            <span className="md:block hidden">
-                                Add Customer
-                            </span>
-                            <span className="hidden sm:block md:hidden">
-                                Add
-                            </span>
-                        </button>
+                        <Link href="/dashboard/customer/add">
+                            <button
+                                className="rounded-lg bg-[#EA0A2A] text-white px-4 py-[10px] flex items-center gap-[8px] cursor-pointer"
+                                onClick={() => {}}
+                            >
+                                <Icon icon="tabler:plus" width={20} />
+                                <span className="md:block hidden">
+                                    Add Customer
+                                </span>
+                                <span className="hidden sm:block md:hidden">
+                                    Add
+                                </span>
+                            </button>
+                        </Link>
                     </div>
 
                     <div className="overflow-x-auto rounded-lg border border-[#E9EAEB]">
@@ -276,8 +279,14 @@ export default function Customer() {
                                                     <CustomCheckbox
                                                         id={row.id.toString()}
                                                         label={row.code}
-                                                        checked={selectedItems.includes(row.id)}
-                                                        onChange={() => handleSelectItem(row.id)}
+                                                        checked={selectedItems.includes(
+                                                            row.id
+                                                        )}
+                                                        onChange={() =>
+                                                            handleSelectItem(
+                                                                row.id
+                                                            )
+                                                        }
                                                     />
                                                 </div>
                                             </td>
@@ -287,9 +296,9 @@ export default function Customer() {
                                                 </div>
                                             </td>
                                             <td className="px-[24px] py-[12px] whitespace-nowrap">
-                                                <div className="flex items-center">
+                                                <Link href={`/dashboard/customer/${row.id}/overview`} className="flex items-center cursor-pointer hover:text-[#EA0A2A]">
                                                     {row.customerName}
-                                                </div>
+                                                </Link>
                                             </td>
                                             <td className="px-[24px] py-[12px] whitespace-nowrap">
                                                 <div className="flex items-center">

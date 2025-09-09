@@ -25,7 +25,7 @@ export default function DashboardLayout1({
         <div className="flex h-screen">
             <Sidebar data={sidebarData} onClickHandler={handleLinkClick} />
 
-            <div className="w-full p-[10px] h-screen bg-gray-200 text-black overflow-auto">
+            <div className="w-full p-[20px] pb-[22px] h-screen bg-gray-200 text-black overflow-auto">
                 {children}
             </div>
         </div>

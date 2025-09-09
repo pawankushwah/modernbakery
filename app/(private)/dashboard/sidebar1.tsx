@@ -3,6 +3,8 @@ import Image from "next/image";
 import { useState } from "react";
 import { miscLinks, SidebarDataType } from "../data/dashboardLinks";
 import Link from "next/link";
+import SearchBar1 from "./searchBar1";
+import SidebarBtn1 from "@/app/components/iconButton1";
 
 export default function Sidebar({
     data,
@@ -11,7 +13,7 @@ export default function Sidebar({
     data: SidebarDataType[];
     onClickHandler: (href: string) => void;
 }>) {
-    const [isOpen, setIsOpen] = useState<boolean>(false);
+    const [isOpen, setIsOpen] = useState<boolean>(true);
 
     return (
         <div className="flex">
@@ -22,7 +24,7 @@ export default function Sidebar({
                     {/* logo */}
                     <div className="flex items-center justify-center w-full h-[40px]">
                         <Image
-                            src="/shortLogo.png"
+                            src="/logoWhite.png"
                             className="p-[10px]"
                             width={152}
                             height={222}
@@ -56,7 +58,9 @@ export default function Sidebar({
                                         <Icon
                                             icon={link.leadingIcon}
                                             width={20}
-                                            className="z-10"
+                                            className={`z-10 ${
+                                                link.iconColor || "text-white"
+                                            }`}
                                         />
                                         <div
                                             className={`z-10 ${
@@ -102,7 +106,9 @@ export default function Sidebar({
                                     className="w-full"
                                     alt={link.label}
                                 />
-                                <div className={`hidden group-hover:flex absolute z-20 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}>
+                                <div
+                                    className={`hidden group-hover:flex absolute z-20 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                                >
                                     {link.label}
                                 </div>
                             </Link>
@@ -131,6 +137,7 @@ export default function Sidebar({
                     isOpen ? "w-[200px]" : "w-[13px] hover:w-[15px]"
                 } h-screen bg-[#223458] group transition-all ease-in-out duration-300`}
             >
+                {/* second sidebar toggle button */}
                 <span
                     className="hidden group-hover:flex absolute bottom-[50px] -right-3 p-1 bg-white rounded-full w-[20px] h-[20px] items-center justify-center"
                     onClick={() => setIsOpen(!isOpen)}
@@ -145,7 +152,49 @@ export default function Sidebar({
                     />
                 </span>
 
-                <div className="w-full h-full flex flex-col items-center px-[8px] py-[10px] gap-[10px]"></div>
+                {/* inner content */}
+                <div
+                    className={`w-full h-full flex-col px-[8px] py-[10px] gap-[5px] overflow-hidden text-[14px] text-white ${
+                        isOpen ? " flex" : "hidden"
+                    }`}
+                >
+                    <span className="text-[16px] font-semibold">Modules</span>
+                    <SearchBar1 />
+                    <SidebarBtn1
+                        isActive={true}
+                        label="Home"
+                        labelTw="text-[#C2CBDE]"
+                        className=""
+                        leadingIcon="hugeicons:home-04"
+                        leadingIconSize={20}
+                    >
+                        <SidebarBtn1
+                            isActive={false}
+                            btnTw="h-[25px] px-3 py-2"
+                            label="Sales"
+                            labelTw="text-white"
+                            className="py-[2px]"
+                            leadingIcon="mdi-light:chevron-down"
+                            leadingIconTw="rounded-[5px] bg-[#324368] p-[1px] text-[#C2CBDE] hover:text-white"
+                            leadingIconSize={15}
+                            trailingIcon={"mdi-light:plus"}
+                            trailingIconSize={20}
+                            trailingIconTw="text-[#C2CBDE] hover:text-white"
+                        >
+                            <SidebarBtn1
+                                isActive={false}
+                                btnTw="h-[25px] px-3 py-2 pl-[30px]"
+                                label="Home"
+                                labelTw="text-[#C2CBDE]"
+                                className="pl-[40px]"
+                                leadingIcon="hugeicons:home-04"
+                                leadingIconSize={20}
+                            /> 
+                        </SidebarBtn1>
+                    </SidebarBtn1>
+                </div>
+
+                <div className="w-full h-full flex flex-col items-center p-[8px] gap-[10px]"></div>
             </div>
         </div>
     );
