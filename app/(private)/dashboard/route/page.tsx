@@ -284,9 +284,9 @@ export default function Route() {
                                             </td>
                                            
                                             <td className="px-[24px] py-[12px] whitespace-nowrap">
-                                                <Link href={`/dashboard/route/${row.id}/overview`} className="flex items-center cursor-pointer hover:text-[#EA0A2A]">
+                                                <div className="flex items-center">
                                                     {row.routeName}
-                                                </Link>
+                                                </div>
                                             </td>
                                            
                                             <td className="px-[24px] py-[12px]">

@@ -438,9 +438,9 @@ export default function VehicleRegistration() {
                                                 </div>
                                             </td>
                                             <td className="px-[24px] py-[12px] whitespace-nowrap">
-                                                <Link href={`/dashboard/vehicle/${row.id}/overview`} className="flex items-center cursor-pointer hover:text-[#EA0A2A]">
+                                                <div className="flex items-center">
                                                     {row.numberPlate}
-                                                </Link>
+                                                </div>
                                             </td>
                                             <td className="px-[24px] py-[12px] whitespace-nowrap">
                                                 <div className="flex items-center">
