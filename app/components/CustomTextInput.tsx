@@ -1,4 +1,4 @@
-export default function CustomTextInput({label, value, onChange}: {label: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}) {
+export default function CustomTextInput({label, value,placeholder, onChange}: {label: string; value: string; placeholder:string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}) {
     return (
         <div>
             <label htmlFor="userId" className="text-sm text-gray-700">
@@ -10,7 +10,7 @@ export default function CustomTextInput({label, value, onChange}: {label: string
                 type="text"
                 id="userId"
                 className="border border-gray-300 rounded-md p-2 w-full mt-[6px]"
-                placeholder={label}
+                placeholder={placeholder}
             />
         </div>
     );

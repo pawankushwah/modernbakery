@@ -80,7 +80,7 @@ export default function Customer() {
         <>
             <div className="flex justify-between items-center mb-[20px]">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                    Customer
+                    Warehouse
                 </h1>
                 <div className="flex gap-[12px] relative">
                     <BorderIconButton
@@ -124,14 +124,14 @@ export default function Customer() {
                         <div className="w-[320px]">
                             <SearchBar />
                         </div>
-                        <Link href="/dashboard/customer/add">
+                        <Link href="/dashboard/warehouse/addwarehouse">
                               <button
                             className="rounded-lg bg-[#EA0A2A] text-white px-4 py-[10px] flex items-center gap-[8px]"
                           
                         >
                             <Icon icon="tabler:plus" width={20} />
                             <span className="md:block hidden">
-                                Add Customer
+                                Add Warehouse
                             </span>
                             <span className="hidden sm:block md:hidden">
                                 Add
@@ -163,7 +163,7 @@ export default function Customer() {
                                     </th>
                                     <th className="px-[24px] py-[12px] font-[500]">
                                         <div className="flex items-center gap-[4px] whitespace-nowrap">
-                                            Customer Name{" "}
+                                            Warehouse Name{" "}
                                             <Icon
                                                 icon="mdi-light:arrow-down"
                                                 width={16}
