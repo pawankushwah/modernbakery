@@ -20,7 +20,7 @@ export default function AddCustomer() {
             </div>
 
             {/* content */}
-            <div></div>
+            <div>Data</div>
         </>
     );
 }

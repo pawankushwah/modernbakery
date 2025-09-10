@@ -52,6 +52,7 @@ const LoginPage = () => {
                                     label="User ID"
                                     value={userId}
                                     onChange={(e) => setUserId(e.target.value)}
+                                    placeholder="User ID"
                                 />
                                 <CustomPasswordInput
                                     label="Password"
