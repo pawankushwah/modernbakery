@@ -7,7 +7,7 @@ import BorderIconButton from "./borderIconButton";
 import { createContext, useContext, useState } from "react";
 import FilterDropdown from "./filterDropdown";
 import CustomCheckbox from "./customCheckbox";
-import { tableDataType } from "../(private)/dashboard/customer/[customerId]/[tabName]/customerInfo";
+import { tableDataType } from "../(private)/master/customer/[customerId]/[tabName]/customerInfo";
 
 type configType = {
     header?: {
