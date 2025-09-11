@@ -78,10 +78,13 @@ export default function Customer() {
 
     return (
         <>
+            {/* header */}
             <div className="flex justify-between items-center mb-[20px]">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
                     Customer
                 </h1>
+
+                {/* top bar action buttons */}
                 <div className="flex gap-[12px] relative">
                     <BorderIconButton
                         icon="gala:file-document"
@@ -117,9 +120,12 @@ export default function Customer() {
                     )}
                 </div>
             </div>
+
+            {/* Table */}
             <div className="flex bg-white w-full h-[calc(100%-46px)] border-[1px] border-[#E9EAEB] rounded-[8px] overflow-hidden">
-                {/* Table */}
                 <div className="w-full h-full flex flex-col">
+
+                    {/* table header */}
                     <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-1 sm:gap-0">
                         <div className="w-[320px]">
                             <SearchBar />
@@ -138,9 +144,9 @@ export default function Customer() {
                             </span>
                         </button>
                         </Link>
-                  
                     </div>
 
+                    {/* table body */}
                     <div className="overflow-x-auto rounded-lg border border-[#E9EAEB]">
                         <table className="table-auto min-w-max">
                             <thead className="text-[12px] bg-[#FAFAFA] text-[#535862] sticky top-0 z-20">
@@ -375,6 +381,7 @@ export default function Customer() {
                         </table>
                     </div>
 
+                    {/* table footer */}
                     <div className="px-[24px] py-[12px] flex justify-between items-center text-[#414651]">
                         <BorderIconButton
                             icon="lucide:arrow-left"
