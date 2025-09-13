@@ -1,14 +1,31 @@
 "use client";
 
-import SearchBar from "../(private)/dashboard/searchBar";
+import SearchBar from "./searchBar";
 import { Icon } from "@iconify-icon/react";
 import CustomDropdown from "./customDropdown";
 import BorderIconButton from "./borderIconButton";
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import FilterDropdown from "./filterDropdown";
 import CustomCheckbox from "./customCheckbox";
+import DismissibleDropdown from "./dismissibleDropdown";
+import { naturalSort } from "../(private)/utils/naturalSort";
 
 type configType = {
+    api?: {
+        search: () => {
+            data: TableDataType[];
+            currentPage: number;
+            pageSize: number;
+            total: number;
+        };
+        filter: () => TableDataType[];
+        pagination: (page: number) => {
+            data: TableDataType[];
+            currentPage: number;
+            pageSize: number;
+            total: number;
+        }
+    };
     header?: {
         searchBar?:
             | boolean
@@ -41,7 +58,7 @@ type configType = {
         filter?: {
             isFilterable?: boolean;
             render: (data: TableDataType[]) => React.ReactNode;
-        }
+        };
     }[];
 };
 
@@ -61,23 +78,16 @@ export type TableDataType = {
     [key: string]: string;
 };
 
-const TableData = createContext<TableDataType[]>([]);
+const TableData = createContext<{
+    tableData: TableDataType[];
+    setTableData: React.Dispatch<React.SetStateAction<TableDataType[]>>;
+}>({ tableData: [], setTableData: () => {} });
 
 type CurrentPageType = {
     currentPage: number;
     setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
 };
 const CurrentPage = createContext<CurrentPageType>({} as CurrentPageType);
-
-type filterDataType = {
-    depotId: string;
-    depotName: string;
-};
-
-const filterData: filterDataType[] = new Array(10).fill(null).map(() => ({
-    depotId: "DP0172",
-    depotName: `Rwamayesi Company Limited-Old Kampala Lorem, ipsum dolor sit amet consectetur adipisicing elit. Aspernatur, omnis.`,
-}));
 
 interface TableProps {
     data: TableDataType[];
@@ -88,14 +98,15 @@ export default function Table({ data, config }: TableProps) {
     const [selectedColumns, setSelectedColumns] = useState(
         new Array(config.columns.length).fill(null).map((_, i) => i)
     );
-    const [tableData] = useState(data);
+    const [tableData, setTableData] = useState(data);
     const [currentPage, setCurrentPage] = useState(0);
+
     return (
         <Config.Provider value={config}>
             <ColumnFilterConfig.Provider
                 value={{ selectedColumns, setSelectedColumns }}
             >
-                <TableData.Provider value={tableData}>
+                <TableData.Provider value={{ tableData, setTableData }}>
                     <CurrentPage.Provider
                         value={{ currentPage, setCurrentPage }}
                     >
@@ -177,54 +188,72 @@ function ColumnFilter() {
 
     return (
         <div className="relative">
-            <BorderIconButton
-                icon="lucide:filter"
-                onClick={() => setShowDropdown(!showDropdown)}
+            <DismissibleDropdown
+                isOpen={showDropdown}
+                setIsOpen={setShowDropdown}
+                button={
+                    <BorderIconButton
+                        icon="lucide:filter"
+                        onClick={() => setShowDropdown(!showDropdown)}
+                    />
+                }
+                dropdown={
+                    <div className="w-[350px] min-h-[300px] h-full absolute right-0 top-[40px] z-50 overflow-hidden">
+                        <CustomDropdown>
+                            <div className="flex gap-[8px] p-[10px]">
+                                <CustomCheckbox
+                                    id="select-all"
+                                    checked={isAllSelected}
+                                    indeterminate={isIndeterminate}
+                                    label="Select All"
+                                    onChange={handleSelectAll}
+                                />
+                            </div>
+                            {columns.map((col, index) => {
+                                return (
+                                    <div
+                                        key={index}
+                                        className="flex gap-[8px] p-[10px]"
+                                    >
+                                        <CustomCheckbox
+                                            id={col.label + index}
+                                            checked={selectedColumns.includes(
+                                                index
+                                            )}
+                                            label={col.label}
+                                            onChange={() =>
+                                                handleSelectItem(index)
+                                            }
+                                        />
+                                    </div>
+                                );
+                            })}
+                        </CustomDropdown>
+                    </div>
+                }
             />
-            {showDropdown && (
-                <div className="w-[350px] min-h-[300px] h-full absolute right-0 top-[40px] z-50 overflow-auto">
-                    <CustomDropdown>
-                        <div className="flex gap-[8px] p-[10px]">
-                            <CustomCheckbox
-                                id="select-all"
-                                checked={isAllSelected}
-                                indeterminate={isIndeterminate}
-                                label="Select All"
-                                onChange={handleSelectAll}
-                            />
-                        </div>
-                        {columns.map((col, index) => {
-                            return (
-                                <div
-                                    key={index}
-                                    className="flex gap-[8px] p-[10px]"
-                                >
-                                    <CustomCheckbox
-                                        id={col.label + index}
-                                        checked={selectedColumns.includes(
-                                            index
-                                        )}
-                                        label={col.label}
-                                        onChange={() => handleSelectItem(index)}
-                                    />
-                                </div>
-                            );
-                        })}
-                    </CustomDropdown>
-                </div>
-            )}
         </div>
     );
 }
 
 function TableBody() {
-    const { columns, rowSelection, rowActions, pageSize = 10 } = useContext(Config);
+    const {
+        api,
+        columns,
+        rowSelection,
+        rowActions,
+        pageSize = 10,
+    } = useContext(Config);
     const { currentPage } = useContext(CurrentPage);
-    const tableData = useContext(TableData);
-
+    const { tableData } = useContext(TableData);
+    const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
+    const [tableOrder, setTableOrder] = useState<{
+        column: string;
+        order: "asc" | "desc";
+    }>({ column: "", order: "asc" });
+    
     const startIndex = currentPage * pageSize;
     const endIndex = startIndex + pageSize;
-    const displayedData = tableData.slice(startIndex, endIndex);
 
     const { selectedColumns } =
         useContext<columnFilterConfigType>(ColumnFilterConfig);
@@ -232,6 +261,14 @@ function TableBody() {
     const allItemsCount: number = tableData.length;
     const isAllSelected = selectedItems.length === allItemsCount;
     const isIndeterminate = selectedItems.length > 0 && !isAllSelected;
+
+    useEffect(() => {
+        if (!api?.pagination){
+            setDisplayedData(tableData.slice(startIndex, endIndex));
+        } else {
+            setDisplayedData(tableData);
+        }
+    }, [currentPage]);
 
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
@@ -247,6 +284,19 @@ function TableBody() {
                 ? prevSelected.filter((item) => item !== id)
                 : [...prevSelected, id]
         );
+    };
+
+    const handleSort = (column: string) => {
+        if (tableOrder.column === column) {
+            setTableOrder({
+                column,
+                order: tableOrder.order === "asc" ? "desc" : "asc",
+            });
+        } else {
+            setTableOrder({ column, order: "desc" });
+        }
+
+        setDisplayedData(naturalSort(displayedData, tableOrder.order, column));
     };
 
     return (
@@ -282,13 +332,26 @@ function TableBody() {
                                                 {col.label}{" "}
                                                 {col.filter?.isFilterable && (
                                                     <FilterTableHeader>
-                                                        { col.filter.render(tableData) }
+                                                        {col.filter.render(
+                                                            tableData
+                                                        )}
                                                     </FilterTableHeader>
                                                 )}
                                                 {col.isSortable && (
                                                     <Icon
-                                                        icon="mdi-light:arrow-down"
+                                                        className="cursor-pointer"
+                                                        icon={
+                                                            tableOrder.order ===
+                                                                "asc" &&
+                                                            tableOrder.column ===
+                                                                col.key
+                                                                ? "mdi-light:arrow-up"
+                                                                : "mdi-light:arrow-down"
+                                                        }
                                                         width={16}
+                                                        onClick={() =>
+                                                            handleSort(col.key)
+                                                        }
                                                     />
                                                 )}
                                             </div>
@@ -349,7 +412,9 @@ function TableBody() {
                                                         width={col.width}
                                                         className={`px-[24px] py-[12px]`}
                                                     >
-                                                        {col.render ? col.render(row) : (
+                                                        {col.render ? (
+                                                            col.render(row)
+                                                        ) : (
                                                             <div className="flex items-center">
                                                                 {row[col.key]}
                                                             </div>
@@ -375,7 +440,8 @@ function TableBody() {
                                                                     width={20}
                                                                     className="p-[10px] cursor-pointer"
                                                                     onClick={() =>
-                                                                        action.onClick && action.onClick(
+                                                                        action.onClick &&
+                                                                        action.onClick(
                                                                             row as object
                                                                         )
                                                                     }
@@ -399,28 +465,26 @@ function TableBody() {
 function FilterTableHeader({ children }: { children: React.ReactNode }) {
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
     return (
-        <>
-            <Icon
-                icon="circum:filter"
-                width={16}
-                onClick={() => setShowFilterDropdown(!showFilterDropdown)}
-            />
-            {showFilterDropdown && (
-                <div className="absolute top-[40px] z-40">
-                    <FilterDropdown>
-                        {children}
-                    </FilterDropdown>
-                </div>
-            )}
-        </>
+        <DismissibleDropdown
+            isOpen={showFilterDropdown}
+            setIsOpen={setShowFilterDropdown}
+            button={
+                <Icon
+                    icon="circum:filter"
+                    width={16}
+                    onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                />
+            }
+            dropdown={<FilterDropdown>{children}</FilterDropdown>}
+        />
     );
 }
 
 function TableFooter() {
-    const { footer, pageSize = 10 } = useContext(Config);
-    const tableData = useContext(TableData);
-    const {currentPage, setCurrentPage} = useContext(CurrentPage);
-    const totalPages = Math.ceil(tableData.length / pageSize);
+    const { api, footer, pageSize = 10 } = useContext(Config);
+    const { tableData, setTableData } = useContext(TableData);
+    const { currentPage, setCurrentPage } = useContext(CurrentPage);
+    const [totalPages, setTotalPages] = useState(0);
 
     // Determine the start and end page indices
     const firstThreePageIndices = [0, 1, 2];
@@ -428,6 +492,21 @@ function TableFooter() {
     // Ensure we don't try to get a negative index if there are fewer than 6 pages
     const lastThreePageIndices =
         totalPages > 3 ? [totalPages - 3, totalPages - 2, totalPages - 1] : [];
+
+    useEffect(() => {
+        if(!api?.pagination) setTotalPages(Math.ceil(tableData.length / pageSize));
+    }, [])
+
+    function handlePageChange(pageNo: number) {
+        if (api?.pagination) {
+            const { data, currentPage, total } = api.pagination(pageNo);
+            setTableData(data);
+            setTotalPages(total);
+            setCurrentPage(currentPage);
+        } else if (pageNo >= 0 && pageNo < totalPages){
+            setCurrentPage(pageNo);
+        } 
+    }
 
     return (
         footer && (
@@ -439,7 +518,7 @@ function TableFooter() {
                             iconWidth={20}
                             label="Previous"
                             labelTw="text-[14px] font-semibold hidden sm:block select-none"
-                            onClick={() => currentPage > 0 && setCurrentPage(currentPage - 1)}
+                            onClick={() => handlePageChange(currentPage - 1) }
                         />
                     )}
                 </div>
@@ -459,9 +538,7 @@ function TableFooter() {
                                                     isActive={
                                                         pageNo === currentPage
                                                     }
-                                                    onClick={() =>
-                                                        setCurrentPage(pageNo)
-                                                    }
+                                                    onClick={() => handlePageChange(pageNo) }
                                                 />
                                             );
                                         }
@@ -481,9 +558,7 @@ function TableFooter() {
                                                     isActive={
                                                         pageNo === currentPage
                                                     }
-                                                    onClick={() =>
-                                                        setCurrentPage(pageNo)
-                                                    }
+                                                    onClick={() => handlePageChange(pageNo) }
                                                 />
                                             );
                                         }
@@ -496,9 +571,7 @@ function TableFooter() {
                                             key={index}
                                             label={(index + 1).toString()}
                                             isActive={index === currentPage}
-                                            onClick={() =>
-                                                setCurrentPage(index)
-                                            }
+                                            onClick={() => handlePageChange(index) }
                                         />
                                     ))}
                                 </>
@@ -513,7 +586,7 @@ function TableFooter() {
                             iconWidth={20}
                             label="Next"
                             labelTw="text-[14px] font-semibold hidden sm:block select-none"
-                            onClick={() => currentPage < totalPages - 1 && setCurrentPage(currentPage + 1)}
+                            onClick={() => handlePageChange(currentPage + 1)}
                         />
                     )}
                 </div>

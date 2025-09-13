@@ -15,7 +15,7 @@ export default function CustomDropdown({
 }) {
     return (
         <div
-            className={`rounded-[8px] border-[1px] border-[#E9EAEB] bg-white py-[4px] w-full`}
+            className={`rounded-[8px] border-[1px] border-[#E9EAEB] bg-white py-[4px] w-full overflow-auto h-full`}
         >
             {children && children}
             {data &&
