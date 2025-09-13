@@ -20,10 +20,22 @@ export default function Settings({children}:{children: React.ReactNode}) {
                 <div className="overflow-auto w-[240px] border-r-[1px] border-[#E9EAEB] p-[12px] flex flex-col gap-[6px]">
                     <SidebarBtn
                         isActive={true}
-                        label="Users & Roles"
+                        label="Add Roles"
                         leadingIcon="hugeicons:workflow-square-06"
                         leadingIconSize={20}
                         href="/dashboard/settings/userRole"
+                    />
+                    <SidebarBtn
+                        label="Users"
+                        leadingIcon="mdi:account-circle"
+                        leadingIconSize={20}
+                        href="/dashboard/settings/user"
+                    />
+                    <SidebarBtn
+                        label="Roles"
+                        leadingIcon="mdi:account-tie"
+                        leadingIconSize={20}
+                        href="/dashboard/settings/role"
                     />
                     <SidebarBtn
                         label="Change Password"
