@@ -24,13 +24,13 @@ export default function SalesmanContactDetails() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
       {/* Primary Contact */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700">Primary Contact</label>
+        <label className="text-sm font-medium text-gray-700 mb-2">Primary Contact</label>
         <div className="flex">
           <select
             value={primaryCode}
             onChange={(e) => setPrimaryCode(e.target.value)}
-            className="border border-gray-300 rounded-l-md px-3 text-gray-900"
-            style={{ height: "44px" }}
+            className="border border-gray-300 rounded-l-md px-3 h-11 text-gray-900"
+            
           >
             {countryOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -43,21 +43,21 @@ export default function SalesmanContactDetails() {
             value={primaryContact}
             onChange={(e) => setPrimaryContact(e.target.value)}
             placeholder="Contact Number"
-            className="border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1"
-            style={{ height: "44px" }}
+            className="border border-gray-300 rounded-r-md px-3 h-11 w-full text-gray-900 placeholder-gray-400 flex-1"
+   
           />
         </div>
       </div>
 
       {/* Secondary Contact */}
       <div className="flex flex-col gap-2">
-        <label className="text-sm font-medium text-gray-700">Secondary Contact</label>
+        <label className="text-sm font-medium text-gray-700 mb-2">Secondary Contact</label>
         <div className="flex">
           <select
             value={secondaryCode}
             onChange={(e) => setSecondaryCode(e.target.value)}
-            className="border border-gray-300 rounded-l-md px-3 text-gray-900"
-            style={{ height: "44px" }}
+            className="border h-11 border-gray-300 rounded-l-md px-3 text-gray-900"
+          
           >
             {countryOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>
@@ -70,8 +70,8 @@ export default function SalesmanContactDetails() {
             value={secondaryContact}
             onChange={(e) => setSecondaryContact(e.target.value)}
             placeholder="Secondary Contact"
-            className="border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1"
-            style={{ height: "44px" }}
+            className="border border-gray-300 rounded-r-md px-3 w-full text-gray-900 h-11 placeholder-gray-400 flex-1"
+          
           />
         </div>
       </div>
@@ -79,6 +79,7 @@ export default function SalesmanContactDetails() {
         label="Mobile Device"
         value={mobileDevice}
         onChange={(e) => setMobileDevice(e.target.value)}
+      
       />
        <InputFields
         label="Divice ID"

@@ -15,6 +15,11 @@ export default function WarehouseDetails() {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              <InputFields
+                label="Registration Number "
+                value={ownerName}
+                onChange={(e) => setOwnerName(e.target.value)}
+            />
             <InputFields
                 label="Warehouse Type"
                 value={warehouseType}
@@ -69,6 +74,17 @@ export default function WarehouseDetails() {
                 value={bussinessType}
                 onChange={(e) => setBussinessType(e.target.value)}
                 options={[{ value: "B2B ", label: "B2B " }]}
+            />
+            
+            
+            <InputFields
+                label="Status"
+                value={bussinessType}
+                onChange={(e) => setBussinessType(e.target.value)}
+               options={[
+                    { value: "active", label: "Active" },
+                    { value: "inactive", label: "Inactive" },
+                ]}
             />
         </div>
     );

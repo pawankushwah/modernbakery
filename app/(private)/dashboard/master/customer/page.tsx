@@ -178,8 +178,8 @@ export default function Customer() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
+                                    href="/dashboard/master/customer/add"
                                     isActive={true}
-                                     href="/dashboard/master/customer/add"
                                     leadingIcon="lucide:plus"
                                     label="Add Item"
                                 />,

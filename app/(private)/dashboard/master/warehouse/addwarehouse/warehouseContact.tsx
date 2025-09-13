@@ -21,7 +21,7 @@ export default function WarehouseContactDetails() {
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full overflow-x-hidden">
       {/* Contact */}
       <div className="flex flex-col gap-2 w-full">
-        <label className="text-sm font-medium text-gray-700">Contact</label>
+        <label className="text-sm font-medium text-gray-700 mb-2">Owner Contact Number </label>
         <div className="flex w-full">
           <select
             value={primaryCode}
@@ -45,7 +45,7 @@ export default function WarehouseContactDetails() {
       </div>
 
       {/* Tin Number */}
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col gap-4 w-full">
         <label className="text-sm font-medium text-gray-700">Tin Number</label>
         <div className="flex w-full">
           <select

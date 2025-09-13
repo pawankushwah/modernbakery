@@ -1,4 +1,4 @@
-export default function CustomSecurityCode({label, value, onChange}: {label: string; value: string; placeholder:string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}) {
+export default function CustomSecurityCode({label, value, onChange,placeholder}: {label: string; value: string; placeholder:string, onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;}) {
     return (
         <div>
             <label htmlFor="Code" className=" text-gray-700  font-medium ">
@@ -9,7 +9,7 @@ export default function CustomSecurityCode({label, value, onChange}: {label: str
                 onChange={onChange}
                 type="number"
                 id="Date"
-                placeholder=""
+                placeholder={placeholder}
                 className="border border-gray-300 h-[44px] rounded-md p-2 w-full mt-[12px]"
               
             />

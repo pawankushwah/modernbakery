@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useContext } from "react";
+import { useState, useContext, useEffect } from "react";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import { SettingsContextValue, SettingsContext } from "../../contexts";
 import Popup from "@/app/components/popUp";
@@ -8,6 +8,17 @@ import AddRole from "./addRole"; // form content
 
 export default function UserRole() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [theme, setTheme] = useState<"layoutTheme" | "layoutTheme2">("layoutTheme");
+
+  useEffect(() => {
+    if (theme === "layoutTheme") {
+      document.body.classList.add("layoutTheme");
+      document.body.classList.remove("layoutTheme2");
+    } else {
+      document.body.classList.add("layoutTheme2");
+      document.body.classList.remove("layoutTheme");
+    }
+  }, [theme]);
 
   const context = useContext<SettingsContextValue | undefined>(SettingsContext);
   if (!context) {
@@ -31,11 +42,13 @@ export default function UserRole() {
 
         {/* Change Theme Btn */}
         <button
-          className="bg-text-secondary text-white p-2 rounded ml-2"
-          onClick={() => {}}
-        >
-          Change Theme
-        </button>
+        className="bg-[#EA0A2A] text-white px-4 py-2 rounded"
+        onClick={() =>
+          setTheme(theme === "layoutTheme" ? "layoutTheme2" : "layoutTheme")
+        }
+      >
+        Change Theme
+      </button>
 
         {/* Add Role Btn (opens popup) */}
         <button
