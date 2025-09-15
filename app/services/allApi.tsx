@@ -9,8 +9,40 @@ const API = axios.create({
   },
 });
 
+API.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token"); // or whatever key you use
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+
 export const login = async (credentials: { email: string; password: string }) => {
-  const res = await API.post("/master/auth/login", credentials);
+  const res = await API.post("/api/master/auth/login", credentials);
   return res.data;
 };
 
+export const isVerify = async () => {
+  try{
+    const res = await API.get("/api/master/auth/me");
+    return res.data;
+  } catch (error) {
+    console.log(error)
+  }
+};
+
+export const logout = async () => {
+  try{
+    const res = await API.post("/api/master/auth/logout");
+    console.log(res);
+    return res.data;
+  } catch (error) {
+    console.log(error)
+  }
+};
