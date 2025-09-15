@@ -6,6 +6,7 @@ import Contexts, { SettingsContext, SettingsContextValue } from "./contexts";
 import { useContext, useEffect } from "react";
 import { isVerify } from "@/app/services/allApi";
 import { useThemeToggle } from "../utils/useThemeToggle";
+import { useRouter } from "next/navigation";
 
 export default function DashboardLayout({
     children,
@@ -22,6 +23,7 @@ export default function DashboardLayout({
 }
 
 function LayoutSelector({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
     const { theme, toggle } = useThemeToggle();
     const context = useContext<SettingsContextValue | undefined>(
         SettingsContext
@@ -35,7 +37,9 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
 
     useEffect(() => {
         isVerify().then((res) => {
-            console.log(res);
+            if(res.status === 401) router.push("/");
+        }).catch((error) => {
+            router.push("/");
         });
     }, []);
 

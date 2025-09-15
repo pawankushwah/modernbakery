@@ -33,6 +33,16 @@ export const isVerify = async () => {
     const res = await API.get("/api/master/auth/me");
     return res.data;
   } catch (error) {
-    throw error;
+    console.log(error)
+  }
+};
+
+export const logout = async () => {
+  try{
+    const res = await API.post("/api/master/auth/logout");
+    console.log(res);
+    return res.data;
+  } catch (error) {
+    console.log(error)
   }
 };
