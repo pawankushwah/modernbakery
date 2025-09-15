@@ -145,35 +145,35 @@ import { login } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import hook
 
 const LoginSchema = Yup.object().shape({
-  userId: Yup.string().required("User ID is required"),
-  password: Yup.string()
-    .min(6, "Password too short")
-    .required("Password is required"),
+    userId: Yup.string().required("User ID is required"),
+    password: Yup.string()
+        .min(6, "Password too short")
+        .required("Password is required"),
 });
 
 const LoginPage = () => {
-  const router = useRouter();
-  const { showSnackbar } = useSnackbar(); // ✅ get snackbar service
+    const router = useRouter();
+    const { showSnackbar } = useSnackbar(); // ✅ get snackbar service
 
-  return (
-    <div className="w-[100%] min-h-screen">
-      <div className="grid grid-cols-1 lg:grid-cols-2">
-        <div className="hidden flex-col justify-center ml-[24px] my-[24px] lg:flex">
-          <CardForLoginPage />
-        </div>
+    return (
+        <div className="w-[100%] min-h-screen">
+            <div className="grid grid-cols-1 lg:grid-cols-2">
+                <div className="hidden flex-col justify-center ml-[24px] my-[24px] lg:flex">
+                    <CardForLoginPage />
+                </div>
 
-        <div className="relative flex flex-col justify-center items-center min-h-screen lg:h-full">
-          <Formik
-            initialValues={{ userId: "", password: "" }}
-            validationSchema={LoginSchema}
-            onSubmit={async (values, { setErrors }) => {
-              try {
-                const res = await login({
-                  email: values.userId,
-                  password: values.password,
-                });
+                <div className="relative flex flex-col justify-center items-center min-h-screen lg:h-full">
+                    <Formik
+                        initialValues={{ userId: "", password: "" }}
+                        validationSchema={LoginSchema}
+                        onSubmit={async (values, { setErrors }) => {
+                            try {
+                                const res = await login({
+                                    email: values.userId,
+                                    password: values.password,
+                                });
 
-                                localStorage.setItem("token", res.token);
+                                localStorage.setItem("token", res.data.access_token);
                                 router.push("/dashboard");
                             } catch (err: unknown) {
                                 if (err instanceof Error) {
@@ -197,58 +197,67 @@ const LoginPage = () => {
                                     </p>
                                 </div>
 
-                <div className="flex flex-col gap-[24px] m-[20px] lg:m-0">
-                  <div className="flex flex-col gap-[20px]">
-                    {/* User ID */}
-                    <div>
-                      <CustomTextInput
-                        label="User ID"
-                        value={values.userId}
-                        onChange={handleChange("userId")}
-                        placeholder="User ID"
-                      />
-                      <ErrorMessage
-                        name="userId"
-                        component="p"
-                        className="text-red-500 text-sm"
-                      />
-                    </div>
+                                <div className="flex flex-col gap-[24px] m-[20px] lg:m-0">
+                                    <div className="flex flex-col gap-[20px]">
+                                        {/* User ID */}
+                                        <div>
+                                            <CustomTextInput
+                                                label="User ID"
+                                                value={values.userId}
+                                                onChange={handleChange(
+                                                    "userId"
+                                                )}
+                                                placeholder="User ID"
+                                            />
+                                            <ErrorMessage
+                                                name="userId"
+                                                component="p"
+                                                className="text-red-500 text-sm"
+                                            />
+                                        </div>
 
-                    {/* Password */}
-                    <div>
-                      <CustomPasswordInput
-                        label="Password"
-                        value={values.password}
-                        onChange={handleChange("password")}
-                      />
-                      <ErrorMessage
-                        name="password"
-                        component="p"
-                        className="text-red-500 text-sm"
-                      />
-                    </div>
-                  </div>
+                                        {/* Password */}
+                                        <div>
+                                            <CustomPasswordInput
+                                                label="Password"
+                                                value={values.password}
+                                                onChange={handleChange(
+                                                    "password"
+                                                )}
+                                            />
+                                            <ErrorMessage
+                                                name="password"
+                                                component="p"
+                                                className="text-red-500 text-sm"
+                                            />
+                                        </div>
+                                    </div>
 
-                  <div className="flex justify-between">
-                    <RememberCheckbox />
-                    <span className="text-[#EA0A2A] font-semibold text-sm cursor-pointer">
-                      Forgot password?
-                    </span>
-                  </div>
+                                    <div className="flex justify-between">
+                                        <RememberCheckbox />
+                                        <span className="text-[#EA0A2A] font-semibold text-sm cursor-pointer">
+                                            Forgot password?
+                                        </span>
+                                    </div>
 
-                  <Button type="submit" disabled={isSubmitting}>
-                    {isSubmitting ? "Signing in..." : "Sign in"}
-                  </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={isSubmitting}
+                                    >
+                                        {isSubmitting
+                                            ? "Signing in..."
+                                            : "Sign in"}
+                                    </Button>
+                                </div>
+                            </Form>
+                        )}
+                    </Formik>
+
+                    <PoweredByTag />
                 </div>
-              </Form>
-            )}
-          </Formik>
-
-          <PoweredByTag />
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default LoginPage;

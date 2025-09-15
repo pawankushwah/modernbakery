@@ -126,7 +126,7 @@ export default function Customer() {
             {/* header */}
             <div className="flex justify-between items-center mb-[20px]">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                 Salesman
+                    Salesman
                 </h1>
 
                 {/* top bar action buttons */}
@@ -175,33 +175,15 @@ export default function Customer() {
                             searchBar: true,
                             columnFilter: true,
                             actions: [
-                            
-                             // Desktop button with text
-                                            <span key="desktop" className="hidden sm:inline">
-                                            
-                                                 <SidebarBtn
-                                                                  href="/dashboard/salesman/add"
-                                                                  isActive={true}
-                                                                  leadingIcon="lucide:plus"
-                                                                  label="Add Item"
-                                                                />
-                                            </span>,
-                            
-                                            // Mobile button only icon centered
-                                            <span
-                                              key="mobile"
-                                              className="inline sm:hidden justify-center w-12"
-                                            >
-                                              <SidebarBtn
-                                                href="/dashboard/salesman/add"
-                                                isActive={true}
-                                                leadingIcon="lucide:plus"
-                                                label="" // no text
-                                              />
-                                            </span>,
-                                          
-                            
-                                                        ],
+                                <SidebarBtn
+                                    key={0}
+                                    href="/dashboard/salesman/add"
+                                    isActive={true}
+                                    leadingIcon="lucide:plus"
+                                    label="Add Salesman"
+                                    labelTw="hidden sm:block"
+                                />,
+                            ],
                         },
                         footer: {
                             nextPrevBtn: true,

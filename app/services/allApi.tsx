@@ -28,39 +28,33 @@ export const login = async (credentials: { email: string; password: string }) =>
 };
 
 export const isVerify = async () => {
- 
-  const res = await API.get("/master/auth/tokenCheck");
+  const res = await API.get("/api/master/auth/me");
   return res.data;
 };
 
 export const companyList = async () => {
-  const res = await API.get("/master/company/list_company");
+  const res = await API.get("/api/master/company/list_company");
   return res.data;
 };
 
 export const companyById = async (id: string) => {
-  const res = await API.get(`/master/company/${id}`);
+  const res = await API.get(`/api/master/company/${id}`);
   return res.data;
 };
 
-
-
 export const updateCompany = async (id: string, data: object) => {
-  const res = await API.put(`/master/company/${id}`, data);
+  const res = await API.put(`/api/master/company/${id}`, data);
   return res.data;
 };
 
 export const deleteCompany = async (id: string) => {
-  const res = await API.delete(`/master/company/${id}`);
+  const res = await API.delete(`/api/master/company/${id}`);
   return res.data;
 };
-
-
 
 export const logout = async () => {
   try{
     const res = await API.post("/api/master/auth/logout");
-    console.log(res);
     return res.data;
   } catch (error) {
     console.log(error)

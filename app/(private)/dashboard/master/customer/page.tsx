@@ -174,28 +174,14 @@ export default function Customer() {
               searchBar: true,
               columnFilter: true,
               actions: [
-                // Desktop button with text
-                <span key="desktop" className="hidden sm:inline">
                   <SidebarBtn
+                    key={0}
                     href="/dashboard/master/customer/add"
                     isActive={true}
                     leadingIcon="lucide:plus"
-                    label="Add Item"
-                  />
-                </span>,
-
-                // Mobile button only icon centered
-                <span
-                  key="mobile"
-                  className="inline sm:hidden justify-center w-12"
-                >
-                  <SidebarBtn
-                    href="/dashboard/master/customer/add"
-                    isActive={true}
-                    leadingIcon="lucide:plus"
-                    label="" // no text
-                  />
-                </span>,
+                    label="Add Customer"
+                    labelTw="hidden md:block"
+                  />,
               ],
             },
             footer: {

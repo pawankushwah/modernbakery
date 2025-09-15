@@ -46,7 +46,7 @@ export default function TopBar({
                                 width={24}
                             />
                         )}
-                        <div className="w-full sm:w-[320px]">
+                        <div className="w-full hidden sm:w-[320px] sm:block">
                             <SearchBar
                                 value={searchBarValue}
                                 onChange={(e) =>
@@ -84,7 +84,7 @@ export default function TopBar({
                                 />
                             }
                             dropdown={
-                                <div className="absolute w-[200px] top-[40px] right-0">
+                                <div className="absolute w-[200px] top-[40px] right-0 z-30">
                                     <CustomDropdown
                                         data={[
                                             {
@@ -102,9 +102,9 @@ export default function TopBar({
                                                 label: "Logout",
                                                 onClick: () => {
                                                     logout().then((res) => {
-                                                        if(res.code === 200) {
+                                                        if(res?.code === 200 || res?.code === 401) {
                                                             router.push("/");
-                                                        } 
+                                                        }
                                                     })
                                                 }
                                             }

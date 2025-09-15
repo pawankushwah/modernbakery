@@ -177,32 +177,15 @@ export default function Item() {
                             searchBar: true,
                             columnFilter: true,
                             actions: [
-                            
-                             // Desktop button with text
-                                            <span key="desktop" className="hidden sm:inline">
-                                              <SidebarBtn
-                                                href="/dashboard/master/item/add"
-                                                isActive={true}
-                                                leadingIcon="lucide:plus"
-                                                label="Add Item"
-                                              />
-                                            </span>,
-                            
-                                            // Mobile button only icon centered
-                                            <span
-                                              key="mobile"
-                                              className="inline sm:hidden justify-center w-12"
-                                            >
-                                              <SidebarBtn
-                                                href="/dashboard/master/item/add"
-                                                isActive={true}
-                                                leadingIcon="lucide:plus"
-                                                label="" // no text
-                                              />
-                                            </span>,
-                                          
-                            
-                                                        ],
+                                <SidebarBtn
+                                    key={0}
+                                    href="/dashboard/master/item/add"
+                                    isActive={true}
+                                    leadingIcon="lucide:plus"
+                                    label="Add Item"
+                                    labelTw="hidden sm:block"
+                                />
+                            ],
                            
                         },
                         footer: {

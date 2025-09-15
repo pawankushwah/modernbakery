@@ -48,16 +48,16 @@ const columns = [
                     {["Customer", "Channel", "Category"].map((item, index) => {
                         return (
                             <div
-                            key={index+1}
-                            className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                        >
-                            <span className="font-[500] text-[#181D27]">
-                                {index}
-                            </span>
-                            <span className="w-full overflow-hidden text-ellipsis">
-                                {item}
-                            </span>
-                        </div>
+                                key={index + 1}
+                                className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                            >
+                                <span className="font-[500] text-[#181D27]">
+                                    {index}
+                                </span>
+                                <span className="w-full overflow-hidden text-ellipsis">
+                                    {item}
+                                </span>
+                            </div>
                         );
                     })}
                 </>
@@ -130,32 +130,15 @@ export default function Customer() {
                             searchBar: true,
                             columnFilter: true,
                             actions: [
-                            
-                             // Desktop button with text
-                                            <span key="desktop" className="hidden sm:inline">
-                                              <SidebarBtn
-                                                href="/dashboard/master/pricing/add"
-                                                isActive={true}
-                                                leadingIcon="lucide:plus"
-                                                label="Add Item"
-                                              />
-                                            </span>,
-                            
-                                            // Mobile button only icon centered
-                                            <span
-                                              key="mobile"
-                                              className="inline sm:hidden justify-center w-12"
-                                            >
-                                              <SidebarBtn
-                                                href="/dashboard/master/pricing/add"
-                                                isActive={true}
-                                                leadingIcon="lucide:plus"
-                                                label="" // no text
-                                              />
-                                            </span>,
-                                          
-                            
-                                                        ],
+                                <SidebarBtn
+                                    key={0}
+                                    href="/dashboard/master/pricing/add"
+                                    isActive={true}
+                                    leadingIcon="lucide:plus"
+                                    label="Add Pricing"
+                                    labelTw="hidden sm:block"
+                                />,
+                            ],
                         },
                         footer: {
                             nextPrevBtn: true,
