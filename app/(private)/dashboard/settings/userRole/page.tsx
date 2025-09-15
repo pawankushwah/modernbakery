@@ -1,30 +1,18 @@
 "use client";
 
-import { useState, useContext, useEffect } from "react";
+import { useState } from "react";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { SettingsContextValue, SettingsContext } from "../../contexts";
 import Popup from "@/app/components/popUp";
-import AddRole from "./addRole"; // form content
+import AddRole from "./addRole";
+import Toggle from "@/app/components/toggle";
+import { useThemeToggle } from "@/app/(private)/utils/useThemeToggle";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 
 export default function UserRole() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [theme, setTheme] = useState<"layoutTheme" | "layoutTheme2">("layoutTheme");
+  const { theme, toggle } = useThemeToggle();
 
-  useEffect(() => {
-    if (theme === "layoutTheme") {
-      document.body.classList.add("layoutTheme");
-      document.body.classList.remove("layoutTheme2");
-    } else {
-      document.body.classList.add("layoutTheme2");
-      document.body.classList.remove("layoutTheme");
-    }
-  }, [theme]);
 
-  const context = useContext<SettingsContextValue | undefined>(SettingsContext);
-  if (!context) {
-    throw new Error("Settings must be used within a SettingsContext.Provider");
-  }
-  const { dispatchSettings } = context;
 
   return (
     <div className="flex bg-white w-full h-[calc(100%-46px)] border border-[#E9EAEB] rounded-[8px] overflow-hidden">
@@ -32,33 +20,29 @@ export default function UserRole() {
       <div className="p-[20px] hidden sm:block">
         <h1 className="text-[18px] font-semibold">Users & Roles</h1>
 
-        {/* Toggle Layout Button */}
-        <button
-          className="bg-text-primary text-white p-2 rounded"
-          onClick={() => dispatchSettings({ type: "layoutToggle", payload: {} })}
-        >
-          Toggle Layout
-        </button>
 
-        {/* Change Theme Btn */}
-        <button
-        className="bg-[#EA0A2A] text-white px-4 py-2 rounded"
-        onClick={() =>
-          setTheme(theme === "layoutTheme" ? "layoutTheme2" : "layoutTheme")
-        }
-      >
-        Change Theme
-      </button>
 
-        {/* Add Role Btn (opens popup) */}
-        <button
+        {/* Change Theme with Toggle Switch */}
+        <div className="mt-3">
+          <Toggle
+            isChecked={theme === "layoutTheme2"}
+            onChange={toggle}
+            label="Dark Mode"
+          />
+        </div>
+
+        <SidebarBtn
+          isActive={true}
+          label="Add Role"
+          // don't redirect if parent
+
+
+          leadingIcon={"tabler:plus"}
+
+
+          trailingIconTw="hidden group-hover:block"
           onClick={() => setIsPopupOpen(true)}
-          className="rounded-lg bg-[#EA0A2A] text-white px-4 py-[10px] flex items-center gap-[8px] cursor-pointer mt-4"
-        >
-          <Icon icon="tabler:plus" width={20} />
-          <span className="md:block hidden">Add Role</span>
-          <span className="hidden sm:block md:hidden">Add</span>
-        </button>
+        />
 
         {/* Popup with AddRole Form */}
         {isPopupOpen && (

@@ -5,6 +5,8 @@ import ImageButton from "../../components/imageButton";
 import HorizontalSidebar from "./horizontalSidebar";
 import Logo from "../../components/logo";
 import { useRouter } from "next/navigation";
+import Toggle from "@/app/components/toggle";
+import { useThemeToggle } from "../utils/useThemeToggle";
 
 export default function TopBar({
     horizontalSidebar,
@@ -13,13 +15,14 @@ export default function TopBar({
     horizontalSidebar: boolean;
     toggleSidebar: () => void;
 }) {
+    const { theme, toggle } = useThemeToggle();
+   
 
     const router = useRouter();
     return (
         <div
-            className={`fixed peer-hover:pl-[250px] w-full flex flex-col items-center ${
-                !horizontalSidebar ? "pl-[80px]" : "pl-[0px]"
-            }`}
+            className={`fixed peer-hover:pl-[250px] w-full flex flex-col items-center ${!horizontalSidebar ? "pl-[80px]" : "pl-[0px]"
+                }`}
         >
             {/* Top Bar start from here */}
             <div className="w-full h-[60px] flex">
@@ -45,6 +48,14 @@ export default function TopBar({
                         </div>
                     </div>
                     <div className="flex items-center gap-[10px]">
+
+                        <Toggle
+                                    isChecked={theme === "layoutTheme2"}
+                                    onChange={toggle}
+                                    label="Dark Mode"
+                                  />
+
+
                         <IconButton icon="humbleicons:maximize" />
                         <IconButton icon="lucide:bell" notification={true} />
                         <IconButton
@@ -62,7 +73,7 @@ export default function TopBar({
                                 router.push("/dashboard/settings/changePassword");
                                 toggleSidebar();
                             }}
-                            
+
                         />
                     </div>
                 </div>
