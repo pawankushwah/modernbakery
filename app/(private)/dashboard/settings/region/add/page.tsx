@@ -32,6 +32,7 @@ export default function AddRegion() {
     fetchCountries();
   }, []);
 
+
   const handleSubmit = async () => {
     if (!regionName || !countryId) {
       alert("Please fill all fields!");
@@ -39,7 +40,13 @@ export default function AddRegion() {
     }
     setLoading(true);
     try {
-      const res = await addRegion(regionName, countryId, status === "1" ? 1 : 0);
+     
+      const res = await addRegion({
+        regionName: regionName,
+        countryId: Number(countryId),
+        status: Number(status),
+      });
+      console.log("Add region response:", res);
       if (res.status) {
         alert("Region added successfully ✅");
         setRegionName("");
@@ -57,7 +64,7 @@ export default function AddRegion() {
 
   return (
     <div className="w-full h-full p-4">
-    <div className="flex items-center gap-4 mb-6">
+      <div className="flex justify-between items-center mb-6">
         <Link href="/dashboard/settings/region">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>

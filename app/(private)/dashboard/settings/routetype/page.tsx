@@ -10,7 +10,9 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { routeTypeList } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-
+import { deleteRouteType } from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext"; // agar snackbar use karte ho
+import { useRouter } from "next/navigation";
 interface RouteType {
   id: string | number;
   route_type_code: string;
@@ -39,7 +41,8 @@ const columns = [
     key: "status",
     label: "Status",
     render: (row: TableDataType) => {
-      const statusText = row.status === "1" ? "Active" : "Inactive";
+      const statusText = row.status === "1" ? "Active" : "Inactive"
+
       const statusClass =
         statusText === "Active" ? "bg-[#ECFDF3] text-[#027A48]" : "bg-red-200 text-red-700";
       return <span className={`text-sm font-[500] px-4 py-1 rounded-xl ${statusClass}`}>{statusText}</span>;
@@ -52,7 +55,8 @@ export default function RouteTypeList() {
   const [tableData, setTableData] = useState<TableDataType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
-
+const router = useRouter();
+const { showSnackbar } = useSnackbar();
   useEffect(() => {
     const fetchRouteTypes = async () => {
       try {
@@ -78,6 +82,25 @@ export default function RouteTypeList() {
 
     fetchRouteTypes();
   }, []);
+
+const handleDelete = async (id: string | number) => {
+  if (!confirm("Are you sure you want to delete this Route Type?")) return;
+
+  try {
+    await deleteRouteType(id); // API call
+    showSnackbar("Route Type deleted successfully ✅", "success");
+
+    // Remove deleted item from state instead of router.refresh()
+    setTableData(prev => prev.filter(row => row.id !== id.toString()));
+
+  } catch (err) {
+    console.error("Delete failed ❌:", err);
+    showSnackbar("Failed to delete Route Type ❌", "error");
+  }
+};
+
+
+
 
   if (loading) return <Loading />;
 
@@ -134,14 +157,17 @@ export default function RouteTypeList() {
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
-            rowActions: [
-              { icon: "lucide:eye" },
-              { icon: "lucide:edit-2", onClick: console.log },
-              {
-                icon: "lucide:more-vertical",
-                onClick: () => confirm("Are you sure you want to delete this Route Type?"),
-              },
-            ],
+         rowActions: [
+  { icon: "lucide:eye" },
+  { icon: "lucide:edit-2", onClick: console.log },
+  {
+    icon: "lucide:trash",
+    onClick: (data: object) => {
+      const row = data as TableDataType;
+      handleDelete(row.id); 
+    },
+  },
+],
           }}
         />
       </div>
