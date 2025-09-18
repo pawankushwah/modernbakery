@@ -60,7 +60,7 @@ export const initialLinkData: SidebarDataType[] = [
 
             {
                 isActive: false,
-                href: "#",
+                href: "/#",
                 label: "Master Data",
                 leadingIcon: "tabler:database",
                 iconColor: "text-green-500",
@@ -110,7 +110,7 @@ export const initialLinkData: SidebarDataType[] = [
                 children: [
                     {
                         isActive: false,
-                        href: "/dashboard/master/customer",
+                        href: "/dashboard/settings/customer/companyType",
                         label: "Company Type",
                         leadingIcon: "lucide:user",
                         iconColor: "text-green-500",
