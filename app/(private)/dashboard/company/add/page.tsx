@@ -12,7 +12,13 @@ import SearchableDropdown from "@/app/components/SearchableDropdown";
 import { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { countryList, addCompany, regionList, subRegionList } from "@/app/services/allApi";
+import {
+  countryList,
+  addCompany,
+  regionList,
+  subRegionList,
+} from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 export default function AddCustomer() {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,6 +47,8 @@ export default function AddCustomer() {
     area_name?: string;
   };
 
+  const { showSnackbar } = useSnackbar();
+
   // ✅ Yup Validation
   const CompanySchema = Yup.object({
     companyName: Yup.string().required("Company name is required"),
@@ -58,7 +66,7 @@ export default function AddCustomer() {
       companyType: "",
       companyCode: "",
       companyName: "",
-      companyLogo: "",
+      companyLogo: File ,
       companyWebsite: "",
       primaryCode: "uae",
       primaryContact: "",
@@ -84,41 +92,63 @@ export default function AddCustomer() {
     onSubmit: async (values) => {
       console.log("✅ Form submitted with values:", values);
 
-      const payload = {
-        company_code: values.companyCode,
-        company_name: values.companyName,
-        email: values.email,
-        tin_number: values.tinNumber,
-        vat: values.vatNo,
-        country_id: values.country,
-        selling_currency: values.sellingCurrency,
-        purchase_currency: values.purchaseCurrency,
-        toll_free_no: `${values.tollFreeCode}${values.tollFreeNumber}`,
-        logo: values.companyLogo,
-        website: values.companyWebsite,
-        service_type: values.serviceType,
-        company_type: values.companyType,
-        status: "active",
-        module_access: values.modules,
-        district: values.district,
-        town: values.town,
-        street: values.street,
-        landmark: values.landmark,
-        region: values.region,
-        sub_region: values.subRegion,
-        primary_contact: `${values.primaryCode}${values.primaryContact}`,
-      };
+      // Convert modules string → array
+      const modulesArray = values.modules
+        ? values.modules.split(",").map((m) => m.trim())
+        : [];
 
-      console.log("📦 Prepared payload:", payload);
+      // Build FormData for file + array support
+      const formData = new FormData();
+
+      formData.append("company_code", values.companyCode);
+      formData.append("company_name", values.companyName);
+      formData.append("email", values.email);
+      formData.append("tin_number", values.tinNumber);
+      formData.append("vat", values.vatNo);
+      formData.append("country_id", values.country);
+      formData.append("selling_currency", values.sellingCurrency);
+      formData.append("purchase_currency", values.purchaseCurrency);
+      formData.append(
+        "toll_free_no",
+        `${values.tollFreeCode}${values.tollFreeNumber}`
+      );
+      formData.append("website", values.companyWebsite);
+      formData.append("service_type", values.serviceType);
+      formData.append("company_type", values.companyType);
+      formData.append("status", "active");
+      formData.append("district", values.district);
+      formData.append("town", values.town);
+      formData.append("street", values.street);
+      formData.append("landmark", values.landmark);
+      formData.append("region", values.region);
+      formData.append("sub_region", values.subRegion);
+      formData.append(
+        "primary_contact",
+        `${values.primaryCode}${values.primaryContact}`
+      );
+
+      // ✅ Handle logo
+      if (values.companyLogo instanceof File) {
+        formData.append("logo", values.companyLogo);
+      } else if (typeof values.companyLogo === "boolean") {
+        formData.append("logo", values.companyLogo);
+      }
+
+      // ✅ Append modules as array
+      modulesArray.forEach((m, i) => {
+        formData.append(`module_access[${i}]`, m);
+      });
+
+      console.log("📦 Prepared payload:", [...formData.entries()]);
 
       try {
-        const res = await addCompany(payload);
+        const res = await addCompany(formData); // API should handle multipart/form-data
         console.log("Company Added ✅", res);
-        alert("Company added successfully!");
+         showSnackbar("COMPANY added successfully ", "success");
         formik.resetForm();
       } catch (error) {
         console.error("Add Company failed ❌", error);
-        alert("Failed to add company!");
+        showSnackbar("Failed to add company!", "error");
       }
     },
   });
@@ -146,7 +176,7 @@ export default function AddCustomer() {
         }));
         setRegions(regionOptions);
 
-        const subRegionRes = await subRegionList({ page: "1", limit: "200" });
+        const subRegionRes = await subRegionList();
         const subRegionOptions = subRegionRes.data.map((sr: ApiSubRegion) => ({
           value: sr.id ?? "",
           label: sr.name ?? sr.area_name ?? "",
@@ -380,6 +410,7 @@ export default function AddCustomer() {
               label="Modules"
               value={formik.values.modules}
               onChange={formik.handleChange}
+             
             />
             <InputFields
               name="serviceType"

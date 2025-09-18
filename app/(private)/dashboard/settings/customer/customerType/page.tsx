@@ -2,21 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
+import { useRouter } from "next/navigation";
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table from "@/app/components/customTable";
+import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { customerTypeList } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { customerTypeList, deleteCustomerType } from "@/app/services/allApi";
 
 interface CustomerType {
   id: string;
   code: string;
   name: string;
   status: string;
-  [key: string]: string; 
+  [key: string]: string;
 }
 
 interface DropdownItem {
@@ -24,13 +27,6 @@ interface DropdownItem {
   label: string;
   iconWidth: number;
 }
-
-const mockCustomer: CustomerType[] = new Array(10).fill(null).map((_, i) => ({
-  id: (i + 1).toString(),
-  code: `AC00016${i + 1}`,
-  name: `Abdul Retail Shop ${i + 1}`,
-  status: "Active",
-}));
 
 const dropdownDataList: DropdownItem[] = [
   { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -50,39 +46,60 @@ export default function Customer() {
   const [customers, setCustomers] = useState<CustomerType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerType | null>(null);
+
+  const { showSnackbar } = useSnackbar();
+  const router = useRouter();
 
   useEffect(() => {
-  const fetchCustomers = async () => {
-    try {
-      const listRes = await customerTypeList();
-      console.log("API Response ✅", listRes);
-
-      const formatted: CustomerType[] = (listRes.data || []).map((c: CustomerType) => ({
-  ...c,
-  status: c.status === "active" ? "Active" : "Inactive", 
-}));
-
-      setCustomers(formatted);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error("API Error:", error.message);
-      } else {
-        console.error("Unexpected error:", error);
+    const fetchCustomers = async () => {
+      try {
+        const listRes = await customerTypeList();
+        const formatted: CustomerType[] = (listRes.data || []).map((c: CustomerType) => ({
+          ...c,
+          status: c.status === "active" ? "Active" : "Inactive",
+        }));
+        setCustomers(formatted);
+      } catch (error: unknown) {
+        console.error("API Error:", error);
+        setCustomers([]); // fallback empty list
+      } finally {
+        setLoading(false);
       }
-      setCustomers(mockCustomer);
+    };
+
+    fetchCustomers();
+  }, []);
+
+  const handleDelete = async () => {
+    if (!selectedCustomer?.id) return;
+
+    try {
+      await deleteCustomerType(selectedCustomer.id);
+      showSnackbar("Customer deleted successfully ✅", "success");
+      setCustomers((prev) => prev.filter((c) => c.id !== selectedCustomer.id));
+    } catch (error) {
+      console.error("Delete failed ❌", error);
+      showSnackbar("Failed to delete customer ❌", "error");
     } finally {
-      setLoading(false);
+      setShowDeletePopup(false);
+      setSelectedCustomer(null);
     }
   };
 
-  fetchCustomers();
-}, []);
-
+  const tableData: TableDataType[] = customers.map((c) => ({
+    id: c.id,
+    code: c.code,
+    name: c.name,
+    status: c.status,
+  }));
 
   return loading ? (
     <Loading />
   ) : (
     <>
+      {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
         <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
           Customer Type
@@ -121,9 +138,10 @@ export default function Customer() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={customers}
+          data={tableData}
           config={{
             header: {
               searchBar: true,
@@ -144,17 +162,43 @@ export default function Customer() {
             columns,
             rowSelection: true,
             rowActions: [
-              { icon: "lucide:eye" },
-              { icon: "lucide:edit-2", onClick: console.log },
+              {
+                icon: "lucide:eye",
+                onClick: (row: object) => {
+                  const r = row as TableDataType;
+                  router.push(`/dashboard/settings/customer/customerType/view/${r.id}`);
+                },
+              },
+              {
+                icon: "lucide:edit-2",
+                onClick: (row: object) => {
+                  const r = row as TableDataType;
+                  router.push(`/dashboard/settings/customer/customerType/updateCustomerType/${r.id}`);
+                },
+              },
               {
                 icon: "lucide:more-vertical",
-                onClick: () =>
-                  confirm("Are you sure you want to delete this customer?"),
+                onClick: (row: object) => {
+                  const r = row as TableDataType;
+                  setSelectedCustomer({ id: r.id, code: r.code, name: r.name, status: r.status });
+                  setShowDeletePopup(true);
+                },
               },
             ],
           }}
         />
       </div>
+
+      {/* Delete Popup */}
+      {showDeletePopup && selectedCustomer && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <DeleteConfirmPopup
+            title={`Delete Customer "${selectedCustomer.name}"?`}
+            onClose={() => setShowDeletePopup(false)}
+            onConfirm={handleDelete}
+          />
+        </div>
+      )}
     </>
   );
 }

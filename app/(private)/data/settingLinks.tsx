@@ -190,7 +190,7 @@ export const initialLinkData: SidebarDataType[] = [
                     },
                     {
                         isActive: false,
-                        href: "/dashboard/master/item",
+                        href: "/dashboard/settings/customer/customerCategory",
                         label: "Customer Category",
                         leadingIcon: "mdi:package-variant",
                         iconColor: "text-cyan-500",

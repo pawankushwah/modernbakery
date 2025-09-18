@@ -47,10 +47,18 @@ export const updateCompany = async (id: string, data: object) => {
   return res.data;
 };
 
-export const deleteCompany = async (id: string) => {
-  const res = await API.delete(`/api/master/company/${id}`);
+export const editCompany = async (id: string, data: object) => {
+  const res = await API.put(`/api/master/company/company/${id}`, data);
+  console.log("gbfjgb",res);
   return res.data;
-};
+}
+
+export const getCompanyById = async (id: string) => {
+  const res = await API.get(`/api/master/company/${id}`);
+  return res.data;
+}
+
+
 
 export const logout = async () => {
   try{
@@ -61,7 +69,7 @@ export const logout = async () => {
   }
 };
 
-export const addCompany = async (data: Record<string, string>) => {
+export const addCompany = async (data:FormData | Record<string, string>) => {
   try {
     const res = await API.post("/api/master/company/add_company", data);
     return res.data;
@@ -70,6 +78,11 @@ export const addCompany = async (data: Record<string, string>) => {
     throw error;
   }
 };
+
+export const deleteCompany = async (id:string) => {
+    const res = await API.delete(`/api/master/company/company/${id}`);
+    return res.data;
+}
 
 
 export const countryList = async (data: Record<string, string>) => {
@@ -235,6 +248,12 @@ export const getSubRegion = async () => {
     return res.data;
 };
 
+export const subRegionList = async () => {
+    const res = await API.get("/api/master/area/list_area");
+    return res.data;
+}
+
+
 export const getCompanyCustomers = async () => {
   const res = await API.get("/api/master/companycustomer/list");
   return res.data;
@@ -305,6 +324,36 @@ export const customerTypeList = async (params?: Record<string, string>) => {
   }
 };
 
+export const deleteCustomerType = async (id: string) => {
+  try {
+    const res = await API.delete(`/api/settings/customer-type/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Delete Customer Type failed ❌", error);
+    throw error;
+  }
+};
+
+export const getCustomerType = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/customer-type/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Get Customer Type by ID failed ❌", error);
+    throw error;
+  }
+};
+
+export const updateCustomerType = async (id: string, payload: Record<string, string>) => {
+  try {
+    const res = await API.put(`/api/settings/customer-type/${id}`, payload);
+    return res.data;
+  } catch (error) {
+    console.error("Update Customer Type failed ❌", error);
+    throw error;
+  }
+};
+
 
 export const addRegion = async  (payload?: {regionName: string, countryId: number, status: number}) => {
   try {
@@ -343,6 +392,70 @@ export const addRouteType = async (payload: Record<string, string | number>) => 
     return res.data;
   } catch (error) {
     console.error("Add Route Type failed ❌", error);
+    throw error;
+  }
+};
+
+
+
+export const customerCategoryList = async (params?: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/customer-category/list", { params }); 
+    return res.data;
+  } catch (error) {
+    console.error("Customer Category List failed ❌", error);
+    throw error;
+  } 
+};
+
+export const deleteCustomerCategory = async (id: string) => {
+  try {
+    const res = await API.delete(`/api/settings/customer-category/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Delete Customer Category failed ❌", error);
+    throw error;
+  }
+};
+
+export const getCustomerCategory = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/customer-category/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Get Customer Category by ID failed ❌", error);
+    throw error;
+  }
+};
+
+
+export const addCustomerCategory = async (payload: Record<string, string | number>) => {
+  try {
+    const res = await API.post("/api/settings/customer-category/create", payload);
+    return res.data;
+  } catch (error) {
+    console.error("Add Customer Category failed ❌", error);
+    throw error;
+  }
+};
+
+export const updateCustomerCategory = async (id: string, payload: Record<string, string | number>) => {
+  try {
+    const res = await API.put(`/api/settings/customer-category/${id}`, payload);
+    return res.data;
+  } catch (error) {
+    console.error("Update Customer Category failed ❌", error);
+    throw error;
+  }
+};
+
+
+export const outletChannelList = async () => {
+  try {
+    const res = await API.get("/api/settings/outlet-channels/list");
+    return res.data;
+  } catch (error) {
+    console.error("Outlet Channel List failed ❌", error);
     throw error;
   }
 };

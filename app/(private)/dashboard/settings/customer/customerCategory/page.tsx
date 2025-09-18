@@ -8,11 +8,19 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { countryList, deleteCountry } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { customerCategoryList, deleteCustomerType } from "@/app/services/allApi";
+
+interface CustomerCategory {
+  id: string;
+  outlet_channel_id: string;
+  customer_category_code: string;
+  customer_category_name: string;
+  status: string;
+}
 
 interface DropdownItem {
   icon: string;
@@ -29,86 +37,80 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "country_code", label: "Country Code" },
-  { key: "country_name", label: "Country Name" },
-  { key: "currency", label: "Currency" },
+    { key: "outlet_channel_id", label: "ID", hidden: true },
+  { key: "customer_category_code", label: "Code" },
+  { key: "customer_category_name", label: "Name" },
+  { key: "status", label: "Status" },
 ];
 
-export default function Country() {
-  interface CountryItem {
-    id?: number | string;
-    country_code?: string;
-    country_name?: string;
-    currency?: string;
-  }
-
-  const [countries, setCountries] = useState<CountryItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [showDropdown, setShowDropdown] = useState<boolean>(false);
-
+export default function CustomerCategoryPage() {
+  const [categories, setCategories] = useState<CustomerCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<CustomerCategory | null>(null);
 
+  const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
-
-  type TableRow = TableDataType & { id?: string };
-
-  // normalize countries to TableDataType for the Table component
-  const tableData: TableDataType[] = countries.map((c) => ({
-    id: c.id?.toString() ?? "",
-    country_code: c.country_code ?? "",
-    country_name: c.country_name ?? "",
-    currency: c.currency ?? "",
-  }));
 
   useEffect(() => {
-    const fetchCountries = async () => {
+    const fetchCategories = async () => {
       try {
-        const listRes = await countryList({});
-        setCountries(listRes.data);
-      } catch (error: unknown) {
+        const listRes = await customerCategoryList();
+        const formatted: CustomerCategory[] = (listRes.data || []).map((c: any) => ({
+          id: c.id,
+            outlet_channel_id: c.outlet_channel_id,
+          customer_category_code: c.customer_category_code,
+          customer_category_name: c.customer_category_name,
+          status: c.status === "active" ? "Active" : "Inactive",
+        }));
+        setCategories(formatted);
+      } catch (error) {
         console.error("API Error:", error);
+        setCategories([]);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCountries();
+    fetchCategories();
   }, []);
 
-  const handleConfirmDelete = async () => {
-    if (!selectedRow) return;
+  const handleDelete = async () => {
+    if (!selectedCategory?.id) return;
 
-  try {
-  if (!selectedRow?.id) throw new Error('Missing id');
-  await deleteCountry(String(selectedRow.id)); // call API
-      
-      showSnackbar("Country deleted successfully ", "success"); 
-      router.refresh();
+    try {
+      await deleteCustomerType(selectedCategory.id);
+      showSnackbar("Customer Category deleted ✅", "success");
+      setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
     } catch (error) {
-      console.error("Delete failed ❌:", error);
-      showSnackbar("Failed to delete country ❌", "error"); 
+      console.error("Delete failed ❌", error);
+      showSnackbar("Failed to delete category ❌", "error");
     } finally {
       setShowDeletePopup(false);
-      setSelectedRow(null);
+      setSelectedCategory(null);
     }
   };
-  
+
+  const tableData: TableDataType[] = categories.map((c) => ({
+    id: c.id,
+    outlet_channel_id: c.outlet_channel_id,
+    customer_category_code: c.customer_category_code,
+    customer_category_name: c.customer_category_name,
+    status: c.status,
+  }));
 
   return loading ? (
     <Loading />
   ) : (
     <>
+      {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
-        <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-          Country
-        </h1>
+        <h1 className="text-[20px] font-semibold text-[#181D27]">Customer Category</h1>
 
         <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
           <BorderIconButton icon="mage:upload" />
-
           <DismissibleDropdown
             isOpen={showDropdown}
             setIsOpen={setShowDropdown}
@@ -121,11 +123,7 @@ export default function Country() {
                       key={idx}
                       className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
                     >
-                      <Icon
-                        icon={link.icon}
-                        width={link.iconWidth}
-                        className="text-[#717680]"
-                      />
+                      <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
                       <span className="text-[#181D27] font-[500] text-[16px]">
                         {link.label}
                       </span>
@@ -138,6 +136,7 @@ export default function Country() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
           data={tableData}
@@ -148,46 +147,54 @@ export default function Country() {
               actions: [
                 <SidebarBtn
                   key={0}
-                  href="/dashboard/settings/country/add"
+                  href="/dashboard/settings/customer/customerCategory/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Country"
+                  label="Add Category"
                   labelTw="hidden sm:block"
                 />,
               ],
             },
+            pageSize: 5,
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
             rowActions: [
-              { icon: "lucide:eye" },
+              {
+                icon: "lucide:eye",
+                onClick: (row: object) => {
+                  const r = row as TableDataType;
+                  router.push(`/dashboard/settings/customer/customerCategory/view/${r.id}`);
+                },
+              },
               {
                 icon: "lucide:edit-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  router.push(`/dashboard/settings/country/update_country/${row.id}`);
+                onClick: (row: object) => {
+                  const r = row as TableDataType;
+                  router.push(`/dashboard/settings/customer/customerCategory/update/${r.id}`);
                 },
               },
               {
                 icon: "lucide:more-vertical",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  setSelectedRow({ id: row.id, country_code: row.country_code, country_name: row.country_name });
+                onClick: (row: object) => {
+                  const r = row as TableDataType;
+                  const category = categories.find((c) => c.id === r.id) || null;
+                  setSelectedCategory(category);
                   setShowDeletePopup(true);
                 },
               },
             ],
-            pageSize: 10,
           }}
         />
       </div>
 
-      {showDeletePopup && (
+      {/* Delete Popup */}
+      {showDeletePopup && selectedCategory && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <DeleteConfirmPopup
-            title="Country"
+            title={`Delete Category "${selectedCategory.customer_category_name}"?`}
             onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
+            onConfirm={handleDelete}
           />
         </div>
       )}

@@ -13,7 +13,8 @@ import {
   itemCategory,
   itemSubCategory,
   channelList,
-  userTypes
+  userTypes,
+  outletChannelList
 } from '@/app/services/allApi';
 
 interface DropdownDataContextType {
@@ -44,6 +45,7 @@ interface DropdownDataContextType {
   itemSubCategoryOptions: { value: string; label: string }[];
   channelOptions: { value: string; label: string }[];
   userTypeOptions: { value: string; label: string }[];
+  outletChannelList: { value: string; label: string }[];
   refreshDropdowns: () => Promise<void>;
   loading: boolean;
 }
@@ -125,6 +127,13 @@ interface UserTypeItem {
   name?: string;
 }
 
+interface OutletChannelItem {
+  id?: number | string;
+  outlet_channel_id?: string;
+  outlet_channel_code?: string;
+  outlet_channel?: string;
+}
+
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
 
 export const useAllDropdownListData = () => {
@@ -150,6 +159,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [itemSubCategoryData, setItemSubCategoryData] = useState<ItemSubCategoryItem[]>([]);
   const [channelListData, setChannelListData] = useState<ChannelItem[]>([]);
   const [userTypesData, setUserTypesData] = useState<UserTypeItem[]>([]);
+  const [outletChannelListData, setOutletChannelListData] = useState<OutletChannelItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options
@@ -210,6 +220,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }));
   userTypesData.map((c) => ({ value: c.id ?? '', label: c.name ?? '' }));
 
+  const outletChannelOptions = (Array.isArray(outletChannelListData) ? outletChannelListData : []).map((c) => ({
+    value: c.id?.toString() ?? '',
+    label: c.outlet_channel_code && c.outlet_channel ? `${c.outlet_channel_code} - ${c.outlet_channel}` : (c.outlet_channel ?? ''),
+  }));
+
 
 
   const refreshDropdowns = async () => {
@@ -228,7 +243,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemCategoryRes,
         itemSubCategoryRes,
         channelListRes,
-        userTypesRes
+        userTypesRes,
+        outletChannelList
       ] = await Promise.all([
         companyList(),
         countryList({}),
@@ -242,7 +258,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemCategory(),
         itemSubCategory(),
         channelList(),
-        userTypes()
+        userTypes(),
+        outletChannelList(),
       ]);
 
 
@@ -260,6 +277,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   setItemSubCategoryData((itemSubCategoryRes?.data || itemSubCategoryRes || []) as ItemSubCategoryItem[]);
   setChannelListData((Array.isArray(channelListRes?.data) ? channelListRes.data : channelListRes || []) as ChannelItem[]);
   setUserTypesData((userTypesRes?.data || userTypesRes || []) as UserTypeItem[]);
+  setOutletChannelListData((outletChannelList?.data || outletChannelList || []) as OutletChannelItem[]);
     } catch (error) {
       console.error('Error loading dropdown data:', error);
       // Reset all data to empty arrays on error
@@ -276,6 +294,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   setItemSubCategoryData([] as ItemSubCategoryItem[]);
   setChannelListData([] as ChannelItem[]);
   setUserTypesData([] as UserTypeItem[]);
+  setOutletChannelListData([] as OutletChannelItem[]);
     } finally {
       setLoading(false);
     }
@@ -316,6 +335,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategoryOptions,
         channelOptions,
         userTypeOptions,
+        outletChannelList: outletChannelOptions,
         refreshDropdowns,
         loading
       }}
