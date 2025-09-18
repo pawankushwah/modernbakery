@@ -72,7 +72,7 @@ export default function AddCustomerType() {
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
         <div className="flex items-center gap-[16px]">
-          <Link href="/dashboard/company">
+          <Link href="/dashboard/settings/customer/customerType">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
@@ -131,13 +131,13 @@ export default function AddCustomerType() {
           >
             Cancel
           </button>
-          <button
-            className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 bg-red-600 text-white-500 text-gray-700 hover:bg-gray-100"
-            type="submit"
-           
-          >
-            submit
-          </button>
+          <SidebarBtn
+                     label="Submit"
+                     isActive={true}
+                     leadingIcon="mdi:check"
+                     type="submit"
+                   />
+
         </div>
       </form>
     </>

@@ -1,27 +1,53 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
-import { routeTypeList, addRouteType } from "@/app/services/allApi";
+import { getRouteTypeById, updateRouteTypeById, routeTypeList } from "@/app/services/allApi";
+import Loading from "@/app/components/Loading";
 
-// ✅ RouteType interface matches API
 interface RouteTypeOption {
-  route_type_code: string;
+  id: number | string;
+  route_type_code: string | null;
   route_type_name: string;
-  status: number; // 1 = Active, 0 = Inactive
+  status: number;
+  created_date: string | null;
 }
 
-export default function AddRouteType() {
-  const [routeTypes, setRouteTypes] = useState<RouteTypeOption[]>([]);
-  const [routeType, setRouteType] = useState(""); // selected route type code
-  const [status, setStatus] = useState("1"); // default Active
+export default function EditRouteType() {
+  const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
 
-  // ✅ Fetch all route types from API
+  const [loading, setLoading] = useState(true);
+  const [routeType, setRouteType] = useState<RouteTypeOption | null>(null);
+  const [routeTypes, setRouteTypes] = useState<RouteTypeOption[]>([]);
+  const [selectedRouteType, setSelectedRouteType] = useState("");
+  const [status, setStatus] = useState("1");
+
+  // Fetch the data for the specific route type to be edited
   useEffect(() => {
-    const fetchRouteTypes = async () => {
+    const fetchRouteType = async () => {
+      if (!id) return;
+      try {
+        const res = await getRouteTypeById(id);
+        if (res.data) {
+          setRouteType(res.data);
+          setSelectedRouteType(String(res.data.id));
+          setStatus(String(res.data.status));
+        }
+      } catch (err) {
+        console.error("Failed to fetch route type", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchAllRouteTypes = async () => {
       try {
         const res = await routeTypeList();
         const dataArray: RouteTypeOption[] = Array.isArray(res.data)
@@ -29,38 +55,48 @@ export default function AddRouteType() {
           : res.data?.data || [];
         setRouteTypes(dataArray);
       } catch (err) {
-        console.error("Failed to fetch route types", err);
+        console.error("Failed to fetch all route types", err);
       }
     };
-    fetchRouteTypes();
-  }, []);
 
-  // ✅ Submit handler with correct property names
+    fetchRouteType();
+    fetchAllRouteTypes();
+  }, [id]);
+
   const handleSubmit = async () => {
-    if (!routeType) return alert("Please select a Route Type");
+    if (!selectedRouteType || !routeType) {
+      alert("Please select a Route Type");
+      return;
+    }
 
-    const selected = routeTypes.find((r) => r.route_type_code === routeType);
-    if (!selected) return alert("Invalid Route Type selected");
+    const selected = routeTypes.find((r) => String(r.id) === selectedRouteType);
+    if (!selected) {
+      alert("Invalid Route Type selected");
+      return;
+    }
 
     try {
-      const res = await addRouteType({
+      const res = await updateRouteTypeById(String(routeType.id), {
         route_type_code: selected.route_type_code,
         route_type_name: selected.route_type_name,
         status: Number(status),
       });
 
       if (res.status) {
-        alert("Route Type added successfully ✅");
-        setRouteType("");
-        setStatus("1");
+        alert("Route Type updated successfully ✅");
+        router.push("/dashboard/settings/routetype");
       } else {
-        alert("Failed to add Route Type ❌: " + res.message);
+        alert("Failed to update Route Type ❌: " + res.message);
       }
     } catch (err) {
-      console.error("Add Route Type error", err);
-      alert("Error adding Route Type ❌");
+      console.error("Update Route Type error", err);
+      alert("Error updating Route Type ❌");
     }
   };
+
+  if (loading) {
+    return <Loading />;
+  }
 
   return (
     <div className="p-6">
@@ -69,7 +105,7 @@ export default function AddRouteType() {
         <Link href="/dashboard/settings/routetype">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold">Add New Route Type</h1>
+        <h1 className="text-xl font-semibold">Edit Route Type</h1>
       </div>
 
       {/* Form */}
@@ -78,15 +114,13 @@ export default function AddRouteType() {
           <InputFields
             label="Route Type"
             type="select"
-            value={routeType}
-            onChange={(e) => setRouteType(e.target.value)}
+            value={selectedRouteType}
+            onChange={(e) => setSelectedRouteType(e.target.value)}
             options={routeTypes.map((r) => ({
-              value: r.route_type_code,
+              value: String(r.id),
               label: r.route_type_name,
             }))}
-       
           />
-
           <InputFields
             label="Status"
             type="select"
@@ -104,15 +138,17 @@ export default function AddRouteType() {
           <button
             className="px-4 py-2 border rounded-lg"
             onClick={() => {
-              setRouteType("");
-              setStatus("1");
+              // Optionally reset to original values
+              if (routeType) {
+                setSelectedRouteType(String(routeType.id));
+                setStatus(String(routeType.status));
+              }
             }}
           >
             Cancel
           </button>
-
           <SidebarBtn
-            label="Submit"
+            label="Update"
             isActive
             leadingIcon="mdi:check"
             onClick={handleSubmit}

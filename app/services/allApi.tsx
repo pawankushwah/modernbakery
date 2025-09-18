@@ -1,6 +1,7 @@
 // app/services/allApi.ts
 import axios from "axios";
 
+
 const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, 
   headers: {
@@ -80,14 +81,26 @@ export const updateCompany = async (id: string, data: object) => {
   }
 };
 
-export const deleteCompany = async (id: string) => {
-   try {
-    const res = await API.delete(`/api/master/company/${id}`);
+export const editCompany = async (id: string, data: object) => {
+  try {
+    const res = await API.put(`/api/master/company/company/${id}`, data);
+    console.log("Response:", res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
+
+export const getCompanyById = async (id: string) => {
+  try {
+    const res = await API.get(`/api/master/company/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
 
 export const logout = async () => {
   try {
@@ -99,7 +112,7 @@ export const logout = async () => {
 
 };
 
-export const addCompany = async (data: Record<string, string>) => {
+export const addCompany = async (data:FormData | Record<string, string>) => {
   try {
     const res = await API.post("/api/master/company/add_company", data);
     return res.data;
@@ -108,6 +121,11 @@ export const addCompany = async (data: Record<string, string>) => {
   }
   
 };
+
+export const deleteCompany = async (id:string) => {
+    const res = await API.delete(`/api/master/company/company/${id}`);
+    return res.data;
+}
 
 
 export const countryList = async (data: Record<string, string>) => {
@@ -158,6 +176,8 @@ export const deleteCountry = async (id:string) => {
     return handleError(error);
   }
 };
+
+
 
 // Item Category
 export const itemCategoryList = async () => {
@@ -448,6 +468,12 @@ export const getSubRegion = async () => {
   }
 };
 
+export const subRegionList = async () => {
+    const res = await API.get("/api/master/area/list_area");
+    return res.data;
+}
+
+
 export const getCompanyCustomers = async () => {
   try {
   const res = await API.get("/api/master/companycustomer/list");
@@ -669,6 +695,20 @@ export const customerTypeList = async (params?: Record<string, string>) => {
 };
 
 
+
+export const getCustomerType = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/customer-type/${id}`);
+    return res.data;
+  } catch (error) {
+    console.error("Get Customer Type by ID failed ❌", error);
+    throw error;
+  }
+};
+
+
+
+
 export const addRegion = async  (payload?: {regionName: string, countryId: number, status: number}) => {
   try {
     const res = await API.post("/api/master/region/add_region", { payload });
@@ -708,6 +748,7 @@ export const addRouteType = async (payload: Record<string, string | number>) => 
     return handleError(error);
   }
 };
+
 
 export const getRouteTypeById = async (id: string) => {
   try {
@@ -941,5 +982,101 @@ export const createUserType = async (body:object) => {
 };
 
 
+
+
+
+
+
+export const customerCategoryList = async (params?: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/customer-category/list", { params }); 
+    return res.data;
+  } catch (error) {
+    console.error("Customer Category List failed ❌", error);
+    throw error;
+  } 
+};
+
+
+
+
+
+
+export const addCustomerCategory = async (payload: Record<string, string | number>) => {
+  try {
+    const res = await API.post("/api/settings/customer-category/create", payload);
+    return res.data;
+  } catch (error) {
+    console.error("Add Customer Category failed ❌", error);
+    throw error;
+  }
+};
+
+export const updateCustomerCategory = async (id: string, payload: Record<string, string | number>) => {
+  try {
+    const res = await API.put(`/api/settings/customer-category/${id}`, payload);
+    return res.data;
+  } catch (error) {
+    console.error("Update Customer Category failed ❌", error);
+    throw error;
+  }
+};
+
+
+
+export const userList = async (data: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/user-type/list", data);
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const addUser = async (payload:object) => {
+    const res = await API.post("/api/settings/user-type/create", payload);
+
+    return res.data;
+};
+
+
+export const editUser = async (id:string,payload:object) => {
+    const res = await API.put(`/api/master/country/update_country/${id}`,payload);
+    return res.data;
+};
+
+
+export const deleteUser = async (id:string) => {
+    const res = await API.delete(`/api/settings/user-type/${id}`);
+   
+    
+    return res.data;
+};
+
+
+export const outletChannelList = async (data: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/outlet-channels/list", data);
+   
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+
+
+
+export const deleteChannel = async (id:string) => {
+    const res = await API.delete(`/api/settings/outlet-channels/${id}`);
+    return res.data;
+};
+
+export const updateChannel = async (id:string,payload:object) => {
+    const res = await API.put(`/api/settings/outlet-channels/{id}/${id}`,payload);
+    return res.data;
+};
 
 

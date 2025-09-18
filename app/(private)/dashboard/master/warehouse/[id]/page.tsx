@@ -43,7 +43,7 @@ type FormValues = {
     deposite_amount: string;
 };
 
-export default function EditWarehouse() {
+export default function editWarehouse() {
     const initialValues: FormValues = {
         registation_no: '',
         warehouse_type: '',
@@ -75,12 +75,12 @@ export default function EditWarehouse() {
 
     const params = useParams();
     const routeId = params?.id ?? "";
-    const [fetched, setFetched] = useState<FormValues | null>(null);
+    const [fetched, setFetched] = useState<any>(null);
 
     useEffect(() => {
         if (!routeId) return;
         let mounted = true;
-    (async () => {
+        (async () => {
             try {
                 const res = await getWarehouseById(String(routeId));
                 const data = res?.data ?? res;
@@ -114,7 +114,7 @@ export default function EditWarehouse() {
                     stock_capital: data?.stock_capital ?? '',
                     deposite_amount: data?.deposite_amount ?? '',
                 });
-            } catch (err: unknown) {
+            } catch (err) {
                 console.error('Failed to fetch warehouse', err);
             }
         })();
@@ -154,16 +154,9 @@ export default function EditWarehouse() {
             }
             resetForm();
         } catch (err: unknown) {
-            // safely inspect the error for an HTTP response shape without using `any`
-            if (err && typeof err === 'object') {
-                const e = err as { response?: { status?: number } };
-                if (e.response && typeof e.response.status === 'number') {
-                    console.error('Error saving warehouse - response.status:', e.response.status);
-                } else {
-                    console.error('Error saving warehouse', err);
-                }
-            } else {
-                console.error('Error saving warehouse', err);
+            const anyErr = err as any;
+            if (anyErr?.response) {
+                console.error('Error saving warehouse - response.status:', anyErr.response.status);
             }
         } finally {
             setSubmitting(false);
