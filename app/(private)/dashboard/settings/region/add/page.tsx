@@ -57,7 +57,7 @@ export default function AddRegion() {
 
   return (
     <div className="w-full h-full p-4">
-      <div className="flex justify-between items-center mb-6">
+    <div className="flex items-center gap-4 mb-6">
         <Link href="/dashboard/settings/region">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>

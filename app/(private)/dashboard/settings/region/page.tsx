@@ -64,7 +64,7 @@ const columns = [
   { key: "region_name", label: "Region Name" },
   { key: "country_code", label: "Country Code" },
   { key: "country_name", label: "Country Name" },
-
+  { key: "status", label: "Status" }, // ✅ Add this
 ];
 
 // -----------------------
