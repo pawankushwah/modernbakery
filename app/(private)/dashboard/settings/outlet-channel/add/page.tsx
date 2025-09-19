@@ -9,11 +9,8 @@ import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-// import IconButton from "@/app/components/iconButton";
-// import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { addOutletChannel } from "@/app/services/allApi";
-// import { TableDataType } from "@/app/components/customTable";
 
 // ✅ Yup Schema
 const CountrySchema = Yup.object().shape({

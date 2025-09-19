@@ -12,11 +12,7 @@ import CreateUpdate from "./createUpdate";
 import StatusBtn from "@/app/components/statusBtn2";
 import { useRouter } from "next/navigation";
 
-const mockCategoryData = new Array(100).fill(null).map((_, i) => ({
-    id: (i + 1).toString(),
-    category_name: "Beverages",
-    status: "0",
-}));
+
 
 const columns = [
     { key: "id", label: "Category Id" },
