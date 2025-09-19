@@ -2,19 +2,14 @@
 
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { Icon } from "@iconify-icon/react";
 
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { addCustomerType } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-
-// 🔹 Predefined customer types for dropdown
-const customerTypes = [
-  { value: "retail", label: "Retail" },
-  { value: "wholesale", label: "Wholesale" },
-  { value: "corporate", label: "Corporate" },
-];
+import Link from "next/link";
 
 export default function AddCustomerTypePage() {
   const { showSnackbar } = useSnackbar();
@@ -22,20 +17,24 @@ export default function AddCustomerTypePage() {
   // ✅ Formik setup
   const formik = useFormik({
     initialValues: {
-      customerType: "",
-      customerCode: "",
-      status: "active",
+      name: "",
+      status: "active", // default string (we'll convert later)
     },
     validationSchema: Yup.object({
-      customerType: Yup.string().required("Customer type is required"),
-      customerCode: Yup.string().required("Customer code is required"),
+      name: Yup.string().required("Name is required"),
       status: Yup.string().required("Status is required"),
     }),
 
     onSubmit: async (values, { resetForm }) => {
       try {
-        const res = await addCustomerType(values);
-        console.log("✅ Customer Type Added:", res);
+        // 🔹 Map status string -> number
+        const payload = {
+          name: values.name,
+          status: values.status === "active" ? 1 : 0,
+        };
+
+        const res = await addCustomerType(payload);
+        console.log("✅ Add Customer Type response:", res);
         showSnackbar("Customer type added successfully!", "success");
         resetForm();
       } catch (error) {
@@ -49,9 +48,14 @@ export default function AddCustomerTypePage() {
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">
-          Add Customer Type
-        </h1>
+       <div className="flex items-center gap-[16px]">
+          <Link href="/dashboard/settings/customer/customerType">
+            <Icon icon="lucide:arrow-left" width={24} />
+          </Link>
+          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
+            Add Customer Type
+          </h1>
+        </div>
       </div>
 
       {/* Form */}
@@ -59,28 +63,17 @@ export default function AddCustomerTypePage() {
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">Customer Type Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* Customer Type Dropdown */}
-            <InputFields
-              type="select"
-              name="customerType"
-              label="Customer Type"
-              value={formik.values.customerType}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.customerType && formik.errors.customerType}
-              options={customerTypes}
-            />
-
-            {/* Customer Code */}
+            {/* Name */}
             <InputFields
               type="text"
-              name="customerCode"
-              label="Customer Code"
-              value={formik.values.customerCode}
+              name="name"
+              label="Customer Name"
+              value={formik.values.name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
-              error={formik.touched.customerCode && formik.errors.customerCode}
+              error={formik.touched.name && formik.errors.name}
             />
+
 
             {/* Status */}
             <InputFields

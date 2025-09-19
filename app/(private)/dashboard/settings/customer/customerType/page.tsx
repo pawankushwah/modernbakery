@@ -18,7 +18,7 @@ interface CustomerType {
   id?: string | number;
   code?: string;
   name?: string;
-  status?: string;
+  status?: string | number;
   [key: string]: string | number | undefined;
 }
 
@@ -42,22 +42,28 @@ export default function CustomerPage() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<CustomerType | null>(null);
+  const [refresh, setRefresh] = useState<boolean>(false);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
+  // normalize table data
   const tableData: TableDataType[] = customers.map((c) => ({
     id: c.id?.toString() ?? "",
     code: c.code ?? "",
     name: c.name ?? "",
-    status: c.status === "active" ? "Active" : "Inactive",
+    status:
+      c.status === "active" || c.status === 1
+        ? "Active"
+        : "Inactive",
   }));
 
+  // fetch list
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
         const res = await customerTypeList();
-        setCustomers(res.data || []);
+        setCustomers(res?.data || []);
       } catch (error) {
         console.error("Failed to fetch customers ❌", error);
         showSnackbar("Failed to fetch customers ❌", "error");
@@ -66,29 +72,40 @@ export default function CustomerPage() {
       }
     };
     fetchCustomers();
-  }, [showSnackbar]);
+  }, [refresh]);
 
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
+  // delete handler
+ const handleConfirmDelete = async () => {
+  if (!selectedRow?.id) return;
 
-    try {
-      const res = await deleteCustomerType(String(selectedRow.id));
-      if (res.error) {
-        showSnackbar("Failed to delete customer ❌", "error");
+  try {
+    const res = await deleteCustomerType(String(selectedRow.id));
+
+    // success check
+    if (res?.success || res?.message || res) {
+      setCustomers((prev) =>
+        prev.filter((c) => String(c.id) !== String(selectedRow.id))
+      );
+
+      showSnackbar("Customer deleted successfully ✅", "success");
+setRefresh(!refresh);
+      // optional: if list becomes empty after delete
+      if (customers.length === 1) {
+        // after deleting last item, customers will be []
+        setCustomers([]);
       }
-      if (res.status === 200) {
-        showSnackbar("Customer deleted successfully ✅", "success");
-        setCustomers((prev) =>
-          prev.filter((c) => String(c.id) !== String(selectedRow.id))
-        );
-        setShowDeletePopup(false);
-        setSelectedRow(null);
-      }
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Delete failed ❌", "error");
+
+      setShowDeletePopup(false);
+      setSelectedRow(null);
+    } else {
+      showSnackbar("Failed to delete customer ❌", "error");
     }
-  };
+  } catch (error) {
+    console.error("Delete failed ❌", error);
+    showSnackbar("Delete failed ❌", "error");
+  }
+};
+
 
   if (loading) return <Loading />;
 
@@ -157,15 +174,6 @@ export default function CustomerPage() {
             rowSelection: true,
             rowActions: [
               {
-                icon: "lucide:eye",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  router.push(
-                    `/dashboard/settings/customer/customerType/view/${r.id}`
-                  );
-                },
-              },
-              {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
@@ -175,7 +183,7 @@ export default function CustomerPage() {
                 },
               },
               {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
                   setSelectedRow({
