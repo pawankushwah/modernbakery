@@ -8,7 +8,7 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { outletChannelList, deleteChannel } from "@/app/services/allApi";
+import { channelList, deleteOutletChannel } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -65,7 +65,7 @@ export default function ChannelList() {
   const fetchChannels = async () => {
     setLoading(true);
     try {
-      const listRes = await outletChannelList({});
+      const listRes = await channelList();
       const data = Array.isArray(listRes?.data) ? listRes.data : [];
       setChannels(data);
     } catch (error: unknown) {
@@ -83,7 +83,7 @@ const handleConfirmDelete = async () => {
   if (!selectedRow?.id) return;
 
   try {
-    await deleteChannel(String(selectedRow.id)); // API call
+    await deleteOutletChannel(String(selectedRow.id)); // API call
     await fetchChannels();
 
     // ✅ Remove deleted row from state

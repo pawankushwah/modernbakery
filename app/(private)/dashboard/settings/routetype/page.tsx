@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
@@ -34,76 +34,81 @@ const columns = [
   { key: "status", label: "Status" },
 ];
 
-export default function Country() {
-  interface CountryItem {
+export default function RouteType() {
+  interface RouteTypeItem {
     id?: number | string;
     route_type_code?: string;
     route_type_name?: string;
     status?: number; // 1 = Active, 0 = Inactive
   }
 
-  const [countries, setCountries] = useState<CountryItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [routeType, setRouteType] = useState<RouteTypeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
+  const [selectedRow, setSelectedRow] = useState<RouteTypeItem | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const updated = searchParams.get("updated"); // detect if redirected after update
   const { showSnackbar } = useSnackbar();
 
   type TableRow = TableDataType & { id?: string };
 
-  // normalize countries to TableDataType for the Table component
-  const tableData: TableDataType[] = countries.map((c) => ({
-    id: c.id?.toString() ?? "",
-    route_type_code: c.route_type_code ?? "",
-    route_type_name: c.route_type_name ?? "",
-    status: c.status === 1 ? "Active" : "Inactive",
+  const tableData: TableDataType[] = routeType.map((item) => ({
+    id: String(item.id ?? ""),
+    route_type_code: item.route_type_code ?? "",
+    route_type_name: item.route_type_name ?? "",
+    status: item.status === 1 ? "Active" : "Inactive",
   }));
 
   useEffect(() => {
-    const fetchCountries = async () => {
+    const fetchRouteTypes = async () => {
+      setLoading(true);
       try {
-        const listRes = await routeTypeList({});
-        setCountries(listRes.data);
-      } catch (error: unknown) {
+        const res = await routeTypeList({});
+        setRouteType(res.data);
+      } catch (error) {
         console.error("API Error:", error);
-        showSnackbar("Failed to fetch countries", "error");
+        showSnackbar("Failed to fetch Route Types", "error");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCountries();
-  }, []);
+    fetchRouteTypes();
+  }, [updated]); // refetch automatically after update
 
   const handleConfirmDelete = async () => {
-    if (!selectedRow) return;
+    if (!selectedRow?.id) return;
+    const idToDelete = String(selectedRow.id);
+    setDeletingId(idToDelete);
 
     try {
-      if (!selectedRow?.id) throw new Error("Missing id");
-      await deleteRouteTypeById(String(selectedRow.id));
-
-      // Remove deleted item from state
-      setCountries(countries.filter((c) => c.id !== selectedRow.id));
-
-      showSnackbar("Country deleted successfully", "success");
+      await deleteRouteTypeById(idToDelete);
+      setRouteType((prev) =>
+        prev.filter((item) => String(item.id) !== idToDelete)
+      );
+      showSnackbar("Route Type deleted successfully", "success");
     } catch (error) {
-      console.error("Delete failed ❌:", error);
-      showSnackbar("Failed to delete country ❌", "error");
+      console.error("Delete failed:", error);
+      showSnackbar("Failed to delete Route Type", "error");
     } finally {
       setShowDeletePopup(false);
       setSelectedRow(null);
+      setDeletingId(null);
     }
   };
 
-  return loading ? (
-    <Loading />
-  ) : (
+  if (loading) return <Loading />;
+
+  return (
     <>
+      {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
         <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-          Country
+          Route Type
         </h1>
 
         <div className="flex gap-[12px] relative">
@@ -139,6 +144,7 @@ export default function Country() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
           data={tableData}
@@ -167,15 +173,16 @@ export default function Country() {
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   router.push(
-                    `/dashboard/settings/routetype/update/${row.id}`
+                    `/dashboard/settings/routetype/update_routetype/${row.id}`
                   );
                 },
               },
               {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  setSelectedRow({ id: row.id });
+                  if (deletingId === String(row.id)) return;
+                  setSelectedRow({ id: String(row.id) });
                   setShowDeletePopup(true);
                 },
               },
@@ -185,10 +192,11 @@ export default function Country() {
         />
       </div>
 
+      {/* Delete popup */}
       {showDeletePopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <DeleteConfirmPopup
-            title="Country"
+            title="Route Type"
             onClose={() => setShowDeletePopup(false)}
             onConfirm={handleConfirmDelete}
           />

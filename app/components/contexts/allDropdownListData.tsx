@@ -13,7 +13,7 @@ import {
   itemCategory,
   itemSubCategory,
   channelList,
-  userTypes
+  userTypesList
 } from '@/app/services/allApi';
 
 interface DropdownDataContextType {
@@ -236,7 +236,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemCategory(),
         itemSubCategory(),
         channelList(),
-        userTypes()
+        userTypesList()
       ]);
 
       // normalize: accept unknown response and extract array of items from `.data` when present

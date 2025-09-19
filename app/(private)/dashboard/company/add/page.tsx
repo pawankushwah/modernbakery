@@ -16,7 +16,8 @@ import {
   countryList,
   addCompany,
   regionList,
-  subRegionList,
+  getArea,
+
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
@@ -182,7 +183,7 @@ export default function AddCustomer() {
         }));
         setRegions(regionOptions);
 
-        const subRegionRes = await subRegionList();
+        const subRegionRes = await getArea();
         const subRegionOptions = subRegionRes.data.map((sr: ApiSubRegion) => ({
           value: sr.id ?? "",
           label: sr.name ?? sr.area_name ?? "",

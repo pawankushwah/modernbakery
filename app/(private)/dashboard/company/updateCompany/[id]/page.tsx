@@ -12,7 +12,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { editCompany, getCompanyById } from "@/app/services/allApi";
+import { updateCompany, companyById } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import { useParams } from "next/navigation";
 
@@ -55,7 +55,7 @@ export default function EditCompany() {
 
     const fetchCompany = async () => {
       try {
-        const res = await getCompanyById(queryId);
+        const res = await companyById(queryId);
         console.log("API response:", res);
 
         // 🔑 Adjust according to your API response
@@ -96,7 +96,7 @@ export default function EditCompany() {
   if (!queryId) return;
 
   
-    const res = await editCompany(queryId, { ...values, status: 1 });
+    const res = await updateCompany(queryId, { ...values, status: 1 });
 
     if (res?.error) {
       showSnackbar(res?.data?.message || "Failed to update company ❌", "error");

@@ -6,7 +6,7 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { userList, deleteUser } from "@/app/services/allApi";
+import { userTypesList, deleteUserType } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -59,7 +59,7 @@ export default function Country() {
   const fetchCountries = async () => {
   try {
     setLoading(true);
-    const listRes = await userList({});
+    const listRes = await userTypesList();
     setCountries(listRes.data);
     console.log("Fetched users:", listRes.data);
   } catch (error: unknown) {
@@ -76,7 +76,7 @@ useEffect(() => {
   useEffect(() => {
     const fetchCountries = async () => {
       try {
-        const listRes = await userList({});
+        const listRes = await userTypesList();
         setCountries(listRes.data);
         console.log("Fetched users:", listRes.data);
       } catch (error: unknown) {
@@ -96,7 +96,7 @@ useEffect(() => {
   }
 
   try {
-    await deleteUser(String(selectedRow.id));
+    await deleteUserType(String(selectedRow.id));
       await fetchCountries();
 
     // ✅ Update state immediately without full refresh
