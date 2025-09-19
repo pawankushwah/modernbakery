@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 
 type Option = {
   value: string | number;
@@ -30,20 +30,40 @@ export default function SearchableDropdown({
   placeholder = "Search...",
 }: Props) {
   const [query, setQuery] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Filter options based on search
+  // Filter options based on search
   const filteredOptions = useMemo(() => {
-    return options.filter((opt) =>
-      opt.label.toLowerCase().includes(query.toLowerCase())
-    );
-  }, [query, options]);
+  return options
+    .filter(opt => opt.label) // only include items with a label
+    .filter(opt => opt.label!.toLowerCase().includes(query.toLowerCase()));
+}, [query, options]);
 
-  // ✅ Get current label
   const selectedLabel =
     options.find((opt) => opt.value === value)?.label || "";
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   return (
-    <div className={`flex flex-col gap-2 w-full ${width}`}>
+    <div
+      ref={dropdownRef}
+      className={`flex flex-col gap-2 w-full ${width}`}
+    >
       <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
@@ -51,30 +71,38 @@ export default function SearchableDropdown({
         {label}
       </label>
 
-      {/* Input + Dropdown */}
       <div className="relative">
+        {/* Input field */}
         <input
           type="text"
           id={id ?? name}
           value={query || selectedLabel}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true); // keep open while typing
+          }}
+          onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className={`border h-[44px] w-full rounded-md px-3 text-gray-900 placeholder-gray-400 ${
+          className={`border h-[44px] w-full rounded-md px-3 text-gray-900 placeholder-gray-400 cursor-pointer ${
             error ? "border-red-500" : "border-gray-300"
           }`}
+          readOnly={false}
         />
 
         {/* Dropdown list */}
-        {query.length > 0 && (
-          <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md max-h-40 overflow-y-auto shadow">
+        {isOpen && (
+          <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md max-h-52 overflow-y-auto shadow-md">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => (
                 <li
                   key={opt.value}
-                  className="px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm"
+                  className={`px-3 py-2 cursor-pointer hover:bg-gray-100 text-sm ${
+                    opt.value === value ? "bg-gray-200" : ""
+                  }`}
                   onClick={() => {
                     onChange(opt.value);
-                    setQuery(opt.label); // show label in input
+                    setQuery(""); // reset query
+                    setIsOpen(false); // close dropdown
                   }}
                 >
                   {opt.label}

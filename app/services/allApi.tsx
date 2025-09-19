@@ -1,6 +1,7 @@
 // app/services/allApi.ts
 import axios from "axios";
 
+
 const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, 
   headers: {
@@ -21,80 +22,162 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+function handleError(error: unknown) {
+  if (axios.isAxiosError(error) && error.response) {
+    console.error('API Error:', error.response.data);
+    return { error: true, data: error.response.data };
+  } else if (error instanceof Error) {
+    console.error('Request Error:', error.message);
+    return { error: true, data: { message: error.message } };
+  } else {
+    console.error('An unknown error occurred.');
+    return { error: true, data: { message: 'An unknown error occurred.' } };
+  }
+}
 
 export const login = async (credentials: { email: string; password: string }) => {
-  const res = await API.post("/api/master/auth/login", credentials);
-  return res.data;
+    try {
+    const res = await API.post("/api/master/auth/login", credentials);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const isVerify = async () => {
-  const res = await API.get("/api/master/auth/me");
-  return res.data;
+   try {
+    const res = await API.get("/api/master/auth/me");
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const companyList = async () => {
-  const res = await API.get("/api/master/company/list_company");
-  return res.data;
+  try {
+    const res = await API.get(`/api/master/company/list_company`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const companyById = async (id: string) => {
+   try {
   const res = await API.get(`/api/master/company/${id}`);
-  return res.data;
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const updateCompany = async (id: string, data: object) => {
-  const res = await API.put(`/api/master/company/${id}`, data);
-  return res.data;
-};
+   try {
+    const res = await API.put(`/api/master/company/${id}`, data);
 
-export const deleteCompany = async (id: string) => {
-  const res = await API.delete(`/api/master/company/${id}`);
-  return res.data;
-};
-
-export const logout = async () => {
-  try{
-    const res = await API.post("/api/master/auth/logout");
     return res.data;
-  } catch (error) {
-    console.log(error)
+  } catch (error: unknown) {
+    return handleError(error);
   }
 };
 
-export const addCompany = async (data: Record<string, string>) => {
+export const editCompany = async (id: string, data: object) => {
+  try {
+    const res = await API.put(`/api/master/company/company/${id}`, data);
+    console.log("Response:", res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getCompanyById = async (id: string) => {
+  try {
+    const res = await API.get(`/api/master/company/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+export const logout = async () => {
+  try {
+        const res = await API.post("/api/master/auth/logout");
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+
+};
+
+export const addCompany = async (data:FormData | Record<string, string>) => {
   try {
     const res = await API.post("/api/master/company/add_company", data);
     return res.data;
-  } catch (error) {
-    console.error("Add company failed ❌", error);
-    throw error;
+  } catch (error: unknown) {
+    return handleError(error);
   }
+  
 };
+
+export const deleteCompany = async (id:string) => {
+    const res = await API.delete(`/api/master/company/company/${id}`);
+    return res.data;
+}
 
 
 export const countryList = async (data: Record<string, string>) => {
   try {
-    const res = await API.get("/api/master/country/list_country", data);
+     const res = await API.get("/api/master/country/list_country", data);
     return res.data;
-  } catch (error) {
-    console.error("Country List failed ❌", error);
-    throw error;
+  } catch (error: unknown) {
+    return handleError(error);
   }
+  
 };
 
 export const addCountry = async (payload:object) => {
-    const res = await API.post("/api/master/country/add_country", payload);
+  try {
+         const res = await API.post("/api/master/country/add_country", payload);
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const countryById = async (id: string) => {
+  try {
+       const res = await API.get(`/api/master/country/country/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const editCountry = async (id:string,payload:object) => {
-    const res = await API.put(`/api/master/country/update_country/${id}`,payload);
+  try {
+           const res = await API.put(`/api/master/country/update_country/${id}`,payload);
+
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 export const deleteCountry = async (id:string) => {
-    const res = await API.delete(`/api/master/country/${id}`);
+  try {
+           const res = await API.delete(`/api/master/country/${id}`);
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
+
+
 
 // Item Category
 export const itemCategoryList = async () => {
@@ -136,7 +219,7 @@ export const updateItemCategory = async (category_id: number, category_name?: st
   }
 
   try {
-    const res = await API.put(`/api/settings/item_category/${category_id}/update`, body);
+    const res = await API.put(`/api/settings/item_category/${category_id}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -145,7 +228,7 @@ export const updateItemCategory = async (category_id: number, category_name?: st
 
 export const deleteItemCategory = async (category_id: number) => {
   try {
-    const res = await API.delete(`/api/settings/item_category/${category_id}/delete`);
+    const res = await API.delete(`/api/settings/item_category/${category_id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -170,6 +253,7 @@ export const itemSubCategoryById = async (id: string) => {
     return handleError(error);
   }
 };
+
 
 export const createItemSubCategory = async (category_id: number, sub_category_name: string, status: 0 | 1) => {
   try {
@@ -198,157 +282,748 @@ export const deleteItemSubCategory = async (sub_category_id: number) => {
   }
 };
 
-function handleError(error: unknown) {
-  if (axios.isAxiosError(error) && error.response) {
-    console.error('API Error:', error.response.data);
-    return { error: true, data: error.response.data };
-  } else if (error instanceof Error) {
-    console.error('Request Error:', error.message);
-    return { error: true, data: { message: error.message } };
-  } else {
-    console.error('An unknown error occurred.');
-    return { error: true, data: { message: 'An unknown error occurred.' } };
-  }
-}
+
 export const regionList = async () => {
-    const res = await API.get("/api/master/region/list_region");
+  try {
+              const res = await API.get("/api/master/region/list_region");
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getRegionById = async (id:string) => {
+  try {
+              const res = await API.get(`/api/master/region/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteRegion = async (id:string) => {
+  try {
+              const res = await API.delete(`/api/master/region/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateRegion = async (id:string,body:object) => {
+  try {
+              const res = await API.put(`/api/master/region/update_region/${id}`,body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const routeList = async () => {
+  try {
     const res = await API.get("/api/master/route/list_routes");
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addRoutes = async (body:object) => {
+  try {
+           const res = await API.post("/api/master/route/add_routes",body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getRouteById = async (id:string) => {
+  try {
+           const res = await API.get(`/api/master/route/routes/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateRoute = async (id:string,body:object) => {
+  try {
+            const res = await API.put(`/api/master/route/routes/${id}`,body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteRoute = async (id:string) => {
+  try {
+           const res = await API.delete(`/api/master/route/routes/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const warehouseList = async () => {
+  try {
     const res = await API.get("/api/master/warehouse/list");
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
+
+export const getWarehouseById = async (id: string) => {
+  try {
+  const res = await API.get(`/api/master/warehouse/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateWarehouse = async (id: string, payload: object) => {
+  try {
+  const res = await API.put(`/api/master/warehouse/${id}`, payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getAllActiveWarehouse = async () => {
+  try {
+  const res = await API.get(`/api/master/warehouse/list_warehouse/active`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getWarehouseByType = async (type: string) => {
+  try {
+  const res = await API.get(`/api/master/warehouse/type/${type}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateWarehouseStatus = async (id: string,body:object) => {
+  try {
+  const res = await API.put(`/api/master/warehouse/${id}/status`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getWarehouseByRegion = async (regionId: string) => {
+  try {
+  const res = await API.get(`/api/master/warehouse/region/${regionId}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getWarehouseByArea = async (areaId: string) => {
+  try {
+  const res = await API.get(`/api/master/warehouse/region/${areaId}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
 
 export const routeType = async () => {
+  try {
     const res = await API.get("/api/settings/route-type/list");
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
+
+
 
 export const getSubRegion = async () => {
+  try {
     const res = await API.get("/api/master/area/areadropdown");
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
+export const subRegionList = async () => {
+    const res = await API.get("/api/master/area/list_area");
+    return res.data;
+}
+
+
 export const getCompanyCustomers = async () => {
+  try {
   const res = await API.get("/api/master/companycustomer/list");
-  return res.data;
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addCompanyCustomers = async (body:object) => {
+  try {
+  const res = await API.post("/api/master/companycustomer/create",body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getCompanyCustomerById = async (id:string) => {
+  try {
+  const res = await API.get(`/api/master/companycustomer/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateCompanyCustomer = async (id:string,body:object) => {
+  try {
+  const res = await API.put(`/api/master/companycustomer/${id}/update`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteCompanyCustomer = async (id:string,body:object) => {
+  try {
+  const res = await API.put(`/api/master/companycustomer/${id}/delete`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getCompanyCustomerByRegion = async (regionId:string) => {
+  try {
+  const res = await API.get(`/api/master/companycustomer/region/${regionId}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getCompanyCustomerByArea = async (areaId:string) => {
+  try {
+  const res = await API.get(`/api/master/companycustomer/region/${areaId}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getCompanyCustomerActive = async () => {
+  try {
+  const res = await API.get(`/api/master/companycustomer/active`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const getCompanyCustomersType = async () => {
-    const res = await API.get("/api/settings/customer-type/list");
+  try {
+    const res = await API.get("/api/master/companycustomer/list");
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const itemCategory = async () => {
+  try {
     const res = await API.get("/api/settings/item_category/list");
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const itemSubCategory = async () => {
+  try {
     const res = await API.get("/api/settings/item-sub-category/list");
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const channelList = async () => {
+  try {
   const res = await API.get("/api/settings/outlet-channels/list");
-  return res.data;
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const userTypes = async () => {
+  try {
     const res = await API.get("/api/settings/user-type/list");
+
     return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const getWarehouse = async () => {
+  try {
   const res = await API.get("/api/master/warehouse/list");
-  return res.data; // returns the full response object with status, code, message, data, pagination
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 export const warehouseType = async (type:number) => {
-  const res = await API.get(`/api/master/warehouse/type/${type}`);
-  return res.data; // returns the full response object with status, code, message, data, pagination
+  try {
+         const res = await API.get(`/api/master/warehouse/type/${type}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 
 export const addWarehouse = async (body:object) => {
+  try {
   const res = await API.post("/api/master/warehouse/create", body);
-  return res.data;
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };
 
 export const deleteWarehouse = async (id:string) => {
+  try {
   const res = await API.delete(`/api/master/warehouse/${id}`);
-  return res.data;
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 }
 
 export const addCustomerType = async (payload: Record<string, string>) => {
   try {
     const res = await API.post("/api/settings/customer-type/create", payload);
+
     return res.data;
-  } catch (error) {
-    console.error("Add Customer Type failed ❌", error);
-    throw error;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getCustomerTypeById = async (id:string) => {
+  try {
+    const res = await API.get(`/api/settings/customer-type/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateCustomerType = async (id:string,body:object) => {
+  try {
+    const res = await API.get(`/api/settings/customer-type/${id}`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteCustomerType = async (id:string) => {
+  try {
+    const res = await API.delete(`/api/settings/customer-type/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
   }
 };
 
 export const customerTypeList = async (params?: Record<string, string>) => {
   try {
     const res = await API.get("/api/settings/customer-type/list", { params });
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+export const getCustomerType = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/customer-type/${id}`);
     return res.data;
   } catch (error) {
-    console.error("Customer Type List failed ❌", error);
+    console.error("Get Customer Type by ID failed ❌", error);
     throw error;
   }
 };
 
 
+
+
 export const addRegion = async  (payload?: {regionName: string, countryId: number, status: number}) => {
   try {
     const res = await API.post("/api/master/region/add_region", { payload });
+
     return res.data;
-  } catch (error) {
-    console.error("Add Region failed ❌", error);
-    throw error;
+  } catch (error: unknown) {
+    return handleError(error);
   }
 };
 
 export const listCountries = async () => {
   try {
     const res = await API.get("/api/master/country/list_country", { params: { page: "1", limit: "200" } });
-    return res.data.data;
-  } catch (error) {
-    console.error("List Countries failed ❌", error);
-    throw error;
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
   }
 };
 
 export const routeTypeList = async (params?: Record<string, string>) => {
   try {
     const res = await API.get("/api/settings/route-type/list", { params });
-    return res.data;
 
-  } catch (error) {
-    console.error("Route Type List failed ❌", error);
-    throw error;
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
   }
 };
 
 export const addRouteType = async (payload: Record<string, string | number>) => {
   try {
-    const res = await API.post("/api/settings/route-type/create", payload);
+    const res = await API.post("/api/settings/route-type/add", payload);
+
     return res.data;
-  } catch (error) {
-    console.error("Add Route Type failed ❌", error);
-    throw error;
+  } catch (error: unknown) {
+    return handleError(error);
   }
 };
 
 
-// user type APIs
+export const getRouteTypeById = async (id: string) => {
+  try {
+    const res = await API.get(`/api/settings/route-type/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const updateRouteTypeById = async (id: string,payload:object) => {
+  try {
+    const res = await API.put(`/api/settings/route-type/${id}/update`,payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteRouteTypeById = async (id: string) => {
+  try {
+    const res = await API.delete(`/api/settings/route-type/${id}/delete`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getArea = async () => {
+  try {
+    const res = await API.get(`/api/master/area/list_area`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addArea = async (body:object) => {
+  try {
+    const res = await API.post(`/api/master/area/add_area`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getAreaById = async (id:string) => {
+  try {
+    const res = await API.get(`/api/master/area/area/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateAreaById = async (id:string) => {
+  try {
+    const res = await API.get(`/api/master/area/area/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteArea = async (id:string) => {
+  try {
+    const res = await API.delete(`/api/master/area/area/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getCustomerCategory = async () => {
+  try {
+    const res = await API.get(`/api/settings/customer-category/list`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getCustomerCategoryById = async (id:string) => {
+  try {
+    const res = await API.get(`/api/settings/customer-category/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const createCustomerCategory = async (body:object) => {
+  try {
+    const res = await API.post(`/api/settings/customer-category/create`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const cupdateCustomerCategory = async (body:object,id:string) => {
+  try {
+    const res = await API.put(`/api/settings/customer-category/${id}/update`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteCustomerCategory = async (id:string) => {
+  try {
+    const res = await API.delete(`/api/settings/customer-category/${id}/delete`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getItemCategory = async () => {
+  try {
+    const res = await API.get(`/api/settings/item-category/list`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getItemCategoryById = async (id:string) => {
+  try {
+    const res = await API.get(`/api/settings/item-category/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getOutletChannelById = async (id:string) => {
+  try {
+    const res = await API.get(`/api/settings/outlet-channels/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateOutletChannel = async (id:string,body:object) => {
+  try {
+    const res = await API.put(`/api/settings/outlet-channels/${id}`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteOutletChannel = async (id:string) => {
+  try {
+    const res = await API.delete(`/api/settings/outlet-channels/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addOutletChannel = async (body:object) => {
+  try {
+    const res = await API.post(`/api/settings/outlet-channels`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getUserTypeById = async (id:string) => {
+  try {
+    const res = await API.get(`/api/settings/user-type/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateUserType = async (id:string,body:object) => {
+  try {
+    const res = await API.put(`/api/settings/user-type/${id}`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteUserType = async (id:string) => {
+  try {
+    const res = await API.delete(`/api/settings/user-type/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const createUserType = async (body:object) => {
+  try {
+    const res = await API.post(`/api/settings/user-type/create`,body);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+
+
+
+
+export const customerCategoryList = async (params?: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/customer-category/list", { params }); 
+    return res.data;
+  } catch (error) {
+    console.error("Customer Category List failed ❌", error);
+    throw error;
+  } 
+};
+
+
+
+
+
+
+export const addCustomerCategory = async (payload: Record<string, string | number>) => {
+  try {
+    const res = await API.post("/api/settings/customer-category/create", payload);
+    return res.data;
+  } catch (error) {
+    console.error("Add Customer Category failed ❌", error);
+    throw error;
+  }
+};
+
+export const updateCustomerCategory = async (id: string, payload: Record<string, string | number>) => {
+  try {
+    const res = await API.put(`/api/settings/customer-category/${id}`, payload);
+    return res.data;
+  } catch (error) {
+    console.error("Update Customer Category failed ❌", error);
+    throw error;
+  } 
+};
+
+
+
 export const userList = async (data: Record<string, string>) => {
   try {
     const res = await API.get("/api/settings/user-type/list", data);
@@ -409,10 +1084,7 @@ export const outletChannelList = async (data: Record<string, string>) => {
   }
 };
 
-export const addOutletChannel = async (payload:object) => {
-const res = await API.post("/api/settings/outlet-channels", payload);
-return res.data;
-};
+
 
 
 export const deleteChannel = async (id:string) => {
@@ -430,7 +1102,5 @@ export const updateChannel = async (id:string,payload:object) => {
     const res = await API.put(`/api/settings/outlet-channels/${id}`,payload);
     return res.data;
 };
-
-
 
 

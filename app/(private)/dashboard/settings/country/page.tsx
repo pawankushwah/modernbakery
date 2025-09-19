@@ -91,6 +91,7 @@ export default function Country() {
       setSelectedRow(null);
     }
   };
+  
 
   return loading ? (
     <Loading />
@@ -167,7 +168,7 @@ export default function Country() {
                 icon: "lucide:more-vertical",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  setSelectedRow({ id: row.id, country_code: row.country_code, country_name: row.country_name });
+                  setSelectedRow({ id: row.id });
                   setShowDeletePopup(true);
                 },
               },

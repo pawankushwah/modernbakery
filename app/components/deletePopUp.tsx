@@ -62,11 +62,13 @@ export default function DeleteConfirmPopup({
           No, mistake!
         </button>
         <SidebarBtn
-          label="Yes, remove !"
-          isActive={true}
-          onClick={handleConfirm}
-          className="bg-red-600 hover:bg-red-700 text-white min-w-[120px]"
-        />
+                                            
+                                            isActive={true}
+                                            label="Yes, remove !"
+                                            onClick={handleConfirm}
+                                            labelTw="hidden sm:block min-w-[120px]"
+                                        />
+      
       </div>
     </div>
   );

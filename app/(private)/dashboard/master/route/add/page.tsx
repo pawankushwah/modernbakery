@@ -3,6 +3,8 @@
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useState } from "react";
+import * as yup from "yup";
+import { addRoutes } from "@/app/services/allApi";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import SettingPopUp from "@/app/components/settingPopUp";
@@ -13,7 +15,58 @@ export default function Route() {
   const [routeName, setRouteName] = useState("");
   const [routeType, setRouteType] = useState("");
   const [warehouse, setWarehouse] = useState("");
+  const [description, setDescription] = useState("");
   const [status, setStatus] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const schema = yup.object().shape({
+    route_code: yup.string().required("Route code is required").max(10),
+    route_name: yup.string().required("Route name is required").max(100),
+    warehouse: yup.number().required("Warehouse is required").typeError("Warehouse must be a number"),
+    route_type: yup.number().required("Route type is required").typeError("Route type must be a number"),
+    status: yup.number().required("Status is required").oneOf([0, 1, 2], "Invalid status"),
+  });
+
+  const clearErrors = () => setErrors({});
+
+  const handleSubmit = async () => {
+    clearErrors();
+    type AddRoutePayload = {
+      route_code?: string;
+      route_name?: string;
+      warehouse?: number | undefined;
+      route_type?: number | undefined;
+      status?: number | undefined;
+      description:string;
+    };
+
+    const payload: AddRoutePayload = {
+      route_code: routeCode,
+      route_name: routeName,
+      warehouse: warehouse ? Number(warehouse) : undefined,
+      route_type: routeType ? Number(routeType) : undefined,
+      status: status ? (status === "active" ? 1 : status === "inactive" ? 0 : Number(status)) : undefined,
+      description:description
+    };
+
+    try {
+      setSubmitting(true);
+      const res = await addRoutes(payload);
+      setSubmitting(false);
+    } catch (err: unknown) {
+      setSubmitting(false);
+      if (err instanceof yup.ValidationError && Array.isArray(err.inner)) {
+        const formErrors: Record<string, string> = {};
+        err.inner.forEach((e) => {
+          if (e.path) formErrors[e.path] = e.message;
+        });
+        setErrors(formErrors);
+      } else {
+        console.error(err);
+      }
+    }
+  };
 
 
   return (
@@ -47,6 +100,9 @@ export default function Route() {
                   value={routeCode}
                   onChange={(e) => setRouteCode(e.target.value)}
                 />
+                {errors.route_code && (
+                  <p className="text-red-500 text-sm mt-1">{errors.route_code}</p>
+                )}
 
                 <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
                   icon="mi:settings"
@@ -66,6 +122,9 @@ export default function Route() {
                   value={routeName}
                   onChange={(e) => setRouteName(e.target.value)}
                 />
+                {errors.route_name && (
+                  <p className="text-red-500 text-sm mt-1">{errors.route_name}</p>
+                )}
               </div>
               <div>
                 <InputFields
@@ -73,11 +132,14 @@ export default function Route() {
                   value={routeType}
                   onChange={(e) => setRouteType(e.target.value)}
                   options={[
-                    { value: "route1", label: "Route 1" },
-                    { value: "route2", label: "Route 2" },
-                    { value: "route3", label: "Route 3" },
+                    { value: "1", label: "Route 1" },
+                    { value: "2", label: "Route 2" },
+                    { value: "3", label: "Route 3" },
                   ]}
                 />
+                {errors.route_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.route_type}</p>
+                )}
 
               </div>
             </div>
@@ -96,11 +158,14 @@ export default function Route() {
                   value={warehouse}
                   onChange={(e) => setWarehouse(e.target.value)}
                   options={[
-                    { value: "warehouseA", label: "warehouse A" },
-                    { value: "warehouseB", label: "warehouse B" },
-                    { value: "warehouseC", label: "warehouse C" },
+                    { value: "1", label: "warehouse A" },
+                    { value: "2", label: "warehouse B" },
+                    { value: "3", label: "warehouse C" },
                   ]}
                 />
+                {errors.warehouse && (
+                  <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>
+                )}
               </div>
 
             </div>
@@ -113,6 +178,14 @@ export default function Route() {
               Additional Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               <div>
+                <InputFields
+                  label="Description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
+               
+              </div>
               <div>
                 <InputFields
                   label="Status"
@@ -123,6 +196,9 @@ export default function Route() {
                     { value: "inactive", label: "In Active" },
                   ]}
                 />
+                {errors.status && (
+                  <p className="text-red-500 text-sm mt-1">{errors.status}</p>
+                )}
               </div>
 
             </div>
@@ -139,10 +215,12 @@ export default function Route() {
           </button>
 
           <SidebarBtn
-            label="Submit"
-            isActive={true}
-            leadingIcon="mdi:check"   // checkmark icon
-            onClick={() => console.log("Form submitted ✅")} />
+            label={submitting ? "Submitting..." : "Submit"}
+            isActive={!submitting}
+            leadingIcon="mdi:check"
+            onClick={handleSubmit}
+            disabled={submitting}
+          />
         </div>
       </div>
 

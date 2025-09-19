@@ -38,15 +38,15 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
         />
   <InputFields label="District" name="district" value={values.district} onChange={handleChange} />
 
-    {/* Row 2 */}
-  <InputFields label="Town/Village" name="town_village" value={values.town_village} onChange={handleChange} />
+        {/* Row 2 */}
+  <InputFields label="Town/Village" name="town" value={values.town} onChange={handleChange} />
   <InputFields label="Street" name="street" value={values.street} onChange={handleChange} />
   <InputFields label="Landmark" name="landmark" value={values.landmark} onChange={handleChange} />
 
         {/* Row 3 */}
   <InputFields label="Latitude" name="latitude" value={values.latitude} onChange={handleChange} error={errors?.latitude && touched?.latitude ? errors.latitude : false} />
   <InputFields label="Longitude" name="longitude" value={values.longitude} onChange={handleChange} error={errors?.longitude && touched?.longitude ? errors.longitude : false} />
-  <InputFields label="Threshold Radius" name="threshold_radius" value={values.threshold_radius} onChange={handleChange} error={errors?.threshold_radius && touched?.threshold_radius ? errors.threshold_radius : false} />
+  <InputFields label="Threshold Radius" name="thresholdRadius" value={values.thresholdRadius} onChange={handleChange} error={errors?.thresholdRadius && touched?.thresholdRadius ? errors.thresholdRadius : false} />
       </div>
 
     </>

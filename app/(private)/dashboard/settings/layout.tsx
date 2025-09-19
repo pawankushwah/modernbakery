@@ -2,7 +2,8 @@
 
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { SettingsContext, SettingsContextValue } from "../contexts";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { initialLinkData } from "../../data/settingLinks";
 import { LinkDataType, SidebarDataType } from "../../data/settingLinks";
 import { Icon } from "@iconify-icon/react";
@@ -44,6 +45,26 @@ export default function Settings({ children }: { children: React.ReactNode }) {
         if (!children) return false;
         return Boolean(children.some((child) => child.href === activeHref));
     };
+
+    const pathname = usePathname();
+
+    useEffect(() => {
+        const current = pathname ?? window.location.pathname;
+        setActiveHref(current);
+
+        // Initialize open menus so any parent with a matching child is opened
+        const initialOpen: Record<string, boolean> = {};
+        initialLinkData.forEach((group) => {
+            group.data.forEach((link) => {
+                if (link.children && link.children.length > 0) {
+                    const shouldOpen = link.children.some((child) => child.href === current);
+                    if (shouldOpen) initialOpen[link.label] = true;
+                }
+            });
+        });
+
+        setOpenMenus((prev) => ({ ...prev, ...initialOpen }));
+    }, []);
 
     return (
         <div className="flex flex-col h-full w-full">

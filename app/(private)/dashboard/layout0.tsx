@@ -7,6 +7,7 @@ import TopBar from "./topBar";
 import { initialLinkData } from "../data/dashboardLinks";
 import LinkDataReducer from "../utils/linkDataReducer";
 import { SettingsContext } from "./contexts";
+import { AllDropdownListDataProvider } from "@/app/components/contexts/allDropdownListData";
 
 const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
     const context = useContext(SettingsContext);
@@ -50,7 +51,11 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
                 isOpen={isOpen}
                 toggleOpen={() => setIsOpen(!isOpen)}
             />
-            <Main horizontalSidebar={horizontalSidebar} isOpen={isOpen}>{children}</Main>
+            <Main horizontalSidebar={horizontalSidebar} isOpen={isOpen}>
+                        <AllDropdownListDataProvider>
+                {children}
+                       </AllDropdownListDataProvider>
+                </Main>
         </div>
     );
 };

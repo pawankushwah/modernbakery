@@ -2,32 +2,29 @@
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import { Icon } from "@iconify-icon/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-
-const data = new Array(100).fill(null).map((_, i) => ({
-    id: (i + 1).toString(),
-    routeCode: "AC0001604",
-    routeName: `Abdul Retail Shop`,
-    depotName: `DP01 - Zuwote Trading Group Ltd - Ggaba`,
-    routeType: `DP01 - Zuwote Trading Group Ltd - Ggaba`,
-    status: "Active",
-}));
+import { routeList,deleteRoute } from "@/app/services/allApi";
+import Loading from "@/app/components/Loading";
+import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import { useSnackbar } from "@/app/services/snackbarContext";
+const initialData: TableDataType[] = [];
 
 const columns = [
     {
-        key: "routeCode",
+        key: "route_code",
         label: "Route Code",
         render: (row: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.routeCode}
+                {row.route_code}
             </span>
         ),
     },
-    { key: "routeName", label: "Route Name" ,isSortable: true },
-    { key: "depotName", label: "Deopt Name" ,filter: {
+    { key: "route_name", label: "Route Name" ,isSortable: true },
+    { key: "warehouse", label: "Deopt Name" ,filter: {
             isFilterable: true,
             render: (data: TableDataType[]) =>
                 data.map((row: TableDataType, index: number) => (
@@ -36,7 +33,7 @@ const columns = [
                         className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
                     >
                         <span className="font-[500] text-[#181D27]">
-                            {row.depotName}
+                            {row.warehouse}
                         </span>
                        
                     </div>
@@ -44,7 +41,7 @@ const columns = [
                 width:218,
         },
 },
-    { key: "routeType", label: "Route Type" ,filter: {
+    { key: "route_type", label: "Route Type" ,filter: {
             isFilterable: true,
             render: (data: TableDataType[]) =>
                 data.map((row: TableDataType, index: number) => (
@@ -53,7 +50,7 @@ const columns = [
                         className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
                     >
                         <span className="font-[500] text-[#181D27]">
-                            {row.routeType}
+                            {row.route_type}
                         </span>
                        
                     </div>
@@ -92,7 +89,70 @@ const dropdownDataList = [
 ];
 
 export default function Route() {
-    const [showDropdown, setShowDropdown] = useState(false);
+    interface RouteItem {
+    id?: number | string;
+    route_code?: string;
+    route_name?: string;
+    warehouse?: string;
+    route_type?: string;
+    status?: string;
+  }
+    const[routes, setRoutes] = useState<RouteItem[]>([]);
+    const [selectedRow, setSelectedRow] = useState<RouteItem | null>(null);
+      const [showDeletePopup, setShowDeletePopup] = useState(false);
+        const [showDropdown, setShowDropdown] = useState(false);
+        const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar();
+  type TableRow = TableDataType & { id?: string };
+
+    const tableData: TableDataType[] = routes.map((c) => ({
+    id: c.id?.toString() ?? "",
+    route_code: c.route_code ?? "",
+    route_name: c.route_name ?? "",
+    warehouse: c.warehouse ?? "",
+    route_type: c.route_type ?? "",
+    status: c.status ?? "",
+  }));
+
+  useEffect(() => {
+        const fetchRoutes = async () => {
+            try {
+                setLoading(true);
+                const listRes = await routeList();
+                // routeList returns response shape similar to other list endpoints: { data: [...] }
+                setRoutes(listRes?.data ?? []);
+            } catch (error: unknown) {
+                console.error("API Error:", error);
+                setRoutes([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchRoutes();
+  }, []);
+
+   const handleConfirmDelete = async () => {
+      if (!selectedRow) return;
+  
+    try {
+    if (!selectedRow?.id) throw new Error('Missing id');
+    await deleteRoute(String(selectedRow.id)); // call API
+        
+        showSnackbar("Country deleted successfully ", "success"); 
+        router.refresh();
+      } catch (error) {
+        console.error("Delete failed ❌:", error);
+        showSnackbar("Failed to delete country ❌", "error"); 
+      } finally {
+        setShowDeletePopup(false);
+        setSelectedRow(null);
+      }
+    };
+
+    if (loading) return <Loading />;
+
     return (
         <>
             {/* header */}
@@ -141,7 +201,7 @@ export default function Route() {
             {/* Table */}
             <div className="h-[calc(100%-60px)]">
                 <Table
-                    data={data}
+                    data={tableData}
                     config={{
                         header: {
                             searchBar: true,
@@ -152,7 +212,7 @@ export default function Route() {
                                     href="/dashboard/master/route/add"
                                     isActive={true}
                                     leadingIcon="lucide:plus"
-                                    label="Add ROute"
+                                    label="Add Route"
                                     labelTw="hidden sm:block"
                                 />
                             ],
@@ -168,24 +228,34 @@ export default function Route() {
                                 icon: "lucide:eye",
                             },
                             {
-                                icon: "lucide:edit-2",
-                                onClick: (data) => {
-                                    console.log(data);
-                                },
-                            },
+                icon: "lucide:edit-2",
+                onClick: (data: object) => {
+                  const row = data as TableRow;
+                  router.push(`/dashboard/master/route/routes/${row.id}`);
+                },
+              },
                             {
-                                icon: "lucide:more-vertical",
-                                onClick: () => {
-                                    confirm(
-                                        "Are you sure you want to delete this route?"
-                                    );
-                                },
+                            icon: "lucide:more-vertical",
+                            onClick: (data: object) => {
+                            const row = data as TableRow;
+                            setSelectedRow({ id: row.id });
+                            setShowDeletePopup(true);
                             },
+                        },
                         ],
                         pageSize: 10,
                     }}
                 />
             </div>
+            {showDeletePopup && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+                      <DeleteConfirmPopup
+                        title="Country"
+                        onClose={() => setShowDeletePopup(false)}
+                        onConfirm={handleConfirmDelete}
+                      />
+                    </div>
+                  )}
         </>
     );
 }
