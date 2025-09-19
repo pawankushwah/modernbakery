@@ -12,7 +12,8 @@ import {
   countryList,
   addCompany,
   regionList,
-  subRegionList,
+  getArea,
+
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 

@@ -1,8 +1,5 @@
 // app/services/allApi.ts
 import axios from "axios";
-import { Params } from "next/dist/server/request/params";
-
-
 
 const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, 
@@ -101,7 +98,7 @@ export const logout = async () => {
 
 };
 
-export const addCompany = async (data: Record<string, string>) => {
+export const addCompany = async (data:FormData) => {
   try {
     const res = await API.post("/api/master/company/add_company", data);
     return res.data;
@@ -203,7 +200,7 @@ export const updateItemCategory = async (category_id: number, category_name?: st
   }
 
   try {
-    const res = await API.put(`/api/settings/item_category/${category_id}`, body);
+    const res = await API.put(`/api/settings/item_category/${category_id}/update`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -212,7 +209,7 @@ export const updateItemCategory = async (category_id: number, category_name?: st
 
 export const deleteItemCategory = async (category_id: number) => {
   try {
-    const res = await API.delete(`/api/settings/item_category/${category_id}`);
+    const res = await API.delete(`/api/settings/item_category/${category_id}/delete`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -734,15 +731,16 @@ export const getRouteTypeById = async (id: string) => {
   }
 };
 
-export const updateRouteTypeById = async (id: string, payload: object) => {
+
+export const updateRouteTypeById = async (id: string,payload:object) => {
   try {
-    const res = await API.put(`/api/settings/route-type/${id}/update`, payload);
+    const res = await API.put(`/api/settings/route-type/${id}/update`,payload);
+
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
-
 
 export const deleteRouteTypeById = async (id: string) => {
   try {

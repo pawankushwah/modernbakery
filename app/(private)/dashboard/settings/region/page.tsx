@@ -1,155 +1,204 @@
-"use client";
+// "use client";
 
-import { useState, useEffect } from "react";
-import { Icon } from "@iconify-icon/react";
-import { useRouter } from "next/navigation";
+// import { useState, useEffect } from "react";
+// import { Icon } from "@iconify-icon/react";
+// import BorderIconButton from "@/app/components/borderIconButton";
+// import CustomDropdown from "@/app/components/customDropdown";
+// import Table, { TableDataType } from "@/app/components/customTable";
+// import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+// import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+// import Loading from "@/app/components/Loading";
+// import { regionList, deleteRegion } from "@/app/services/allApi";
+// import { useSnackbar } from "@/app/services/snackbarContext";
+// import { useParams, useRouter } from "next/navigation";
+// import DeleteConfirmPopup from "@/app/components/deletePopUp";
 
-import BorderIconButton from "@/app/components/borderIconButton";
-import Table, { TableDataType } from "@/app/components/customTable";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { regionList, deleteRegion } from "@/app/services/allApi";
-import Loading from "@/app/components/Loading";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
+// // -----------------------
+// // Types
+// // -----------------------
+// interface RegionAPIItem {
+//   id: number | string;
+//   region_code: string;
+//   region_name: string;
+//   status: number;
+// }
 
-interface RegionItem {
-  id?: number | string;
-  region_code?: string;
-  region_name?: string;
-  status?: number | "Active" | "Inactive"; // API may return number
-}
+// interface Region extends TableDataType {
+//   id: string;
+//   region_code: string;
+//   region_name: string;
+//    country_name: string;
+//   status: "Active" | "Inactive";
+// }
 
-export default function Region() {
-  const [regions, setRegions] = useState<RegionItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);  
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<RegionItem | null>(null);
+// // -----------------------
+// // Table columns
+// // -----------------------
+// const columns = [
+//   { key: "region_code", label: "Region Code" },
+//   { key: "region_name", label: "Region Name" },
+//   { key: "country_name", label: "country_name" },
+//   { key: "status", label: "Status" },
+// ];
 
-  const router = useRouter();
-  const { showSnackbar } = useSnackbar();
 
-  type TableRow = TableDataType & { id?: string };
+// // -----------------------
+// // Component
+// // -----------------------
+// export default function RegionPage() {
+//   const [regions, setRegions] = useState<Region[]>([]);
+//   const [loading, setLoading] = useState(true);
+//   const [showDropdown, setShowDropdown] = useState(false);
+//   const [deletingId, setDeletingId] = useState<string | null>(null);
+//   const [showDeletePopup, setShowDeletePopup] = useState(false);
+//   const [selectedRow, setSelectedRow] = useState<Region | null>(null);
+//   const router = useRouter();
+//   const { showSnackbar } = useSnackbar();
 
-  // Normalize API data for table
-  const tableData: TableDataType[] = regions.map((s) => ({
-    id: s.id?.toString() ?? "",
-    region_code: s.region_code ?? "",
-    region_name: s.region_name ?? "",
-    status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive", // ✅ Correct mapping
-  }));
+//   // -----------------------
+//   // Fetch regions
+//   // -----------------------
+//   useEffect(() => {
+//     const fetchRegions = async () => {
+//       try {
+//         const res = await regionList();
+//         if (res.status && Array.isArray(res.data)) {
+//         const mappedData: Region[] = res.data.map((item: any) => ({
+//   id: item.id.toString(),
+//   region_code: item.region_code,
+//   region_name: item.region_name,
+//   country_name: item.country?.country_name || "", // ✅ fixed
+//   status: item.status === 1 ? "Active" : "Inactive",
+// }));
 
-  useEffect(() => {
-    const fetchRegions = async () => {
-      try {
-        const listRes = await regionList();
-        setRegions(listRes.data);
-      } catch (error) {
-        console.error("API Error:", error);
-        showSnackbar("Failed to fetch Regions ❌", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
+//           setRegions(mappedData);
+//         } else {
+//           setRegions([]);
+//         }
+//       } catch (error) {
+//         console.error("API Error:", error);
+//         setRegions([]);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
 
-    fetchRegions();
-  }, []);
-const handleConfirmDelete = async () => {
-  if (!selectedRow?.id) return;
+//     fetchRegions();
+//   }, []);
 
-  try {
-    await deleteRegion(String(selectedRow.id));
+//   // -----------------------
+//   // Confirm delete
+//   // -----------------------
+//   const handleConfirmDelete = async () => {
+//     if (!selectedRow?.id) return;
+//     const idToDelete = String(selectedRow.id);
+//     setDeletingId(idToDelete);
 
-    // Remove deleted row from local state
-    setRegions((prev) =>
-      prev.filter((region) => region.id !== selectedRow.id)
-    );
+//     try {
+//       const res = await deleteRegion(idToDelete);
+//       if (res?.status) {
+//         setRegions((prev) =>
+//           prev.filter((item) => String(item.id) !== idToDelete)
+//         );
+//         showSnackbar("Region deleted successfully ✅", "success");
+//       } else {
+//         showSnackbar("Failed to delete region ❌", "error");
+//       }
+//     } catch (error) {
+//       console.error("Delete failed:", error);
+//       showSnackbar("Error deleting region ❌", "error");
+//     } finally {
+//       setShowDeletePopup(false);
+//       setSelectedRow(null);
+//       setDeletingId(null);
+//     }
+//   };
 
-    showSnackbar("Region deleted successfully ✅", "success");
-    window.location.reload(); // This reloads the page
-  } catch (error) {
-    console.error("Delete failed ❌", error);
-    showSnackbar("Failed to delete Region ❌", "error");
-  } finally {
-    setShowDeletePopup(false);
-    setSelectedRow(null);
-  }
-};
-  if (loading) return <Loading />;
+//   if (loading) return <Loading />;
 
-  return (
-    <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Region</h1>
-        <SidebarBtn
-          href="/dashboard/settings/region/add"
-          isActive
-          leadingIcon="lucide:plus"
-          label="Add Region"
-        />
-      </div>
+//   return (
+//     <div className="h-full p-4">
+//       {/* Header */}
+//       <div className="flex justify-between items-center mb-6">
+//         <h1 className="text-xl font-semibold text-gray-900">Regions</h1>
 
-      {/* Table */}
-      <div className="h-[calc(100%-60px)]">
-        <Table
-          data={tableData}
-          config={{
-            header: { searchBar: true, columnFilter: true },
-            footer: { nextPrevBtn: true, pagination: true },
-            columns: [
-              { key: "region_code", label: "Region Code" },
-              { key: "region_name", label: "Region Name" },
-              {
-                key: "status",
-                label: "Status",
-                render: (row: RegionItem) => (
-                  <div className="flex items-center">
-                    {row.status === "Active" ? (
-                      <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-                ),
-              },
-            ],
-            rowSelection: true,
-            rowActions: [
-              {
-                icon: "lucide:edit-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  router.push(`/dashboard/settings/region/update/${row.id}`);
-                },
-              },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  setSelectedRow({ id: row.id });
-                  setShowDeletePopup(true);
-                },
-              },
-            ],
-            pageSize: 10,
-          }}
-        />
-      </div>
+//         <div className="flex gap-2 relative">
+//           <BorderIconButton icon="gala:file-document" label="Export CSV" />
+//           <BorderIconButton icon="mage:upload" />
+//           <DismissibleDropdown
+//             isOpen={showDropdown}
+//             setIsOpen={setShowDropdown}
+//             button={<BorderIconButton icon="ic:sharp-more-vert" />}
+//             dropdown={
+//               <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+//                 <CustomDropdown>
+//                   <div className="px-4 py-2 flex items-center gap-2 text-gray-600">
+//                     <Icon icon="lucide:delete" width={20} />
+//                     <span>Bulk Delete</span>
+//                   </div>
+//                 </CustomDropdown>
+//               </div>
+//             }
+//           />
+//         </div>
+//       </div>
 
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Region"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
-    </>
-  );
-}
+//       {/* Table */}
+//      <Table
+//   key={regions.length}   // 👈 ye ensure karega har delete/add ke baad re-render
+//   data={regions}
+//   config={{
+//     header: {
+//       searchBar: true,
+//       columnFilter: true,
+//       actions: [
+//         <SidebarBtn
+//           key={0}
+//           href="/dashboard/settings/region/add"
+//           isActive
+//           leadingIcon="lucide:plus"
+//           label="Add Region"
+//           labelTw="hidden sm:block"
+//         />,
+//       ],
+//     },
+//     footer: { nextPrevBtn: true, pagination: true },
+//     columns,
+//     rowSelection: true,
+//     rowActions: [
+//        {
+//                 icon: "lucide:edit-2",
+//                 onClick: (data: object) => {
+//                   const row = data as TableRow;
+//                   router.push(
+//                     `/dashboard/settings/region/update_region/${row.id}`
+//                   );
+//                 },
+//               },
+//       {
+//         icon: "lucide:trash-2",
+//         onClick: (row) => {
+//           setSelectedRow(row as Region);
+//           setShowDeletePopup(true);
+//         },
+//       },
+//     ],
+//     pageSize: 10,
+//   }}
+// />
+
+
+//       {/* Delete confirmation popup */}
+//       {showDeletePopup && selectedRow && (
+//         <DeleteConfirmPopup
+//           isOpen={showDeletePopup}
+//           onClose={() => setShowDeletePopup(false)}
+//           onConfirm={handleConfirmDelete}
+//           title="Delete Region"
+//           description={`Are you sure you want to delete region "${selectedRow.region_name}"?`}
+//           loading={deletingId === String(selectedRow.id)}
+//         />
+//       )}
+//     </div>
+//   );
+// }
