@@ -59,16 +59,14 @@ export default function ChannelList() {
  
 }));
 
- useEffect(() => {
+useEffect(() => {
   const fetchChannels = async () => {
     try {
       const listRes = await outletChannelList({});
-      console.log("API Response 👉", listRes);
+      console.log("API Response 👉", listRes.data);
 
-      // ✅ Correct array path
-      const data = Array.isArray(listRes?.original?.data)
-        ? listRes.original.data
-        : [];
+      // ✅ Correctly extract array
+      const data = Array.isArray(listRes?.data) ? listRes.data : [];
 
       setChannels(data);
     } catch (error: unknown) {
@@ -80,8 +78,6 @@ export default function ChannelList() {
 
   fetchChannels();
 }, []);
-
-
 
   const handleConfirmDelete = async () => {
     if (!selectedRow) return;

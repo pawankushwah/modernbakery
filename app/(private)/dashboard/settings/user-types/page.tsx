@@ -163,7 +163,7 @@ export default function Country() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/settings/user-type/update_user-type/${row.id}`);
+                  router.push(`/dashboard/settings/user-types/update/${row.id}`);
                 //   /api/settings/user-type/{id}
                 },
               },

@@ -348,7 +348,7 @@ export const addRouteType = async (payload: Record<string, string | number>) => 
 };
 
 
-
+// user type APIs
 export const userList = async (data: Record<string, string>) => {
   try {
     const res = await API.get("/api/settings/user-type/list", data);
@@ -379,7 +379,25 @@ export const deleteUser = async (id:string) => {
     return res.data;
 };
 
+export const getUserById = async (id:string) => {
+    const res = await API.get(`/api/settings/user-type/${id}`);
+    return res.data;
+  
+};
 
+
+export const updateUser = async (id:string,payload:object) => {
+    const res = await API.put(`/api/settings/user-type/${id}`,payload);
+    return res.data;
+};
+
+
+
+
+
+
+
+// outlet channel APIs
 export const outletChannelList = async (data: Record<string, string>) => {
   try {
     const res = await API.get("/api/settings/outlet-channels/list", data);
@@ -402,7 +420,17 @@ export const deleteChannel = async (id:string) => {
     return res.data;
 };
 
-export const updateChannel = async (id:string,payload:object) => {
-    const res = await API.put(`/api/settings/outlet-channels/{id}/${id}`,payload);
+export const getChannelById = async (id:string) => {
+    const res = await API.get(`/api/settings/outlet-channels/${id}`);
     return res.data;
 };
+
+
+export const updateChannel = async (id:string,payload:object) => {
+    const res = await API.put(`/api/settings/outlet-channels/${id}`,payload);
+    return res.data;
+};
+
+
+
+
