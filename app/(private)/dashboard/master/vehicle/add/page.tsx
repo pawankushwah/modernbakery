@@ -2,11 +2,7 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { Formik, Form } from "formik";
-import * as Yup from "yup";
-
+import { useState } from "react";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { addVehicle, warehouseList } from "@/app/services/allApi";
@@ -167,10 +163,13 @@ export default function AddVehicle() {
                 ]} />
               </div>
             </div>
-
-            {/* Location Info */}
-            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6 p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">Location Information</h2>
+          </div>
+          {/* Location Information */}
+          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+            <div className="p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">
+                Location Information
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <InputFields label="Owner Type" value={values.ownerType} onChange={handleChange} onBlur={handleBlur} error={touched.ownerType && errors.ownerType} name="ownerType" options={[
                   { value: "0", label: "Company Owned" },
@@ -179,10 +178,14 @@ export default function AddVehicle() {
                 <InputFields label="Warehouse" value={values.warehouseId} onChange={handleChange} onBlur={handleBlur} error={touched.warehouseId && errors.warehouseId} name="warehouseId" options={warehouses.map(w => ({ value: String(w.id), label: w.warehouse_name }))} />
               </div>
             </div>
+          </div>
+          {/* Additional Information */}
+          <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 ">
+            <div className="p-6">
+              <h2 className="text-lg font-medium text-gray-800 mb-4">
+                Additional Information
+              </h2>
 
-            {/* Additional Info */}
-            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 p-6">
-              <h2 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <InputFields label="Odo Meter" value={values.odoMeter} onChange={handleChange} onBlur={handleBlur} error={touched.odoMeter && errors.odoMeter} name="odoMeter" />
                 <InputFields label="Capacity" value={values.capacity} onChange={handleChange} onBlur={handleBlur} error={touched.capacity && errors.capacity} name="capacity" />

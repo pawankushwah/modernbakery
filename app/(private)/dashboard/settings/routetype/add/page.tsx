@@ -1,12 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { useState } from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useFormik } from "formik";
 import * as Yup from "yup";
+import { useFormik } from "formik";
+import * as Yup from "yup";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
+import { addRouteType } from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext";
+// Define the validation schema using Yup
+const validationSchema = Yup.object({
+  routeTypeName: Yup.string()
+    .trim()
+    .required("Route Type Name is required")
+    .min(3, "Route Type Name must be at least 3 characters")
+    .max(50, "Route Type Name cannot exceed 50 characters"),
+  status: Yup.string()
+    .oneOf(["1", "0"], "Invalid status selected")
+    .required("Status is required"),
+});
 import { addRouteType } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 // Define the validation schema using Yup
@@ -43,11 +59,39 @@ export default function AddRouteType() {
           resetForm();
         } else {
           alert("Failed to add Route Type ❌: " + (res?.message || "Unknown error"));
+export default function AddRouteType() {
+    const { showSnackbar } = useSnackbar();
+  const formik = useFormik({
+    initialValues: {
+      routeTypeName: "",
+      status: "1",
+    },
+    validationSchema: validationSchema,
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
+      try {
+        const res = await addRouteType({
+          route_type_name: values.routeTypeName.trim(),
+          status: Number(values.status),
+        });
+
+        console.log("👉 API Response:", res);
+
+        if (res?.status) {
+          showSnackbar("Route Type Add successfully ", "success");
+          resetForm();
+        } else {
+          alert("Failed to add Route Type ❌: " + (res?.message || "Unknown error"));
         }
       } catch (err) {
         console.error("Add Route Type error", err);
         alert("Error adding Route Type ❌");
+        console.error("Add Route Type error", err);
+        alert("Error adding Route Type ❌");
       } finally {
+        setSubmitting(false);
+      }
+    },
+  });
         setSubmitting(false);
       }
     },
@@ -60,6 +104,7 @@ export default function AddRouteType() {
         <Link href="/dashboard/settings/routetype">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
+        <h1 className="text-xl font-semibold">Add New Route Type</h1>
         <h1 className="text-xl font-semibold">Add New Route Type</h1>
       </div>
 
@@ -101,7 +146,62 @@ export default function AddRouteType() {
               }
             />
           </div>
+        <form onSubmit={formik.handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Route Type Name Field */}
+            <InputFields
+              label="Route Type Name"
+              type="text"
+              name="routeTypeName"
+              value={formik.values.routeTypeName}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={
+                formik.touched.routeTypeName && formik.errors.routeTypeName
+                  ? formik.errors.routeTypeName
+                  : ""
+              }
+            />
 
+            {/* Status Field */}
+            <InputFields
+              label="Status"
+              type="select"
+              name="status"
+              value={formik.values.status}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              options={[
+                { value: "1", label: "Active" },
+                { value: "0", label: "Inactive" },
+              ]}
+              error={
+                formik.touched.status && formik.errors.status
+                  ? formik.errors.status
+                  : ""
+              }
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              type="button"
+              className="px-4 py-2 border rounded-lg"
+              onClick={() => formik.resetForm()}
+            >
+              Cancel
+            </button>
+
+            <SidebarBtn
+              type="submit"
+              label="Submit"
+              isActive
+              leadingIcon="mdi:check"
+              disabled={formik.isSubmitting}
+            />
+          </div>
+        </form>
           {/* Buttons */}
           <div className="flex justify-end gap-4 mt-6">
             <button

@@ -3,12 +3,8 @@
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import ContainerCard from "@/app/components/containerCard";
-import FormInputField from "@/app/components/formInputField";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
-import SearchableDropdown from "@/app/components/SearchableDropdown";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useState, useEffect } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -166,40 +162,39 @@ export default function AddCustomer() {
 
   // ✅ Fetch Dropdown Data
   useEffect(() => {
-    const fetchDropdowns = async () => {
+    const fetchCustomerTypes = async () => {
       try {
-        const countryRes = await countryList({ page: "1", limit: "200" });
-        const countryOptions = countryRes.data.map((c: ApiCountry) => ({
-          value: c.id ?? "",
-          label: c.name ?? c.country_name ?? "",
+        const listRes = await customerTypeList({ page: "1", limit: "200" });
+        const options = (listRes.data || []).map((c: ApiCustomerType) => ({
+          value: c.id,
+          label: c.name,
         }));
-        const countryCurrency = countryRes.data.map((c: ApiCountry) => ({
-          value: c.currency ?? "",
-          label: c.currency ?? "",
-        }));
-        setCurrency(countryCurrency);
-        setCountries(countryOptions);
-
-        const regionRes = await regionList();
-        const regionOptions = regionRes.data.map((r: ApiRegion) => ({
-          value: r.id ?? "",
-          label: r.name ?? r.region_name ?? "",
-        }));
-        setRegions(regionOptions);
-
-        const subRegionRes = await subRegionList();
-        const subRegionOptions = subRegionRes.data.map((sr: ApiSubRegion) => ({
-          value: sr.id ?? "",
-          label: sr.name ?? sr.area_name ?? "",
-        }));
-        setSubRegions(subRegionOptions);
+        setCustomerTypes(options);
       } catch (error) {
-        console.error("Failed to fetch dropdown data ❌", error);
+        console.error("Failed to fetch customer types ❌", error);
       }
     };
 
-    fetchDropdowns();
+    fetchCustomerTypes();
   }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await addCustomerType(formData);
+      console.log("✅ Customer Type Added:", res);
+      alert("Customer type added successfully!");
+      setFormData({ customerType: "", customerCode: "", status: "active" });
+    } catch (error) {
+      console.error("❌ Add Customer Type failed", error);
+      alert("Failed to add customer type");
+    }
+  };
 
   return (
     <>
@@ -210,15 +205,15 @@ export default function AddCustomer() {
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
-            Add New Company
+            Add Customer Type
           </h1>
         </div>
       </div>
 
-      <form onSubmit={formik.handleSubmit}>
-        {/* Company Details */}
+      <form onSubmit={handleSubmit}>
+        {/* Customer Type Details */}
         <ContainerCard>
-          <h2 className="text-lg font-semibold mb-6">Company Details</h2>
+          <h2 className="text-lg font-semibold mb-6">Customer Type Details</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <InputFields
               name="companyName"
@@ -432,6 +427,11 @@ export default function AddCustomer() {
                 { value: "branch", label: "Branch" },
                 { value: "warehouse", label: "Warehouse" },
               ]}
+              error={
+                formik.touched.status && formik.errors.status
+                  ? formik.errors.status
+                  : ""
+              }
             />
             <InputFields
               label="Status"
@@ -458,6 +458,7 @@ export default function AddCustomer() {
           <button
             className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
             type="button"
+            onClick={() => setFormData({ customerType: "", customerCode: "", status: "active" })}
           >
             Cancel
           </button>

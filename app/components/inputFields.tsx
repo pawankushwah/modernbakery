@@ -10,7 +10,7 @@ type Option = {
 type Props = {
   label: string;
   name?: string;
-  value?: string | string[];
+  value?: string;
   onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void;
   onChange: (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -21,7 +21,6 @@ type Props = {
   width?: string;
   error?: string | false;
   disabled?: boolean;
-  isSingle?: boolean; // Optional, default false
 };
 
 export default function InputFields({
@@ -35,8 +34,7 @@ export default function InputFields({
   width = "max-w-[406px]",
   error,
   disabled,
-  onBlur,
-  isSingle = true
+  onBlur
 }: Props) {
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -117,9 +115,10 @@ export default function InputFields({
           id={id ?? name}
           name={name}
           value={value ?? ""}
-          onChange={safeOnChange}
+          onChange={onChange}
           onBlur={onBlur}
-          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] ${error ? "border-red-500" : "border-gray-300"} text-gray-900`}
+          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] ${error ? "border-red-500" : "border-gray-300"
+            } text-gray-900`}
         >
           <option value="" disabled hidden className="text-gray-400">
             {`Select ${label}`}
@@ -135,7 +134,7 @@ export default function InputFields({
           id={id ?? name}
           name={name}
           type="file"
-          onChange={safeOnChange}
+          onChange={onChange}
           onBlur={onBlur}
           className={`border h-[44px] w-full rounded-md px-3 py-1 mt-[6px] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
             }`}
@@ -160,7 +159,7 @@ export default function InputFields({
           name={name}
           type="text"
           value={value ?? ""}
-          onChange={safeOnChange}
+          onChange={onChange}
           disabled={disabled}
           onBlur={onBlur}
           className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
