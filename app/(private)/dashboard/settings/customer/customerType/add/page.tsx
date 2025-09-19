@@ -54,7 +54,7 @@ export default function AddCustomerType() {
     }),
 
     onSubmit: async (values, { resetForm }) => {
-        console.log("Submitting values:", values);
+      console.log("Submitting values:", values);
       try {
         const res = await addCustomerType(values);
         console.log("✅ Customer Type Added:", res);
@@ -88,6 +88,7 @@ export default function AddCustomerType() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Customer Type Dropdown */}
             <InputFields
+              type="select"
               name="customerType"
               label="Customer Type"
               value={formik.values.customerType}
@@ -99,6 +100,7 @@ export default function AddCustomerType() {
 
             {/* Customer Code */}
             <InputFields
+              type="text"
               name="customerCode"
               label="Customer Code"
               value={formik.values.customerCode}
@@ -109,6 +111,7 @@ export default function AddCustomerType() {
 
             {/* Status */}
             <InputFields
+              type="select"
               name="status"
               label="Status"
               value={formik.values.status}
@@ -128,16 +131,17 @@ export default function AddCustomerType() {
           <button
             className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
             type="button"
+            onClick={() => formik.resetForm()}
           >
             Cancel
           </button>
-          <SidebarBtn
-                     label="Submit"
-                     isActive={true}
-                     leadingIcon="mdi:check"
-                     type="submit"
-                   />
 
+          <SidebarBtn
+            label="Submit"
+            isActive={true}
+            leadingIcon="mdi:check"
+            type="submit"
+          />
         </div>
       </form>
     </>

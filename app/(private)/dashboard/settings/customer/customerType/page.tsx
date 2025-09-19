@@ -14,7 +14,6 @@ import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { customerTypeList, deleteCustomerType } from "@/app/services/allApi";
 
-// 🔹 API response type
 interface CustomerType {
   id?: string | number;
   code?: string;
@@ -23,7 +22,6 @@ interface CustomerType {
   [key: string]: string | number | undefined;
 }
 
-// 🔹 Dropdown menu items
 const dropdownDataList = [
   { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
   { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
@@ -32,7 +30,6 @@ const dropdownDataList = [
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
-// 🔹 Table columns
 const columns = [
   { key: "code", label: "Code" },
   { key: "name", label: "Name" },
@@ -49,7 +46,6 @@ export default function CustomerPage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // normalize table data
   const tableData: TableDataType[] = customers.map((c) => ({
     id: c.id?.toString() ?? "",
     code: c.code ?? "",
@@ -57,7 +53,6 @@ export default function CustomerPage() {
     status: c.status === "active" ? "Active" : "Inactive",
   }));
 
-  // fetch list
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
@@ -73,7 +68,6 @@ export default function CustomerPage() {
     fetchCustomers();
   }, [showSnackbar]);
 
-  // delete handler (like CompanyPage)
   const handleConfirmDelete = async () => {
     if (!selectedRow?.id) return;
 
@@ -84,11 +78,9 @@ export default function CustomerPage() {
       }
       if (res.status === 200) {
         showSnackbar("Customer deleted successfully ✅", "success");
-
         setCustomers((prev) =>
           prev.filter((c) => String(c.id) !== String(selectedRow.id))
         );
-
         setShowDeletePopup(false);
         setSelectedRow(null);
       }
@@ -98,14 +90,15 @@ export default function CustomerPage() {
     }
   };
 
-  // render
   if (loading) return <Loading />;
 
   return (
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Customer Type</h1>
+        <h1 className="text-[20px] font-semibold text-[#181D27]">
+          Customer Type
+        </h1>
 
         <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
@@ -150,12 +143,12 @@ export default function CustomerPage() {
               columnFilter: true,
               actions: [
                 <SidebarBtn
-                  key={0}
+                  key="add-customer-type"
                   href="/dashboard/settings/customer/customerType/add"
-                  isActive
                   leadingIcon="lucide:plus"
                   label="Add Customer Type"
                   labelTw="hidden sm:block"
+                  isActive
                 />,
               ],
             },
