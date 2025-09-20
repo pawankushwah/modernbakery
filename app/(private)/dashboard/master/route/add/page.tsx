@@ -27,6 +27,13 @@ export default function Route() {
   const [submitting, setSubmitting] = useState(false);
   const clearErrors = () => setErrors({});
 
+  const handleRouteTypeChange = (e: any) => {
+  if (Array.isArray(e.target.value)) {
+    setRouteType(e.target.value); // multi-select
+  } else {
+    setRouteType([e.target.value]); // single-select fallback
+  }
+};
 
   const validationSchema = yup.object().shape({
     route_code: yup.string().required("Route code is required").max(10),
@@ -142,42 +149,14 @@ export default function Route() {
               </div>
               <div>
                 <InputFields
-                  label="Route Type"
-                  value={routeType.join(",")}
-                  onChange={(e) => {
-                    const selectedValue = e.target.value;
-                    if (selectedValue && !routeType.includes(selectedValue)) {
-                      setRouteType([...routeType, selectedValue]);
-                    }
-                  }}
-                  options={routeTypeOptions}
-                />
-                {/* Display selected route types */}
-                {routeType.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {routeType.map((type, index) => {
-                      const label = routeTypeOptions?.find(opt => opt.value === type)?.label || type;
-                      return (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-                        >
-                          {label}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRouteType(routeType.filter((_, i) => i !== index));
-                            }}
-                            className="ml-1 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-                {errors.route_type && (
+                    label="Route Type"
+                    name="route_type"
+                    value={routeType}
+                    onChange={handleRouteTypeChange}
+                    options={routeTypeOptions}
+                    isSingle={false}
+                  />
+                  {errors.route_type && (
                   <p className="text-red-500 text-sm mt-1">{errors.route_type}</p>
                 )}
 
