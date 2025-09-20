@@ -129,6 +129,22 @@ export const countryById = async (id: string) => {
   }
 };
 
+
+// export const getAreaById = async (id:string) => {
+//   try {
+//     const res = await API.get(`/api/master/area/area/${id}`);
+
+//     return res.data;
+//   } catch (error: unknown) {
+//     return handleError(error);
+//   }
+// };
+
+
+
+
+
+
 export const editCountry = async (id:string,payload:object) => {
   try {
            const res = await API.put(`/api/master/country/update_country/${id}`,payload);
@@ -153,7 +169,12 @@ export const deleteCountry = async (id:string) => {
 // Item Category
 export const itemCategoryList = async () => {
   try {
-    const res = await API.get("/api/settings/item_category/list");
+    const res = await API.get("/api/settings/item_category/list", {
+      params: {
+        per_page: 5,
+        page: 2
+      },
+    });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -761,9 +782,9 @@ export const getArea = async () => {
   }
 };
 
-export const addArea = async (body:object) => {
+export const addArea = async (body: object) => {
   try {
-    const res = await API.post(`/api/master/area/add_area`);
+    const res = await API.post(`/api/master/area/add_area`,body);
 
     return res.data;
   } catch (error: unknown) {
@@ -781,9 +802,9 @@ export const getAreaById = async (id:string) => {
   }
 };
 
-export const updateAreaById = async (id:string) => {
+export const updateAreaById = async (id:string,payload:object) => {
   try {
-    const res = await API.get(`/api/master/area/area/${id}`);
+    const res = await API.get(`/api/master/area/area/${id}`,payload);
 
     return res.data;
   } catch (error: unknown) {
@@ -1103,8 +1124,13 @@ export const outletChannelList = async (data: Record<string, string>) => {
 
 
 export const deleteChannel = async (id:string) => {
-    const res = await API.delete(`/api/settings/outlet-channels/${id}`);
+  try {
+       const res = await API.delete(`/api/settings/outlet-channels/${id}`);
     return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
 };
 
 export const getChannelById = async (id:string) => {
@@ -1114,11 +1140,110 @@ export const getChannelById = async (id:string) => {
 
 
 export const updateChannel = async (id:string,payload:object) => {
-    const res = await API.put(`/api/settings/outlet-channels/${id}`,payload);
+  try {
+           const res = await API.put(`/api/settings/outlet-channels/${id}`,payload);
+
     return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const getExpenseTypeList = async () => {
+  try {
+           const res = await API.get(`/api/settings/expense_type/list`);
+
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const getExpenseTypeById = async (id:string) => {
+  try {
+           const res = await API.get(`/api/settings/expense_type/${id}`);
+
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const addExpenseType = async (body:object) => {
+  try {
+           const res = await API.post(`/api/settings/expense_type/create`,body);
+
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const updateExpenseType = async (id:string,body:object) => {
+  try {
+           const res = await API.put(`/api/settings/expense_type/${id}/update`,body);
+
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
 };
 
 
+export const deleteExpenseType = async (id:string) => {
+  try {
+           const res = await API.delete(`/api/settings/expense_type/${id}/delete`);
+
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const salesmanTypeList = async (data: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/salesman_type/list", data);
+   
+    return res.data;
+  } catch (error) {
+    console.error("User List failed ❌", error);
+    throw error;
+  }
+};
+
+export const addSalesmanType = async (payload:object) => {
+    const res = await API.post("/api/settings/salesman_type/create", payload);
+
+    return res.data;
+};
+
+export const getSalesmanTypeById = async (id:string) => {
+    const res = await API.get(`/api/settings/salesman_type/${id}`);
+ 
+    return res.data;
+  
+};
+
+
+export const updateSalesmanType = async (id:string,payload:object) => {
+    const res = await API.put(`/api/settings/salesman_type/${id}/update`,payload);
+ 
+    return res.data;
+};
+
+//{id}/delete
+
+
+export const deleteSalesmanType = async (id:string) => {
+    const res = await API.delete(`api/settings/salesman_type/${id}/delete`);
+    return res.data;
+};
 
 export const vehicleList = async () => {
   try {
@@ -1165,46 +1290,3 @@ export const getVehicleById = async (id: string) => {
     return handleError(error);
   }
 };
-
-// salesman type APIs
-export const salesmanTypeList = async (data: Record<string, string>) => {
-  try {
-    const res = await API.get("/api/settings/salesman_type/list", data);
-   
-    return res.data;
-  } catch (error) {
-    console.error("User List failed ❌", error);
-    throw error;
-  }
-};
-
-
-export const addSalesmanType = async (payload:object) => {
-    const res = await API.post("/api/settings/salesman_type/create", payload);
-
-    return res.data;
-};
-
-
-export const getSalesmanTypeById = async (id:string) => {
-    const res = await API.get(`/api/settings/salesman_type/${id}`);
- 
-    return res.data;
-  
-};
-
-
-export const updateSalesmanType = async (id:string,payload:object) => {
-    const res = await API.put(`/api/settings/salesman_type/${id}/update`,payload);
- 
-    return res.data;
-};
-
-//{id}/delete
-
-
-export const deleteSalesmanType = async (id:string) => {
-    const res = await API.delete(`api/settings/salesman_type/${id}/delete`);
-    return res.data;
-};
-

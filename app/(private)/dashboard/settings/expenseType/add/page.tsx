@@ -9,64 +9,57 @@ import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { addCountry } from "@/app/services/allApi";
+import { addExpenseType } from "@/app/services/allApi";
 
-// ✅ Yup Schema
-const CountrySchema = Yup.object().shape({
-  country_code: Yup.string().required("Country Code is required."),
-  country_name: Yup.string().required("Country Name is required."),
-  currency: Yup.string().required("Currency is required."),
+const ExpensetypeSchema = Yup.object().shape({
+  expense_type_name: Yup.string().required("Expense Name is required."),
+  expense_type_status: Yup.string().required("Status is required."),
 });
 
-export default function AddCountry() {
+export default function AddExpenseType() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
 
-  type CountryFormValues = {
-    country_code: string;
-    country_name: string;
-    currency: string;
+  type expenseTypeFormValues = {
+    expense_type_name: string;
+    expense_type_status: boolean;
   };
 
-  const initialValues: CountryFormValues = {
-    country_code: "",
-    country_name: "",
-    currency: "",
+  const initialValues: expenseTypeFormValues = {
+    expense_type_name: "",
+    expense_type_status: true,
   };
 
   const handleSubmit = async (
-    values: CountryFormValues,
-    { setSubmitting }: FormikHelpers<CountryFormValues>
+    values: expenseTypeFormValues,
+    { setSubmitting }: FormikHelpers<expenseTypeFormValues>
   ) => {
     try {
       const payload = {
         ...values,
-        status: 1,
+        
       };
-      const res = await addCountry(payload);
-      showSnackbar("Country added successfully ", "success");
-      router.push("/dashboard/settings/country");
+      const res = await addExpenseType(payload);
+      showSnackbar("Expense Type added successfully ", "success");
+      router.push("/dashboard/settings/expenseType");
     } catch (error) {
-      console.error("Error submitting country ❌:", error);
+      console.error("Error submitting expense type ❌:", error);
       showSnackbar("Failed to submit form", "error");
     } finally {
       setSubmitting(false);
     }
-  }; 
+  };
 
   return (
     <div className="w-full h-full overflow-x-hidden p-4">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard/settings/country">
+          <Link href="/dashboard/settings/expenseType">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            Add New Country
+            Add New Expense Type
           </h1>
         </div>
       </div>
@@ -74,7 +67,7 @@ export default function AddCountry() {
       {/* ✅ Formik + Yup */}
       <Formik
         initialValues={initialValues}
-        validationSchema={CountrySchema}
+        validationSchema={ExpensetypeSchema}
         onSubmit={handleSubmit}
       >
         {({ handleSubmit, values, setFieldValue }) => (
@@ -82,50 +75,20 @@ export default function AddCountry() {
             <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
               <div className="p-6">
                 <h2 className="text-lg font-medium text-gray-800 mb-4">
-                  Country Details
+                  Expense Type Details
                 </h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Country Code */}
-                  <div className="flex items-end gap-2 max-w-[406px]">
-                    <div className="w-full">
-                      <InputFields
-                        label="Country Code"
-                        value={values.country_code}
-                        onChange={(e) =>
-                          setFieldValue("country_code", e.target.value)
-                        }
-                      />
-                      <ErrorMessage
-                        name="country_code"
-                        component="span"
-                        className="text-xs text-red-500"
-                      />
-                    </div>
-                    <IconButton
-                      bgClass="white"
-                      className="mb-2 cursor-pointer text-[#252B37]"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Country Code"
-                    />
-                  </div>
-
-                  {/* Country Name */}
                   <div>
                     <InputFields
-                      label="Country Name"
-                      value={values.country_name}
+                      label="Expense Type Name"
+                      value={values.expense_type_name}
                       onChange={(e) =>
-                        setFieldValue("country_name", e.target.value)
+                        setFieldValue("expense_type_name", e.target.value)
                       }
                     />
                     <ErrorMessage
-                      name="country_name"
+                      name="expense_type_name"
                       component="span"
                       className="text-xs text-red-500"
                     />
@@ -134,14 +97,18 @@ export default function AddCountry() {
                   {/* Currency */}
                   <div>
                     <InputFields
-                      label="Currency"
-                      value={values.currency}
+                      label="Status"
+                      value={values.expense_type_status ? "Active" : "Inactive"}
                       onChange={(e) =>
-                        setFieldValue("currency", e.target.value)
+                        setFieldValue("expense_type_status", e.target.value)
                       }
+                      options={[
+                        { label: "Active", value: "1" },
+                        { label: "Inactive", value: "0" },
+                      ]}
                     />
                     <ErrorMessage
-                      name="currency"
+                      name="expense_type_status"
                       component="span"
                       className="text-xs text-red-500"
                     />

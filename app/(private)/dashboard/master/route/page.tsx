@@ -11,7 +11,6 @@ import { routeList,deleteRoute } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-const initialData: TableDataType[] = [];
 
 const columns = [
     {
@@ -66,7 +65,7 @@ const columns = [
         label: "Status",
         render: (row: TableDataType) => (
             <div className="flex items-center">
-                {row.status ? (
+                {Number(row.status) === 1 ? (
                     <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
                         Active
                     </span>
@@ -140,11 +139,11 @@ export default function Route() {
     if (!selectedRow?.id) throw new Error('Missing id');
     await deleteRoute(String(selectedRow.id)); // call API
         
-        showSnackbar("Country deleted successfully ", "success"); 
+        showSnackbar("Route deleted successfully ", "success"); 
         router.refresh();
       } catch (error) {
         console.error("Delete failed ❌:", error);
-        showSnackbar("Failed to delete country ❌", "error"); 
+        showSnackbar("Failed to delete Route ❌", "error"); 
       } finally {
         setShowDeletePopup(false);
         setSelectedRow(null);
@@ -250,7 +249,7 @@ export default function Route() {
             {showDeletePopup && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                       <DeleteConfirmPopup
-                        title="Country"
+                        title="Route"
                         onClose={() => setShowDeletePopup(false)}
                         onConfirm={handleConfirmDelete}
                       />

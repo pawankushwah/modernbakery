@@ -43,7 +43,7 @@ const columns = [
         label: "Apply On",
         filter: {
             isFilterable: true,
-            render: (data: TableDataType[]) => (
+            render: () => (
                 <>
                     {["Customer", "Channel", "Category"].map((item, index) => {
                         return (

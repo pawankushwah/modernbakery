@@ -119,17 +119,17 @@ export const initialLinkData: SidebarDataType[] = [
                 isActive: false,
                 href: "/dashboard/agentTransaction",
                 label: "Agent Transaction",
-                leadingIcon: "mingcute:bill-line",
+                leadingIcon: "mdi:account-cash-outline",
                 iconColor: "text-violet-500"
             },
            
-            {
-                isActive: false,
-                href: "/dashboard/harissTransaction",
-                label: "Report",
-                leadingIcon: "hugeicons:transaction",
-                iconColor: "text-fuchsia-500"
-            },
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/harissTransaction",
+            //     label: "Report",
+            //     leadingIcon: "hugeicons:transaction",
+            //     iconColor: "text-fuchsia-500"
+            // },
             
                
         ],

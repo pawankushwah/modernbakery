@@ -10,21 +10,18 @@ import CustomCheckbox from "./customCheckbox";
 import DismissibleDropdown from "./dismissibleDropdown";
 import { naturalSort } from "../(private)/utils/naturalSort";
 
+export type listReturnType = { data: TableDataType[]; currentPage: number; pageSize: number; total: number }
+
 type configType = {
     api?: {
-        search: () => {
+        search?: () => {
             data: TableDataType[];
             currentPage: number;
             pageSize: number;
             total: number;
         };
-        filter: () => TableDataType[];
-        pagination: (page: number) => {
-            data: TableDataType[];
-            currentPage: number;
-            pageSize: number;
-            total: number;
-        }
+        filter?: () => TableDataType[];
+        list: (pageNo: number) => Promise<listReturnType> | listReturnType;
     };
     header?: {
         searchBar?:
@@ -62,8 +59,6 @@ type configType = {
     }[];
 };
 
-const Config = createContext<configType>({} as configType);
-
 type columnFilterConfigType = {
     selectedColumns: number[];
     setSelectedColumns: React.Dispatch<React.SetStateAction<number[]>>;
@@ -72,6 +67,16 @@ type columnFilterConfigType = {
 const ColumnFilterConfig = createContext<columnFilterConfigType>({
     selectedColumns: [],
     setSelectedColumns: () => {},
+});
+
+type configContextType = {
+    config: configType;
+    setConfig: React.Dispatch<React.SetStateAction<configType>>;
+};
+
+const Config = createContext<configContextType>({
+    config: {} as configType,
+    setConfig: () => {},
 });
 
 export type TableDataType = {
@@ -95,14 +100,21 @@ interface TableProps {
 }
 
 export default function Table({ data, config }: TableProps) {
-    const [selectedColumns, setSelectedColumns] = useState(
-        new Array(config.columns.length).fill(null).map((_, i) => i)
+    return (
+        <ContextProvider>
+            <TableContainer data={data} config={config} />
+        </ContextProvider>
     );
-    const [tableData, setTableData] = useState(data);
+}
+
+function ContextProvider({ children }: { children: React.ReactNode }) {
+    const [selectedColumns, setSelectedColumns] = useState([] as number[]);
+    const [tableData, setTableData] = useState([] as TableDataType[]);
     const [currentPage, setCurrentPage] = useState(0);
+    const [config, setConfig] = useState({} as configType);
 
     return (
-        <Config.Provider value={config}>
+        <Config.Provider value={{ config, setConfig }}>
             <ColumnFilterConfig.Provider
                 value={{ selectedColumns, setSelectedColumns }}
             >
@@ -110,7 +122,7 @@ export default function Table({ data, config }: TableProps) {
                     <CurrentPage.Provider
                         value={{ currentPage, setCurrentPage }}
                     >
-                        <TableContainer />
+                        {children}
                     </CurrentPage.Provider>
                 </TableData.Provider>
             </ColumnFilterConfig.Provider>
@@ -118,7 +130,17 @@ export default function Table({ data, config }: TableProps) {
     );
 }
 
-function TableContainer() {
+function TableContainer({ data, config }: TableProps) {
+    const { setTableData } = useContext(TableData);
+    const { setSelectedColumns } = useContext(ColumnFilterConfig);
+    const { setConfig } = useContext(Config);
+
+    useEffect(() => {
+        setTableData(data);
+        setSelectedColumns(config.columns.map((_, index) => index)); // select all in the filter dropdown
+        setConfig(config);
+    }, [data]);
+
     return (
         <>
             <div className="flex flex-col bg-white w-full h-full border-[1px] border-[#E9EAEB] rounded-[8px] overflow-hidden">
@@ -131,22 +153,29 @@ function TableContainer() {
 }
 
 function TableHeader() {
-    const { header } = useContext(Config);
+    const { config } = useContext(Config);
     const [searchBarValue, setSearchBarValue] = useState("");
 
     return (
-        header && (
+        config.header && (
             <>
                 <div className="px-[24px] py-[20px] w-full flex justify-between items-center gap-1 sm:gap-0">
                     <div className="w-[320px] invisible sm:visible">
-                        {header?.searchBar && <SearchBar value={searchBarValue} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchBarValue(e.target.value)} />}
+                        {config.header?.searchBar && (
+                            <SearchBar
+                                value={searchBarValue}
+                                onChange={(
+                                    e: React.ChangeEvent<HTMLInputElement>
+                                ) => setSearchBarValue(e.target.value)}
+                            />
+                        )}
                     </div>
 
                     {/* actions */}
                     <div className="flex justify-right w-fit gap-[8px]">
-                        {header?.actions?.map((action) => action)}
+                        {config.header?.actions?.map((action) => action)}
 
-                        {header?.columnFilter && <ColumnFilter />}
+                        {config.header?.columnFilter && <ColumnFilter />}
                     </div>
                 </div>
             </>
@@ -155,7 +184,8 @@ function TableHeader() {
 }
 
 function ColumnFilter() {
-    const { columns } = useContext(Config);
+    const { config } = useContext(Config);
+    const {columns} = config
     const { selectedColumns, setSelectedColumns } =
         useContext<columnFilterConfigType>(ColumnFilterConfig);
     const allItemsCount = columns.length;
@@ -238,13 +268,14 @@ function ColumnFilter() {
 }
 
 function TableBody() {
+    const { config } = useContext(Config);
     const {
         api,
         columns,
         rowSelection,
         rowActions,
         pageSize = 10,
-    } = useContext(Config);
+    } = config;
     const { currentPage } = useContext(CurrentPage);
     const { tableData } = useContext(TableData);
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
@@ -252,25 +283,26 @@ function TableBody() {
         column: string;
         order: "asc" | "desc";
     }>({ column: "", order: "asc" });
-    
+
     const startIndex = currentPage * pageSize;
     const endIndex = startIndex + pageSize;
 
     const { selectedColumns } =
         useContext<columnFilterConfigType>(ColumnFilterConfig);
     const [selectedItems, setSelectedItems] = useState<Array<number>>([]);
-    if(!Array.isArray(tableData)) throw new Error("Data must me in Array format")
+    if (!Array.isArray(tableData))
+        throw new Error("Data must me in Array format");
     const allItemsCount: number = tableData.length || 0;
     const isAllSelected = selectedItems.length === allItemsCount;
     const isIndeterminate = selectedItems.length > 0 && !isAllSelected;
 
     useEffect(() => {
-        if (!api?.pagination){
+        if (!api?.list) {
             setDisplayedData(tableData.slice(startIndex, endIndex));
         } else {
             setDisplayedData(tableData);
         }
-    }, [currentPage]);
+    }, [currentPage, tableData, startIndex, endIndex]);
 
     const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
@@ -323,7 +355,7 @@ function TableBody() {
                             )}
 
                             {/* main data */}
-                            {columns.map((col, index) => {
+                            {columns && columns.map((col, index) => {
                                 return (
                                     selectedColumns.includes(index) && (
                                         <th
@@ -443,7 +475,9 @@ function TableBody() {
                                                                     className="p-[10px] cursor-pointer"
                                                                     onClick={() =>
                                                                         action.onClick &&
-                                                                        action.onClick(row)
+                                                                        action.onClick(
+                                                                            row
+                                                                        )
                                                                     }
                                                                 />
                                                             );
@@ -481,7 +515,8 @@ function FilterTableHeader({ children }: { children: React.ReactNode }) {
 }
 
 function TableFooter() {
-    const { api, footer, pageSize = 10 } = useContext(Config);
+    const {config} = useContext(Config);
+    const { api, footer, pageSize = 10 } = config;
     const { tableData, setTableData } = useContext(TableData);
     const { currentPage, setCurrentPage } = useContext(CurrentPage);
     const [totalPages, setTotalPages] = useState(0);
@@ -494,18 +529,21 @@ function TableFooter() {
         totalPages > 3 ? [totalPages - 3, totalPages - 2, totalPages - 1] : [];
 
     useEffect(() => {
-        if(!api?.pagination) setTotalPages(Math.ceil(tableData.length / pageSize));
-    }, [])
+        if (!api?.list)
+            setTotalPages(Math.ceil(tableData.length / pageSize));
+    }, []);
 
-    function handlePageChange(pageNo: number) {
-        if (api?.pagination) {
-            const { data, currentPage, total } = api.pagination(pageNo);
+    async function handlePageChange(pageNo: number) {
+        if (api?.list) {
+            const result = await api.list(pageNo);
+            const resolvedResult = result instanceof Promise ? await result : result;
+            const { data, total, currentPage } = resolvedResult;
             setTableData(data);
             setTotalPages(total);
             setCurrentPage(currentPage);
-        } else if (pageNo >= 0 && pageNo < totalPages){
+        } else if (pageNo >= 0 && pageNo < totalPages) {
             setCurrentPage(pageNo);
-        } 
+        }
     }
 
     return (
@@ -518,7 +556,7 @@ function TableFooter() {
                             iconWidth={20}
                             label="Previous"
                             labelTw="text-[14px] font-semibold hidden sm:block select-none"
-                            onClick={() => handlePageChange(currentPage - 1) }
+                            onClick={() => handlePageChange(currentPage - 1)}
                         />
                     )}
                 </div>
@@ -538,7 +576,9 @@ function TableFooter() {
                                                     isActive={
                                                         pageNo === currentPage
                                                     }
-                                                    onClick={() => handlePageChange(pageNo) }
+                                                    onClick={() =>
+                                                        handlePageChange(pageNo)
+                                                    }
                                                 />
                                             );
                                         }
@@ -558,7 +598,9 @@ function TableFooter() {
                                                     isActive={
                                                         pageNo === currentPage
                                                     }
-                                                    onClick={() => handlePageChange(pageNo) }
+                                                    onClick={() =>
+                                                        handlePageChange(pageNo)
+                                                    }
                                                 />
                                             );
                                         }
@@ -571,7 +613,9 @@ function TableFooter() {
                                             key={index}
                                             label={(index + 1).toString()}
                                             isActive={index === currentPage}
-                                            onClick={() => handlePageChange(index) }
+                                            onClick={() =>
+                                                handlePageChange(index)
+                                            }
                                         />
                                     ))}
                                 </>

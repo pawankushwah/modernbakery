@@ -1,19 +1,26 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
+import { useRouter } from "next/navigation";
+
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getWarehouse ,deleteWarehouse} from "@/app/services/allApi";
+import { getExpenseTypeList, deleteExpenseType } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
+import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 
-const dropdownDataList = [
+interface DropdownItem {
+  icon: string;
+  label: string;
+  iconWidth: number;
+}
+
+const dropdownDataList: DropdownItem[] = [
   { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
   { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
   { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
@@ -22,22 +29,18 @@ const dropdownDataList = [
 ];
 
 const columns = [
-  { key: "code", label: "Warehouse Code" },
-  { key: "sapId", label: "SAP ID" },
-  { key: "warehouseName", label: "Warehouse Name" },
-  { key: "ownerName", label: "Owner Name" },
-  { key: "depotName", label: "Depot Name" },
-  { key: "depotLocation", label: "Depot Location" },
-  { key: "phoneNumber", label: "Phone Number" },
-  { key: "address", label: "Address" },
-  { key: "district", label: "District" },
-  { key: "route", label: "Route" },
-   {
-        key: "status",
+  { key: "expense_type_code", label: "Expense Type Code" },
+  { key: "expense_type_name", label: "Expense Type Name" },
+  { key: "created_user", label: "Created User" },
+  { key: "updated_user", label: "Updated User" },
+  { key: "created_date", label: "Created Date" },
+//   { key: "expense_type_status", label: "Status" },
+  {
+        key: "expense_type_status",
         label: "Status",
         render: (row: TableDataType) => (
             <div className="flex items-center">
-                {row.status ? (
+                {row.expense_type_status ? (
                     <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
                         Active
                     </span>
@@ -51,97 +54,83 @@ const columns = [
     },
 ];
 
-export default function Warehouse() {
-  const [warehouses, setWarehouses] = useState<TableDataType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showDropdown, setShowDropdown] = useState(false);
+export default function Expensetype() {
+  interface expenseTypeItem {
+    id?: number | string;
+    expense_type_code?: string;
+    expense_type_name?: string;
+    created_user?: string;
+    updated_user?: string;
+    created_date?: string;
+    expense_type_status?: string;
+  }
+
+  const [countries, setCountries] = useState<expenseTypeItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
+  const [selectedRow, setSelectedRow] = useState<expenseTypeItem | null>(null);
+  const router = useRouter();
+  const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
   type TableRow = TableDataType & { id?: string };
-    // typed row for warehouse table
-    type WarehouseRow = TableDataType & {
-      id?:string;
-      code?: string;
-      sapId?: string;
-      warehouseName?: string;
-      ownerName?: string;
-      depotName?: string;
-      depotLocation?: string;
-      phoneNumber?: string;
-      address?: string;
-      district?: string;
-      route?: string;
-      status?: string | boolean | number;
-    };
 
-    const [selectedRow, setSelectedRow] = useState<WarehouseRow | null>(null);
-    const router = useRouter();
-    const { showSnackbar } = useSnackbar();
+  // normalize countries to TableDataType for the Table component
+const tableData: TableDataType[] = countries.map((c) => ({
+    id: c.id?.toString() ?? "",
+    expense_type_code: c.expense_type_code ?? "",
+    expense_type_name: c.expense_type_name ?? "",
+    created_user: c.created_user ?? "",
+    updated_user: c.updated_user ?? "",
+    created_date: c.created_date ?? "",
+    expense_type_status:
+        c.expense_type_status === "0" 
+            ? "Inactive"
+            : "Active",
+}));
+
   useEffect(() => {
-    const fetchWarehouses = async () => {
+    const fetchCountries = async () => {
       try {
-        const res = await getWarehouse();
-        interface ApiWarehouse {
-          id?: number | string;
-          warehouse_code?: string;
-          warehouse_name?: string;
-          owner_name?: string;
-          branch_id?: string | number;
-          location?: string;
-          owner_number?: string;
-          address?: string;
-          city?: string;
-          status?: number;
-        }
-
-        const mapped = (res.data || []).map((item: ApiWarehouse) => ({
-          id: item.id,
-          code: item.warehouse_code ?? "",
-          sapId: "-",
-          warehouseName: item.warehouse_name ?? "",
-          ownerName: item.owner_name ?? "",
-          depotName: item.branch_id?.toString() ?? "",
-          depotLocation: item.location ?? "",
-          phoneNumber: item.owner_number ?? "",
-          address: item.address ?? "",
-          district: item.city ?? "",
-          route: "-",
-          status: item.status === 1 ? "Active" : "Inactive",
-        } as WarehouseRow));
-        setWarehouses(mapped);
-      } catch (e) {
-        // ignore error details here but ensure warehouses cleared
-        setWarehouses([]);
+        const listRes = await getExpenseTypeList();
+        setCountries(listRes.data);
+      } catch (error: unknown) {
+        console.error("API Error:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchWarehouses();
+
+    fetchCountries();
   }, []);
 
-    const handleConfirmDelete = async () => {
-      if (!selectedRow) return;
-  
-      try {
-        if (!selectedRow?.id) throw new Error('Missing id');
-        await deleteWarehouse(String(selectedRow.id)); // call API
-        
-        showSnackbar("Warehouse deleted successfully ", "success"); 
-        router.refresh();
-      } catch (error) {
-        console.error("Delete failed :", error);
-        showSnackbar("Failed to delete Warehouse", "error"); 
-      } finally {
-        setShowDeletePopup(false);
-        setSelectedRow(null);
-      }
-    };
+  const handleConfirmDelete = async () => {
+    if (!selectedRow) return;
 
-  return loading ? <Loading /> : (
+  try {
+  if (!selectedRow?.id) throw new Error('Missing id');
+  await deleteExpenseType(String(selectedRow.id)); // call API
+      
+      showSnackbar("Expense Type deleted successfully ", "success"); 
+      router.refresh();
+    } catch (error) {
+      console.error("Delete failed ❌:", error);
+      showSnackbar("Failed to delete Expense Type", "error");
+    } finally {
+      setShowDeletePopup(false);
+      setSelectedRow(null);
+    }
+  };
+  
+
+  return loading ? (
+    <Loading />
+  ) : (
     <>
       <div className="flex justify-between items-center mb-[20px]">
         <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-          Warehouse
+          Expense Type
         </h1>
+
         <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
           <BorderIconButton icon="mage:upload" />
@@ -173,9 +162,10 @@ export default function Warehouse() {
           />
         </div>
       </div>
+
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={warehouses}
+          data={tableData}
           config={{
             header: {
               searchBar: true,
@@ -183,10 +173,10 @@ export default function Warehouse() {
               actions: [
                 <SidebarBtn
                   key={0}
-                  href="/dashboard/master/warehouse/addwarehouse"
+                  href="/dashboard/settings/expenseType/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Warehouse"
+                  label="Add Expense Type"
                   labelTw="hidden sm:block"
                 />,
               ],
@@ -200,17 +190,14 @@ export default function Warehouse() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/master/warehouse/${row.id}`);
+                  router.push(`/dashboard/settings/expenseType/${row.id}/update`);
                 },
               },
-              // { icon: "lucide:edit-2", onClick: console.log },
-               {
-                icon: "lucide:more-vertical",
+              {
+                icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  if (row.id) {
-                    setSelectedRow({ id: String(row.id) });
-                  }
+                  setSelectedRow({ id: row.id });
                   setShowDeletePopup(true);
                 },
               },
@@ -219,15 +206,16 @@ export default function Warehouse() {
           }}
         />
       </div>
+
       {showDeletePopup && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                <DeleteConfirmPopup
-                  title="Warehouse"
-                  onClose={() => setShowDeletePopup(false)}
-                  onConfirm={handleConfirmDelete}
-                />
-              </div>
-            )}
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <DeleteConfirmPopup
+            title="Expense Type"
+            onClose={() => setShowDeletePopup(false)}
+            onConfirm={handleConfirmDelete}
+          />
+        </div>
+      )}
     </>
   );
 }
