@@ -7,65 +7,29 @@ import { useRouter } from "next/navigation";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { routeList,deleteRoute } from "@/app/services/allApi";
+import { getDiscountTypeList,deleteDiscountType } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
 const columns = [
     {
-        key: "route_code",
-        label: "Route Code",
+        key: "discount_code",
+        label: "Discount Code",
         render: (row: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.route_code}
+                {row.discount_code}
             </span>
         ),
     },
-    { key: "route_name", label: "Route Name" ,isSortable: true },
-    { key: "warehouse", label: "Deopt Name" ,filter: {
-            isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.warehouse}
-                        </span>
-                       
-                    </div>
-                )),
-                width:218,
-        },
-},
-    { key: "route_type", label: "Route Type" ,filter: {
-            isFilterable: true,
-            render: (data: TableDataType[]) =>
-                data.map((row: TableDataType, index: number) => (
-                    <div
-                        key={index}
-                        className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                    >
-                        <span className="font-[500] text-[#181D27]">
-                            {row.route_type}
-                        </span>
-                       
-                    </div>
-                )),
-        },
-         width:218,
-},
-   
-    
-
+    { key: "discount_name", label: "Discount Name" ,isSortable: true },
+    { key: "created_date", label: "Created Date" },
     {
-        key: "status",
+        key: "discount_status",
         label: "Status",
         render: (row: TableDataType) => (
             <div className="flex items-center">
-                {Number(row.status) === 1 ? (
+                {Number(row.discount_status) === 1 ? (
                     <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
                         Active
                     </span>
@@ -87,17 +51,16 @@ const dropdownDataList = [
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
-export default function Route() {
-    interface RouteItem {
+export default function DiscountType() {
+    interface DiscountTypeItem {
     id?: number | string;
-    route_code?: string;
-    route_name?: string;
-    warehouse?: string;
-    route_type?: string;
-    status?: string;
+    discount_code?: string;
+    discount_name?: string;
+    created_date?: string;
+    discount_status?: string;
   }
-    const[routes, setRoutes] = useState<RouteItem[]>([]);
-    const [selectedRow, setSelectedRow] = useState<RouteItem | null>(null);
+    const[discountType, setDiscountType] = useState<DiscountTypeItem[]>([]);
+    const [selectedRow, setSelectedRow] = useState<DiscountTypeItem | null>(null);
       const [showDeletePopup, setShowDeletePopup] = useState(false);
         const [showDropdown, setShowDropdown] = useState(false);
         const [loading, setLoading] = useState(true);
@@ -105,47 +68,48 @@ export default function Route() {
   const { showSnackbar } = useSnackbar();
   type TableRow = TableDataType & { id?: string };
 
-    const tableData: TableDataType[] = routes.map((c) => ({
+    const tableData: TableDataType[] = discountType.map((c) => ({
     id: c.id?.toString() ?? "",
-    route_code: c.route_code ?? "",
-    route_name: c.route_name ?? "",
-    warehouse: c.warehouse ?? "",
-    route_type: c.route_type ?? "",
-    status: c.status ?? "",
+    discount_code: c.discount_code ?? "",
+    discount_name: c.discount_name ?? "",
+    created_date: c.created_date ?? "",
+    discount_status: c.discount_status ?? "",
   }));
 
-    // Move fetchRoutes outside useEffect so it can be reused
-    const fetchRoutes = async () => {
-        try {
-            setLoading(true);
-            const listRes = await routeList();
-            setRoutes(listRes?.data ?? []);
-        } catch (error: unknown) {
-            console.error("API Error:", error);
-            setRoutes([]);
-        } finally {
-            setLoading(false);
-        }
-    };
+  useEffect(() => {
+        const fetchDiscountType = async () => {
+            try {
+                setLoading(true);
+                const listRes = await getDiscountTypeList();
+                // routeList returns response shape similar to other list endpoints: { data: [...] }
+                setDiscountType(listRes?.data ?? []);
+            } catch (error: unknown) {
+                console.error("API Error:", error);
+                setDiscountType([]);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    useEffect(() => {
-        fetchRoutes();
-    }, []);
+        fetchDiscountType();
+  }, []);
 
-    const handleConfirmDelete = async () => {
-        if (!selectedRow) return;
-        try {
-            if (!selectedRow?.id) throw new Error('Missing id');
-            await deleteRoute(String(selectedRow.id)); // call API
-            showSnackbar("Route deleted successfully ", "success");
-            await fetchRoutes();
-        } catch (error) {
-            console.error("Delete failed ❌:", error);
-            showSnackbar("Failed to delete Route ❌", "error");
-        } finally {
-            setShowDeletePopup(false);
-            setSelectedRow(null);
-        }
+   const handleConfirmDelete = async () => {
+      if (!selectedRow) return;
+  
+    try {
+    if (!selectedRow?.id) throw new Error('Missing id');
+    await deleteDiscountType(String(selectedRow.id)); // call API
+        
+        showSnackbar("Discount Type deleted successfully ", "success"); 
+        router.refresh();
+      } catch (error) {
+        console.error("Delete failed ❌:", error);
+        showSnackbar("Failed to delete Discount Type ❌", "error"); 
+      } finally {
+        setShowDeletePopup(false);
+        setSelectedRow(null);
+      }
     };
 
     if (loading) return <Loading />;
@@ -155,7 +119,7 @@ export default function Route() {
             {/* header */}
             <div className="flex justify-between items-center mb-[20px]">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                    Route
+                    Discount Type
                 </h1>
 
                 {/* top bar action buttons */}
@@ -206,10 +170,10 @@ export default function Route() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/dashboard/master/route/add"
+                                    href="/dashboard/settings/customer/discountType/create"
                                     isActive={true}
                                     leadingIcon="lucide:plus"
-                                    label="Add Route"
+                                    label="Add Discount Type"
                                     labelTw="hidden sm:block"
                                 />
                             ],
@@ -226,7 +190,7 @@ export default function Route() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/master/route/routes/${row.id}`);
+                  router.push(`/dashboard/settings/customer/discountType/${row.id}/update`);
                 },
               },
                             {
@@ -245,7 +209,7 @@ export default function Route() {
             {showDeletePopup && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                       <DeleteConfirmPopup
-                        title="Route"
+                        title="Discount Type"
                         onClose={() => setShowDeletePopup(false)}
                         onConfirm={handleConfirmDelete}
                       />

@@ -199,8 +199,7 @@ export default function EditWarehouse() {
             .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Longitude must be a valid decimal number'),
         area_id: Yup.string().required('Area ID is required'),
         device_no: Yup.string()
-            .required('Device Number is required')
-            .matches(/^\d+$/, 'Device Number must be numeric'),
+            .required('Device Number is required'),
         p12_file: Yup.string()
             .test('p12-required', 'P12 File is required for new warehouse', function(value) {
                 // For edit mode, P12 file is optional (user can keep existing file)

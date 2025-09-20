@@ -195,7 +195,7 @@ export default function Warehouse() {
             columns,
             rowSelection: true,
             rowActions: [
-              { icon: "lucide:eye" },
+              
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
@@ -205,7 +205,7 @@ export default function Warehouse() {
               },
               // { icon: "lucide:edit-2", onClick: console.log },
                {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   if (row.id) {

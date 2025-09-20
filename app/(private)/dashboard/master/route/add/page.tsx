@@ -27,25 +27,48 @@ export default function Route() {
   const [submitting, setSubmitting] = useState(false);
   const clearErrors = () => setErrors({});
 
+  type RouteTypeChangeEvent = { target: { value: string | string[] } };
+  const handleRouteTypeChange = (e: RouteTypeChangeEvent) => {
+    if (Array.isArray(e.target.value)) {
+      setRouteType(e.target.value);
+    } else {
+      setRouteType([e.target.value]);
+    }
+  };
+
+  const validationSchema = yup.object().shape({
+    route_code: yup.string().required("Route code is required").max(10),
+    route_name: yup.string().required("Route name is required").max(100),
+    route_type: yup.array().of(yup.string()).required("Route type is required").min(1, "At least one route type is required"),
+    status: yup.string().required("Status is required").oneOf(["0", "1", "active", "inactive"], "Invalid status"),
+  });
+
   const handleSubmit = async () => {
     clearErrors();
-    type AddRoutePayload = {
-      route_code?: string;
-      route_name?: string;
-      route_type?: number[] | undefined;
-      status?: number | undefined;
-      description:string;
-    };
-
-    const payload: AddRoutePayload = {
-      route_code: routeCode,
-      route_name: routeName,
-      route_type: routeType.length > 0 ? routeType.map(rt => Number(rt)) : undefined,
-      status: status ? (status === "active" ? 1 : status === "inactive" ? 0 : Number(status)) : undefined,
-      description:description
-    };
-
     try {
+      await validationSchema.validate({
+        route_code: routeCode,
+        route_name: routeName,
+        route_type: routeType,
+        status: status,
+      }, { abortEarly: false });
+
+      type AddRoutePayload = {
+        route_code?: string;
+        route_name?: string;
+        route_type?: number[] | undefined;
+        status?: number | undefined;
+        description: string;
+      };
+
+      const payload: AddRoutePayload = {
+        route_code: routeCode,
+        route_name: routeName,
+        route_type: routeType.length > 0 ? routeType.map(rt => Number(rt)) : undefined,
+        status: status ? (status === "active" ? 1 : status === "inactive" ? 0 : Number(status)) : undefined,
+        description: description
+      };
+
       setSubmitting(true);
       await addRoutes(payload);
       showSnackbar("Route added successfully ", "success");
@@ -98,9 +121,7 @@ export default function Route() {
                   value={routeCode}
                   onChange={(e) => setRouteCode(e.target.value)}
                 />
-                {errors.route_code && (
-                  <p className="text-red-500 text-sm mt-1">{errors.route_code}</p>
-                )}
+               
 
                 <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]"
                   icon="mi:settings"
@@ -112,6 +133,9 @@ export default function Route() {
                   onClose={() => setIsOpen(false)}
                   title="Route Code"
                 />
+                 {errors.route_code && (
+                  <p className="text-red-500 text-sm mt-1">{errors.route_code}</p>
+                )}
               </div>
 
               <div>
@@ -126,42 +150,14 @@ export default function Route() {
               </div>
               <div>
                 <InputFields
-                  label="Route Type"
-                  value={routeType.join(",")}
-                  onChange={(e) => {
-                    const selectedValue = e.target.value;
-                    if (selectedValue && !routeType.includes(selectedValue)) {
-                      setRouteType([...routeType, selectedValue]);
-                    }
-                  }}
-                  options={routeTypeOptions}
-                />
-                {/* Display selected route types */}
-                {routeType.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {routeType.map((type, index) => {
-                      const label = routeTypeOptions?.find(opt => opt.value === type)?.label || type;
-                      return (
-                        <span
-                          key={index}
-                          className="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-                        >
-                          {label}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRouteType(routeType.filter((_, i) => i !== index));
-                            }}
-                            className="ml-1 text-blue-600 hover:text-blue-800"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-                {errors.route_type && (
+                    label="Route Type"
+                    name="route_type"
+                    value={routeType}
+                    onChange={handleRouteTypeChange}
+                    options={routeTypeOptions}
+                    isSingle={false}
+                  />
+                  {errors.route_type && (
                   <p className="text-red-500 text-sm mt-1">{errors.route_type}</p>
                 )}
 

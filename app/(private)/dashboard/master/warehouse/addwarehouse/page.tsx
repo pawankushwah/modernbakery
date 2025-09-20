@@ -125,8 +125,7 @@ export default function AddWarehouse() {
             .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Longitude must be a valid decimal number'),
         area_id: Yup.string().required('Area ID is required'),
         device_no: Yup.string()
-            .required('Device Number is required')
-            .matches(/^\d+$/, 'Device Number must be numeric'),
+            .required('Device Number is required'),
         p12_file: Yup.string().required('P12 File is required'),
         password: Yup.string()
             .required('Password is required')

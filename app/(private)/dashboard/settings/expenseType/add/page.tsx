@@ -23,12 +23,12 @@ export default function AddExpenseType() {
 
   type expenseTypeFormValues = {
     expense_type_name: string;
-    expense_type_status: boolean;
+    expense_type_status: string;
   };
 
   const initialValues: expenseTypeFormValues = {
     expense_type_name: "",
-    expense_type_status: true,
+    expense_type_status: "1",
   };
 
   const handleSubmit = async (
@@ -37,8 +37,8 @@ export default function AddExpenseType() {
   ) => {
     try {
       const payload = {
-        ...values,
-        
+        expense_type_name: values.expense_type_name,
+        expense_type_status: values.expense_type_status === "1" ? 1 : 0,
       };
       const res = await addExpenseType(payload);
       showSnackbar("Expense Type added successfully ", "success");
@@ -98,10 +98,15 @@ export default function AddExpenseType() {
                   <div>
                     <InputFields
                       label="Status"
-                      value={values.expense_type_status ? "Active" : "Inactive"}
-                      onChange={(e) =>
-                        setFieldValue("expense_type_status", e.target.value)
-                      }
+                      value={values.expense_type_status}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        // If user selects from dropdown, ensure value is string '1' or '0'
+                        if (val !== "1" && val !== "0") {
+                          val = val === "Active" ? "1" : val === "Inactive" ? "0" : val;
+                        }
+                        setFieldValue("expense_type_status", val);
+                      }}
                       options={[
                         { label: "Active", value: "1" },
                         { label: "Inactive", value: "0" },

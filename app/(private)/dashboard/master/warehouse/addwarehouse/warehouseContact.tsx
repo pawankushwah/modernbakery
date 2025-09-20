@@ -55,30 +55,16 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
 
       {/* Tin Number */}
       <div className="flex flex-col gap-4 w-full">
-        <label className="text-sm font-medium text-gray-700">Tin Number *</label>
         <div className="flex w-full">
-          <select
-            name="tinCode"
-            value={values.tinCode ?? ""}
-            onChange={handleChange}
-            className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
-          >
-            {countries.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-          <input
-            type="text"
-            name="tin_no"
-            value={values.tin_no ?? ""}
-            onChange={handleChange}
-            placeholder="TIN Number"
-            className={`border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px] w-full ${errors?.tin_no && touched?.tin_no ? 'border-red-500' : ''}`}
-          />
+          <InputFields
+        label="TIN Number *"
+        name="tin_no"
+        value={values.tin_no}
+        onChange={handleChange}
+        error={errors?.tin_no && touched?.tin_no ? errors.tin_no : false}
+      />
+         
         </div>
-        {errors?.tin_no && touched?.tin_no && <span className="text-xs text-red-500 mt-1">{errors.tin_no}</span>}
       </div>
 
       {/* Email */}

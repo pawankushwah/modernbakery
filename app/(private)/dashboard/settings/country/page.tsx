@@ -76,21 +76,19 @@ export default function Country() {
 
   const handleConfirmDelete = async () => {
     if (!selectedRow) return;
-
-  try {
-  if (!selectedRow?.id) throw new Error('Missing id');
-  await deleteCountry(String(selectedRow.id)); // call API
-      
-      showSnackbar("Country deleted successfully ", "success"); 
-      router.refresh();
-    } catch (error) {
-      console.error("Delete failed ❌:", error);
-      showSnackbar("Failed to delete country ❌", "error"); 
-    } finally {
-      setShowDeletePopup(false);
-      setSelectedRow(null);
-    }
-  };
+    try {
+                if (!selectedRow?.id) throw new Error('Missing id');
+                await deleteCountry(String(selectedRow.id)); // call API
+                showSnackbar("Country deleted successfully ", "success");
+                await countryList({});
+            } catch (error) {
+                console.error("Delete failed ❌:", error);
+                showSnackbar("Failed to delete country", "error"); 
+            } finally {
+                setShowDeletePopup(false);
+                setSelectedRow(null);
+            }
+          };
   
 
   return loading ? (
@@ -156,7 +154,7 @@ export default function Country() {
             columns,
             rowSelection: true,
             rowActions: [
-              { icon: "lucide:eye" },
+              
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
@@ -165,7 +163,7 @@ export default function Country() {
                 },
               },
               {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   setSelectedRow({ id: row.id });

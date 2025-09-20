@@ -36,22 +36,22 @@ const columns = [
   { key: "created_date", label: "Created Date" },
 //   { key: "expense_type_status", label: "Status" },
   {
-        key: "expense_type_status",
-        label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {row.expense_type_status ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
-        ),
-    },
+    key: "expense_type_status",
+    label: "Status",
+    render: (row: TableDataType) => (
+      <div className="flex items-center">
+        {Number(row.expense_type_status) === 1 ? (
+          <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+            Active
+          </span>
+        ) : (
+          <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+            Inactive
+          </span>
+        )}
+      </div>
+    ),
+  },
 ];
 
 export default function Expensetype() {
@@ -76,42 +76,42 @@ export default function Expensetype() {
 
   // normalize countries to TableDataType for the Table component
 const tableData: TableDataType[] = countries.map((c) => ({
-    id: c.id?.toString() ?? "",
-    expense_type_code: c.expense_type_code ?? "",
-    expense_type_name: c.expense_type_name ?? "",
-    created_user: c.created_user ?? "",
-    updated_user: c.updated_user ?? "",
-    created_date: c.created_date ?? "",
-    expense_type_status:
-        c.expense_type_status === "0" 
-            ? "Inactive"
-            : "Active",
+  id: c.id?.toString() ?? "",
+  expense_type_code: c.expense_type_code ?? "",
+  expense_type_name: c.expense_type_name ?? "",
+  created_user: c.created_user ?? "",
+  updated_user: c.updated_user ?? "",
+  created_date: c.created_date ?? "",
+  expense_type_status:
+    typeof c.expense_type_status === "number"
+      ? String(c.expense_type_status)
+      : c.expense_type_status ?? "0",
 }));
+  // Move fetchCountries outside useEffect so it can be reused
+  const fetchCountries = async () => {
+    try {
+      const listRes = await getExpenseTypeList();
+      setCountries(listRes.data);
+    } catch (error: unknown) {
+      console.error("API Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const listRes = await getExpenseTypeList();
-        setCountries(listRes.data);
-      } catch (error: unknown) {
-        console.error("API Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCountries();
   }, []);
+
 
   const handleConfirmDelete = async () => {
     if (!selectedRow) return;
 
   try {
-  if (!selectedRow?.id) throw new Error('Missing id');
-  await deleteExpenseType(String(selectedRow.id)); // call API
-      
-      showSnackbar("Expense Type deleted successfully ", "success"); 
-      router.refresh();
+      if (!selectedRow?.id) throw new Error('Missing id');
+      await deleteExpenseType(String(selectedRow.id)); // call API
+      showSnackbar("Expense Type deleted successfully ", "success");
+      fetchCountries(); // Refresh the table data after successful delete
     } catch (error) {
       console.error("Delete failed ❌:", error);
       showSnackbar("Failed to delete Expense Type", "error");
@@ -185,7 +185,7 @@ const tableData: TableDataType[] = countries.map((c) => ({
             columns,
             rowSelection: true,
             rowActions: [
-              { icon: "lucide:eye" },
+              
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {

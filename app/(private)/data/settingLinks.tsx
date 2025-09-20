@@ -202,6 +202,13 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",
                     },
+                    {
+                        isActive: false,
+                        href: "/dashboard/settings/customer/discountType",
+                        label: "Discount Types",
+                        leadingIcon: "mdi:map",
+                        iconColor: "text-yellow-400",
+                    },
                 ],
             },
             {
