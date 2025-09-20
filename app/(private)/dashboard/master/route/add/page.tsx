@@ -27,13 +27,14 @@ export default function Route() {
   const [submitting, setSubmitting] = useState(false);
   const clearErrors = () => setErrors({});
 
-  const handleRouteTypeChange = (e: any) => {
-  if (Array.isArray(e.target.value)) {
-    setRouteType(e.target.value); // multi-select
-  } else {
-    setRouteType([e.target.value]); // single-select fallback
-  }
-};
+  type RouteTypeChangeEvent = { target: { value: string | string[] } };
+  const handleRouteTypeChange = (e: RouteTypeChangeEvent) => {
+    if (Array.isArray(e.target.value)) {
+      setRouteType(e.target.value);
+    } else {
+      setRouteType([e.target.value]);
+    }
+  };
 
   const validationSchema = yup.object().shape({
     route_code: yup.string().required("Route code is required").max(10),

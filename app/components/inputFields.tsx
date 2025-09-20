@@ -63,17 +63,25 @@ export default function InputFields({
   }, [dropdownOpen, isMulti]);
 
 
-  // Helper to create a plain event-like object for multi-select
-  // Always returns an array for value, so parent can use (e) => setRouteType(e.target.value)
-  const createMultiSelectEvent = (vals: string[]) => {
-    // If only one value is selected, still return as array
-    return { target: { value: vals } };
+  // Custom event type for multi-select
+  type MultiSelectChangeEvent = {
+    target: {
+      value: string[];
+      name?: string;
+    };
   };
-
+  
+  // Helper to create a plain event-like object for multi-select
+  const createMultiSelectEvent = (vals: string[]): MultiSelectChangeEvent => {
+    return { target: { value: vals, name } };
+  };
+  
   // Helper to safely call onChange
-  const safeOnChange = (event: any) => {
+  const safeOnChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | MultiSelectChangeEvent
+  ) => {
     if (typeof onChange === 'function') {
-      onChange(event);
+      onChange(event as React.ChangeEvent<HTMLInputElement | HTMLSelectElement>);
     } else {
       // eslint-disable-next-line no-console
       console.warn('InputFields: onChange prop is not a function. You must pass (e) => setValue(e.target.value)');
