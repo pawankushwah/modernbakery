@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Loading from "@/app/components/Loading";
 import { deleteItemCategory, itemCategoryList } from "@/app/services/allApi";
@@ -17,7 +17,13 @@ import { useRouter } from "next/navigation";
 const columns = [
     { key: "id", label: "Category Id" },
     { key: "category_name", label: "Category Name" },
-    { key: "status", label: "Status", render: (data: TableDataType) => <StatusBtn isActive={data.status === "0" ? false : true} /> },
+    {
+        key: "status",
+        label: "Status",
+        render: (data: TableDataType) => (
+            <StatusBtn isActive={data.status === "0" ? false : true} />
+        ),
+    },
 ];
 
 export type categoryType = {
@@ -27,10 +33,10 @@ export type categoryType = {
 };
 
 export default function Category() {
-    const router = useRouter();
     const [categoryData, setCategoryData] = useState<TableDataType[]>(
         [] as TableDataType[]
     );
+    const [refresh, setRefresh] = useState<boolean>(false);
     const [loading, setLoading] = useState<boolean>(true);
     const { showSnackbar } = useSnackbar();
     const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
@@ -45,10 +51,10 @@ export default function Category() {
     async function deleteCategory() {
         if (!deleteItemCategoryId) return;
         const listRes = await deleteItemCategory(deleteItemCategoryId);
-        if (listRes.error) return showSnackbar(listRes.data.message, "error")
+        if (listRes.error) return showSnackbar(listRes.data.message, "error");
+        setRefresh(!refresh);
         showSnackbar("Category deleted successfully", "success");
         setShowDeletePopup(false);
-        router.refresh();
     }
 
     useEffect(() => {
@@ -58,9 +64,8 @@ export default function Category() {
             setCategoryData(listRes.data);
             setLoading(false);
         };
-
         fetchItemCategory();
-    }, []);
+    }, [refresh]);
 
     return loading ? (
         <Loading />
@@ -87,6 +92,7 @@ export default function Category() {
                     <CreateUpdate
                         type="create"
                         onClose={() => setShowCreatePopup(false)}
+                        onRefresh={() => setRefresh(!refresh)}
                     />
                 </Popup>
             )}
@@ -97,15 +103,26 @@ export default function Category() {
                         type="update"
                         updateItemCategoryData={updateItemCategoryData}
                         onClose={() => setShowUpdatePopup(false)}
+                        onRefresh={() => setRefresh(!refresh)}
                     />
                 </Popup>
             )}
 
             <div className="h-[calc(100%-60px)]">
-                {categoryData && categoryData.length > 0 && (
+                {categoryData && (
                     <Table
                         data={categoryData}
                         config={{
+                            api: {
+                                list: (pageNo: number) => {
+                                    return {
+                                        data: [] as TableDataType[],
+                                        currentPage: 1,
+                                        pageSize: 10,
+                                        total: 20,
+                                    };
+                                }
+                            },
                             header: {
                                 searchBar: false,
                                 columnFilter: true,
@@ -129,7 +146,7 @@ export default function Category() {
                             rowActions: [
                                 {
                                     icon: "lucide:edit-2",
-                                    onClick: (data) => {
+                                    onClick: (data: Record<string, string>) => {
                                         setShowUpdatePopup(true);
                                         setUpdateItemCategoryData({
                                             id: parseInt(data.id),
@@ -140,7 +157,7 @@ export default function Category() {
                                 },
                                 {
                                     icon: "lucide:trash-2",
-                                    onClick: (data) => {
+                                    onClick: (data: Record<string, string>) => {
                                         setShowDeletePopup(true);
                                         setDeleteItemCategoryId(
                                             parseInt(data.id)

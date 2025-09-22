@@ -4,7 +4,10 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import Loading from "@/app/components/Loading";
 import Popup from "@/app/components/popUp";
-import {  deleteItemSubCategory, itemSubCategoryList } from "@/app/services/allApi";
+import {
+    deleteItemSubCategory,
+    itemSubCategoryList,
+} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useEffect, useState } from "react";
 import CreateUpdate from "./createUpdate";
@@ -21,7 +24,13 @@ const mockCategoryData = new Array(100).fill(null).map((_, i) => ({
 const columns = [
     { key: "id", label: "Category Id" },
     { key: "sub_category_name", label: "Sub Category Name" },
-    { key: "status", label: "Status", render: (data: TableDataType) => <StatusBtn isActive={data.status === "0" ? false : true} /> },
+    {
+        key: "status",
+        label: "Status",
+        render: (data: TableDataType) => (
+            <StatusBtn isActive={data.status === "0" ? false : true} />
+        ),
+    },
 ];
 
 export type subCategoryType = {
@@ -43,7 +52,8 @@ export default function SubCategory() {
     const [deleteItemCategoryId, setDeleteItemCategoryId] = useState<
         number | undefined
     >();
-    const [updateItemCategoryData, setUpdateItemCategoryData] = useState<subCategoryType>({} as subCategoryType);
+    const [updateItemCategoryData, setUpdateItemCategoryData] =
+        useState<subCategoryType>({} as subCategoryType);
 
     async function deleteCategory() {
         if (!deleteItemCategoryId) return;
@@ -123,55 +133,52 @@ export default function SubCategory() {
             )}
 
             <div className="h-[calc(100%-60px)]">
-                {categoryData && categoryData.length > 0 && (
-                    <Table
-                        data={categoryData}
-                        config={{
-                            header: {
-                                searchBar: false,
-                                columnFilter: true,
-                                actions: [
-                                    <SidebarBtn
-                                        key={0}
-                                        href="#"
-                                        isActive={true}
-                                        buttonTw="px-3 h-9"
-                                        leadingIcon="lucide:plus"
-                                        label="Add Sub Category"
-                                        labelTw="hidden lg:block"
-                                        onClick={() => setShowCreatePopup(true)}
-                                    />,
-                                ],
-                            },
-                            pageSize: 5,
-                            footer: { nextPrevBtn: true, pagination: true },
-                            columns,
-                            rowSelection: true,
-                            rowActions: [
-                                {
-                                    icon: "lucide:edit-2",
-                                    onClick: (data) => {
-                                        setShowUpdatePopup(true);
-                                        setUpdateItemCategoryData({
-                                            category_id: parseInt(data.id),
-                                            sub_category_name: data.sub_category_name,
-                                            status: data.status,
-                                        });
-                                    },
-                                },
-                                {
-                                    icon: "lucide:trash-2",
-                                    onClick: (data) => {
-                                        setShowDeletePopup(true);
-                                        setDeleteItemCategoryId(
-                                            parseInt(data.id)
-                                        );
-                                    },
-                                },
+                <Table
+                    data={categoryData}
+                    config={{
+                        header: {
+                            searchBar: false,
+                            columnFilter: true,
+                            actions: [
+                                <SidebarBtn
+                                    key={0}
+                                    href="#"
+                                    isActive={true}
+                                    buttonTw="px-3 h-9"
+                                    leadingIcon="lucide:plus"
+                                    label="Add Sub Category"
+                                    labelTw="hidden lg:block"
+                                    onClick={() => setShowCreatePopup(true)}
+                                />,
                             ],
-                        }}
-                    />
-                )}
+                        },
+                        pageSize: 5,
+                        footer: { nextPrevBtn: true, pagination: true },
+                        columns,
+                        rowSelection: true,
+                        rowActions: [
+                            {
+                                icon: "lucide:edit-2",
+                                onClick: (data) => {
+                                    setShowUpdatePopup(true);
+                                    setUpdateItemCategoryData({
+                                        category_id: parseInt(data.id),
+                                        sub_category_name:
+                                            data.sub_category_name,
+                                        status: data.status,
+                                    });
+                                },
+                            },
+                            {
+                                icon: "lucide:trash-2",
+                                onClick: (data) => {
+                                    setShowDeletePopup(true);
+                                    setDeleteItemCategoryId(parseInt(data.id));
+                                },
+                            },
+                        ],
+                    }}
+                />
             </div>
         </>
     );
