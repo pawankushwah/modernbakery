@@ -6,7 +6,6 @@ import InputDropdown from "@/app/components/inputDropdown";
 import InputFields from "@/app/components/inputFields";
 import {
     createItemSubCategory,
-    itemCategoryList,
     updateItemSubCategory,
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -133,6 +132,7 @@ export default function CreateUpdate({
                 <InputDropdown
                     label="Status"
                     defaultText="Select Status"
+                    dropdownTw="w-full h-[100px]"
                     defaultOption={formik.values.status === 1 ? 0 : 1}
                     options={[
                         { label: "Active", value: "1" },

@@ -23,7 +23,7 @@ interface CustomerCategoryAPI {
   outlet_channel_id: string;
   customer_category_code: string;
   customer_category_name: string;
-  status: "1" | "0" | 1 | 0; // backend can send string or number
+  status:  number; // backend can send string or number
 }
 
 interface CustomerCategory {
@@ -31,7 +31,7 @@ interface CustomerCategory {
   outlet_channel_code: string;
   customer_category_code: string;
   customer_category_name: string;
-  status: "0" | "1"; // keep raw for backend compatibility
+  status:number; // keep raw for backend compatibility
 }
 
 export default function CustomerCategoryPage() {
@@ -74,7 +74,7 @@ export default function CustomerCategoryPage() {
           outlet_channel_code: outletChannels[c.outlet_channel_id] || c.outlet_channel_id,
           customer_category_code: c.customer_category_code,
           customer_category_name: c.customer_category_name,
-          status: c.status === "1" || c.status === 1 ? "1" : "0", // normalize to "1"/"0"
+          status:  c.status === 1 ? "Active" : "In Active", // normalize to "1"/"0"
         }));
 
         console.log("Fetched Categories ✅", formatted);
@@ -112,14 +112,30 @@ export default function CustomerCategoryPage() {
     outlet_channel_code: c.outlet_channel_code,
     customer_category_code: c.customer_category_code,
     customer_category_name: c.customer_category_name,
-    status: c.status === "1" ? "Active" : "Inactive",
+    status: c.status === 1 ? "Active" : "Inactive",
   }));
 
   const columns = [
     { key: "outlet_channel_code", label: "Outlet Channel Code" },
     { key: "customer_category_code", label: "Code" },
     { key: "customer_category_name", label: "Name" },
-    { key: "status", label: "Status" },
+    {
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => (
+            <div className="flex items-center">
+                {row.status ? (
+                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+                        Active
+                    </span>
+                ) : (
+                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+                        Inactive
+                    </span>
+                )}
+            </div>
+        ),
+    },
   ];
 
   if (loading) return <Loading />;

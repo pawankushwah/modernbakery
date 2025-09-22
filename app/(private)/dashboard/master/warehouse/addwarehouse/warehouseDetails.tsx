@@ -5,6 +5,7 @@ import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import CustomPasswordInput from '@/app/components/customPasswordInput';
+import { useAllDropdownListData } from '@/app/components/contexts/allDropdownListData';
 
 type Props = {
     values: Record<string, string>;
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue }: Props) {
+    const { companyCustomersOptions } = useAllDropdownListData();
     const [isOpen, setIsOpen] = React.useState(false);
 
     return (
@@ -61,9 +63,10 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             />
 
             <InputFields
-                label="Company Customer ID *"
+                label="Company Customer *"
                 name="company_customer_id"
                 value={values.company_customer_id}
+                options={companyCustomersOptions}
                 onChange={handleChange}
                 error={errors?.company_customer_id && touched?.company_customer_id ? errors.company_customer_id : false}
             />

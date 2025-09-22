@@ -3,51 +3,38 @@
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import ContainerCard from "@/app/components/containerCard";
-import FormInputField from "@/app/components/formInputField";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import FormInputField from "@/app/components/formInputField";
 import SearchableDropdown from "@/app/components/SearchableDropdown";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useRouter } from "next/navigation";
-import {
-  countryList,
-  addCompany,
-  regionList,
-  getArea,
-} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { addCompany } from "@/app/services/allApi";
 
-interface Country {
-  id: string | number;
-  name?: string;
-  country_name?: string;
-  currency?: string;
-}
-
-interface Region {
-  id: string | number;
-  name?: string;
-  region_name?: string;
-}
-
-interface SubRegion {
-  id: string | number;
-  name?: string;
-  area_name?: string;
-}
+// Dummy options (replace with API data if you have endpoints)
+const countries = [
+  { value: "ug", label: "Uganda" },
+  { value: "ke", label: "Kenya" },
+  { value: "tz", label: "Tanzania" },
+];
+const regions = [
+  { value: "central", label: "Central" },
+  { value: "eastern", label: "Eastern" },
+];
+const subRegions = [
+  { value: "kampala", label: "Kampala" },
+  { value: "jinja", label: "Jinja" },
+];
+const currency = [
+  { value: "USD", label: "USD" },
+  { value: "UGX", label: "UGX" },
+];
 
 export default function AddCompany() {
-  const [isOpen, setIsOpen] = useState(false);
-  const [countries, setCountries] = useState<{ value: string; label: string }[]>([]);
-  const [currency, setCurrency] = useState<{ value: string; label: string }[]>([]);
-  const [regions, setRegions] = useState<{ value: string; label: string }[]>([]);
-  const [subRegions, setSubRegions] = useState<{ value: string; label: string }[]>([]);
-  const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const [isOpen, setIsOpen] = useState(false);
 
   // Yup Validation
   const CompanySchema = Yup.object({
@@ -93,57 +80,50 @@ export default function AddCompany() {
     validationSchema: CompanySchema,
     onSubmit: async (values) => {
       try {
-        // Convert modules string to object
         const modulesArray = values.modules
           ? values.modules.split(",").map((m) => m.trim())
           : [];
-        const moduleAccess: Record<string, boolean> = {};
-        modulesArray.forEach((m) => {
-          if (m) moduleAccess[m] = true;
+
+        const formData = new FormData();
+        formData.append("company_code", values.companyCode);
+        formData.append("company_name", values.companyName);
+        formData.append("email", values.email);
+        formData.append("tin_number", values.tinNumber);
+        formData.append("vat", values.vatNo);
+        formData.append("country_id", values.country);
+        formData.append("selling_currency", values.sellingCurrency);
+        formData.append("purchase_currency", values.purchaseCurrency);
+        formData.append(
+          "toll_free_no",
+          `${values.tollFreeCode}${values.tollFreeNumber}`
+        );
+        formData.append("website", values.companyWebsite);
+        formData.append("service_type", values.serviceType);
+        formData.append("company_type", values.companyType);
+        formData.append("status", values.status);
+        formData.append("district", values.district);
+        formData.append("town", values.town);
+        formData.append("street", values.street);
+        formData.append("landmark", values.landmark);
+        formData.append("region", values.region);
+        formData.append("sub_region", values.subRegion);
+        formData.append(
+          "primary_contact",
+          `${values.primaryCode}${values.primaryContact}`
+        );
+
+        const maybeFile = values.companyLogo as unknown;
+        if (
+          maybeFile &&
+          typeof maybeFile === "object" &&
+          "name" in (maybeFile as Record<string, unknown>)
+        ) {
+          formData.append("logo", maybeFile as Blob);
+        }
+
+        modulesArray.forEach((m, i) => {
+          formData.append(`module_access[${i}]`, m);
         });
-
-        // Prepare payload
-        const payload = {
-          company_name: values.companyName,
-          company_type: values.companyType,
-          email: values.email,
-          tin_number: values.tinNumber,
-          vat: values.vatNo,
-          country_id: Number(values.country),
-          selling_currency: values.sellingCurrency,
-          purchase_currency: values.purchaseCurrency,
-          toll_free_no: values.tollFreeNumber,
-          logo: values.companyLogo,
-          website: values.companyWebsite,
-          service_type: values.serviceType,
-          status: values.status === "1" ? "active" : "inactive",
-          module_access: moduleAccess,
-          district: values.district,
-          town: values.town,
-          street: values.street,
-          landmark: values.landmark,
-          region: Number(values.region),
-          sub_region: Number(values.subRegion),
-          primary_contact: values.primaryContact,
-        };
-
-        // Convert to FormData to support file upload
-      const formData = new FormData();
-for (const key in payload) {
-  const typedKey = key as keyof typeof payload;
-  const value = payload[typedKey];
-
-  if (typedKey === "module_access") {
-    formData.append(typedKey, JSON.stringify(value));
-  } else if (typedKey === "logo" && value instanceof File) {
-    formData.append("logo", value);
-  } else if (value !== undefined && value !== null) {
-    // Convert numbers to strings
-    formData.append(typedKey, String(value));
-  }
-}
-
-
 
         const res = await addCompany(formData);
         if (res.error) {
@@ -151,52 +131,13 @@ for (const key in payload) {
         } else {
           showSnackbar("Company added successfully ✅", "success");
           formik.resetForm();
-          router.push("/dashboard/company");
         }
-      } catch (error) {
-        console.error(error);
-        showSnackbar("Unexpected error ❌", "error");
+      } catch (err) {
+        console.error("❌ Add Company failed", err);
+        showSnackbar("Failed to add company ❌", "error");
       }
     },
   });
-
-  // Fetch Dropdown Data
-  useEffect(() => {
-    const fetchDropdowns = async () => {
-      try {
-        const countryRes = await countryList({ page: "1", limit: "200" });
-        const countryOptions = (countryRes.data as Country[]).map((c) => ({
-          value: String(c.id ?? ""),
-          label: c.name ?? c.country_name ?? "",
-        }));
-        setCountries(countryOptions);
-
-        const currencyOptions = (countryRes.data as Country[]).map((c) => ({
-          value: c.currency ?? "",
-          label: c.currency ?? "",
-        }));
-        setCurrency(currencyOptions);
-
-        const regionRes = await regionList();
-        const regionOptions = (regionRes.data as Region[]).map((r) => ({
-          value: String(r.id ?? ""),
-          label: r.name ?? r.region_name ?? "",
-        }));
-        setRegions(regionOptions);
-
-        const subRegionRes = await getArea();
-        const subRegionOptions = (subRegionRes.data as SubRegion[]).map((sr) => ({
-          value: String(sr.id ?? ""),
-          label: sr.name ?? sr.area_name ?? "",
-        }));
-        setSubRegions(subRegionOptions);
-      } catch (error) {
-        console.error("Failed to fetch dropdown data ❌", error);
-      }
-    };
-
-    fetchDropdowns();
-  }, []);
 
   return (
     <>
@@ -207,11 +148,12 @@ for (const key in payload) {
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
-            Add New Company
+            Add Company
           </h1>
         </div>
       </div>
 
+      {/* Form */}
       <form onSubmit={formik.handleSubmit}>
         {/* Company Details */}
         <ContainerCard>
@@ -236,43 +178,13 @@ for (const key in payload) {
               ]}
               error={formik.touched.companyType && formik.errors.companyType}
             />
-            <div className="flex items-end gap-2 max-w-[406px]">
-              <InputFields
-                name="companyCode"
-                label="Company Code"
-                value={formik.values.companyCode}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.companyCode && formik.errors.companyCode}
-              />
-              <IconButton
-                bgClass="white"
-                className="mb-2 cursor-pointer text-[#252B37]"
-                icon="mi:settings"
-                onClick={() => setIsOpen(true)}
-              />
-              <SettingPopUp
-                isOpen={isOpen}
-                onClose={() => setIsOpen(false)}
-                title="Company Code"
-              />
-            </div>
             <InputFields
-              name="companyLogo"
-              label="Company Logo"
-              type="file"
-              onChange={(e) =>
-                formik.setFieldValue(
-                  "companyLogo",
-                  (e.currentTarget as HTMLInputElement).files?.[0] ?? null
-                )
-              }
-            />
-            <InputFields
-              name="companyWebsite"
-              label="Company Website"
-              value={formik.values.companyWebsite}
+              name="companyCode"
+              label="Company Code"
+              value={formik.values.companyCode}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.companyCode && formik.errors.companyCode}
             />
           </div>
         </ContainerCard>
@@ -289,10 +201,14 @@ for (const key in payload) {
               onContactChange={(e) =>
                 formik.setFieldValue("primaryContact", e.target.value)
               }
-              onCodeChange={(e) => formik.setFieldValue("primaryCode", e.target.value)}
+              onCodeChange={(e) =>
+                formik.setFieldValue("primaryCode", e.target.value)
+              }
               options={countries}
               onBlur={formik.handleBlur}
-              error={formik.touched.primaryContact && formik.errors.primaryContact}
+              error={
+                formik.touched.primaryContact && formik.errors.primaryContact
+              }
             />
             <FormInputField
               type="contact"
@@ -302,7 +218,9 @@ for (const key in payload) {
               onContactChange={(e) =>
                 formik.setFieldValue("tollFreeNumber", e.target.value)
               }
-              onCodeChange={(e) => formik.setFieldValue("tollFreeCode", e.target.value)}
+              onCodeChange={(e) =>
+                formik.setFieldValue("tollFreeCode", e.target.value)
+              }
               options={countries}
             />
             <InputFields
@@ -425,27 +343,29 @@ for (const key in payload) {
                 { value: "branch", label: "Branch" },
                 { value: "warehouse", label: "Warehouse" },
               ]}
+              error={formik.touched.serviceType && formik.errors.serviceType}
             />
             <InputFields
-              name="status"
               label="Status"
               type="select"
+              name="status"
               value={formik.values.status}
               onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
               options={[
                 { value: "1", label: "Active" },
                 { value: "0", label: "Inactive" },
               ]}
+              error={formik.touched.status && formik.errors.status}
             />
           </div>
         </ContainerCard>
 
-        {/* Footer Actions */}
+        {/* Footer */}
         <div className="flex justify-end gap-3 mt-6">
           <button
             className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
             type="button"
-            onClick={() => router.back()}
           >
             Cancel
           </button>

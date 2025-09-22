@@ -175,7 +175,7 @@ export default function SubRegion() {
             columns,
             rowSelection: true,
             rowActions: [
-              { icon: "lucide:eye" },
+              
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
@@ -185,7 +185,7 @@ export default function SubRegion() {
                 },
               },
               {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   setSelectedRow({ id: row.id });

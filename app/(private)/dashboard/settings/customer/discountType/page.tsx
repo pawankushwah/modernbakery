@@ -85,7 +85,7 @@ export default function DiscountType() {
     discount_status: c.discount_status ?? "",
   }));
 
-  useEffect(() => {
+
         const fetchDiscountType = async () => {
             try {
                 setLoading(true);
@@ -100,9 +100,11 @@ export default function DiscountType() {
             }
         };
 
-        fetchDiscountType();
-  }, []);
 
+
+  useEffect(() => {
+    fetchDiscountType();
+  }, []);
    const handleConfirmDelete = async () => {
       if (!selectedRow) return;
   
@@ -111,6 +113,10 @@ export default function DiscountType() {
     await deleteDiscountType(String(selectedRow.id)); // call API
         
         showSnackbar("Discount Type deleted successfully ", "success"); 
+        await fetchDiscountType();
+
+    // ✅ Update state immediately without full refresh
+    setDiscountType((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
         router.refresh();
       } catch (error) {
         console.error("Delete failed ❌:", error);

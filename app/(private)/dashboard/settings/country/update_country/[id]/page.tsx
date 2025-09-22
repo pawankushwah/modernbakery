@@ -47,6 +47,7 @@ export default function EditCountry() {
         const res = await countryById(String(queryId));
         const data = res?.data ?? res;
         if (!mounted) return;
+        
         setFetched({ country_code: data?.country_code, country_name: data?.country_name, currency: data?.currency });
       } catch (err) {
         console.error('Failed to fetch country by id', err);

@@ -1,17 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import InputFields from "@/app/components/inputFields";
 import { addRouteType } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-
-// ✅ Validation schema
+import InputFields from "@/app/components/inputFields";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import Link from "next/link";
+import { Icon } from "@iconify-icon/react";
+// Define the validation schema using Yup
 const validationSchema = Yup.object({
   routeTypeName: Yup.string()
     .trim()
@@ -62,6 +60,7 @@ export default function AddRouteType() {
       }
     },
   });
+      
 
   return (
     <div className="p-6">
@@ -70,6 +69,7 @@ export default function AddRouteType() {
         <Link href="/dashboard/settings/routetype">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
+        <h1 className="text-xl font-semibold">Add New Route Type</h1>
         <h1 className="text-xl font-semibold">Add New Route Type</h1>
       </div>
 
@@ -111,7 +111,62 @@ export default function AddRouteType() {
               }
             />
           </div>
+        <form onSubmit={formik.handleSubmit}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Route Type Name Field */}
+            <InputFields
+              label="Route Type Name"
+              type="text"
+              name="routeTypeName"
+              value={formik.values.routeTypeName}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={
+                formik.touched.routeTypeName && formik.errors.routeTypeName
+                  ? formik.errors.routeTypeName
+                  : ""
+              }
+            />
 
+            {/* Status Field */}
+            <InputFields
+              label="Status"
+              type="select"
+              name="status"
+              value={formik.values.status}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              options={[
+                { value: "1", label: "Active" },
+                { value: "0", label: "Inactive" },
+              ]}
+              error={
+                formik.touched.status && formik.errors.status
+                  ? formik.errors.status
+                  : ""
+              }
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              type="button"
+              className="px-4 py-2 border rounded-lg"
+              onClick={() => formik.resetForm()}
+            >
+              Cancel
+            </button>
+
+            <SidebarBtn
+              type="submit"
+              label="Submit"
+              isActive
+              leadingIcon="mdi:check"
+              disabled={formik.isSubmitting}
+            />
+          </div>
+        </form>
           {/* Buttons */}
           <div className="flex justify-end gap-4 mt-6">
             <button

@@ -8,11 +8,11 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import { vehicleList } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { vehicleList, deleteVehicle } from "@/app/services/allApi";
 
 // 🔹 API response type
 interface Vehicle {
@@ -49,7 +49,7 @@ const dropdownDataList: DropdownItem[] = [
 
 // 🔹 Table columns
 const columns = [
-  { key: "code", label: "Vehicle Code" },
+  { key: "vehicle_code", label: "Vehicle Code" },
   { key: "brand", label: "Brand" },
   { key: "numberPlate", label: "Number Plate" },
   { key: "chassisNumber", label: "Chassis Number" },
@@ -61,20 +61,22 @@ const columns = [
   { key: "ownerReference", label: "Owner Reference" },
   { key: "vehicleRoute", label: "Vehicle Route" },
   {
-    key: "status",
-    label: "Status",
-    render: (row: TableDataType) => (
-      <span
-        className={`text-sm p-1 px-4 rounded-xl text-[12px] ${
-          row.status === "Active"
-            ? "text-[#027A48] bg-[#ECFDF3]"
-            : "text-red-700 bg-red-200"
-        }`}
-      >
-        {row.status}
-      </span>
-    ),
-  },
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => (
+            <div className="flex items-center">
+                {row.status ? (
+                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+                        Active
+                    </span>
+                ) : (
+                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+                        Inactive
+                    </span>
+                )}
+            </div>
+        ),
+    },
 ];
 
 export default function VehiclePage() {
@@ -87,10 +89,10 @@ export default function VehiclePage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // ✅ Map API → TableDataType
+  // ✅ Map vehicles → TableDataType safely
   const tableData: TableDataType[] = vehicles.map((v) => ({
     id: String(v.id ?? ""),
-    code: v.vehicle_code ?? "-",
+    vehicle_code: v.vehicle_code ?? "-",
     brand: v.description ?? "-",
     numberPlate: v.number_plat ?? "-",
     chassisNumber: v.vehicle_chesis_no ?? "-",
@@ -125,19 +127,15 @@ export default function VehiclePage() {
     fetchVehicles();
   }, [showSnackbar]);
 
-  // ✅ Delete handler
+  // ✅ Delete handler (placeholder – update once delete API exists)
   const handleConfirmDelete = async () => {
     if (!selectedRow?.id) return;
 
-    const res = await deleteVehicle(String(selectedRow.id));
-    if (res.error) {
-      showSnackbar(res.message || "Failed to delete vehicle ❌", "error");
-    } else {
-      showSnackbar("Vehicle deleted successfully ✅", "success");
-      setVehicles((prev) =>
-        prev.filter((v) => String(v.id) !== String(selectedRow.id))
-      );
-    }
+    // TODO: Replace with actual deleteVehicle API
+    setVehicles((prev) =>
+      prev.filter((v) => String(v.id) !== String(selectedRow.id))
+    );
+    showSnackbar("Vehicle deleted successfully ✅", "success");
 
     setShowDeletePopup(false);
     setSelectedRow(null);

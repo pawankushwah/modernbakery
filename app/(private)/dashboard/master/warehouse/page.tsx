@@ -76,7 +76,7 @@ export default function Warehouse() {
     const [selectedRow, setSelectedRow] = useState<WarehouseRow | null>(null);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
-  useEffect(() => {
+ 
     const fetchWarehouses = async () => {
       try {
         const res = await getWarehouse();
@@ -115,8 +115,9 @@ export default function Warehouse() {
         setLoading(false);
       }
     };
-    fetchWarehouses();
-  }, []);
+    useEffect(() => {
+      fetchWarehouses();
+    }, []);
 
     const handleConfirmDelete = async () => {
       if (!selectedRow) return;
@@ -126,7 +127,8 @@ export default function Warehouse() {
         await deleteWarehouse(String(selectedRow.id)); // call API
         
         showSnackbar("Warehouse deleted successfully ", "success"); 
-        router.refresh();
+        await fetchWarehouses();
+         setWarehouses((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
       } catch (error) {
         console.error("Delete failed :", error);
         showSnackbar("Failed to delete Warehouse", "error"); 

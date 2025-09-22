@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
@@ -31,7 +31,23 @@ const dropdownDataList: DropdownItem[] = [
 const columns = [
   { key: "route_type_code", label: "Route Type Code" },
   { key: "route_type_name", label: "Route Type Name" },
-  { key: "status", label: "Status" },
+  {
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => (
+            <div className="flex items-center">
+                {Number(row.status) === 1 ? (
+                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+                        Active
+                    </span>
+                ) : (
+                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+                        Inactive
+                    </span>
+                )}
+            </div>
+        ),
+    },
 ];
 
 export default function RouteType() {
@@ -47,8 +63,10 @@ export default function RouteType() {
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<RouteTypeItem | null>(null);
-
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const updated = searchParams.get("updated"); // detect if redirected after update
   const { showSnackbar } = useSnackbar();
 
   type TableRow = TableDataType & { id?: string };
@@ -95,13 +113,15 @@ export default function RouteType() {
     } finally {
       setShowDeletePopup(false);
       setSelectedRow(null);
+      setDeletingId(null);
     }
   };
 
-  return loading ? (
-    <Loading />
-  ) : (
+  if (loading) return <Loading />;
+
+  return (
     <>
+      {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
         <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
           Route Type
@@ -140,6 +160,7 @@ export default function RouteType() {
         </div>
       </div>
 
+      {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
           data={tableData}
@@ -162,7 +183,7 @@ export default function RouteType() {
             columns,
             rowSelection: true,
             rowActions: [
-              { icon: "lucide:eye" },
+              
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
@@ -171,10 +192,11 @@ export default function RouteType() {
                 },
               },
               {
-                icon: "lucide:more-vertical",
+                icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  setSelectedRow({ id: row.id });
+                  if (deletingId === String(row.id)) return;
+                  setSelectedRow({ id: String(row.id) });
                   setShowDeletePopup(true);
                 },
               },
@@ -184,6 +206,7 @@ export default function RouteType() {
         />
       </div>
 
+      {/* Delete popup */}
       {showDeletePopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <DeleteConfirmPopup

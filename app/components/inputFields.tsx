@@ -15,7 +15,7 @@ type Props = {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => void;
   options?: Option[];
-  type?: "text" | "select" | "file";
+  type?: "text" | "select" | "file" | "date";
   id?: string;
   width?: string;
   error?: string | false;

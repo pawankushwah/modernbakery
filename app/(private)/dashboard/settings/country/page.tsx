@@ -59,7 +59,7 @@ export default function Country() {
     currency: c.currency ?? "",
   }));
 
-  useEffect(() => {
+
     const fetchCountries = async () => {
       try {
         const listRes = await countryList({});
@@ -71,9 +71,10 @@ export default function Country() {
       }
     };
 
-    fetchCountries();
-  }, []);
-
+ 
+useEffect(()  => {
+  fetchCountries();
+},[]);
   const handleConfirmDelete = async () => {
     if (!selectedRow) return;
     try {
@@ -81,6 +82,7 @@ export default function Country() {
                 await deleteCountry(String(selectedRow.id)); // call API
                 showSnackbar("Country deleted successfully ", "success");
                 await countryList({});
+                setCountries((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
             } catch (error) {
                 console.error("Delete failed ❌:", error);
                 showSnackbar("Failed to delete country", "error"); 

@@ -34,20 +34,16 @@ const LoginPage = () => {
                         initialValues={{ userId: "", password: "" }}
                         validationSchema={LoginSchema}
                         onSubmit={async (values, { setErrors }) => {
-                            try {
-                                const res = await login({
-                                    email: values.userId,
-                                    password: values.password,
-                                });
 
+                            const res = await login({
+                                email: values.userId,
+                                password: values.password,
+                            });
+                            
+                            if(res.error) return setErrors({ userId: res.data.message });
+                            else {
                                 localStorage.setItem("token", res.data.access_token);
                                 router.push("/dashboard");
-                            } catch (err: unknown) {
-                                if (err instanceof Error) {
-                                    setErrors({
-                                        userId: "Invalid credentials",
-                                    });
-                                }
                             }
                         }}
                     >

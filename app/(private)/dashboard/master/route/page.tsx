@@ -139,6 +139,7 @@ export default function Route() {
             await deleteRoute(String(selectedRow.id)); // call API
             showSnackbar("Route deleted successfully ", "success");
             await fetchRoutes();
+             setRoutes((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
         } catch (error) {
             console.error("Delete failed ❌:", error);
             showSnackbar("Failed to delete Route ❌", "error");

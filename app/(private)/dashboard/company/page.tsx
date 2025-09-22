@@ -67,7 +67,7 @@ export default function CompanyPage() {
   }));
 
   // ✅ Fetch companies from API
-  useEffect(() => {
+  
     const fetchCompanies = async () => {
       try {
         const res = await companyList();
@@ -84,8 +84,10 @@ export default function CompanyPage() {
       }
     };
 
-    fetchCompanies();
-  }, [showSnackbar]);
+
+    useEffect(() => {
+       fetchCompanies();
+    }, [showSnackbar]);
 
 
   const handleConfirmDelete = async () => {
@@ -94,7 +96,7 @@ export default function CompanyPage() {
     const res = await deleteCompany(String(selectedRow.id));
     if (res.error) {
       showSnackbar(res.message || "Failed to delete company ❌", "error");
-
+await fetchCompanies();
       setCompanies((prev) =>
         prev.filter((c) => String(c.id) !== String(selectedRow.id))
       );
@@ -105,6 +107,7 @@ export default function CompanyPage() {
       showSnackbar("Company deleted successfully ✅", "success");
     }
 };
+     
 
 
   if (loading) return <Loading />;

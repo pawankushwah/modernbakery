@@ -18,7 +18,7 @@ interface CustomerType {
   id?: string | number;
   code?: string;
   name?: string;
-  status?: string | number;
+  status?:  number;
   [key: string]: string | number | undefined;
 }
 
@@ -33,7 +33,23 @@ const dropdownDataList = [
 const columns = [
   { key: "code", label: "Code" },
   { key: "name", label: "Name" },
-  { key: "status", label: "Status" },
+   {
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => (
+            <div className="flex items-center">
+                {Number(row.status) === 1 ? (
+                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+                        Active
+                    </span>
+                ) : (
+                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+                        In Active
+                    </span>
+                )}
+            </div>
+        ),
+    },
 ];
 
 export default function CustomerPage() {
@@ -53,7 +69,7 @@ export default function CustomerPage() {
     code: c.code ?? "",
     name: c.name ?? "",
     status:
-      c.status === "active" || c.status === 1
+        c.status === 1
         ? "Active"
         : "Inactive",
   }));
@@ -190,7 +206,7 @@ setRefresh(!refresh);
                     id: r.id,
                     code: r.code,
                     name: r.name,
-                    status: r.status,
+                    status: Number(r.status) === 1 ? 1 : 0,
                   });
                   setShowDeletePopup(true);
                 },

@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-
+import CustomDropdown from "@/app/components/customDropdown";
+import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import BorderIconButton from "@/app/components/borderIconButton";
+import { Icon } from "@iconify-icon/react";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Loading from "@/app/components/Loading";
@@ -28,7 +31,16 @@ interface CustomerItem {
   status: number; // 1 = Active, 0 = Inactive
 }
 
+const dropdownDataList = [
+  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
+  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
+  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
+  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
+];
+
 export default function CompanyCustomers() {
+  const [showDropdown, setShowDropdown] = useState(false);
   const [customers, setCustomers] = useState<CustomerItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
@@ -93,22 +105,63 @@ export default function CompanyCustomers() {
   return (
     <>
       {/* Header */}
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Company Customer</h1>
-        <SidebarBtn
-          href="/dashboard/settings/company/companyCustomer/add"
-          isActive
-          leadingIcon="lucide:plus"
-          label="Add Company Customer"
-        />
-      </div>
+      <div className="flex justify-between items-center mb-[20px]">
+              <h1 className="text-[20px] font-semibold text-[#181D27]">
+                Company Customer
+              </h1>
+      
+              <div className="flex gap-[12px] relative">
+                <BorderIconButton icon="gala:file-document" label="Export CSV" />
+                <BorderIconButton icon="mage:upload" />
+      
+                <DismissibleDropdown
+                  isOpen={showDropdown}
+                  setIsOpen={setShowDropdown}
+                  button={<BorderIconButton icon="ic:sharp-more-vert" />}
+                  dropdown={
+                    <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                      <CustomDropdown>
+                        {dropdownDataList.map((link, idx) => (
+                          <div
+                            key={idx}
+                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                          >
+                            <Icon
+                              icon={link.icon}
+                              width={link.iconWidth}
+                              className="text-[#717680]"
+                            />
+                            <span className="text-[#181D27] font-[500] text-[16px]">
+                              {link.label}
+                            </span>
+                          </div>
+                        ))}
+                      </CustomDropdown>
+                    </div>
+                  }
+                />
+              </div>
+            </div>
 
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
           data={tableData}
           config={{
-            header: { searchBar: true, columnFilter: true },
+            header: {
+                         searchBar: true,
+                         columnFilter: true,
+                         actions: [
+                           <SidebarBtn
+                             key="add-company-customer"
+                             href="/dashboard/settings/companyCustomer/add"
+                             leadingIcon="lucide:plus"
+                             label="Add Company Customer"
+                             labelTw="hidden sm:block"
+                             isActive
+                           />,
+                         ],
+                       },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
               { key: "sap_code", label: "SAP Code" },
@@ -136,7 +189,7 @@ export default function CompanyCustomers() {
             rowActions: [
               {
                 icon: "lucide:edit-2",
-                onClick: (row: TableDataType) => router.push(`/dashboard/settings/customers/update/${row.id}`),
+                onClick: (row: TableDataType) => router.push(`/dashboard/settings/company/companyCustomer/update/${row.id}`),
               },
               {
                 icon: "lucide:trash-2",

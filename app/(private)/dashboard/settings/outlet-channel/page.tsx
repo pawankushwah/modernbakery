@@ -12,7 +12,7 @@ import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { channelList, deleteOutletChannel } from "@/app/services/allApi";
+import { channelList, deleteOutletChannel} from "@/app/services/allApi";
 
 interface OutletChannel {
   id?: number | string;
@@ -33,7 +33,23 @@ const dropdownDataList = [
 const columns = [
   { key: "outlet_channel_code", label: "Channel Code" },
   { key: "outlet_channel", label: "Outlet Channel Name" },
-  { key: "status", label: "Status" },
+  {
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => (
+            <div className="flex items-center">
+                {Number(row.status) === 1 ? (
+                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+                        Active
+                    </span>
+                ) : (
+                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+                        Inactive
+                    </span>
+                )}
+            </div>
+        ),
+    },
 ];
 
 export default function ChannelList() {
@@ -52,44 +68,53 @@ export default function ChannelList() {
     id: c.id?.toString() ?? "",
     outlet_channel_code: c.outlet_channel_code ?? "",
     outlet_channel: c.outlet_channel ?? "",
-    status: c.status === 1 ? "Active" : "Inactive",
+    status: c.status !== undefined ? String(c.status) : "0",
   }));
 
-  // Fetch channels
-  useEffect(() => {
-    const fetchChannels = async () => {
-      setLoading(true);
-      try {
-        const res = await channelList();
-        const data = Array.isArray(res?.data) ? res.data : [];
-        setChannels(data);
-      } catch (error) {
-        console.error("Failed to fetch channels ❌", error);
-        showSnackbar("Failed to fetch channels ❌", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchChannels();
-  }, [refresh]);
+ useEffect(() => {
+  const fetchChannels = async () => {
+    try {
+      const listRes = await channelList();
+      console.log("API Response 👉", listRes);
+
+      // ✅ Correct array path
+      const data = Array.isArray(listRes?.original?.data)
+        ? listRes.original.data
+        : [];
+
+      setChannels(data);
+    } catch (error: unknown) {
+      console.error("API Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchChannels();
+}, []);
 
   // Delete handler
   const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
-    try {
-      await deleteOutletChannel(String(selectedRow.id));
-      setChannels((prev) =>
-        prev.filter((c) => String(c.id) !== String(selectedRow.id))
-      );
-      showSnackbar("Channel deleted successfully ✅", "success");
-      setSelectedRow(null);
-      setShowDeletePopup(false);
-      setRefresh(!refresh);
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Failed to delete channel ❌", "error");
-    }
-  };
+    if (!selectedRow) return;
+
+  try {
+    await deleteOutletChannel(String(selectedRow.id)); // API call
+    await channelList();
+
+    // ✅ Remove deleted row from state
+    setChannels((prev) =>
+      prev.filter((c) => String(c.id) !== String(selectedRow.id))
+    );
+
+    showSnackbar("Channel deleted successfully ✅", "success");
+  } catch (error) {
+    console.error("Delete failed ❌:", error);
+    showSnackbar("Failed to delete channel ❌", "error");
+  } finally {
+    setShowDeletePopup(false);
+    setSelectedRow(null);
+  }
+};
 
   if (loading) return <Loading />;
 
@@ -172,7 +197,7 @@ export default function ChannelList() {
                     id: r.id,
                     outlet_channel_code: r.outlet_channel_code,
                     outlet_channel: r.outlet_channel,
-                    status: r.status === "Active" ? 1 : 0,
+                    status: Number(r.status) === 1 ? 1 : 0,
                   });
                   setShowDeletePopup(true);
                 },

@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-
+import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
@@ -19,8 +20,17 @@ interface RegionItem {
   status?: number | "Active" | "Inactive"; // API may return number
 }
 
+const dropdownDataList = [
+  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
+  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
+  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
+  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
+];
+
 export default function Region() {
   const [regions, setRegions] = useState<RegionItem[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState<boolean>(true);  
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<RegionItem | null>(null);
@@ -82,12 +92,37 @@ export default function Region() {
       {/* Header */}
       <div className="flex justify-between items-center mb-5">
         <h1 className="text-[20px] font-semibold text-[#181D27]">Region</h1>
-        <SidebarBtn
-          href="/dashboard/settings/region/add"
-          isActive
-          leadingIcon="lucide:plus"
-          label="Add Region"
-        />
+      <div className="flex gap-[12px] relative">
+                <BorderIconButton icon="gala:file-document" label="Export CSV" />
+                <BorderIconButton icon="mage:upload" />
+      
+                <DismissibleDropdown
+                  isOpen={showDropdown}
+                  setIsOpen={setShowDropdown}
+                  button={<BorderIconButton icon="ic:sharp-more-vert" />}
+                  dropdown={
+                    <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                      <CustomDropdown>
+                        {dropdownDataList.map((link, idx) => (
+                          <div
+                            key={idx}
+                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                          >
+                            <Icon
+                              icon={link.icon}
+                              width={link.iconWidth}
+                              className="text-[#717680]"
+                            />
+                            <span className="text-[#181D27] font-[500] text-[16px]">
+                              {link.label}
+                            </span>
+                          </div>
+                        ))}
+                      </CustomDropdown>
+                    </div>
+                  }
+                />
+              </div>
       </div>
 
       {/* Table */}
@@ -95,7 +130,20 @@ export default function Region() {
         <Table
           data={tableData}
           config={{
-            header: { searchBar: true, columnFilter: true },
+            header: {
+                         searchBar: true,
+                         columnFilter: true,
+                         actions: [
+                           <SidebarBtn
+                             key="add-region"
+                             href="/dashboard/settings/region/add"
+                             leadingIcon="lucide:plus"
+                             label="Add Region"
+                             labelTw="hidden sm:block"
+                             isActive
+                           />,
+                         ],
+                       },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
               { key: "region_code", label: "Region Code" },
