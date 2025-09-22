@@ -39,7 +39,7 @@ export default function TopBar({
 
     return (
         <div
-            className={`fixed w-full flex flex-col items-center ${paddingLeft} peer-hover:pl-[250px]`}
+            className={`absolute w-full flex flex-col items-center ${paddingLeft} peer-hover:pl-[250px]`}
         >
             {/* Top Bar start */}
             <div className="w-full h-[60px] flex">

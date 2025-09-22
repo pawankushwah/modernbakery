@@ -133,6 +133,7 @@ export default function CreateUpdate({
                 <InputDropdown
                     label="Status"
                     defaultText="Select Status"
+                    dropdownTw="w-full h-[100px]"
                     defaultOption={formik.values.status === 1 ? 0 : 1}
                     options={[
                         { label: "Active", value: "1" },

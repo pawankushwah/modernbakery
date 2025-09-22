@@ -24,8 +24,8 @@ API.interceptors.request.use(
 
 function handleError(error: unknown) {
     if (axios.isAxiosError(error) && error.response) {
-        console.error("API Error:", error.response.data);
-        return { error: true, data: error.response.data };
+        console.error("API Error:", error.response?.data);
+        return { error: true, data: error.response?.data };
     } else if (error instanceof Error) {
         console.error("Request Error:", error.message);
         return { error: true, data: { message: error.message } };
