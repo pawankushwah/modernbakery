@@ -858,7 +858,7 @@ export const getAreaById = async (id: string) => {
 
 export const updateAreaById = async (id: string, payload: object) => {
     try {
-        const res = await API.get(`/api/master/area/area/${id}`, payload);
+        const res = await API.put(`/api/master/area/area/${id}`, payload);
 
         return res.data;
     } catch (error: unknown) {
