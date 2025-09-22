@@ -27,19 +27,28 @@ const columns = [
     {
         key: "discount_status",
         label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {Number(row.discount_status) === 1 ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
-        ),
+        render: (row: TableDataType) => {
+            // Debug log to see actual values
+            console.log('discount_status value:', row.discount_status, 'type:', typeof row.discount_status);
+            
+            // Check if status is active (handles both string and number types)
+            const statusValue = String(row.discount_status);
+            const isActive = statusValue === "1";
+            
+            return (
+                <div className="flex items-center">
+                    {isActive ? (
+                        <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+                            Active
+                        </span>
+                    ) : (
+                        <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+                            Inactive
+                        </span>
+                    )}
+                </div>
+            );
+        },
     },
 ];
 

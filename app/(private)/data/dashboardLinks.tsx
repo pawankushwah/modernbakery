@@ -34,20 +34,20 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "mdi:company",
                 iconColor: "text-[#79e3f8]"
             },
-            {
-                isActive: false,
-                href: "/dashboard/salesman",
-                label: "Salesman",
-                leadingIcon: "carbon:sales-ops",
-                iconColor: "text-green-500"
-            },
-            {
-                isActive: false,
-                href: "/dashboard/promotion",
-                label: "Promotion",
-                leadingIcon: "hugeicons:promotion",
-                iconColor: "text-red-500"
-            },
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/salesman",
+            //     label: "Salesman",
+            //     leadingIcon: "carbon:sales-ops",
+            //     iconColor: "text-green-500"
+            // },
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/promotion",
+            //     label: "Promotion",
+            //     leadingIcon: "hugeicons:promotion",
+            //     iconColor: "text-red-500"
+            // },
         ],
     },
     {
@@ -62,20 +62,20 @@ export const initialLinkData: SidebarDataType[] = [
                 iconColor: "text-yellow-400",
                 children: [ 
                    
-                    {
-                        isActive: false,
-                        href: "/dashboard/master/customer",
-                        label: "Customer",
-                        leadingIcon: "lucide:user",
-                        iconColor: "text-green-500"
-                    },
-                    {
-                isActive: false,
-                href: "/dashboard/master/item",
-                label: "Items",
-                leadingIcon: "mdi:package-variant",
-                iconColor: "text-cyan-500"
-            },
+                    // {
+                    //     isActive: false,
+                    //     href: "/dashboard/master/customer",
+                    //     label: "Customer",
+                    //     leadingIcon: "lucide:user",
+                    //     iconColor: "text-green-500"
+                    // },
+            //         {
+            //     isActive: false,
+            //     href: "/dashboard/master/item",
+            //     label: "Items",
+            //     leadingIcon: "mdi:package-variant",
+            //     iconColor: "text-cyan-500"
+            // },
                     {
                 isActive: false,
                 href: "/dashboard/master/route",
@@ -83,13 +83,13 @@ export const initialLinkData: SidebarDataType[] = [
                 leadingIcon: "mdi:map",
                 iconColor: "text-yellow-400"
             },
-                    {
-                isActive: false,
-                href: "/dashboard/master/pricing",
-                label: "Pricing",
-                leadingIcon: "mdi:currency-usd",
-                iconColor: "text-yellow-400"
-            },
+            //         {
+            //     isActive: false,
+            //     href: "/dashboard/master/pricing",
+            //     label: "Pricing",
+            //     leadingIcon: "mdi:currency-usd",
+            //     iconColor: "text-yellow-400"
+            // },
             {
                 isActive: false,
                 href: "/dashboard/master/vehicle",
@@ -107,21 +107,21 @@ export const initialLinkData: SidebarDataType[] = [
                 ],
             },
             
-            {
-                isActive: false,
-                href: "/dashboard/report",
-                label: "Report",
-                leadingIcon: "tabler:file-text",
-                trailingIcon: "mdi-light:chevron-right",
-                iconColor: "text-red-500"
-            },
-            {
-                isActive: false,
-                href: "/dashboard/agentTransaction",
-                label: "Agent Transaction",
-                leadingIcon: "mdi:account-cash-outline",
-                iconColor: "text-violet-500"
-            },
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/report",
+            //     label: "Report",
+            //     leadingIcon: "tabler:file-text",
+            //     trailingIcon: "mdi-light:chevron-right",
+            //     iconColor: "text-red-500"
+            // },
+            // {
+            //     isActive: false,
+            //     href: "/dashboard/agentTransaction",
+            //     label: "Agent Transaction",
+            //     leadingIcon: "mdi:account-cash-outline",
+            //     iconColor: "text-violet-500"
+            // },
            
             // {
             //     isActive: false,

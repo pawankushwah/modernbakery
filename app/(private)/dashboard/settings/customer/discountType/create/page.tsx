@@ -22,7 +22,7 @@ export default function CreateDiscountType() {
 
   const validationSchema = yup.object().shape({
     discount_name: yup.string().required("Discount name is required").max(100),
-    discount_status: yup.string().required("Status is required").oneOf(["active", "inactive"], "Invalid status"),
+    discount_status: yup.string().required("Status is required").oneOf(["0","1","active", "inactive"], "Invalid status"),
   });
 
   const handleSubmit = async () => {
