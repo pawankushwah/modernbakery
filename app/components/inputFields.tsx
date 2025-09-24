@@ -209,10 +209,10 @@ export default function InputFields({
           type="file"
           onChange={safeOnChange}
           onBlur={onBlur}
-          className={`border h-[44px] w-full rounded-md px-3 py-1 mt-[6px] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
+          className={`border h-[44px] w-full rounded-md px-3 py-1 mt-[2px] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
             }`}
         />
-      ) : (
+      ) : type === "text" ? (
         <input
           id={id ?? name}
           name={name}
@@ -221,10 +221,22 @@ export default function InputFields({
           onChange={safeOnChange}
           disabled={disabled}
           onBlur={onBlur}
-          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+          className={`border h-[44px] w-full rounded-md px-3 mt-[2px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
           placeholder={`Enter ${label}`}
         />
-      )}
+      ) : type === "date" ? (
+        <input
+          id={id ?? name}
+          name={name}
+          type="date"
+          value={value ?? ""}
+          onChange={safeOnChange}
+          disabled={disabled}
+          onBlur={onBlur}
+          className={`border h-[44px] w-full rounded-md px-3 mt-[2px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+          placeholder={`Enter ${label}`}
+        />
+      ): null}
 
       {error && (
         <span className="text-xs text-red-500 mt-1">{error}</span>

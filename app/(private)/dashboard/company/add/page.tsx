@@ -1,489 +1,479 @@
 "use client";
 
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
+import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
 import ContainerCard from "@/app/components/containerCard";
-import FormInputField from "@/app/components/formInputField";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import SearchableDropdown from "@/app/components/SearchableDropdown";
-import { useState, useEffect } from "react";
-import { useFormik } from "formik";
-import * as Yup from "yup";
-import {
-  countryList,
-  addCompany,
-  regionList,
-  subRegionList,
-} from "@/app/services/allApi";
+import FormInputField from "@/app/components/formInputField";
+import { addCompany, countryList, regionList, subRegionList } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import * as Yup from "yup";
+import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-export default function AddCustomer() {
-  const [countries, setCountries] = useState<{ value: string; label: string }[]>(
-    []
-  );
-  const [currency, setCurrency] = useState<{ value: string; label: string }[]>(
-    []
-  );
-  const [regions, setRegions] = useState<{ value: string; label: string }[]>(
-    []
-  );
-  const [subRegions, setSubRegions] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const router= useRouter()
+interface ApiCountry {
+  id: string;
+  name?: string;
+  country_name?: string;
+  currency?: string;
+}
 
-  type ApiCountry = {
-    id?: string;
-    code?: string;
-    name?: string;
-    country_name?: string;
-    currency?: string;
-  };
+interface ApiRegion {
+  id: string;
+  name?: string;
+  region_name?: string;
+}
 
-  type ApiRegion = {
-    id?: string;
-    name?: string;
-    region_name?: string;
-  };
+interface ApiSubRegion {
+  id: string;
+  name?: string;
+  area_name?: string;
+}
 
-  type ApiSubRegion = {
-    id?: string;
-    name?: string;
-    area_name?: string;
-  };
+interface CompanyFormValues {
+  company_name: string;
+  company_code: string;
+  company_type: string;
+  company_website: string;
+  company_logo: string;
+  primary_contact: string;
+  primary_code: string;
+  toll_free_number: string;
+  toll_free_code: string;
+  email: string;
+  country_id: string;
+  region: string;
+  sub_region: string;
+  district: string;
+  town: string;
+  street: string;
+  landmark: string;
+  tin_number: string;
+  selling_currency: string;
+  purchase_currency: string;
+  vat_no: string;
+  modules: string;
+  service_type: string;
+  status: string;
+}
 
-  const { showSnackbar } = useSnackbar();
-
-  // ✅ Yup Validation
-  const CompanySchema = Yup.object({
-  companyName: Yup.string().required("Company name is required"),
-  companyCode: Yup.string().required("Company code is required"),
-  companyType: Yup.string().required("Company type is required"),
-  companyWebsite: Yup.string()
-    .url("Invalid URL")
-    .nullable()
-    .notRequired(),
-  companyLogo: Yup.mixed().nullable().notRequired(),
-  primaryContact: Yup.string().required("Primary contact is required"),
-  primaryCode: Yup.string().required("Primary code is required"),
-  tollFreeNumber: Yup.string().nullable().notRequired(),
-  tollFreeCode: Yup.string().nullable().notRequired(),
+const CompanySchema = Yup.object().shape({
+  company_name: Yup.string().required("Company name is required"),
+  company_code: Yup.string().required("Company code is required"),
+  company_type: Yup.string().required("Company type is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
-  region: Yup.string().required("Region is required"),
-  subRegion: Yup.string().required("Sub-region is required"),
-  district: Yup.string().nullable().notRequired(),
-  town: Yup.string().nullable().notRequired(),
-  street: Yup.string().nullable().notRequired(),
-  landmark: Yup.string().nullable().notRequired(),
-  country: Yup.string().required("Country is required"),
-  tinNumber: Yup.string().required("TIN Number is required"),
-  sellingCurrency: Yup.string().required("Selling currency is required"),
-  purchaseCurrency: Yup.string().required("Purchase currency is required"),
-  vatNo: Yup.number()
-    .typeError("VAT must be a number")
-    .nullable()
-    .notRequired(),
-  modules: Yup.string().nullable().notRequired(),
-  serviceType: Yup.string().required("Service type is required"),
-  status: Yup.string()
-    .oneOf(["0", "1"], "Status must be Active or Inactive")
-    .required("Status is required"),
+  country_id: Yup.string().required("Country is required"),
+  tin_number: Yup.string().required("TIN Number is required"),
+  selling_currency: Yup.string().required("Selling currency is required"),
+  purchase_currency: Yup.string().required("Purchase currency is required"),
+  service_type: Yup.string().required("Service type is required"),
+  status: Yup.string().required("Status is required"),
+  district: Yup.string().required("District is required"),
+  town: Yup.string().required("Town is required"),
+  street: Yup.string().required("Street is required"),
+  sub_region: Yup.string().required("Sub Region is required"),
+  primary_contact: Yup.string().required("Primary contact is required"),
+  toll_free_number: Yup.string().required("Toll free number is required"),
 });
 
+// Per-step validation schemas
+const stepSchemas = [
+  // Step 1: Company
+  Yup.object({
+    company_name: Yup.string().required("Company name is required"),
+    company_code: Yup.string().required("Company code is required"),
+    company_type: Yup.string().required("Company type is required"),
+    company_website: Yup.string(),
+    company_logo: Yup.string(),
+  }),
+  // Step 2: Contact
+  Yup.object({
+    primary_contact: Yup.string().required("Primary contact is required"),
+    primary_code: Yup.string(),
+    toll_free_number: Yup.string().required("Toll free number is required"),
+    toll_free_code: Yup.string(),
+    email: Yup.string().email("Invalid email").required("Email is required"),
+  }),
+  // Step 3: Location
+  Yup.object({
+    region: Yup.string().required("Region is required"),
+    sub_region: Yup.string().required("Sub Region is required"),
+    district: Yup.string().required("District is required"),
+    town: Yup.string().required("Town is required"),
+    street: Yup.string().required("Street is required"),
+    landmark: Yup.string(),
+    country_id: Yup.string().required("Country is required"),
+    tin_number: Yup.string().required("TIN Number is required"),
+  }),
+  // Step 4: Financial
+  Yup.object({
+    selling_currency: Yup.string().required("Selling currency is required"),
+    purchase_currency: Yup.string().required("Purchase currency is required"),
+    vat_no: Yup.string(),
+  }),
+  // Step 5: Additional
+  Yup.object({
+    modules: Yup.string(),
+    service_type: Yup.string().required("Service type is required"),
+    status: Yup.string().required("Status is required"),
+  }),
+];
 
-  // ✅ Formik Setup
-  const formik = useFormik({
-    initialValues: {
-      companyType: "",
-      companyCode: "",
-      companyName: "",
-      companyLogo: "",
-      companyWebsite: "",
-      primaryCode: "uae",
-      primaryContact: "",
-      tollFreeCode: "uae",
-      tollFreeNumber: "",
-      email: "",
-      region: "",
-      subRegion: "",
-      district: "",
-      town: "",
-      street: "",
-      landmark: "",
-      country: "",
-      tinNumber: "",
-      sellingCurrency: "USD",
-      purchaseCurrency: "USD",
-      vatNo: "",
-      modules: "",
-      serviceType: "",
-      status: "1", // string because form input returns string
-    },
+export default function AddCompanyWithStepper() {
+  const { regionOptions,areaOptions,loading, countryOptions, onlyCountryOptions } = useAllDropdownListData();
+  const steps: StepperStep[] = [
+    { id: 1, label: "Company" },
+    { id: 2, label: "Contact" },
+    { id: 3, label: "Location" },
+    { id: 4, label: "Financial" },
+    { id: 5, label: "Additional" },
+  ];
 
-    validationSchema: CompanySchema,
-    onSubmit: async (values) => {
-      console.log("✅ Form submitted with values:", values);
+  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
+    useStepperForm(steps.length);
 
-      // Convert modules string → array
-      const modulesArray = values.modules
-        ? values.modules.split(",").map((m) => m.trim())
-        : [];
+  const { showSnackbar } = useSnackbar();
+  const router = useRouter();
 
-      // Build FormData for file + array support
-      const formData = new FormData();
+  const [currency, setCurrency] = useState<{ value: string; label: string }[]>([]);
+  const [regions, setRegions] = useState<{ value: string; label: string }[]>([]);
+  const [subRegions, setSubRegions] = useState<{ value: string; label: string }[]>([]);
 
-      formData.append("company_code", values.companyCode);
-      formData.append("company_name", values.companyName);
-      formData.append("email", values.email);
-      formData.append("tin_number", values.tinNumber);
-      formData.append("vat", values.vatNo);
-      formData.append("country_id", values.country);
-      formData.append("company_logo", values.companyLogo);
-      formData.append("selling_currency", values.sellingCurrency);
-      formData.append("purchase_currency", values.purchaseCurrency);
-      formData.append(
-        "toll_free_no",
-        `${values.tollFreeCode}${values.tollFreeNumber}`
-      );
-      formData.append("website", values.companyWebsite);
-      formData.append("service_type", values.serviceType);
-      formData.append("status", values.status);
-      formData.append("company_type", values.companyType);
-      formData.append("district", values.district);
-      formData.append("town", values.town);
-      formData.append("street", values.street);
-      formData.append("landmark", values.landmark);
-      formData.append("region", values.region);
-      formData.append("sub_region", values.subRegion);
-      formData.append(
-        "primary_contact",
-        `${values.primaryCode}${values.primaryContact}`
-      );
+  const initialValues: CompanyFormValues = {
+    company_name: "",
+    company_code: "",
+    company_type: "",
+    company_website: "",
+    company_logo: "",
+    email: "",
+    primary_contact: "",
+    primary_code: "",
+    toll_free_number: "",
+    toll_free_code: "",
+    country_id: "",
+    region: "",
+    sub_region: "",
+    district: "",
+    town: "",
+    street: "",
+    landmark: "",
+    tin_number: "",
+    selling_currency: "USD",
+    purchase_currency: "USD",
+    vat_no: "",
+    modules: "",
+    service_type: "",
+    status: "1",
+  };
 
-      // ✅ Handle logo
-      const maybeFile = values.companyLogo as unknown;
-      if (
-        maybeFile &&
-        typeof maybeFile === "object" &&
-        "name" in (maybeFile as Record<string, unknown>)
-      ) {
-        formData.append("logo", maybeFile as Blob);
-      } else if (typeof values.companyLogo === "boolean") {
-        formData.append("logo", String(values.companyLogo));
+  const handleNext = async (
+    values: CompanyFormValues,
+    actions: FormikHelpers<CompanyFormValues>
+  ) => {
+    try {
+      // Validate only the current step's fields
+      const schema = stepSchemas[currentStep - 1];
+      await schema.validate(values, { abortEarly: false });
+      markStepCompleted(currentStep);
+      nextStep();
+    } catch (err: unknown) {
+      if (err instanceof Yup.ValidationError) {
+        // Only touch fields in the current step
+        const fields = err.inner.map((e) => e.path);
+        actions.setTouched(
+          fields.reduce(
+            (acc, key) => ({ ...acc, [key!]: true }),
+            {} as Record<string, boolean>
+          )
+        );
+        actions.setErrors(
+          err.inner.reduce(
+            (acc: Partial<Record<keyof CompanyFormValues, string>>, curr) => ({
+              ...acc,
+              [curr.path as keyof CompanyFormValues]: curr.message,
+            }),
+            {}
+          )
+        );
       }
+      showSnackbar("Please fix validation errors before proceeding", "error");
+    }
+  };
 
-      // ✅ Append modules as array
-      modulesArray.forEach((m, i) => {
-        formData.append(`module_access[${i}]`, m);
+  const handleSubmit = async (values: CompanyFormValues) => {
+    try {
+      await CompanySchema.validate(values, { abortEarly: false });
+
+      // Convert to FormData for API
+      const formData = new FormData();
+      (Object.keys(values) as (keyof CompanyFormValues)[]).forEach((key) => {
+        formData.append(key, values[key] ?? "");
       });
 
-      console.log("📦 Prepared payload:", [...formData.entries()]);
-
-      const res = await addCompany(formData); // API should handle multipart/form-data
-      console.log("🛢️ API response:", res);
+      const res = await addCompany(formData);
       if (res.error) {
-        showSnackbar(res.data.message || "Failed to add company!", "error");
+        showSnackbar(res.data?.message || "Failed to add company ❌", "error");
       } else {
-        showSnackbar("COMPANY added successfully ", "success");
-        formik.resetForm();
-        router.push("/dashboard/company")
+        showSnackbar("Company added successfully ✅", "success");
+        router.push("/dashboard/company");
       }
-    },
-  });
+    } catch {
+      showSnackbar("Add company failed ❌", "error");
+    }
+  };
 
-  // ✅ Fetch Dropdown Data
-  useEffect(() => {
-    const fetchDropdowns = async () => {
-      try {
-        const countryRes = await countryList({ page: "1", limit: "200" });
-        const countryOptions = countryRes.data.map((c: ApiCountry) => ({
-          value: c.id ?? "",
-          label: c.name ?? c.country_name ?? "",
-        }));
-        const countryCurrency = countryRes.data.map((c: ApiCountry) => ({
-          value: c.currency ?? "",
-          label: c.currency ?? "",
-        }));
-        setCurrency(countryCurrency);
-        setCountries(countryOptions);
-
-        const regionRes = await regionList();
-        const regionOptions = regionRes.data.map((r: ApiRegion) => ({
-          value: r.id ?? "",
-          label: r.name ?? r.region_name ?? "",
-        }));
-        setRegions(regionOptions);
-
-        const subRegionRes = await subRegionList();
-        const subRegionOptions = subRegionRes.data.map((sr: ApiSubRegion) => ({
-          value: sr.id ?? "",
-          label: sr.name ?? sr.area_name ?? "",
-        }));
-        setSubRegions(subRegionOptions);
-      } catch (error) {
-        console.error("Failed to fetch dropdown data ❌", error);
-      }
-    };
-
-    fetchDropdowns();
-  }, []);
-
-  return (
-    <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-[20px]">
-        <div className="flex items-center gap-[16px]">
-          <Link href="/dashboard/company">
-            <Icon icon="lucide:arrow-left" width={24} />
-          </Link>
-          <h1 className="text-[20px] font-semibold text-[#181D27] leading-[30px] mb-[5px]">
-            Add Company
-          </h1>
-        </div>
-      </div>
-
-      {/* Form */}
-      <form onSubmit={formik.handleSubmit}>
-        {/* Company Details */}
-        <ContainerCard>
-          <h2 className="text-lg font-semibold mb-6">Company Details</h2>
-          <div className="flex flex-wrap gap-5">
-            <InputFields
-              name="companyName"
-              label="Company Name"
-              value={formik.values.companyName}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.companyName && formik.errors.companyName}
-            />
-            <InputFields
-              name="companyType"
-              label="Company Type"
-              value={formik.values.companyType}
-              onChange={formik.handleChange}
-              options={[
-                { value: "manufacturing", label: "Manufacturing" },
-                { value: "trading", label: "Trading" },
-              ]}
-              error={formik.touched.companyType && formik.errors.companyType}
-            />
-            <InputFields
-              name="companyCode"
-              label="Company Code"
-              value={formik.values.companyCode}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.companyCode && formik.errors.companyCode}
-            />
-            <InputFields
-              name="companyWebsite"
-              label="Company Website"
-              value={formik.values.companyWebsite}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.companyWebsite && formik.errors.companyWebsite}
-            />
-            <InputFields
-              name="companyLogo"
-              label="Company Logo"
-              type="file"
-              value={formik.values.companyLogo}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.companyLogo && formik.errors.companyLogo}
-            />
-          </div>
-        </ContainerCard>
-
-        {/* Contact */}
-        <ContainerCard>
-          <h2 className="text-lg font-semibold mb-6">Contact</h2>
-          <div className="flex flex-wrap gap-5">
-            <div className="w-[406px]">
+  const renderStepContent = (
+    values: CompanyFormValues,
+    setFieldValue: (
+      field: keyof CompanyFormValues,
+      value: string | File,
+      shouldValidate?: boolean
+    ) => void,
+    errors: FormikErrors<CompanyFormValues>,
+    touched: FormikTouched<CompanyFormValues>
+  ) => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <InputFields
+                label="Company Name"
+                name="company_name"
+                value={values.company_name}
+                onChange={(e) => setFieldValue("company_name", e.target.value)}
+                error={touched.company_name && errors.company_name}
+              />
+              <InputFields
+                label="Company Code"
+                name="company_code"
+                value={values.company_code}
+                onChange={(e) => setFieldValue("company_code", e.target.value)}
+                error={touched.company_code && errors.company_code}
+              />
+              <SearchableDropdown
+                label="Company Type"
+                name="company_type"
+                value={values.company_type}
+                onChange={(e) => setFieldValue("company_type", String(e))}
+                options={[
+                  { value: "manufacturing", label: "Manufacturing" },
+                  { value: "trading", label: "Trading" },
+                ]}
+              />
+              <InputFields
+                label="Website"
+                name="company_website"
+                value={values.company_website}
+                onChange={(e) => setFieldValue("company_website", e.target.value)}
+              />
+              <InputFields
+                label="Logo"
+                name="company_logo"
+                type="file"
+                value={values.company_logo}
+                onChange={(e) => setFieldValue("company_logo", e.target.value)}
+              />
+            </div>
+          </ContainerCard>
+        );
+      case 2:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <FormInputField
                 type="contact"
                 label="Primary Contact"
-                contact={formik.values.primaryContact}
-                code={formik.values.primaryCode}
-                onContactChange={(e) =>
-                  formik.setFieldValue("primaryContact", e.target.value)
-                }
-                options={countries}
-                onBlur={formik.handleBlur}
-                error={
-                  formik.touched.primaryContact && formik.errors.primaryContact
-                }
+                contact={values.primary_contact}
+                code={values.primary_code}
+                onContactChange={(e) => setFieldValue("primary_contact", e.target.value)}
+                onCodeChange={(e) => setFieldValue("primary_code", e.target.value)}
+                options={onlyCountryOptions}
               />
-            </div>
-            <div className="w-[406px]">
               <FormInputField
                 type="contact"
                 label="Toll Free Number"
-                contact={formik.values.tollFreeNumber}
-                code={formik.values.tollFreeCode}
-                onContactChange={(e) =>
-                  formik.setFieldValue("tollFreeNumber", e.target.value)
-                }
-                options={countries}
+                contact={values.toll_free_number}
+                code={values.toll_free_code}
+                onContactChange={(e) => setFieldValue("toll_free_number", e.target.value)}
+                onCodeChange={(e) => setFieldValue("toll_free_code", e.target.value)}
+                options={onlyCountryOptions}
+              />
+              <InputFields
+                label="Email"
+                name="email"
+                value={values.email}
+                onChange={(e) => setFieldValue("email", e.target.value)}
+                error={touched.email && errors.email}
               />
             </div>
-            <InputFields
-              name="email"
-              label="Email"
-              value={formik.values.email}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.email && formik.errors.email}
-            />
-            
-          </div>
-        </ContainerCard>
+          </ContainerCard>
+        );
+      case 3:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* <InputFields
+                label="Region"
+                name="region"
+                value={values.region}
+                options={regionOptions}
+                onChange={(e) => e.target.value}
+              /> */}
+              <SearchableDropdown
+                label="Region"
+                name="region"
+                value={values.region}
+                options={loading ? [{ value: '', label: 'Loading...' }] : (regionOptions && regionOptions.length > 0 ? regionOptions : [{ value: '', label: 'No options available' }])}
+                onChange={(val) => setFieldValue("region", String(val))}
+                error={errors?.region && touched?.region ? errors.region : false}
+              />
+              <SearchableDropdown
+                label="Sub Region"
+                name="sub_region"
+                value={values.sub_region}
+                options={areaOptions}
+                onChange={(val) => setFieldValue("sub_region", String(val))}
+                error={errors?.sub_region && touched?.sub_region ? errors.sub_region : false}
+              />
+              
+              <InputFields
+                label="District"
+                name="district"
+                value={values.district}
+                onChange={(e) => setFieldValue("district", e.target.value)}
+              />
+              <InputFields
+                label="Town"
+                name="town"
+                value={values.town}
+                onChange={(e) => setFieldValue("town", e.target.value)}
+              />
+              <InputFields
+                label="Street"
+                name="street"
+                value={values.street}
+                onChange={(e) => setFieldValue("street", e.target.value)}
+              />
+              <InputFields
+                label="Landmark"
+                name="landmark"
+                value={values.landmark}
+                onChange={(e) => setFieldValue("landmark", e.target.value)}
+              />
+              <SearchableDropdown
+                label="Country"
+                name="country_id"
+                value={values.country_id}
+                options={countryOptions}
+                onChange={(val) => setFieldValue("country_id", String(val))}
+                error={errors?.country_id && touched?.country_id ? errors.country_id : false}
+              />
+              <InputFields
+                label="TIN Number"
+                name="tin_number"
+                value={values.tin_number}
+                onChange={(e) => setFieldValue("tin_number", e.target.value)}
+                error={touched.tin_number && errors.tin_number}
+              />
+            </div>
+          </ContainerCard>
+        );
+      case 4:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <SearchableDropdown
+                label="Selling Currency"
+                name="selling_currency"
+                value={values.selling_currency}
+                options={onlyCountryOptions}
+                onChange={(val) => setFieldValue("selling_currency", String(val))}
+              />
+              <SearchableDropdown
+                label="Purchase Currency"
+                name="purchase_currency"
+                value={values.purchase_currency}
+                options={onlyCountryOptions}
+                onChange={(val) => setFieldValue("purchase_currency", String(val))}
+              />
+              <InputFields
+                label="VAT Number"
+                name="vat_no"
+                value={values.vat_no}
+                onChange={(e) => setFieldValue("vat_no", e.target.value)}
+              />
+            </div>
+          </ContainerCard>
+        );
+      case 5:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <InputFields
+                label="Module"
+                name="modules"
+                value={values.modules}
+                onChange={(e) => setFieldValue("modules", e.target.value)}
+              />
+              <SearchableDropdown
+                label="Service Type"
+                name="service_type"
+                value={values.service_type}
+                onChange={(e) => setFieldValue("service_type", String(e))}
+                options={[
+                  { value: "branch", label: "Branch" },
+                  { value: "warehouse", label: "Warehouse" },
+                ]}
+              />
+              <SearchableDropdown
+                label="Status"
+                name="status"
+                value={values.status}
+                onChange={(e) => setFieldValue("status", String(e))}
+                options={[
+                  { value: "1", label: "Active" },
+                  { value: "0", label: "Inactive" },
+                ]}
+              />
+            </div>
+          </ContainerCard>
+        );
+      default:
+        return null;
+    }
+  };
 
-        {/* Location */}
-        <ContainerCard>
-          <h2 className="text-lg font-semibold mb-6">Location Information</h2>
-          <div className="flex flex-wrap gap-5">
-            <SearchableDropdown
-              label="Region"
-              name="region"
-              value={formik.values.region}
-              options={regions}
-              onChange={(val) => formik.setFieldValue("region", val)}
-            />
-            <SearchableDropdown
-              label="Sub Region"
-              name="subRegion"
-              value={formik.values.subRegion}
-              options={subRegions}
-              onChange={(val) => formik.setFieldValue("subRegion", val)}
-            />
-            <InputFields
-              name="district"
-              label="District"
-              value={formik.values.district}
-              onChange={formik.handleChange}
-            />
-            <InputFields
-              name="town"
-              label="Town/Village"
-              value={formik.values.town}
-              onChange={formik.handleChange}
-            />
-            <InputFields
-              name="street"
-              label="Street"
-              value={formik.values.street}
-              onChange={formik.handleChange}
-            />
-            <InputFields
-              name="landmark"
-              label="Landmark"
-              value={formik.values.landmark}
-              onChange={formik.handleChange}
-            />
-            <SearchableDropdown
-              label="Country"
-              name="country"
-              value={formik.values.country}
-              options={countries}
-              onChange={(val) => formik.setFieldValue("country", val)}
-              error={formik.touched.country && formik.errors.country}
-            />
-            <InputFields
-              name="tinNumber"
-              label="TIN Number"
-              value={formik.values.tinNumber}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.tinNumber && formik.errors.tinNumber}
-            />
-          </div>
-        </ContainerCard>
-
-        {/* Financial */}
-        <ContainerCard>
-          <h2 className="text-lg font-semibold mb-6">Financial Information</h2>
-          <div className="flex flex-wrap gap-5">
-            <InputFields
-              name="sellingCurrency"
-              label="Selling Currency"
-              value={formik.values.sellingCurrency}
-              onChange={formik.handleChange}
-              options={currency}
-            />
-            <InputFields
-              name="purchaseCurrency"
-              label="Purchase Currency"
-              value={formik.values.purchaseCurrency}
-              onChange={formik.handleChange}
-              options={currency}
-            />
-            <InputFields
-              name="vatNo"
-              label="VAT No (%)"
-              value={formik.values.vatNo}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              error={formik.touched.vatNo && formik.errors.vatNo}
-            />
-          </div>
-        </ContainerCard>
-
-        {/* Additional */}
-        <ContainerCard>
-          <h2 className="text-lg font-semibold mb-6">Additional Information</h2>
-          <div className="flex flex-wrap gap-5">
-            <InputFields
-              name="modules"
-              label="Modules"
-              value={formik.values.modules}
-              onChange={formik.handleChange}
-            />
-            <InputFields
-              name="serviceType"
-              label="Service Type"
-              value={formik.values.serviceType}
-              onChange={formik.handleChange}
-              options={[
-                { value: "branch", label: "Branch" },
-                { value: "warehouse", label: "Warehouse" },
-              ]}
-              error={formik.touched.serviceType && formik.errors.serviceType}
-            />
-            <InputFields
-              label="Status"
-              type="select"
-              name="status"
-              value={formik.values.status}
-              onChange={formik.handleChange}
-              onBlur={formik.handleBlur}
-              options={[
-                { value: "1", label: "Active" },
-                { value: "0", label: "Inactive" },
-              ]}
-              error={formik.touched.status && formik.errors.status}
-            />
-          </div>
-        </ContainerCard>
-
-        {/* Footer */}
-        <div className="flex justify-end gap-3 mt-6">
-          <button
-            className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
-            type="button"
-          >
-            Cancel
-          </button>
-          <SidebarBtn
-            label="Submit"
-            isActive={true}
-            leadingIcon="mdi:check"
-            type="submit"
-          />
-        </div>
-      </form>
-    </>
+  return (
+    <div>
+      <h1 className="text-2xl font-bold mb-6">Add Company</h1>
+      <Formik initialValues={initialValues} validationSchema={CompanySchema} onSubmit={handleSubmit}>
+        {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit }) => (
+          <Form>
+            <StepperForm
+              steps={steps.map((step) => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
+              currentStep={currentStep}
+              onStepClick={() => {}}
+              onBack={prevStep}
+              onNext={() =>
+                handleNext(values, {
+                  setErrors: () => {},
+                  setTouched: () => {},
+                } as unknown as FormikHelpers<CompanyFormValues>)
+              }
+              onSubmit={() => formikSubmit()}
+              showSubmitButton={isLastStep}
+              showNextButton={!isLastStep}
+              nextButtonText="Save & Next"
+              submitButtonText="Submit"
+            >
+              {renderStepContent(values, setFieldValue, errors, touched)}
+            </StepperForm>
+          </Form>
+        )}
+      </Formik>
+    </div>
   );
 }

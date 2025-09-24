@@ -91,7 +91,7 @@ export default function SearchableDropdown({
 
         {/* Dropdown list */}
         {isOpen && (
-          <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md max-h-52 overflow-y-auto shadow-md">
+          <ul className="fixed z-10 mt-1 w-[206px] bg-white border border-gray-300 rounded-md max-h-52 overflow-y-auto shadow-md">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => (
                 <li
