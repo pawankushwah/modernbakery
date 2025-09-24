@@ -96,15 +96,13 @@ export default function CompanyPage() {
     const res = await deleteCompany(String(selectedRow.id));
     if (res.error) {
       showSnackbar(res.message || "Failed to delete company ❌", "error");
-await fetchCompanies();
-      setCompanies((prev) =>
-        prev.filter((c) => String(c.id) !== String(selectedRow.id))
-      );
+      await fetchCompanies();
       setShowDeletePopup(false);
       setSelectedRow(null);
     } else {
       // show message from API if exists, else generic error
       showSnackbar("Company deleted successfully ✅", "success");
+      fetchCompanies();
     }
 };
      

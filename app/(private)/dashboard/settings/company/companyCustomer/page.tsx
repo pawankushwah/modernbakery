@@ -11,24 +11,53 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Loading from "@/app/components/Loading";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { getCompanyCustomers, deleteCompanyCustomer } from "@/app/services/allApi";
+import {
+  getCompanyCustomers,
+  deleteCompanyCustomer,
+} from "@/app/services/allApi";
 
 interface CustomerItem {
   id: number;
   sap_code: string;
   customer_code: string;
   business_name: string;
+  customer_type: string;
   owner_name: string;
   owner_no: string;
+ 
+  whatsapp_no: string;
   email: string;
+  language: string;
+  contact_no2: string;
+
+  road_street: string;
   town: string;
+  landmark: string;
   district: string;
   balance: number;
+  payment_type: string;
+  bank_name: string;
+  bank_account_number: string;
+  creditday: string;
+  tin_no: string;
+  accuracy: string;
   creditlimit: number;
+  guarantee_name: string;
+  guarantee_amount: number;
+  guarantee_from: string;
+  guarantee_to: string;
   totalcreditlimit: number;
-  region_id: number;
-  area_id: number;
-  status: number; // 1 = Active, 0 = Inactive
+  credit_limit_validity: string;
+  vat_no: string;
+  longitude: string;
+  latitude: string;
+  threshold_radius: number;
+  dchannel_id: number;
+  status: number;
+  created_user: number;
+  updated_user: number;
+  created_at: string;
+  updated_at: string;
 }
 
 const dropdownDataList = [
@@ -50,55 +79,84 @@ export default function CompanyCustomers() {
   const { showSnackbar } = useSnackbar();
 
   // Fetch customers
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const data = await getCompanyCustomers();
-        if (!Array.isArray(data)) {
-          showSnackbar("No customers found ❌", "error");
-          setCustomers([]);
-          return;
-        }
-        setCustomers(data);
-      } catch (error) {
-        console.error("Failed to fetch customers", error);
-        showSnackbar("Failed to fetch Customers ❌", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchCompanyCustomers = async () => {
+    try {
+      const data = await getCompanyCustomers();
+      const customersData = Array.isArray(data) ? data : [data]; // Wrap single object
+      setCustomers(customersData);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchCompanyCustomers();
+}, []); // 🔴 Use empty dependency array, NOT showSnackbar
 
-    fetchCustomers();
-  }, [showSnackbar]);
-
-  // Table data
+  // Map all fields into TableDataType (convert numbers to strings)
   const tableData: TableDataType[] = customers.map((c) => ({
     id: c.id.toString(),
     sap_code: c.sap_code,
     customer_code: c.customer_code,
     business_name: c.business_name,
+  
     owner_name: c.owner_name,
     owner_no: c.owner_no,
+   
+    whatsapp_no: c.whatsapp_no,
     email: c.email,
+    language: c.language,
+    contact_no2: c.contact_no2,
+    road_street: c.road_street,
+    town: c.town,
+    landmark: c.landmark,
     district: c.district,
+    balance: c.balance.toString(),
+    payment_type: c.payment_type,
+    bank_name: c.bank_name,
+    bank_account_number: c.bank_account_number,
+    creditday: c.creditday,
+    tin_no: c.tin_no,
+    accuracy: c.accuracy,
+    creditlimit: c.creditlimit.toString(),
+    guarantee_name: c.guarantee_name,
+    guarantee_amount: c.guarantee_amount.toString(),
+    guarantee_from: c.guarantee_from,
+    guarantee_to: c.guarantee_to,
+    totalcreditlimit: c.totalcreditlimit.toString(),
+    credit_limit_validity: c.credit_limit_validity,
+    vat_no: c.vat_no,
+    longitude: c.longitude,
+    latitude: c.latitude,
+    threshold_radius: c.threshold_radius.toString(),
+    dchannel_id: c.dchannel_id.toString(),
     status: c.status === 1 ? "Active" : "Inactive",
+    created_user: c.created_user.toString(),
+    updated_user: c.updated_user.toString(),
+    created_at: c.created_at,
+    updated_at: c.updated_at,
   }));
-
   // Delete handler
-  const handleConfirmDelete = async () => {
-    if (!selectedRow) return;
-    try {
-      await deleteCompanyCustomer(selectedRow.id.toString());
-      setCustomers(prev => prev.filter(c => c.id !== selectedRow.id));
-      showSnackbar("Customer deleted successfully ✅", "success");
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Failed to delete Customer ❌", "error");
-    } finally {
-      setShowDeletePopup(false);
-      setSelectedRow(null);
-    }
-  };
+const handleConfirmDelete = async () => {
+  if (!selectedRow) return;
+
+  // Optimistically remove row first
+  setCustomers((prev) => prev.filter((c) => c.id !== selectedRow.id));
+  setShowDeletePopup(false);
+
+  try {
+    await deleteCompanyCustomer(selectedRow.id.toString());
+    showSnackbar("Customer deleted successfully ✅", "success");
+  } catch (error) {
+    // If API fails, re-add the row
+    setCustomers((prev) => [...prev, selectedRow]);
+    showSnackbar("Failed to delete Customer ❌", "error");
+  } finally {
+    setSelectedRow(null);
+  }
+};
+
 
   if (loading) return <Loading />;
 
@@ -106,42 +164,42 @@ export default function CompanyCustomers() {
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-[20px]">
-              <h1 className="text-[20px] font-semibold text-[#181D27]">
-                Company Customer
-              </h1>
-      
-              <div className="flex gap-[12px] relative">
-                <BorderIconButton icon="gala:file-document" label="Export CSV" />
-                <BorderIconButton icon="mage:upload" />
-      
-                <DismissibleDropdown
-                  isOpen={showDropdown}
-                  setIsOpen={setShowDropdown}
-                  button={<BorderIconButton icon="ic:sharp-more-vert" />}
-                  dropdown={
-                    <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                      <CustomDropdown>
-                        {dropdownDataList.map((link, idx) => (
-                          <div
-                            key={idx}
-                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                          >
-                            <Icon
-                              icon={link.icon}
-                              width={link.iconWidth}
-                              className="text-[#717680]"
-                            />
-                            <span className="text-[#181D27] font-[500] text-[16px]">
-                              {link.label}
-                            </span>
-                          </div>
-                        ))}
-                      </CustomDropdown>
+        <h1 className="text-[20px] font-semibold text-[#181D27]">
+          Company Customer
+        </h1>
+
+        <div className="flex gap-[12px] relative">
+          <BorderIconButton icon="gala:file-document" label="Export CSV" />
+          <BorderIconButton icon="mage:upload" />
+
+          <DismissibleDropdown
+            isOpen={showDropdown}
+            setIsOpen={setShowDropdown}
+            button={<BorderIconButton icon="ic:sharp-more-vert" />}
+            dropdown={
+              <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                <CustomDropdown>
+                  {dropdownDataList.map((link, idx) => (
+                    <div
+                      key={idx}
+                      className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                    >
+                      <Icon
+                        icon={link.icon}
+                        width={link.iconWidth}
+                        className="text-[#717680]"
+                      />
+                      <span className="text-[#181D27] font-[500] text-[16px]">
+                        {link.label}
+                      </span>
                     </div>
-                  }
-                />
+                  ))}
+                </CustomDropdown>
               </div>
-            </div>
+            }
+          />
+        </div>
+      </div>
 
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
@@ -149,52 +207,51 @@ export default function CompanyCustomers() {
           data={tableData}
           config={{
             header: {
-                         searchBar: true,
-                         columnFilter: true,
-                         actions: [
-                           <SidebarBtn
-                             key="add-company-customer"
-                             href="/dashboard/settings/companyCustomer/add"
-                             leadingIcon="lucide:plus"
-                             label="Add Company Customer"
-                             labelTw="hidden sm:block"
-                             isActive
-                           />,
-                         ],
-                       },
+              searchBar: true,
+              columnFilter: true,
+              actions: [
+                <SidebarBtn
+                  key="add-company-customer"
+                  href="/dashboard/settings/company/companyCustomer/add"
+                  leadingIcon="lucide:plus"
+                  label="Add Company Customer"
+                  labelTw="hidden sm:block"
+                  isActive
+                />,
+              ],
+            },
             footer: { nextPrevBtn: true, pagination: true },
-            columns: [
-              { key: "sap_code", label: "SAP Code" },
-              { key: "customer_code", label: "Customer Code" },
-              { key: "business_name", label: "Business Name" },
-              { key: "owner_name", label: "Owner Name" },
-              { key: "owner_no", label: "Owner Number" },
-              { key: "email", label: "Email" },
-              { key: "district", label: "District" },
-              {
-                key: "status",
-                label: "Status",
-                render: (row: TableDataType) => (
-                  <span
-                    className={`text-sm p-1 px-4 rounded-xl text-[12px] font-[500] ${
-                      row.status === "Active" ? "text-[#027A48] bg-[#ECFDF3]" : "text-red-700 bg-red-200"
-                    }`}
-                  >
-                    {row.status}
-                  </span>
-                ),
-              },
-            ],
+            columns: Object.keys(tableData[0]).map((key) => ({
+              key,
+              label: key.charAt(0).toUpperCase() + key.slice(1),
+              render:
+                key === "status"
+                  ? (row: TableDataType) => (
+                      <span
+                        className={`text-sm p-1 px-4 rounded-xl text-[12px] font-[500] ${
+                          row.status === "Active"
+                            ? "text-[#027A48] bg-[#ECFDF3]"
+                            : "text-red-700 bg-red-200"
+                        }`}
+                      >
+                        {row.status}
+                      </span>
+                    )
+                  : undefined,
+            })),
             rowSelection: true,
             rowActions: [
               {
                 icon: "lucide:edit-2",
-                onClick: (row: TableDataType) => router.push(`/dashboard/settings/company/companyCustomer/update/${row.id}`),
+                onClick: (row: TableDataType) =>
+                  router.push(
+                    `/dashboard/settings/company/companyCustomer/update/${row.id}`
+                  ),
               },
               {
                 icon: "lucide:trash-2",
                 onClick: (row: TableDataType) => {
-                  const fullRow = customers.find(c => c.id.toString() === row.id);
+                  const fullRow = customers.find((c) => c.id.toString() === row.id);
                   if (fullRow) {
                     setSelectedRow(fullRow);
                     setShowDeletePopup(true);
