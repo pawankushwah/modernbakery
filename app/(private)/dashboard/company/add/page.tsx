@@ -3,7 +3,6 @@
 import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
-import SearchableDropdown from "@/app/components/SearchableDropdown";
 import FormInputField from "@/app/components/formInputField";
 import { addCompany } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -11,6 +10,8 @@ import { useRouter } from "next/navigation";
 import * as Yup from "yup";
 import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import Link from "next/link";
+import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 
 
 interface CompanyFormValues {
@@ -231,7 +232,8 @@ export default function AddCompanyWithStepper() {
                 onChange={(e) => setFieldValue("company_code", e.target.value)}
                 error={touched.company_code && errors.company_code}
               />
-              <SearchableDropdown
+              <InputFields
+              required
                 label="Company Type"
                 name="company_type"
                 value={values.company_type}
@@ -300,7 +302,7 @@ export default function AddCompanyWithStepper() {
                 options={regionOptions}
                 onChange={(e) => e.target.value}
               /> */}
-              <SearchableDropdown
+              <InputFields
                 label="Region"
                 name="region"
                 value={values.region}
@@ -308,7 +310,7 @@ export default function AddCompanyWithStepper() {
                 onChange={(val) => setFieldValue("region", String(val))}
                 error={errors?.region && touched?.region ? errors.region : false}
               />
-              <SearchableDropdown
+              <InputFields
                 label="Sub Region"
                 name="sub_region"
                 value={values.sub_region}
@@ -341,7 +343,7 @@ export default function AddCompanyWithStepper() {
                 value={values.landmark}
                 onChange={(e) => setFieldValue("landmark", e.target.value)}
               />
-              <SearchableDropdown
+              <InputFields
                 label="Country"
                 name="country_id"
                 value={values.country_id}
@@ -363,14 +365,14 @@ export default function AddCompanyWithStepper() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <SearchableDropdown
+              <InputFields
                 label="Selling Currency"
                 name="selling_currency"
                 value={values.selling_currency}
                 options={countryCurrency}
                 onChange={(val) => setFieldValue("selling_currency", String(val))}
               />
-              <SearchableDropdown
+              <InputFields
                 label="Purchase Currency"
                 name="purchase_currency"
                 value={values.purchase_currency}
@@ -396,7 +398,7 @@ export default function AddCompanyWithStepper() {
                 value={values.module_access}
                 onChange={(e) => setFieldValue("module_access", e.target.value)}
               />
-              <SearchableDropdown
+              <InputFields
                 label="Service Type"
                 name="service_type"
                 value={values.service_type}
@@ -406,7 +408,7 @@ export default function AddCompanyWithStepper() {
                   { value: "warehouse", label: "Warehouse" },
                 ]}
               />
-              <SearchableDropdown
+              <InputFields
                 label="Status"
                 name="status"
                 value={values.status}
@@ -426,7 +428,16 @@ export default function AddCompanyWithStepper() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Add Company</h1>
+     <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-4">
+          <Link href="/dashboard/company">
+            <Icon icon="lucide:arrow-left" width={24} />
+          </Link>
+          <h1 className="text-xl font-semibold text-gray-900">
+            Add New Company
+          </h1>
+        </div>
+      </div>
       <Formik initialValues={initialValues} validationSchema={CompanySchema} onSubmit={handleSubmit}>
         {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit }) => (
           <Form>
