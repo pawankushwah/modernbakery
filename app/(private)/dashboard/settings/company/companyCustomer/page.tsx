@@ -96,7 +96,6 @@ useEffect(() => {
 
   // Map all fields into TableDataType (convert numbers to strings)
   const tableData: TableDataType[] = customers.map((c) => ({
-    id: c.id.toString(),
     sap_code: c.sap_code,
     customer_code: c.customer_code,
     business_name: c.business_name,
@@ -132,10 +131,6 @@ useEffect(() => {
     threshold_radius: c.threshold_radius.toString(),
     dchannel_id: c.dchannel_id.toString(),
     status: c.status === 1 ? "Active" : "Inactive",
-    created_user: c.created_user.toString(),
-    updated_user: c.updated_user.toString(),
-    created_at: c.created_at,
-    updated_at: c.updated_at,
   }));
   // Delete handler
 const handleConfirmDelete = async () => {

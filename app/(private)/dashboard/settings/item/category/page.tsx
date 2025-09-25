@@ -34,7 +34,7 @@ export default function Category() {
     const [categoryData, setCategoryData] = useState<TableDataType[]>(
         [] as TableDataType[]
     );
-    const { setLoading} = useLoading();
+    const {loading, setLoading} = useLoading();
     const { showSnackbar } = useSnackbar();
     const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
     const [showCreatePopup, setShowCreatePopup] = useState<boolean>(false);
@@ -59,6 +59,7 @@ export default function Category() {
         }
         setShowDeletePopup(false);
     }
+
 
     const fetchItemCategory = useCallback(
         async (pageNo: number = 1, pageSize: number = 10) => {
@@ -86,6 +87,8 @@ export default function Category() {
     useEffect(() => {
         setLoading(true);
     }, [])
+
+    if (loading) return <Loading />;
 
     return (
         <>

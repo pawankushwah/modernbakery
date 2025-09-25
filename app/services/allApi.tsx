@@ -53,9 +53,9 @@ export const isVerify = async () => {
   }
 };
 
-export const companyList = async () => {
+export const companyList = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/master/company/list_company`);
+    const res = await API.get(`/api/master/company/list_company`, {params: params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

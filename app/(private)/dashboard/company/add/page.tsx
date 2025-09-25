@@ -237,7 +237,7 @@ export default function AddCompanyWithStepper() {
                 label="Company Type"
                 name="company_type"
                 value={values.company_type}
-                onChange={(e) => setFieldValue("company_type", String(e))}
+                onChange={(e) => setFieldValue("company_type", e.target.value)}
                 options={[
                   { value: "manufacturing", label: "Manufacturing" },
                   { value: "trading", label: "Trading" },
@@ -307,7 +307,7 @@ export default function AddCompanyWithStepper() {
                 name="region"
                 value={values.region}
                 options={regionOptions}
-                onChange={(val) => setFieldValue("region", String(val))}
+                onChange={(e) => setFieldValue("region",e.target.value)}
                 error={errors?.region && touched?.region ? errors.region : false}
               />
               <InputFields
@@ -315,7 +315,7 @@ export default function AddCompanyWithStepper() {
                 name="sub_region"
                 value={values.sub_region}
                 options={areaOptions}
-                onChange={(val) => setFieldValue("sub_region", String(val))}
+                onChange={(e) => setFieldValue("sub_region", e.target.value)}
                 error={errors?.sub_region && touched?.sub_region ? errors.sub_region : false}
               />
               
@@ -348,7 +348,7 @@ export default function AddCompanyWithStepper() {
                 name="country_id"
                 value={values.country_id}
                 options={onlyCountryOptions}
-                onChange={(val) => setFieldValue("country_id", String(val))}
+                onChange={(e) => setFieldValue("country_id", e.target.value)}
                 error={errors?.country_id && touched?.country_id ? errors.country_id : false}
               />
               <InputFields
@@ -370,14 +370,14 @@ export default function AddCompanyWithStepper() {
                 name="selling_currency"
                 value={values.selling_currency}
                 options={countryCurrency}
-                onChange={(val) => setFieldValue("selling_currency", String(val))}
+                onChange={(e) => setFieldValue("selling_currency", e.target.value)}
               />
               <InputFields
                 label="Purchase Currency"
                 name="purchase_currency"
                 value={values.purchase_currency}
                 options={countryCurrency}
-                onChange={(val) => setFieldValue("purchase_currency", String(val))}
+                onChange={(e) => setFieldValue("purchase_currency", e.target.value)}
               />
               <InputFields
                 label="VAT Number"
@@ -402,7 +402,7 @@ export default function AddCompanyWithStepper() {
                 label="Service Type"
                 name="service_type"
                 value={values.service_type}
-                onChange={(e) => setFieldValue("service_type", String(e))}
+                onChange={(e) => setFieldValue("service_type",e.target.value)}
                 options={[
                   { value: "branch", label: "Branch" },
                   { value: "warehouse", label: "Warehouse" },
