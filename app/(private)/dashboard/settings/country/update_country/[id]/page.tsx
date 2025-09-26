@@ -121,7 +121,7 @@ export default function EditCountry() {
                       <InputFields
                         label="Country Code"
                         value={values.country_code}
-                        onChange={(e) =>
+                        onChange={(e) => 
                           setFieldValue("country_code", e.target.value)
                         }
                       />

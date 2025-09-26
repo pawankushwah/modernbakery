@@ -1,26 +1,33 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
+
+// Components
 import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
+
+// Contexts & Services
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { addArea } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-// ✅ Validation schema
+// ✅ Yup Validation Schema
 const SubRegionSchema = Yup.object().shape({
-  areacode: Yup.string().required("SubRegion name is required."),
+  areacode: Yup.string().required("SubRegion code is required."),
   companyName: Yup.string().required("SubRegion name is required."),
   status: Yup.string().required("Status is required."),
   region: Yup.string().required("Please select a region."),
 });
 
+// ✅ Types
 type SubRegionFormValues = {
   areacode: string;
   companyName: string;
@@ -31,8 +38,10 @@ type SubRegionFormValues = {
 export default function AddSubRegion() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { regionOptions, loading } = useAllDropdownListData();
+  const { regionOptions } = useAllDropdownListData();
+  const [isOpen, setIsOpen] = useState(false);
 
+  // ✅ Initial Form Values
   const initialValues: SubRegionFormValues = {
     areacode: "",
     companyName: "",
@@ -40,11 +49,7 @@ export default function AddSubRegion() {
     region: "",
   };
 
-  // Helper: Generate area_code (you can change logic as per requirement)
-  // const generateAreaCode = () => {
-  //   return "AR" + Date.now(); // Example: AR1695038291234
-  // };
-
+  // ✅ Handle Submit
   const handleSubmit = async (
     values: SubRegionFormValues,
     { setSubmitting }: FormikHelpers<SubRegionFormValues>
@@ -55,7 +60,7 @@ export default function AddSubRegion() {
       const region_id = Number(values.region);
       const status = Number(values.status);
 
-      if (!area_code ||!area_name || !region_id) {
+      if (!area_code || !area_name || !region_id) {
         showSnackbar("Please fill all required fields.", "error");
         setSubmitting(false);
         return;
@@ -85,7 +90,7 @@ export default function AddSubRegion() {
 
       showSnackbar("SubRegion added successfully ✅", "success");
       router.push("/dashboard/settings/company/subRegion");
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Add SubRegion failed ❌", error);
       showSnackbar("Failed to add SubRegion", "error");
     } finally {
@@ -95,7 +100,7 @@ export default function AddSubRegion() {
 
   return (
     <div className="w-full h-full overflow-x-hidden p-4">
-      {/* Header */}
+      {/* ✅ Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/settings/company/subRegion">
@@ -107,7 +112,7 @@ export default function AddSubRegion() {
         </div>
       </div>
 
-      {/* Formik */}
+      {/* ✅ Formik Wrapper */}
       <Formik
         initialValues={initialValues}
         validationSchema={SubRegionSchema}
@@ -117,7 +122,34 @@ export default function AddSubRegion() {
           <Form onSubmit={handleSubmit}>
             <ContainerCard>
               <h2 className="text-lg font-semibold mb-6">Sub Region Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+
+              <div className="flex items-end gap-2 max-w-4xl flex-wrap">
+                {/* SubRegion Code */}
+                <div className="w-full">
+                  <InputFields
+                    name="areacode"
+                    label="SubRegion Code"
+                    value={values.areacode}
+                    onChange={(e) => setFieldValue("areacode", e.target.value)}
+                  />
+                  <ErrorMessage
+                    name="areacode"
+                    component="span"
+                    className="text-xs text-red-500"
+                  />
+                  <IconButton
+                    bgClass="white"
+                    className="mb-2 cursor-pointer text-[#252B37]"
+                    icon="mi:settings"
+                    onClick={() => setIsOpen(true)}
+                  />
+                  <SettingPopUp
+                    isOpen={isOpen}
+                    onClose={() => setIsOpen(false)}
+                    title="Country Code"
+                  />
+                </div>
+
                 {/* SubRegion Name */}
                 <div>
                   <InputFields
@@ -134,47 +166,19 @@ export default function AddSubRegion() {
                     className="text-xs text-red-500"
                   />
                 </div>
-                <div>
-                  <InputFields
-                    name="arecode"
-                    label="SubRegion Name"
-                    value={values.areacode}
-                    onChange={(e) =>
-                      setFieldValue("areacode", e.target.value)
-                    }
-                  />
-                  <ErrorMessage
-                    name="companyName"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
 
                 {/* Status */}
                 <div>
-                  {/* <select
-                    className="border px-3 py-2 rounded w-full"
+                  <InputFields
+                    label="Status"
+                    name="status"
                     value={values.status}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setFieldValue("status", e.target.value)
-                    }
-                  >
-                    <option value="1">Active</option>
-                    <option value="0">Inactive</option>
-                  </select> */}
-                   <InputFields
-                                                      label="Status"
-                                                      name="status"
-                                                      value={values.status}
-                                                      // onChange={handleChange}
-                                        onChange={(e) => setFieldValue("status", e.target.value)}
-                  
-                                                      options={[
-                                                          { value: "1", label: "Active" },
-                                                          { value: "0", label: "Inactive" },
-                                                      ]}
-                                                      // error={errors?.statusType && touched?.statusType ? errors.statusType : false}
-                                                  />
+                    onChange={(e) => setFieldValue("status", e.target.value)}
+                    options={[
+                      { value: "1", label: "Active" },
+                      { value: "0", label: "Inactive" },
+                    ]}
+                  />
                   <ErrorMessage
                     name="status"
                     component="span"
@@ -184,37 +188,13 @@ export default function AddSubRegion() {
 
                 {/* Region */}
                 <div>
-                   <InputFields
-                                        label="Region id"
-                                        value={values.region}
-                                        onChange={(e) =>
-                                          setFieldValue("region", e.target.value)
-                                          
-                                        }
-                                        options={regionOptions}
-                                      />
-                  {/* <select
-                    className="border px-3 py-2 rounded w-full"
+                  <InputFields
+                    label="Region"
+                    name="region"
                     value={values.region}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      setFieldValue("region", e.target.value)
-                    }
-                  >
-                    <option value="">Select region</option>
-                    {loading ? (
-                      <option value="" disabled>
-                        Loading...
-                      </option>
-                    ) : regionOptions?.length > 0 ? (
-                      regionOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))
-                    ) : (
-                      <option value="">No options available</option>
-                    )}
-                  </select> */}
+                    onChange={(e) => setFieldValue("region", e.target.value)}
+                    options={regionOptions}
+                  />
                   <ErrorMessage
                     name="region"
                     component="span"
@@ -224,7 +204,7 @@ export default function AddSubRegion() {
               </div>
             </ContainerCard>
 
-            {/* Footer Actions */}
+            {/* ✅ Footer Actions */}
             <div className="flex justify-end gap-4 mt-6">
               <button
                 type="reset"

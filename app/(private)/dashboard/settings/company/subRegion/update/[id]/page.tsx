@@ -6,16 +6,17 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter, useParams } from "next/navigation";
 import { Formik, Form, ErrorMessage } from "formik";
 import * as Yup from "yup";
-
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { getAreaById, updateAreaById } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-// ✅ Yup Schema for validation
+// ✅ Yup Schema
 const SubRegionSchema = Yup.object().shape({
-  area_code: Yup.string().required("SubRegion Name is required."),
+  area_code: Yup.string().required("SubRegion Code is required."),
   area_name: Yup.string().required("SubRegion Name is required."),
   status: Yup.string().required("Status is required."),
   region_id: Yup.string().required("Please select a region."),
@@ -34,12 +35,11 @@ export default function EditSubRegion() {
   const router = useRouter();
   const params = useParams();
   const { showSnackbar } = useSnackbar();
-  const { regionOptions, loading: regionLoading } = useAllDropdownListData();
+  const { regionOptions } = useAllDropdownListData();
 
-  // Get ID from route or query
   const routeId = params?.id ?? "";
   const queryId = searchParams.get("id") || routeId || "";
-
+  const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState<boolean>(false);
   const [fetched, setFetched] = useState<null | {
     area_code?: string;
@@ -48,7 +48,7 @@ export default function EditSubRegion() {
     region_id?: number;
   }>(null);
 
-  // Fetch SubRegion details by ID
+  // ✅ Fetch SubRegion details
   useEffect(() => {
     if (!queryId) return;
     let mounted = true;
@@ -82,32 +82,41 @@ export default function EditSubRegion() {
     area_name: fetched?.area_name ?? "",
     status: fetched?.status?.toString() ?? "1",
     region_id: fetched?.region_id?.toString() ?? "",
-  }; useEffect(()=>console.log("not find",initialValues))
+  };
 
   // ✅ Submit Handler
   const handleSubmit = async (values: SubRegionFormValues) => {
     if (!queryId) return;
 
-
-// area_code": "AR001",
-//         "area_name": "Central Area",
-//         "region_id": 71,
-//         "status":
-
-
     try {
+      // 👇 Make sure area_code is always passed
       const payload = {
-        area_code: values.area_code,
-        area_name: values.area_name,
+        area_code: values.area_code?.trim() ?? "", // ✅ FIX
+        area_name: values.area_name?.trim() ?? "",
         status: Number(values.status),
         region_id: Number(values.region_id),
       };
 
-      await updateAreaById(String(queryId), payload);
+      console.log("🚀 Payload sending:", payload);
+
+       await updateAreaById(String(queryId), payload);
       showSnackbar("SubRegion updated successfully ✅", "success");
       router.push("/dashboard/settings/company/subRegion");
-    } catch (error) {
-      console.error("Failed to update SubRegion ❌", error);
+    } catch (error: unknown) {
+      console.error("❌ Failed to update SubRegion:", error);
+
+      if (
+        typeof error === "object" &&
+        error !== null &&
+        "response" in error &&
+        typeof (error as { response?: unknown }).response === "object"
+      ) {
+        const response = (error as { response?: { data?: { errors?: { area_code?: string[] } } } }).response;
+        if (response?.data?.errors?.area_code && Array.isArray(response.data.errors.area_code)) {
+          showSnackbar(response.data.errors.area_code[0], "error");
+          return;
+        }
+      }
       showSnackbar("Failed to update SubRegion", "error");
     }
   };
@@ -140,11 +149,12 @@ export default function EditSubRegion() {
                   SubRegion Details
                 </h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* SubRegion Name */}
-                  <div>
+                <div className="flex items-end gap-2 max-w-4xl flex-wrap">
+                  {/* SubRegion Code */}
+                  <div className="w-full">
                     <InputFields
                       label="SubRegion Code"
+                      name="area_code"
                       value={values.area_code}
                       onChange={(e) =>
                         setFieldValue("area_code", e.target.value)
@@ -155,10 +165,24 @@ export default function EditSubRegion() {
                       component="span"
                       className="text-xs text-red-500"
                     />
+                     <IconButton
+                                          bgClass="white"
+                                          className="mb-2 cursor-pointer text-[#252B37]"
+                                          icon="mi:settings"
+                                          onClick={() => setIsOpen(true)}
+                                        />
+                                        <SettingPopUp
+                                          isOpen={isOpen}
+                                          onClose={() => setIsOpen(false)}
+                                          title="Country Code"
+                                        />
                   </div>
+
+                  {/* SubRegion Name */}
                   <div>
                     <InputFields
                       label="SubRegion Name"
+                      name="area_name"
                       value={values.area_name}
                       onChange={(e) =>
                         setFieldValue("area_name", e.target.value)
@@ -173,68 +197,34 @@ export default function EditSubRegion() {
 
                   {/* Status */}
                   <div>
-                     <InputFields
-                                    label="Status"
-                                    name="status"
-                                    value={values.status}
-                                    // onChange={handleChange}
+                    <InputFields
+                      label="Status"
+                      name="status"
+                      value={values.status}
                       onChange={(e) => setFieldValue("status", e.target.value)}
-
-                                    options={[
-                                        { value: "1", label: "Active" },
-                                        { value: "0", label: "Inactive" },
-                                    ]}
-                                    // error={errors?.statusType && touched?.statusType ? errors.statusType : false}
-                                />
-                                 <ErrorMessage
+                      options={[
+                        { value: "1", label: "Active" },
+                        { value: "0", label: "Inactive" },
+                      ]}
+                    />
+                    <ErrorMessage
                       name="status"
                       component="span"
                       className="text-xs text-red-500"
                     />
-                    {/* <select
-                      className="border px-3 py-2 rounded w-full"
-                      value={values.status}
-                      onChange={(e) => setFieldValue("status", e.target.value)}
-                    >
-                      <option value="1">Active</option>
-                      <option value="0">Inactive</option>
-                    </select>
-                    */}
                   </div>
 
                   {/* Region */}
                   <div>
-                     <InputFields
-                      label="Region id"
+                    <InputFields
+                      label="Region"
+                      name="region_id"
                       value={values.region_id}
                       onChange={(e) =>
                         setFieldValue("region_id", e.target.value)
-                        
                       }
                       options={regionOptions}
                     />
-                    {/* <select
-                      className="border px-3 py-2 rounded w-full"
-                      value={values.region_id}
-                      onChange={(e) =>
-                        setFieldValue("region_id", e.target.value)
-                      }
-                    >
-                      <option value="region_id">Select region</option>
-                      {regionLoading ? (
-                        <option value="region_id" disabled>
-                          Loading...
-                        </option>
-                      ) : regionOptions?.length > 0 ? (
-                        regionOptions.map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))
-                      ) : (
-                        <option value="">No options available</option>
-                      )}
-                    </select> */}
                     <ErrorMessage
                       name="region_id"
                       component="span"

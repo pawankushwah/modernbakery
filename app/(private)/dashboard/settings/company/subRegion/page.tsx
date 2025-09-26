@@ -23,6 +23,10 @@ interface DropdownItem {
 interface SubRegionItem {
   id?: number | string;
   area_code?: string;
+  region?: {
+    region_name?: string;
+    // add other region properties if needed
+  };
   area_name?: string;
   status?: "Active" | "Inactive" | string;
 }
@@ -38,6 +42,12 @@ const dropdownDataList: DropdownItem[] = [
 const columns = [
   { key: "area_code", label: "SubRegion Code" },
   { key: "area_name", label: "SubRegion Name" },
+  {
+  label: 'Region',
+  key: 'region_name',
+  render: (row: TableDataType) => row.region_name || '',
+},
+  
   {
     key: "status",
     label: "Status",
@@ -74,6 +84,7 @@ export default function SubRegion() {
   const tableData: TableDataType[] = subRegions.map((s) => ({
     id: s.id?.toString() ?? "",
     area_code: s.area_code ?? "",
+    region_name: s.region?.region_name ?? "",
     area_name: s.area_name ?? "",
     status: s.status ?? "Inactive",
   }));
@@ -83,6 +94,7 @@ export default function SubRegion() {
       try {
         const listRes = await getArea();
         setSubRegions(listRes.data);
+        console.log("API Response:", subRegions)
       } catch (error: unknown) {
         console.error("API Error:", error);
       } finally {
@@ -180,7 +192,7 @@ export default function SubRegion() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                //   router.push(`/dashboard/settings/company/subRegion/update_subRegion/${row.id}`);
+                //   router.push(/dashboard/settings/company/subRegion/update_subRegion/${row.id});
                 router.push(`/dashboard/settings/company/subRegion/update/${row.id}`);
                 },
               },
@@ -207,6 +219,6 @@ export default function SubRegion() {
           />
         </div>
       )}
-    </>
-  );
+    </>
+  );
 }
