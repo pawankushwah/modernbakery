@@ -273,7 +273,7 @@ export default function Warehouse() {
     };
     useEffect(() => {
       fetchWarehouses();
-    }, [fetchWarehouses]);
+    }, []);
 
     const handleConfirmDelete = async () => {
       if (!selectedRow) return;
