@@ -1,18 +1,19 @@
 "use client";
 
-import { useState, useEffect,useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { companyList, deleteCompany } from "@/app/services/allApi";
-import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { useLoading } from "@/app/services/loadingContext";
+import StatusBtn from "@/app/components/statusBtn2";
 
 // 🔹 API response type
 interface Company {
@@ -23,28 +24,17 @@ interface Company {
   email?: string;
   tin_number?: string;
   vat?: string;
-
   country?: {
-    id?: number;
+    
     country_name?: string;
-    country_code?: string;
     selling_currency?: string;
     purchase_currency?: string;
   };
-
-  region?: {
-    id?: number;
-    region_name?: string;
-    region_code?: string;
-  };
-
-  sub_region?: {
-    id?: number;
-    subregion_name?: string;
-    subregion_code?: string;
-  };
-
+  region?: {  region_name?: string; region_code?: string };
+  sub_region?: {  subregion_name?: string; subregion_code?: string };
   selling_currency?: string;
+  // region_name?: string;
+  // country_name?: string;
   purchase_currency?: string;
   toll_free_no?: string;
   primary_contact?: string;
@@ -55,18 +45,11 @@ interface Company {
   street?: string;
   landmark?: string;
   service_type?: string;
-  status?: string | number; // allow both since API may send 0/1
+  status?: string | number;
 }
-
 
 // 🔹 Dropdown menu data
-interface DropdownItem {
-  icon: string;
-  label: string;
-  iconWidth: number;
-}
-
-const dropdownDataList: DropdownItem[] = [
+const dropdownDataList = [
   { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
   { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
   { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
@@ -83,25 +66,48 @@ const columns = [
   { key: "website", label: "Website" },
   { key: "toll_free_no", label: "Toll Free No" },
   { key: "primary_contact", label: "Primary Contact" },
-  { key: "region_name", label: "Region" },
-  { key: "subregion_name", label: "Sub Region" },
+  // { key: "region_name", label: "Region" },
+  {
+    key: 'region_name',
+    label: 'Region',
+    render: (row: TableDataType) => row.region_name ,
+  },
+  // { key: "subregion_name", label: "Sub Region" },
+  {
+    key: 'subregion_name',
+    label: 'Sub Region',
+    render: (row: TableDataType) => row.subregion_name ,
+  },
   { key: "street", label: "Street" },
   { key: "landmark", label: "Landmark" },
   { key: "town", label: "Town" },
   { key: "district", label: "District" },
-  { key: "country_name", label: "Country" },
+  // { key: "country_name", label: "Country" },
+  {
+    key: 'country_name',
+    label: 'Country',
+    render: (row: TableDataType) => row.country_name ,
+  },
   { key: "tin_number", label: "TIN Number" },
   { key: "purchase_currency", label: "Purchase Currency" },
   { key: "selling_currency", label: "Selling Currency" },
   { key: "vat", label: "VAT" },
   { key: "module_access", label: "Module Access" },
   { key: "service_type", label: "Service Type" },
-  { key: "status", label: "Status" },
+  {
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) => (
+    <StatusBtn
+    isActive= {row.status === "1" ? true: false}
+    />
+    )
+  },
 ];
 
-export default function CompanyPage() {
+const CompanyPage = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Company | null>(null);
@@ -109,103 +115,74 @@ export default function CompanyPage() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
+
+  const fetchCompanies = useCallback(
+    async (pageNo: number = 1, pageSize: number = 5): Promise<listReturnType> => {
+      setLoading(true);
+      const result = await companyList({
+        page: pageNo.toString(),
+        per_page: pageSize.toString(),
+      });
+      console.log(result)
+      setLoading(false);
+      if (result.error) {
+        showSnackbar(result.data.message, "error");
+        throw new Error("Error fetching data");
+      } else {
+        return {
+          data:
+           (result.data as TableDataType[]),
+          currentPage: result.pagination?.current_page || 1,
+          pageSize: result.pagination?.per_page || 5,
+          total: result.pagination?.last_page || 0,
+        };
+      }
+    },
+  [showSnackbar, setLoading]
+  );
+
   // ✅ Map companies → TableDataType safely
   const tableData: TableDataType[] = companies.map((c) => ({
-  id: String(c.id ?? ""),
-  company_code: c.company_code ?? "",
-  company_name: c.company_name ?? "",
-  company_type: c.company_type ?? "",
-  email: c.email ?? "",
-  tin_number: c.tin_number ?? "",
-  vat: c.vat ?? "",
-  country_name: c.country?.country_name ?? "",
-  selling_currency: c.country?.selling_currency ?? "",
-  purchase_currency: c.country?.purchase_currency ?? "",
-  toll_free_no: c.toll_free_no ?? "",
-  primary_contact: c.primary_contact ?? "",
-  website: c.website ?? "",
-  region_name: c.region?.region_name ?? "",
-  subregion_name: c.sub_region?.subregion_name ?? "",
-  module_access: c.module_access ?? "",
-  district: c.district ?? "",
-  town: c.town ?? "",
-  street: c.street ?? "",
-  landmark: c.landmark ?? "",
-  service_type: c.service_type ?? "",
-  status: c.status === "1" || c.status === 1 ? "Active" : "Inactive",
-}));
+    id: String(c.id ?? ""),
+    company_code: c.company_code ?? "",
+    company_name: c.company_name ?? "",
+    company_type: c.company_type ?? "",
+    email: c.email ?? "",
+    tin_number: c.tin_number ?? "",
+    vat: c.vat ?? "",
+    country_name: c.country?.country_name ?? "",
+    selling_currency: c.country?.selling_currency ?? "",
+    purchase_currency: c.country?.purchase_currency ?? "",
+    toll_free_no: c.toll_free_no ?? "",
+    primary_contact: c.primary_contact ?? "",
+    website: c.website ?? "",
+    region_name: c.region?.region_name ?? "",
+    subregion_name: c.sub_region?.subregion_name ?? "",
+    module_access: c.module_access ?? "",
+    district: c.district ?? "",
+    town: c.town ?? "",
+    street: c.street ?? "",
+    landmark: c.landmark ?? "",
+    service_type: c.service_type ?? "",
+    status: c.status === "1" || c.status === 1 ? "Active" : "Inactive",
+  }));
 
-
-  // ✅ Fetch companies from API
-    // const fetchCompanies = useCallback(
-    //   async (pageNo: number = 1, pageSize: number = 5) => {
-    //     setLoading(true);
-    //     const result = await companyList({
-    //       page: pageNo.toString(),
-    //       per_page: pageSize.toString(),
-    //     });
-    //     setLoading(false);
-    //     if (result.error) {
-    //       showSnackbar(result.data.message, "error");
-    //       throw new Error("Error fetching data");
-    //     } else {
-    //       return {
-    //         data:
-    //           (result.data || []).map((c: any) => ({
-    //             id: c.id?.toString() ?? "",
-    //             country_code: c.country_code ?? "",
-    //             country_name: c.country_name ?? "",
-    //             currency: c.currency ?? "",
-    //           })),
-    //         currentPage: result.pagination?.page || 1,
-    //         pageSize: result.pagination?.limit || 5,
-    //         total: result.pagination?.totalPages || 0,
-    //       };
-    //     }
-    //   },
-    //   [showSnackbar]
-    // );
-    const fetchCompanies = async () => {
-      try {
-        const res = await companyList();
-        if (res?.data && Array.isArray(res.data)) {
-          setCompanies(res.data);
-        } else {
-          setCompanies([]);
-        }
-      } catch (err) {
-        console.error("Failed to fetch companies ❌", err);
-        showSnackbar("Failed to fetch companies ❌", "error");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-
-    useEffect(() => {
-       fetchCompanies();
-    }, [showSnackbar]);
-
-
+  // ✅ Handle Delete
   const handleConfirmDelete = async () => {
-  if (!selectedRow?.id) return;
+    if (!selectedRow?.id) return;
 
     const res = await deleteCompany(String(selectedRow.id));
     if (res.error) {
       showSnackbar(res.message || "Failed to delete company ❌", "error");
-      await fetchCompanies();
-      setShowDeletePopup(false);
-      setSelectedRow(null);
     } else {
-      // show message from API if exists, else generic error
       showSnackbar("Company deleted successfully ✅", "success");
       fetchCompanies();
     }
-};
-     
+    setShowDeletePopup(false);
+    setSelectedRow(null);
+  };
 
 
-  if (loading) return <Loading />;
 
   return (
     <>
@@ -249,8 +226,11 @@ export default function CompanyPage() {
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={tableData}
+          // data={tableData}
           config={{
+            api: {
+              list: fetchCompanies,
+            },
             header: {
               searchBar: true,
               columnFilter: true,
@@ -285,7 +265,7 @@ export default function CompanyPage() {
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 5,
           }}
         />
       </div>
@@ -302,4 +282,6 @@ export default function CompanyPage() {
       )}
     </>
   );
-}
+};
+
+export default CompanyPage;

@@ -174,7 +174,6 @@ export default function Country() {
           config={{
             api: {
               list: fetchCountries,
-              search: searchCountries,
             },
             header: {
               searchBar: true,

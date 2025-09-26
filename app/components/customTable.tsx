@@ -19,16 +19,16 @@ export type listReturnType = {
 
 type configType = {
     api?: {
-        search?: (
-            pageNo: number,
-            pageSize: number,
-            query?: string
-        ) => Promise<listReturnType> | listReturnType;
+        search?: () => {
+            data: TableDataType[];
+            currentPage: number;
+            pageSize: number;
+            total: number;
+        };
         filter?: () => TableDataType[];
         list: (
             pageNo: number,
-            pageSize: number,
-            query?: string
+            pageSize: number
         ) => Promise<listReturnType> | listReturnType;
     };
     header?: {
@@ -154,9 +154,8 @@ function TableContainer({ data, config }: TableProps) {
     const { setConfig } = useContext(Config);
     const { setTableDetails } = useContext(TableDetails);
     const { selectedRow } = useContext(SelectedRow);
-    const [searchValue, setSearchValue] = useState("");
 
-    async function checkForData(query?: string) {
+    async function checkForData() {
         // if data is passed, use default values
         if (data) {
             setTableDetails({
@@ -173,8 +172,7 @@ function TableContainer({ data, config }: TableProps) {
         else if (config.api?.list) {
             const result = await config.api.list(
                 0,
-                config.pageSize || defaultPageSize,
-                query
+                config.pageSize || defaultPageSize
             );
             const resolvedResult =
                 result instanceof Promise ? await result : result;
@@ -196,10 +194,10 @@ function TableContainer({ data, config }: TableProps) {
     }
 
     useEffect(() => {
-        checkForData(searchValue);
+        checkForData();
         setSelectedColumns(config.columns.map((_, index) => index)); // select all in the filter dropdown
         setConfig(config);
-    }, [data, searchValue]);
+    }, [data]);
 
     return (
         <>
@@ -213,7 +211,7 @@ function TableContainer({ data, config }: TableProps) {
                 {selectedRow.length > 0 && config.header?.wholeTableActions?.map((action) => action)}
             </div>}
             <div className="flex flex-col bg-white w-full border-[1px] border-[#E9EAEB] rounded-[8px] overflow-hidden">
-                <TableHeader onSearch={setSearchValue} />
+                <TableHeader />
                 <TableBody />
                 <TableFooter />
             </div>
@@ -221,16 +219,9 @@ function TableContainer({ data, config }: TableProps) {
     );
 }
 
-function TableHeader({ onSearch }: { onSearch: (query: string) => void }) {
+function TableHeader() {
     const { config } = useContext(Config);
     const [searchBarValue, setSearchBarValue] = useState("");
-
-    // Only update searchValue (for API) on Enter
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === "Enter") {
-            onSearch(searchBarValue);
-        }
-    };
 
     return (
         <>
@@ -244,8 +235,6 @@ function TableHeader({ onSearch }: { onSearch: (query: string) => void }) {
                                     onChange={(
                                         e: React.ChangeEvent<HTMLInputElement>
                                     ) => setSearchBarValue(e.target.value)}
-                                    // @ts-ignore
-                                    onKeyDown={handleKeyDown}
                                 />
                             )}
                         </div>

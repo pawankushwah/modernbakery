@@ -19,7 +19,7 @@ interface CompanyCustomerPayload {
   sap_code: string;
   customer_code: string;
   business_name: string;
-  customer_type: number;
+  customer_type: string;
   owner_name: string;
   owner_no: string;
   is_whatsapp: number;
@@ -35,13 +35,13 @@ interface CompanyCustomerPayload {
   region_id: number;
   area_id: number;
   balance: number;
-  payment_type: number;
+  payment_type: string;
   bank_name: string;
   bank_account_number: string;
   creditday: string;
   tin_no: string;
-  accuracy?: string;
-  credit_limit: number;
+  accuracy: string;
+  creditlimit: number;
   totalcreditlimit: number;
   credit_limit_validity?: string;
   guarantee_name: string;
@@ -53,6 +53,7 @@ interface CompanyCustomerPayload {
   latitude: string;
   threshold_radius: number;
   dchannel_id: number;
+  merchendiser_ids: number;
   status: number;
 }
 
@@ -91,7 +92,8 @@ const CompanyCustomerSchema = Yup.object().shape({
   longitude: Yup.string().required("Longitude is required."),
   latitude: Yup.string().required("Latitude is required."),
   thresholdRadius: Yup.number().required("Threshold Radius is required."),
-  dChannelId: Yup.string().required("DChannel is required."),
+  channelId: Yup.string().required("Channel is required."),
+  merchendiser_ids: Yup.string().required("Merchendiser is required."),
 });
 
 const stepSchemas = [
@@ -134,7 +136,8 @@ const stepSchemas = [
     longitude: Yup.string().required("Longitude is required."),
     latitude: Yup.string().required("Latitude is required."),
     thresholdRadius: Yup.number().required("Threshold Radius is required."),
-    dChannelId: Yup.string().required("DChannel is required."),
+    channelId: Yup.string().required("Channel is required."),
+    merchendiser_ids: Yup.string().required("Merchendiser is required."),
   }),
 ];
 
@@ -178,13 +181,14 @@ type CompanyCustomerFormValues = {
   thresholdRadius: string;
   dChannelId: string;
   status: string;
+  merchendiser_ids: string;
 };
 
 // ---------------------- Component ----------------------
 export default function AddCompanyCustomer() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { regionOptions, areaOptions } = useAllDropdownListData();
+  const { regionOptions, areaOptions, customerTypeOptions } = useAllDropdownListData();
 
   const steps: StepperStep[] = [
     { id: 1, label: "Company Customer" },
@@ -216,7 +220,7 @@ export default function AddCompanyCustomer() {
     region: "",
     area: "",
     balance: "",
-    paymentType: "1",
+    paymentType: "",
     bankName: "",
     bankAccountNumber: "",
     creditDay: "",
@@ -234,6 +238,7 @@ export default function AddCompanyCustomer() {
     latitude: "",
     thresholdRadius: "",
     dChannelId: "",
+    merchendiser_ids: "",
     status: "1",
   };
 
@@ -278,7 +283,7 @@ export default function AddCompanyCustomer() {
         sap_code: values.sapCode,
         customer_code: values.customerCode,
         business_name: values.businessName,
-        customer_type: Number(values.customerType),
+        customer_type: String(values.customerType),
         owner_name: values.ownerName,
         owner_no: values.ownerNumber,
         is_whatsapp: Number(values.isWhatsapp),
@@ -294,15 +299,15 @@ export default function AddCompanyCustomer() {
         region_id: Number(values.region),
         area_id: Number(values.area),
         balance: Number(values.balance),
-        payment_type: Number(values.paymentType),
+        payment_type: values.paymentType,
         bank_name: values.bankName,
         bank_account_number: values.bankAccountNumber,
         creditday: String(values.creditDay),
         tin_no: values.tinNo,
         accuracy: values.accuracy || "",
-        credit_limit: Number(values.creditLimit),
+        creditlimit: Number(values.creditLimit),
         totalcreditlimit: Number(values.totalCreditLimit),
-        credit_limit_validity: values.creditLimitValidity || "",
+        credit_limit_validity: values.creditLimitValidity,
         guarantee_name: values.guaranteeName,
         guarantee_amount: Number(values.guaranteeAmount),
         guarantee_from: values.guaranteeFrom,
@@ -312,6 +317,7 @@ export default function AddCompanyCustomer() {
         latitude: values.latitude,
         threshold_radius: Number(values.thresholdRadius),
         dchannel_id: Number(values.dChannelId),
+        merchendiser_ids: Number(values.merchendiser_ids),
         status: Number(values.status),
       };
 
@@ -356,7 +362,7 @@ export default function AddCompanyCustomer() {
                 { label: "SAP Code", name: "sapCode" },
                 { label: "Customer Code", name: "customerCode" },
                 { label: "Business Name", name: "businessName" },
-                { label: "Customer Type", name: "customerType", options: [{ value: "1", label: "Type 1" }, { value: "2", label: "Type 2" }] },
+                { label: "Customer Type", name: "customerType", options: customerTypeOptions },
                 { label: "Owner Name", name: "ownerName" },
                 { label: "Owner Number", name: "ownerNumber" },
                 { label: "Email", name: "email" },
@@ -413,6 +419,10 @@ export default function AddCompanyCustomer() {
                 { label: "District", name: "district" },
                 { label: "Region", name: "region", options: regionOptions },
                 { label: "Area", name: "area", options: areaOptions },
+                 { label: "TIN No", name: "tinNo" },
+                  { label: "Longitude", name: "longitude" },
+                { label: "Latitude", name: "latitude" },
+                { label: "Threshold Radius", name: "thresholdRadius" },
               ].map((field) => (
                 <div key={field.name}>
                   <InputFields
@@ -438,19 +448,18 @@ export default function AddCompanyCustomer() {
                 { label: "Payment Type", name: "paymentType", options: [{ value: "1", label: "Cash" }, { value: "2", label: "Credit" }] },
                 { label: "Bank Name", name: "bankName" },
                 { label: "Bank Account Number", name: "bankAccountNumber" },
-                { label: "Credit Day", name: "creditDay" },
+                { label: "Credit Day", name: "creditDay", type: "Date" },
+                { label: "Accuracy", name: "accuracy" },
                 { label: "Credit Limit", name: "creditLimit" },
                 { label: "Total Credit Limit", name: "totalCreditLimit" },
+                { label: "credit_limit_validity", name: "creditLimitValidity", type: "Date" },
                 { label: "Guarantee Name", name: "guaranteeName" },
                 { label: "Guarantee Amount", name: "guaranteeAmount" },
-                { label: "Guarantee From", name: "guaranteeFrom" },
-                { label: "Guarantee To", name: "guaranteeTo" },
+                { label: "Guarantee From", name: "guaranteeFrom", type: "Date" },
+                { label: "Guarantee To", name: "guaranteeTo", type: "Date" },
                 { label: "VAT No", name: "vatNo" },
-                { label: "TIN No", name: "tinNo" },
-                { label: "Longitude", name: "longitude" },
-                { label: "Latitude", name: "latitude" },
-                { label: "Threshold Radius", name: "thresholdRadius" },
-                { label: "DChannel ID", name: "dChannelId" },
+                { label: "Channel ID", name: "channelId" },
+                { label: "Merchendiser", name: "merchendiser_ids", options: [{ value: "1", label: "Merchendiser 1" }, { value: "2", label: "Merchendiser 2" }, { value: "3", label: "Merchendiser 3" }]},
                 { label: "Status", name: "status", options: [{ value: "1", label: "Active" }, { value: "0", label: "Inactive" }] },
               ].map((field) => (
                 <div key={field.name}>
@@ -459,6 +468,7 @@ export default function AddCompanyCustomer() {
                     name={field.name}
                     value={values[field.name as keyof CompanyCustomerFormValues]}
                     onChange={(e) => setFieldValue(field.name as keyof CompanyCustomerFormValues, e.target.value)}
+                    isSingle={false}
                     options={field.options}
                   />
                   <ErrorMessage name={field.name} component="span" className="text-xs text-red-500 mt-1" />
