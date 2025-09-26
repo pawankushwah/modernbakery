@@ -239,7 +239,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         companyList(),
         countryList({}),
         regionList(),
-        routeList(),
+      routeList({}),
         warehouseType(1),
         routeType(),
         getSubRegion(),

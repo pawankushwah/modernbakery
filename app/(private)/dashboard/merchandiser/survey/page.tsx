@@ -10,17 +10,14 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-
-interface ShelfDisplayItem {
+interface SurveyItem {
   id: string;
-  date: string;
-  name: string;
-  customer_code: string;
-  customer_name: string;
-    valid_from: string;
-  valid_to: string;
+  survey_code: string;
+  survey_name: string;
+  start_date: string;
+  end_date: string;
+  status: string;
 }
-
 const dropdownDataList = [
   { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
   { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
@@ -28,57 +25,53 @@ const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
-
 // ✅ Static table data
 const tableData: TableDataType[] = [
   {
     id: "1",
-    date: "2025-09-01",
-    name: "North Shelf Display",
-    customer_code: "C001",
-    customer_name: "Data ",
-  valid_from: "2025-09-01",
-  valid_to: "2025-09-30",
+    survey_code: "S001",
+    survey_name: "North survey",
+
+    start_date: "2025-09-01",
+    end_date: "2025-09-30",
+    status: "Active",
   },
   {
     id: "2",
-    date: "2025-09-05",
-    name: "South Shelf Display",
-    customer_code: "C002",
-    customer_name: "Custume Name",
+    survey_code: "S002",
+    survey_name: "South Survey",
+
     status: "Inactive",
-     valid_from: "2025-09-01",
-  valid_to: "2025-09-30",
+    start_date: "2025-09-01",
+    end_date: "2025-09-30",
   },
   {
     id: "3",
-    date: "2025-09-10",
-    name: "East Shift Display",
-    customer_code: "C003",
-    customer_name: "Ramesh",
+    survey_code: "S003",
+    survey_name: "East survey",
+
     status: "Active",
-     valid_from: "2025-09-01",
-  valid_to: "2025-09-30",
+    start_date: "2025-09-01",
+    end_date: "2025-09-30",
   },
   {
     id: "4",
-    date: "2025-09-15",
-    name: "West Shift Display",
-    customer_code: "Cu004",
-    customer_name: "Ramesh",
-     valid_from: "2025-09-01",
-  valid_to: "2025-09-30",
+    survey_code: "S004",
+    survey_name: "West survey",
+
+    start_date: "2025-09-01",
+    end_date: "2025-09-30",
+    status: "Active",
   },
 ];
 
-export default function ShelfDisplay() {
+export default function Survey() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<ShelfDisplayItem | null>(null);
+  const [selectedRow, setSelectedRow] = useState<SurveyItem | null>(null);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
-
   const handleConfirmDelete = () => {
     if (selectedRow) {
       showSnackbar(`Deleted row with ID: ${selectedRow.id}`, "success");
@@ -92,7 +85,7 @@ export default function ShelfDisplay() {
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-5">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Shelf Display</h1>
+        <h1 className="text-[20px] font-semibold text-[#181D27]">Survey</h1>
         <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
           <BorderIconButton icon="mage:upload" />
@@ -108,8 +101,14 @@ export default function ShelfDisplay() {
                       key={idx}
                       className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
                     >
-                      <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
-                      <span className="text-[#181D27] font-[500] text-[16px]">{link.label}</span>
+                      <Icon
+                        icon={link.icon}
+                        width={link.iconWidth}
+                        className="text-[#717680]"
+                      />
+                      <span className="text-[#181D27] font-[500] text-[16px]">
+                        {link.label}
+                      </span>
                     </div>
                   ))}
                 </CustomDropdown>
@@ -130,9 +129,9 @@ export default function ShelfDisplay() {
               actions: [
                 <SidebarBtn
                   key="name"
-                  href="/dashboard/merchandiser/shelfDisplay/add"
+                  href="/dashboard/merchandiser/survey/add"
                   leadingIcon="lucide:plus"
-                  label="Add Shelf Display"
+                  label="Add Survey"
                   labelTw="hidden sm:block"
                   isActive
                 />,
@@ -140,13 +139,11 @@ export default function ShelfDisplay() {
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "date", label: "Date" },
-              { key: "name", label: "Name" },
-              { key: "customer_code", label: "Customer Code" },
-              { key: "customer_name", label: "Customer Name" },
-              { key: "valid_from", label: "Valid From" },
-              { key: "valid_to", label: "Valid To" },
-          
+              { key: "survey_code", label: "Survey Code" },
+              { key: "survey_name", label: "Survey Name" },
+              { key: "start_date", label: "Start Date" },
+              { key: "end_date", label: "End Date" },
+              { key: "status", label: "Status" },
             ],
             rowSelection: true,
             rowActions: [
@@ -154,14 +151,16 @@ export default function ShelfDisplay() {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/merchandiser/shelfDisplay/update/${row.id}`);
+                  router.push(
+                    `/dashboard/merchandiser/survey/update/${row.id}`
+                  );
                 },
               },
               {
                 icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  setSelectedRow({ id: row.id, ...row } as ShelfDisplayItem);
+                  setSelectedRow({ id: row.id, ...row } as SurveyItem);
                   setShowDeletePopup(true);
                 },
               },
@@ -175,7 +174,7 @@ export default function ShelfDisplay() {
       {showDeletePopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <DeleteConfirmPopup
-            title="Shelf Display"
+            title="Survey"
             onClose={() => setShowDeletePopup(false)}
             onConfirm={handleConfirmDelete}
           />
