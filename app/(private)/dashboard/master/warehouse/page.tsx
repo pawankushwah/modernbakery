@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { TableDataType, searchReturnType,listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getWarehouse ,deleteWarehouse} from "@/app/services/allApi";
+import { getWarehouse ,deleteWarehouse, warehouseList, warehouseListGlobalSearch} from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -94,8 +94,14 @@ export default function Warehouse() {
           tin_no?: string;
           warehouse_manager?: string;
       warehouse_manager_contact?: string;
-      sub_region_id?: string;
-      region_id?: string;
+      area: {
+        id?: number | string;
+        area_name?: string;
+      }
+      region:{
+        id?: number | string;
+        region_name?: string;
+      }
           warehouse_name?: string;
           company_customer_id?: string;
           owner_name?: string;
@@ -117,8 +123,8 @@ export default function Warehouse() {
           // depotName: item.branch_id?.toString() ?? "",
           depotLocation: item.location ?? "",
           company_customer_id: item.company_customer_id ?? "",
-          region_id: item.region_id ?? "",
-          sub_region_id: item.sub_region_id ?? "",
+          region_id: item.region.region_name ?? "",
+          sub_region_id: item.area.area_name ?? "",
           warehouse_manager: item.warehouse_manager ?? "",
           warehouse_manager_contact: item.warehouse_manager_contact ?? "",
           phoneNumber: item.owner_number ?? "",
@@ -156,6 +162,53 @@ export default function Warehouse() {
         setSelectedRow(null);
       }
     };
+
+    const fetchWarehouse = useCallback(
+            async (
+                page: number = 1,
+                pageSize: number = 10
+            ): Promise<listReturnType> => {
+                try {
+                    const listRes = await warehouseList();
+                    setLoading(false);
+                    return {
+                        data: listRes.data || [],
+                        total: listRes.pagination.pagination.last_pages || 1,
+                        currentPage: listRes.pagination.pagination.current_page || page,
+                        pageSize: listRes.pagination.pagination.per_page || pageSize,
+                    };
+                } catch (error: unknown) {
+                    console.error("API Error:", error);
+                    setLoading(false);
+                    throw error;
+                }
+            },
+            []
+        );
+
+    const searchCountries = useCallback(
+            async (
+                searchQuery: string,
+                pageSize: number
+            ): Promise<searchReturnType> => {
+                setLoading(true);
+                const result = await warehouseListGlobalSearch({
+                    query: searchQuery,
+                    per_page: pageSize.toString(),
+                });
+                setLoading(false);
+                if (result.error) throw new Error(result.data.message);
+                else {
+                    return {
+                        data: result.data || [],
+                        total: result.pagination.pagination.totalPages || 0,
+                        currentPage: result.pagination.pagination.current_page || 0,
+                        pageSize: result.pagination.pagination.limit || pageSize,
+                    };
+                }
+            },
+            []
+        );
 
   return loading ? <Loading /> : (
     <>
@@ -198,6 +251,10 @@ export default function Warehouse() {
         <Table
           data={warehouses}
           config={{
+            api: {
+              search: searchCountries,
+              list: fetchWarehouse,
+            },
             header: {
               searchBar: true,
               columnFilter: true,
@@ -236,7 +293,7 @@ export default function Warehouse() {
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 2,
           }}
         />
       </div>

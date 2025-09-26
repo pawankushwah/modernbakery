@@ -112,6 +112,16 @@ export const addCompany = async (data:FormData | Record<string, string>) => {
   
 };
 
+export const companyListGlobalSearch = async (params: Params) => {
+  try {
+     const res = await API.get("/api/master/company/global_search", {params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
+};
+
 export const deleteCompany = async (id:string) => {
     const res = await API.delete(`/api/master/company/company/${id}`);
     return res.data;
@@ -355,6 +365,15 @@ export const deleteRoute = async (id:string) => {
     return handleError(error);
   }
 };
+
+export const warehouseListGlobalSearch = async (params: Params) => {
+  try{
+    const res = await API.get(`/api/master/warehouse/global_search`, {params})
+    return res.data;
+  }catch (error: unknown){
+    return handleError(error)
+  }
+}
 
 export const warehouseList = async () => {
   try {

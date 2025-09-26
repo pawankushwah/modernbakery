@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
+import Table, { listReturnType, TableDataType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { companyList, deleteCompany } from "@/app/services/allApi";
+import { companyList, deleteCompany, companyListGlobalSearch } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -74,8 +74,8 @@ const columns = [
   {
     label: 'Country',
     key: 'country_name',
-    render: (row: TableDataType) => row.country_name || '-',
-  },
+    render: (row: TableDataType) => row.country_name || '-',
+  },
   { key: "tin_number", label: "TIN Number" },
   { key: "purchase_currency", label: "Purchase Currency" },
   { key: "selling_currency", label: "Selling Currency" },
@@ -86,16 +86,16 @@ const columns = [
     key: "status",
     label: "Status",
     render: (row: TableDataType) => (
-    <StatusBtn
-    isActive= {row.status === "1" ? true: false}
-    />
+      <StatusBtn
+        isActive={row.status === "1" ? true : false}
+      />
     )
   },
 ];
 
 const CompanyPage = () => {
   const [companies, setCompanies] = useState<Company[]>([]);
-  const {setLoading} = useLoading();
+  const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<Company | null>(null);
@@ -119,15 +119,46 @@ const CompanyPage = () => {
       } else {
         return {
           data:
-           (result.data as TableDataType[]),
+            (result.data as TableDataType[]),
           currentPage: result.pagination?.current_page || 1,
           pageSize: result.pagination?.per_page || 5,
           total: result.pagination?.last_page || 0,
         };
       }
     },
-  [showSnackbar, setLoading]
+    [showSnackbar, setLoading]
   );
+
+  const searchCompanies = useCallback(
+  async (
+    searchQuery: string,
+    pageSize: number = 5
+  ): Promise<searchReturnType> => {
+    setLoading(true);
+
+    const result = await companyListGlobalSearch({
+      query: searchQuery,
+      per_page: pageSize.toString(),
+    });
+
+    setLoading(false);
+
+    if (result.error) {
+      throw new Error(result.data?.message || "Search failed");
+    }
+
+    return {
+      data: result.data || [],
+      currentPage: result.pagination.pagination.current_page || 0, 
+      pageSize: result.pagination.pagination.per_page || pageSize,
+      total:
+        result.pagination.pagination.total || result.data?.length || 0, // safe fallback
+    };
+  },
+  [setLoading]
+);
+
+
 
   // ✅ Map companies → TableDataType safely
   const tableData: TableDataType[] = companies.map((c) => ({
@@ -218,6 +249,7 @@ const CompanyPage = () => {
           config={{
             api: {
               list: fetchCompanies,
+              search: searchCompanies,
             },
             header: {
               searchBar: true,

@@ -468,6 +468,7 @@ export default function AddCompanyCustomer() {
                     name={field.name}
                     value={values[field.name as keyof CompanyCustomerFormValues]}
                     onChange={(e) => setFieldValue(field.name as keyof CompanyCustomerFormValues, e.target.value)}
+                    isSingle={false}
                     options={field.options}
                   />
                   <ErrorMessage name={field.name} component="span" className="text-xs text-red-500 mt-1" />
