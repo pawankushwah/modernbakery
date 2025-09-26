@@ -22,11 +22,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
-          <LoadingProvider>
+          {/* <LoadingProvider> */}
             <SnackbarProvider>
               {children}
             </SnackbarProvider>
-          </LoadingProvider>
+          {/* </LoadingProvider> */}
       </body>
     </html>
   );

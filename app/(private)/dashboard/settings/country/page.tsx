@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 
@@ -8,11 +8,11 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { countryList, deleteCountry } from "@/app/services/allApi";
-import Loading from "@/app/components/Loading";
+import { countryList, deleteCountry,countryGlobalSearch } from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface DropdownItem {
   icon: string;
@@ -41,60 +41,96 @@ export default function Country() {
     country_name?: string;
     currency?: string;
   }
-
-  const [countries, setCountries] = useState<CountryItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
   const router = useRouter();
-  const { showSnackbar } = useSnackbar(); // ✅ snackbar hook
+  const { showSnackbar } = useSnackbar();
   type TableRow = TableDataType & { id?: string };
 
-  // normalize countries to TableDataType for the Table component
-  const tableData: TableDataType[] = countries.map((c) => ({
-    id: c.id?.toString() ?? "",
-    country_code: c.country_code ?? "",
-    country_name: c.country_name ?? "",
-    currency: c.currency ?? "",
-  }));
-
-
-    const fetchCountries = async () => {
-      try {
-        const listRes = await countryList({});
-        setCountries(listRes.data);
-      } catch (error: unknown) {
-        console.error("API Error:", error);
-      } finally {
-        setLoading(false);
+  // Normal list fetch (no search)
+  const fetchCountries = useCallback(
+    async (pageNo: number = 1, pageSize: number = 5) => {
+      setLoading(true);
+      const safePage = Math.max(1, pageNo);
+      const result = await countryList({
+        page: safePage.toString(),
+        limit: pageSize.toString(),
+      });
+      setLoading(false);
+      if (result.error) {
+        showSnackbar(result.data.message, "error");
+        throw new Error("Error fetching data");
+      } else {
+        return {
+          data:
+            (result.data || []).map((c: { id?: string | number; country_code?: string; country_name?: string; currency?: string }) => ({
+              id: c.id?.toString() ?? "",
+              country_code: c.country_code ?? "",
+              country_name: c.country_name ?? "",
+              currency: c.currency ?? "",
+            })),
+          currentPage: result.pagination?.page ,
+          pageSize: result.pagination?.limit ,
+          total: result.pagination?.totalPages,
+        };
       }
-    };
+    },
+    [showSnackbar, setLoading]
+  );
 
- 
-useEffect(()  => {
-  fetchCountries();
-},[]);
+  // Search fetch (uses countryGlobalSearch)
+  const searchCountries = useCallback(
+    async (pageNo: number = 1, pageSize: number = 5, query: string = "") => {
+      setLoading(true);
+      const safePage = Math.max(1, pageNo);
+      const result = await countryGlobalSearch({
+        query,
+        page: safePage.toString(),
+        per_page: pageSize.toString(),
+      });
+      setLoading(false);
+      if (result.error) {
+        showSnackbar(result.data.message, "error");
+        throw new Error("Error fetching data");
+      } else {
+        const pagination = result.pagination || result.data?.pagination || {};
+        const dataArr = result.data?.data || result.data || [];
+        return {
+          data:
+            (dataArr || []).map((c: { id?: string | number; country_code?: string; country_name?: string; currency?: string }) => ({
+              id: c.id?.toString() ?? "",
+              country_code: c.country_code ?? "",
+              country_name: c.country_name ?? "",
+              currency: c.currency ?? "",
+            })),
+          currentPage: pagination.page || pagination.currentPage || 1,
+          pageSize: pagination.limit || pagination.per_page || pageSize,
+          total: pagination.totalPages || pagination.total || 1,
+        };
+      }
+    },
+    [showSnackbar, setLoading]
+  );
+
   const handleConfirmDelete = async () => {
     if (!selectedRow) return;
-    
-                if (!selectedRow?.id) throw new Error('Missing id');
-                 const res = await deleteCountry(String(selectedRow.id)); 
-                if (res.error) return showSnackbar(res.data.message|| "Failed to delete country","error");
-                else{
-                  showSnackbar("Country deleted successfully ", "success");
-                await countryList({});
-                setCountries((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
-                }
-                 setShowDeletePopup(false);
-                setSelectedRow(null);
-           
-          };
+    if (!selectedRow?.id) throw new Error('Missing id');
+    const res = await deleteCountry(String(selectedRow.id));
+    if (res.error) return showSnackbar(res.data.message || "Failed to delete country", "error");
+    else {
+      showSnackbar("Country deleted successfully ", "success");
+    }
+    setShowDeletePopup(false);
+    setSelectedRow(null);
+  };
   
+    useEffect(() => {
+      setLoading(true);
+    }, [setLoading]);
 
-  return loading ? (
-    <Loading />
-  ) : (
+  return (
     <>
       <div className="flex justify-between items-center mb-[20px]">
         <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
@@ -135,8 +171,11 @@ useEffect(()  => {
 
       <div className="h-[calc(100%-60px)]">
         <Table
-          data={tableData}
           config={{
+            api: {
+              list: fetchCountries,
+              search: searchCountries,
+            },
             header: {
               searchBar: true,
               columnFilter: true,
@@ -155,7 +194,6 @@ useEffect(()  => {
             columns,
             rowSelection: true,
             rowActions: [
-              
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
@@ -172,7 +210,7 @@ useEffect(()  => {
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 5,
           }}
         />
       </div>

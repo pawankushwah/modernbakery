@@ -27,6 +27,10 @@ interface SubRegionItem {
     region_name?: string;
     // add other region properties if needed
   };
+  region?: {
+    region_name?: string;
+    // add other region properties if needed
+  };
   area_name?: string;
   status?: "Active" | "Inactive" | string;
 }
@@ -43,10 +47,10 @@ const columns = [
   { key: "area_code", label: "SubRegion Code" },
   { key: "area_name", label: "SubRegion Name" },
   {
-  label: 'Region',
-  key: 'region_name',
-  render: (row: TableDataType) => row.region_name || '',
-},
+    label: 'Region',
+    key: 'region_name',
+  render: (row: SubRegionItem) => row.region?.region_name || '',
+  },
   
   {
     key: "status",
@@ -84,7 +88,6 @@ export default function SubRegion() {
   const tableData: TableDataType[] = subRegions.map((s) => ({
     id: s.id?.toString() ?? "",
     area_code: s.area_code ?? "",
-    region_name: s.region?.region_name ?? "",
     area_name: s.area_name ?? "",
     status: s.status ?? "Inactive",
   }));
@@ -103,6 +106,7 @@ export default function SubRegion() {
     };
 
     fetchSubRegions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleConfirmDelete = async () => {

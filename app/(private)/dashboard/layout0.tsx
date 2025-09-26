@@ -8,7 +8,7 @@ import { initialLinkData } from "../data/dashboardLinks";
 import LinkDataReducer from "../utils/linkDataReducer";
 import { SettingsContext } from "./contexts";
 import { AllDropdownListDataProvider } from "@/app/components/contexts/allDropdownListData";
-
+import { LoadingProvider } from "@/app/services/loadingContext";
 const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
     const context = useContext(SettingsContext);
 
@@ -53,7 +53,10 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
             />
             <Main horizontalSidebar={horizontalSidebar} isOpen={isOpen}>
                         <AllDropdownListDataProvider>
+                <LoadingProvider>
+
                 {children}
+                       </LoadingProvider>
                        </AllDropdownListDataProvider>
                 </Main>
         </div>

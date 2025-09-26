@@ -53,9 +53,9 @@ export const isVerify = async () => {
   }
 };
 
-export const companyList = async () => {
+export const companyList = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/master/company/list_company`);
+    const res = await API.get(`/api/master/company/list_company`, { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -118,9 +118,9 @@ export const deleteCompany = async (id:string) => {
 }
 
 
-export const countryList = async (data: Record<string, string>) => {
+export const countryList = async (params?: Params) => {
   try {
-     const res = await API.get("/api/master/country/list_country", data);
+     const res = await API.get("/api/master/country/list_country",{ params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -226,9 +226,9 @@ export const deleteItemCategory = async (category_id: number) => {
 };
 
 // Item Sub Category
-export const itemSubCategoryList = async () => {
+export const itemSubCategoryList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/settings/item-sub-category/list");
+    const res = await API.get("/api/settings/item-sub-category/list", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -273,9 +273,9 @@ export const deleteItemSubCategory = async (sub_category_id: number) => {
 };
 
 
-export const regionList = async () => {
+export const regionList = async (params?: Params) => {
   try {
-              const res = await API.get("/api/master/region/list_region");
+              const res = await API.get("/api/master/region/list_region", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -301,9 +301,9 @@ export const deleteRegion = async (id:string) => {
 };
 
 
-export const routeList = async () => {
+export const routeList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/route/list_routes");
+    const res = await API.get("/api/master/route/list_routes", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -346,9 +346,9 @@ export const deleteRoute = async (id:string) => {
   }
 };
 
-export const warehouseList = async () => {
+export const warehouseList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/warehouse/list");
+    const res = await API.get("/api/master/warehouse/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -428,9 +428,9 @@ export const getWarehouseByArea = async (areaId: string) => {
 
 
 
-export const routeType = async () => {
+export const routeType = async (params?: Params) => {
   try {
-    const res = await API.get("/api/settings/route-type/list");
+    const res = await API.get("/api/settings/route-type/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -450,15 +450,15 @@ export const getSubRegion = async () => {
   }
 };
 
-export const subRegionList = async () => {
-    const res = await API.get("/api/master/area/list_area");
+export const subRegionList = async (params?: Params) => {
+    const res = await API.get("/api/master/area/list_area", { params: params });
     return res.data;
 }
 
 
-export const getCompanyCustomers = async () => {
+export const getCompanyCustomers = async (params?: Params) => {
   try {
-  const res = await API.get("/api/master/companycustomer/list");
+  const res = await API.get("/api/master/companycustomer/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -535,9 +535,9 @@ export const getCompanyCustomerActive = async () => {
   }
 };
 
-export const getCompanyCustomersType = async () => {
+export const getCompanyCustomersType = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/companycustomer/list");
+    const res = await API.get("/api/master/companycustomer/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -545,9 +545,9 @@ export const getCompanyCustomersType = async () => {
   }
 };
 
-export const itemCategory = async () => {
+export const itemCategory = async (params?: Params) => {
   try {
-    const res = await API.get("/api/settings/item_category/list");
+    const res = await API.get("/api/settings/item_category/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -555,9 +555,9 @@ export const itemCategory = async () => {
   }
 };
 
-export const itemSubCategory = async () => {
+export const itemSubCategory = async (params?: Params) => {
   try {
-    const res = await API.get("/api/settings/item-sub-category/list");
+    const res = await API.get("/api/settings/item-sub-category/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -565,9 +565,9 @@ export const itemSubCategory = async () => {
   }
 };
 
-export const channelList = async () => {
+export const channelList = async (params?: Params) => {
   try {
-  const res = await API.get("/api/settings/outlet-channels/list");
+  const res = await API.get("/api/settings/outlet-channels/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -575,9 +575,9 @@ export const channelList = async () => {
   }
 };
 
-export const userTypes = async () => {
+export const userTypes = async (params?: Params) => {
   try {
-    const res = await API.get("/api/settings/user-type/list");
+    const res = await API.get("/api/settings/user-type/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -585,9 +585,9 @@ export const userTypes = async () => {
   }
 };
 
-export const getWarehouse = async () => {
+export const getWarehouse = async (params?: Params) => {
   try {
-  const res = await API.get("/api/master/warehouse/list");
+  const res = await API.get("/api/master/warehouse/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -677,9 +677,9 @@ export const customerTypeList = async (params?: Record<string, string>) => {
 
 
 
-export const getCustomerType = async () => {
+export const getCustomerType = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/customer-type/list`);
+    const res = await API.get(`/api/settings/customer-type/list`, { params });
     return res.data;
   } catch (error) {
     console.error("Get Customer Type by ID failed ❌", error);
@@ -733,9 +733,9 @@ export const listCountries = async () => {
   }
 };
 
-export const routeTypeList = async (params?: Record<string, string>) => {
+export const routeTypeList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/settings/route-type/list", { params });
+    const res = await API.get("/api/settings/route-type/list", { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -785,9 +785,9 @@ export const deleteRouteTypeById = async (id: string) => {
   }
 };
 
-export const getArea = async () => {
+export const getArea = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/master/area/list_area`);
+    const res = await API.get(`/api/master/area/list_area`, { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -835,9 +835,9 @@ export const deleteArea = async (id:string) => {
   }
 };
 
-export const getCustomerCategory = async () => {
+export const getCustomerCategory = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/customer-category/list`);
+    const res = await API.get(`/api/settings/customer-category/list`, { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -885,9 +885,9 @@ export const deleteCustomerCategory = async (id:string) => {
   }
 };
 
-export const getItemCategory = async () => {
+export const getItemCategory = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/item-category/list`);
+    const res = await API.get(`/api/settings/item-category/list`, { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -1118,9 +1118,9 @@ export const updateChannel = async (id:string,payload:object) => {
   }
 };
 
-export const getExpenseTypeList = async () => {
+export const getExpenseTypeList = async (params?: Params) => {
   try {
-           const res = await API.get(`/api/settings/expense_type/list`);
+           const res = await API.get(`/api/settings/expense_type/list`, { params: params });
 
     return res.data;
   } catch (error) {
@@ -1213,18 +1213,18 @@ export const deleteSalesmanType = async (id:string) => {
     return res.data;
 };
 
-export const vehicleList = async () => {
+export const vehicleList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/vehicle/list");
+    const res = await API.get("/api/master/vehicle/list", { params: params });
     return res.data;
 } catch (error: unknown) {
     return handleError(error);
 }
 };
 
-export const getDiscountTypeList = async () => {
+export const getDiscountTypeList = async (params?: Params) => {
   try {
-           const res = await API.get(`/api/settings/discount_type/list`);
+           const res = await API.get(`/api/settings/discount_type/list`, { params: params });
 
     return res.data;
   } catch (error: unknown) {
@@ -1371,9 +1371,9 @@ export const updateCustomerSubCategory = async (id: string,body:object) => {
     return handleError(error);
   }
 };
-export const customerSubCategoryList = async () => {
+export const customerSubCategoryList = async (params?: Params) => {
   try {
-    const res = await API.get(`/api/settings/customer-sub-category/list`);
+    const res = await API.get(`/api/settings/customer-sub-category/list`, { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1387,9 +1387,20 @@ export const deleteCustomerSubCategory = async (id:number) => {
     return handleError(error);
   }
 };
+
+
 export const addCustomerSubCategory = async (body:object) => {
   try {
     const res = await API.post(`/api/settings/customer-sub-category/create`,body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const countryGlobalSearch = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/master/country/global_search`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
