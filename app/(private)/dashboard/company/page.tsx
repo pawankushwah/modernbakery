@@ -9,7 +9,6 @@ import CustomDropdown from "@/app/components/customDropdown";
 import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { companyList, deleteCompany } from "@/app/services/allApi";
-import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -72,7 +71,11 @@ const columns = [
   { key: "landmark", label: "Landmark" },
   { key: "town", label: "Town" },
   { key: "district", label: "District" },
-  { key: "country_name", label: "Country" },
+  {
+    label: 'Country',
+    key: 'country_name',
+    render: (row: TableDataType) => row.country_name || '-',
+  },
   { key: "tin_number", label: "TIN Number" },
   { key: "purchase_currency", label: "Purchase Currency" },
   { key: "selling_currency", label: "Selling Currency" },
@@ -100,29 +103,6 @@ const CompanyPage = () => {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
-  // ✅ Fetch companies with pagination
-  // const fetchCompanies = useCallback(async () => {
-  //   try {
-  //     setLoading(true);
-  //     const res = await companyList({ pageNo: 1, pageSize: 10 });
-
-  //     if (res.error) {
-  //       showSnackbar(res.data?.message || "Failed to fetch companies ❌", "error");
-  //       setCompanies([]);
-  //     } else {
-  //       setCompanies(res.data || []);
-  //     }
-  //   } catch (err) {
-  //     console.error("Failed to fetch companies ❌", err);
-  //     showSnackbar("Failed to fetch companies ❌", "error");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // }, [showSnackbar]);
-
-  // useEffect(() => {
-  //   fetchCompanies();
-  // }, [fetchCompanies]);
 
   const fetchCompanies = useCallback(
     async (pageNo: number = 1, pageSize: number = 5): Promise<listReturnType> => {

@@ -412,7 +412,7 @@ export default function AddCompanyWithStepper() {
                 label="Status"
                 name="status"
                 value={values.status}
-                onChange={(e) => setFieldValue("status", String(e))}
+                onChange={(e) => setFieldValue("status", e.target.value)}
                 options={[
                   { value: "1", label: "Active" },
                   { value: "0", label: "Inactive" },
