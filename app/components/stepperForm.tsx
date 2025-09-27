@@ -87,7 +87,7 @@ export default function StepperForm({
   return (
     <div className={`w-full ${className}`}>
       {/* Stepper Header */}
-        <div className="flex items-center justify-center gap-30 w-full mb-4">
+        <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-16 w-full mb-4">
           {steps.map((step, index) => {
             const stepNumber = index + 1;
             const status = getStepStatus(step, index);
@@ -126,16 +126,16 @@ export default function StepperForm({
       </div>
 
       {/* Form Content */}
-      <div className="mb-6">
+      <div className="mb-6 w-full max-w-full px-2 sm:px-0">
         {children}
       </div>
 
       {/* Action Buttons */}
-      <div className="flex justify-end gap-3">
+      <div className="flex flex-col sm:flex-row justify-end gap-3 w-full px-2 sm:px-0">
         {showBackButton && currentStep > 1 && (
           <button
             onClick={onBack}
-            className="px-4 py-2 h-10 rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors"
+            className="px-4 py-2 h-10 rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors w-full sm:w-auto"
             type="button"
           >
             {backButtonText}
@@ -143,21 +143,25 @@ export default function StepperForm({
         )}
 
         {showNextButton && !isLastStep && (
-          <SidebarBtn
-            label={nextButtonText}
-            isActive={true}
-            leadingIcon="mdi:arrow-right"
-            onClick={onNext}
-          />
+          <div className="w-full sm:w-auto">
+            <SidebarBtn
+              label={nextButtonText}
+              isActive={true}
+              leadingIcon="mdi:arrow-right"
+              onClick={onNext}
+            />
+          </div>
         )}
 
         {showSubmitButton && isLastStep && (
-          <SidebarBtn
-            label={submitButtonText}
-            isActive={true}
-            leadingIcon="mdi:check"
-            onClick={onSubmit}
-          />
+          <div className="w-full sm:w-auto">
+            <SidebarBtn
+              label={submitButtonText}
+              isActive={true}
+              leadingIcon="mdi:check"
+              onClick={onSubmit}
+            />
+          </div>
         )}
       </div>
     </div>

@@ -14,7 +14,8 @@ import {
   itemSubCategory,
   channelList,
   userTypes,
-  getCustomerType
+  getCustomerType,
+  vehicleListData
 } from '@/app/services/allApi';
 
 interface DropdownDataContextType {
@@ -32,6 +33,7 @@ interface DropdownDataContextType {
   channelList: ChannelItem[];
   customerType: CustomerType[];
   userTypes: UserTypeItem[];
+  vehicleList: VehicleListItem[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -49,6 +51,7 @@ interface DropdownDataContextType {
   channelOptions: { value: string; label: string }[];
   customerTypeOptions: { value: string; label: string }[];
   userTypeOptions: { value: string; label: string }[];
+  vehicleListOptions: { value: string; label: string }[];
   refreshDropdowns: () => Promise<void>;
   loading: boolean;
 }
@@ -136,6 +139,11 @@ interface UserTypeItem {
   name?: string;
 }
 
+interface VehicleListItem {
+  id?: number | string;
+  vehicle_code?: string;
+}
+
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
 
 export const useAllDropdownListData = () => {
@@ -162,6 +170,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [channelListData, setChannelListData] = useState<ChannelItem[]>([]);
   const [customerTypeData, setCustomerTypeData] = useState<CustomerType[]>([]);
   const [userTypesData, setUserTypesData] = useState<UserTypeItem[]>([]);
+  const [VehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -242,6 +251,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     value: String(c.id ?? ''),
     label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
   }));
+  
+  const vehicleListOptions = (Array.isArray(VehicleList) ? VehicleList : []).map((c: VehicleListItem) => ({
+    value: String(c.id ?? ''),
+    label: c.vehicle_code ? c.vehicle_code : '-',
+  }));
 
 
 
@@ -263,6 +277,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         channelList(),
         getCustomerType(),
         userTypes(),
+        vehicleListData(),
       ]);
 
       // normalize: accept unknown response and extract array of items from `.data` when present
@@ -288,7 +303,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setItemSubCategoryData(normalize(res[10]) as ItemSubCategoryItem[]);
       setChannelListData(normalize(res[11]) as ChannelItem[]);
       setCustomerTypeData(normalize(res[12]) as CustomerType[]);
-      setUserTypesData(normalize(res[13]) as UserTypeItem[]);
+  setUserTypesData(normalize(res[13]) as UserTypeItem[]);
+  setVehicleList(normalize(res[14]) as VehicleListItem[]);
     } catch (error) {
       console.error('Error loading dropdown data:', error);
       // on error clear to empty arrays
@@ -306,6 +322,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setChannelListData([]);
       setCustomerTypeData([]);
       setUserTypesData([]);
+      setVehicleList([]);
     } finally {
       setLoading(false);
     }
@@ -334,6 +351,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         channelList: Array.isArray(channelListData) ? channelListData : [],
         customerType: customerTypeData,
         userTypes: userTypesData,
+        vehicleList: VehicleList,
         companyOptions,
         countryOptions,
         onlyCountryOptions,
@@ -350,6 +368,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         channelOptions,
         customerTypeOptions,
         userTypeOptions,
+        vehicleListOptions,
         refreshDropdowns,
         loading
       }}

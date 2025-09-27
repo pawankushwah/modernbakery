@@ -1215,7 +1215,7 @@ export const deleteSalesmanType = async (id:string) => {
     return res.data;
 };
 
-export const vehicleList = async (params?: Params) => {
+export const vehicleListData = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/vehicle/list", { params: params });
     return res.data;
@@ -1430,6 +1430,15 @@ export const regionGlobalSearch = async (params?:Params) => {
 export const vehicleGlobalSearch = async (params?:Params) => {
   try {
     const res = await API.get(`/api/master/vehicle/global_search`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const routeGlobalSearch = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/master/route/global_search`, { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
