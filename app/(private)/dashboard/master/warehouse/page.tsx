@@ -9,7 +9,6 @@ import Table, { TableDataType,listReturnType } from "@/app/components/customTabl
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { getWarehouse ,deleteWarehouse} from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
@@ -71,11 +70,6 @@ const columns = [
   // { key: "depotName", label: "Depot Name" },
   { key: "location", label: "Warehouse Location", render: (row: WarehouseRow) => row.location || "-" },
   { key: "company_customer_id", label: "Customer", render: (row: WarehouseRow) => row.get_company_customer?.owner_name || "-" },
-  // {
-  //   label: 'Customer',
-  //   key: 'company_customer_id',
-  //   render: (row: WarehouseRow) => row.company_customer_id || '-',
-  // },
   { key: "warehouse_manager", label: "Warehouse Manager", render: (row: WarehouseRow) => row.warehouse_manager || "-" },
   { key: "warehouse_manager_contact", label: "Warehouse Manager Contact", render: (row: WarehouseRow) => row.warehouse_manager_contact || "-" },
   {
