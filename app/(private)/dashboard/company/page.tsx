@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 
@@ -104,7 +104,6 @@ const columns = [
 ];
 
 const CompanyPage = () => {
-    const [companies, setCompanies] = useState<Company[]>([]);
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
@@ -170,32 +169,6 @@ const CompanyPage = () => {
         },
         [setLoading]
     );
-
-    // ✅ Map companies → TableDataType safely
-    const tableData: TableDataType[] = companies.map((c) => ({
-        id: String(c.id ?? ""),
-        company_code: c.company_code ?? "",
-        company_name: c.company_name ?? "",
-        company_type: c.company_type ?? "",
-        email: c.email ?? "",
-        tin_number: c.tin_number ?? "",
-        vat: c.vat ?? "",
-        country_name: c.country?.country_name ?? "",
-        selling_currency: c.country?.selling_currency ?? "",
-        purchase_currency: c.country?.purchase_currency ?? "",
-        toll_free_no: c.toll_free_no ?? "",
-        primary_contact: c.primary_contact ?? "",
-        website: c.website ?? "",
-        region_name: c.region?.region_name ?? "",
-        subregion_name: c.sub_region?.subregion_name ?? "",
-        module_access: c.module_access ?? "",
-        district: c.district ?? "",
-        town: c.town ?? "",
-        street: c.street ?? "",
-        landmark: c.landmark ?? "",
-        service_type: c.service_type ?? "",
-        status: c.status === "1" || c.status === 1 ? "Active" : "Inactive",
-    }));
 
     // ✅ Handle Delete
     const handleConfirmDelete = async () => {

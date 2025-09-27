@@ -86,8 +86,6 @@ export default function Category() {
         setLoading(true);
     }, [])
 
-    if (loading) return <Loading />;
-
     return (
         <>
             <div className="flex justify-between items-center mb-[20px]">
