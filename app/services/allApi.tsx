@@ -2,7 +2,7 @@
 import axios from "axios";
 import { Params } from "next/dist/server/request/params";
 
-const API = axios.create({
+export const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL, 
   headers: {
     "Content-Type": "application/json",
@@ -22,7 +22,7 @@ API.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-function handleError(error: unknown) {
+export function handleError(error: unknown) {
   if (axios.isAxiosError(error) && error.response) {
     console.error('API Error:', error.response.data);
     return { error: true, data: error.response.data };
