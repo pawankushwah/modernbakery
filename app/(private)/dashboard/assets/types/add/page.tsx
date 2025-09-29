@@ -3,90 +3,77 @@
 import { useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { addRouteType } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
+import { addServiceTypes } from "@/app/services/assetsApi";
+
 // Define the validation schema using Yup
 const validationSchema = Yup.object({
-  routeTypeName: Yup.string()
+  name: Yup.string()
     .trim()
-    .required("Route Type Name is required")
-    .min(3, "Route Type Name must be at least 3 characters")
-    .max(50, "Route Type Name cannot exceed 50 characters"),
+    .required("Service Type Name is required")
+    .min(3, "Service Type Name must be at least 3 characters")
+    .max(50, "Service Type Name cannot exceed 50 characters"),
   status: Yup.string()
     .oneOf(["1", "0"], "Invalid status selected")
     .required("Status is required"),
 });
 
-export default function AddRouteType() {
+export default function AddServiceType() {
   const { showSnackbar } = useSnackbar();
-  const router = useRouter(); // ✅ for redirect
+  const router = useRouter(); 
 
   const formik = useFormik({
     initialValues: {
-      routeTypeName: "",
+      name: "",
       status: "1",
     },
     validationSchema,
     onSubmit: async (values, { setSubmitting, resetForm }) => {
-      try {
-        const res = await addRouteType({
-          route_type_name: values.routeTypeName.trim(),
+        const res = await addServiceTypes({
+          name: values.name.trim(),
           status: Number(values.status),
         });
 
-        console.log("👉 API Response:", res);
-
-        if (res?.status) {
-          showSnackbar("Route Type added successfully ✅", "success");
-          resetForm();
-
-          // ✅ Redirect to RouteType list page
-          router.push("/dashboard/settings/routetype");
+        if(res.error) {
+          showSnackbar(res.data.message || "Failed to add Service Type", "error");
+          throw new Error("Unable to add Service Type");
         } else {
-          showSnackbar(
-            "Failed to add Route Type ❌: " + (res?.message || "Unknown error"),
-            "error"
-          );
+          showSnackbar( res.message || "Service Type added successfully", "success");
+          resetForm();
+          router.push("/dashboard/assets/types");
         }
-      } catch (err) {
-        console.error("Add Route Type error", err);
-        showSnackbar("Error adding Route Type ❌", "error");
-      } finally {
         setSubmitting(false);
-      }
-    },
-  });
+  }});
       
 
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard/settings/routetype">
+        <div onClick={() => router.back()}>
           <Icon icon="lucide:arrow-left" width={24} />
-        </Link>
-        <h1 className="text-xl font-semibold">Add New Route Type</h1>
+        </div>
+        <h1 className="text-xl font-semibold">Add Servie Type</h1>
       </div>
 
       {/* Form */}
       <div className="bg-white rounded-xl shadow p-6">
         <form onSubmit={formik.handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Route Type Name Field */}
+            {/* Service Type Name Field */}
             <InputFields
-              label="Route Type Name"
+              label="Service Type Name"
               type="text"
-              name="routeTypeName"
-              value={formik.values.routeTypeName}
+              name="name"
+              value={formik.values.name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={
-                formik.touched.routeTypeName && formik.errors.routeTypeName
-                  ? formik.errors.routeTypeName
+                formik.touched.name && formik.errors.name
+                  ? formik.errors.name
                   : ""
               }
             />

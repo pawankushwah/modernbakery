@@ -10,7 +10,7 @@ import Table, { listReturnType, TableDataType } from "@/app/components/customTab
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { shelvesList } from "@/app/services/merchandiserApi";
+import { deleteShelves, shelvesList } from "@/app/services/merchandiserApi";
 import { useLoading } from "@/app/services/loadingContext";
 
 interface ShelfDisplayItem {
@@ -33,13 +33,22 @@ export default function ShelfDisplay() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<ShelfDisplayItem | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (selectedRow) {
-      showSnackbar(`Deleted row with ID: ${selectedRow.id}`, "success");
+      setLoading(true);
+      const res = await deleteShelves(String(selectedRow.id));
+      setLoading(false);
+      if (res.error) {
+        showSnackbar(res.data.message || "Failed to delete row", "error");
+      } else {
+        setRefreshKey(refreshKey + 1);
+        showSnackbar(res.message || `Deleted Shelf Display successfully`, "success");
+      }
       setShowDeletePopup(false);
     }
   };
@@ -58,9 +67,9 @@ export default function ShelfDisplay() {
       } else {
         return {
           data: res.data || [],
-          currentPage: res?.pagination?.page || 0,
-          pageSize: res?.pagination?.limit || 10,
-          total: res?.pagination?.totalPages || 0,
+          currentPage: res?.pagination?.current_page || 1,
+          pageSize: res?.pagination?.per_page || pageSize,
+          total: res?.pagination?.last_page || 0,
         };
       }
     }, []
@@ -75,6 +84,7 @@ export default function ShelfDisplay() {
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
+          refreshKey={refreshKey}
           config={{
             api: {
               list: fetchShelfDisplay
@@ -83,8 +93,6 @@ export default function ShelfDisplay() {
               title: "Shelf Display",
               wholeTableActions: [
                 <div key={0} className="flex gap-[12px] relative">
-                  <BorderIconButton icon="gala:file-document" label="Export CSV" />
-                  <BorderIconButton icon="mage:upload" />
                   <DismissibleDropdown
                     isOpen={showDropdown}
                     setIsOpen={setShowDropdown}
@@ -134,7 +142,7 @@ export default function ShelfDisplay() {
                     .map((customer) => `${customer.customer_code} - ${customer.owner_name}`)
                     .join(", ");
                 }
-                return "No customer details available";
+                return "-";
                }},
           
             ],

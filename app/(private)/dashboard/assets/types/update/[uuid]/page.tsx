@@ -1,92 +1,110 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { addRouteType } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
+import { getServiceTypesByUUID, updateServiceTypes } from "@/app/services/assetsApi";
+import { useEffect, useState } from "react";
+import { useLoading } from "@/app/services/loadingContext";
+
+type ServiceType = { name: string; status: string };
+
 // Define the validation schema using Yup
 const validationSchema = Yup.object({
-  routeTypeName: Yup.string()
+  name: Yup.string()
     .trim()
-    .required("Route Type Name is required")
-    .min(3, "Route Type Name must be at least 3 characters")
-    .max(50, "Route Type Name cannot exceed 50 characters"),
+    .required("Service Type Name is required")
+    .min(3, "Service Type Name must be at least 3 characters")
+    .max(50, "Service Type Name cannot exceed 50 characters"),
   status: Yup.string()
     .oneOf(["1", "0"], "Invalid status selected")
     .required("Status is required"),
 });
 
-export default function AddRouteType() {
+export default function AddServiceType() {
+    const {setLoading} = useLoading();
+    const params = useParams();
+    let uuid = params?.uuid || "";
+    if (Array.isArray(uuid)) {
+        uuid = uuid[0] || "";
+    }
   const { showSnackbar } = useSnackbar();
-  const router = useRouter(); // ✅ for redirect
+  const router = useRouter();
+  const [serviceType, setServiceType] = useState<ServiceType | null>(null);
+
+  useEffect(() => {
+    const fetchServiceType = async () => {
+        setLoading(true);
+        const res = await getServiceTypesByUUID(uuid);
+        setLoading(false);
+        if(res.error) {
+            showSnackbar(res.data.message || "Unable to fetch the service type", "error");
+            throw new Error("unable fetch service types");
+        } else {
+            setServiceType(res.data);
+
+        }
+    };
+    fetchServiceType();
+  }, [])
 
   const formik = useFormik({
     initialValues: {
-      routeTypeName: "",
-      status: "1",
+      name: serviceType?.name || "",
+      status: serviceType?.status.toString() || "1",
     },
+    enableReinitialize: true,
     validationSchema,
     onSubmit: async (values, { setSubmitting, resetForm }) => {
-      try {
-        const res = await addRouteType({
-          route_type_name: values.routeTypeName.trim(),
-          status: Number(values.status),
+        if(!uuid) return;
+        setLoading(true);
+        const res = await updateServiceTypes(uuid, {
+            name: values.name.trim(),
+            status: Number(values.status),
         });
+        setLoading(false);
 
-        console.log("👉 API Response:", res);
-
-        if (res?.status) {
-          showSnackbar("Route Type added successfully ✅", "success");
-          resetForm();
-
-          // ✅ Redirect to RouteType list page
-          router.push("/dashboard/settings/routetype");
+        if(res.error) {
+          showSnackbar(res.data.message || "Failed to add Service Type", "error");
+          throw new Error("Unable to add Service Type");
         } else {
-          showSnackbar(
-            "Failed to add Route Type ❌: " + (res?.message || "Unknown error"),
-            "error"
-          );
+          showSnackbar( res.message || "Service Type added successfully", "success");
+          resetForm();
+          router.push("/dashboard/assets/types");
         }
-      } catch (err) {
-        console.error("Add Route Type error", err);
-        showSnackbar("Error adding Route Type ❌", "error");
-      } finally {
         setSubmitting(false);
-      }
-    },
-  });
+  }});
       
 
   return (
     <div className="p-6">
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard/settings/routetype">
+        <div onClick={() => router.back()}>
           <Icon icon="lucide:arrow-left" width={24} />
-        </Link>
-        <h1 className="text-xl font-semibold">Add New Route Type</h1>
+        </div>
+        <h1 className="text-xl font-semibold">Edit Service Type</h1>
       </div>
 
       {/* Form */}
       <div className="bg-white rounded-xl shadow p-6">
         <form onSubmit={formik.handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Route Type Name Field */}
+            {/* Service Type Name Field */}
             <InputFields
-              label="Route Type Name"
+              label="Service Type Name"
               type="text"
-              name="routeTypeName"
-              value={formik.values.routeTypeName}
+              name="name"
+              value={formik.values.name}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={
-                formik.touched.routeTypeName && formik.errors.routeTypeName
-                  ? formik.errors.routeTypeName
+                formik.touched.name && formik.errors.name
+                  ? formik.errors.name
                   : ""
               }
             />
