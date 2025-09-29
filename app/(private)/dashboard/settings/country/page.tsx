@@ -44,7 +44,7 @@ const columns = [
             key: "status",
             label: "Status",
             render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status === "Active" ? true : false} />
+                <StatusBtn isActive={row.status ? true : false} />
             ),
         },
 ];

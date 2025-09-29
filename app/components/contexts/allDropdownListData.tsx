@@ -294,7 +294,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         companyList(),
         countryList(),
         regionList(),
-        routeList(),
+        routeList({}),
         warehouseType(1),
         routeType(),
         getSubRegion(),

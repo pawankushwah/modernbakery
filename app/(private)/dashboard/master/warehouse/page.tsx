@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect,useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType,listReturnType } from "@/app/components/customTable";
+import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getWarehouse ,deleteWarehouse} from "@/app/services/allApi";
+import { getWarehouse, deleteWarehouse, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -139,7 +139,6 @@ const columns = [
 
 export default function Warehouse() {
   const {setLoading} = useLoading();
-  const [warehouses, setWarehouses] = useState<TableDataType[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   type TableRow = TableDataType & { id?: string };
@@ -212,6 +211,33 @@ export default function Warehouse() {
              },
              []
          );
+
+         const searchWarehouse = useCallback(
+             async (
+                 query: string,
+                 pageSize: number = 5
+             ): Promise<listReturnType> => {
+                 try {
+                   setLoading(true);
+                     const listRes = await warehouseListGlobalSearch({
+                         query,
+                         per_page: pageSize.toString()
+                     });
+                     setLoading(false);
+                     return {
+                         data: listRes.data || [],
+                         total: listRes.pagination.totalPages ,
+                         currentPage: listRes.pagination.page ,
+                         pageSize: listRes.pagination.limit ,
+                     };
+                 } catch (error: unknown) {
+                     console.error("API Error:", error);
+                     setLoading(false);
+                     throw error;
+                 }
+             },
+             []
+         );
  
 
 
@@ -246,6 +272,7 @@ export default function Warehouse() {
           config={{
             api:{
               list: fetchWarehouse,
+              search: searchWarehouse
             },
             header: {
               title: "Warehouse",
@@ -307,7 +334,7 @@ export default function Warehouse() {
             columns,
             rowSelection: true,
             rowActions: [
-              
+
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
@@ -316,7 +343,7 @@ export default function Warehouse() {
                 },
               },
               // { icon: "lucide:edit-2", onClick: console.log },
-               {
+              {
                 icon: "lucide:trash-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
@@ -332,14 +359,14 @@ export default function Warehouse() {
         />
       </div>
       {showDeletePopup && (
-              <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-                <DeleteConfirmPopup
-                  title="Warehouse"
-                  onClose={() => setShowDeletePopup(false)}
-                  onConfirm={handleConfirmDelete}
-                />
-              </div>
-            )}
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+          <DeleteConfirmPopup
+            title="Warehouse"
+            onClose={() => setShowDeletePopup(false)}
+            onConfirm={handleConfirmDelete}
+          />
+        </div>
+      )}
     </>
   );
 }

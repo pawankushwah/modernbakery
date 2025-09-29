@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -42,12 +43,12 @@ const columns = [
 ];
 
 export default function RouteType() {
-  interface RouteTypeItem {
-    id?: number | string;
-    route_type_code?: string;
-    route_type_name?: string;
-    status?: number; // 1 = Active, 0 = Inactive
-  }
+ interface RouteTypeItem {
+  id?: number | string;
+  route_type_code?: string;
+  route_type_name?: string;
+  status?: number | "Active" | "Inactive";
+}
 
   const [routeType, setRouteType] = useState<RouteTypeItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -63,12 +64,12 @@ export default function RouteType() {
   type TableRow = TableDataType & { id?: string };
 
   // ✅ Table data mapping
-  const tableData: TableDataType[] = routeType.map((c) => ({
-    id: c.id?.toString() ?? "",
-    route_type_code: c.route_type_code ?? "",
-    route_type_name: c.route_type_name ?? "",
-    status: c.status === 1 ? "Active" : "Inactive",
-  }));
+const tableData: TableDataType[] = routeType.map((s) => ({
+  id: s.id?.toString() ?? "",
+  route_type_code: s.route_type_code ?? "",
+  route_type_name: s.route_type_name ?? "",
+  status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive",
+}));
 
   // ✅ Reusable fetch function
   const fetchRouteTypes = async () => {

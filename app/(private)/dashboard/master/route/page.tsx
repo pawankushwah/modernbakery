@@ -61,31 +61,21 @@ const columns = [
         key: "warehouse",
         label: "Warehouse",
         width: 218,
-        render: (data: TableDataType) => {
-            const warehouseObj = typeof data.warehouse === "string"
-                ? JSON.parse(data.warehouse)
-                : data.warehouse;
-            return warehouseObj?.warehouse_name ? warehouseObj.warehouse_name : "-";
-        },
+        render: (data: TableDataType) =>  (typeof data.warehouse === "object" && data.warehouse !== null) ? (data.warehouse as { warehouse_name?: string }).warehouse_name : "-",
         filter: {
             isFilterable: true,
             render: (data: TableDataType[]) => (
                 <>
-                    {data.map((row, index) => {
-                        const warehouseObj = typeof row.warehouse === "string"
-                            ? JSON.parse(row.warehouse)
-                            : row.warehouse;
-                        return (
-                            <div
-                                key={index}
-                                className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-                            >
-                                <span className="font-[500] text-[#181D27]">
-                                    {warehouseObj?.warehouse_name ? warehouseObj.warehouse_name : "-"}
-                                </span>
-                            </div>
-                        );
-                    })}
+                    {data.map((row, index) => (
+                        <div
+                            key={index}
+                            className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+                        >
+                            <span className="font-[500] text-[#181D27]">
+                                {(typeof row.warehouse === "object" && row.warehouse !== null) ? (row.warehouse as { warehouse_name?: string }).warehouse_name : "-"}
+                            </span>
+                        </div>
+                    ))}
                 </>
             ),
         },

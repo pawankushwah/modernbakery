@@ -81,6 +81,16 @@ export const updateCompany = async (id: string, data: object) => {
   }
 };
 
+export const deleteCompany = async (id: string) => {
+   try {
+    const res = await API.delete(`/api/master/company/company/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const getCompanyById = async (id: string) => {
   try {
     const res = await API.get(`/api/master/company/company/${id}`);
@@ -112,11 +122,15 @@ export const addCompany = async (data:FormData | Record<string, string>) => {
   
 };
 
-export const deleteCompany = async (id:string) => {
-    const res = await API.delete(`/api/master/company/company/${id}`);
+export const companyListGlobalSearch = async (params: Params) => {
+  try {
+     const res = await API.get("/api/master/company/global_search", {params});
     return res.data;
-}
-
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
+};
 
 
 
@@ -297,7 +311,7 @@ export const deleteRegion = async (id:string) => {
   try {
               const res = await API.delete(`/api/master/region/${id}`);
     return res.data;
-  } catch (error: unknown) {
+  } catch (error: unknown) {  
     return handleError(error);
   }
 };
@@ -347,6 +361,15 @@ export const deleteRoute = async (id:string) => {
     return handleError(error);
   }
 };
+
+export const warehouseListGlobalSearch = async (params?: Params) => {
+  try{
+    const res = await API.get(`/api/master/warehouse/global_search`, {params: params})
+    return res.data;
+  }catch (error: unknown){
+    return handleError(error)
+  }
+}
 
 export const warehouseList = async (params?: Params) => {
   try {
@@ -498,9 +521,10 @@ export const updateCompanyCustomer = async (id:string,body:object) => {
   }
 };
 
-export const deleteCompanyCustomer = async (id: string, body?: object) => {
+export const deleteCompanyCustomer = async (id: string) => {
   try {
-    const res = await API.delete(`/api/master/companycustomer/delete/${id}`, { data: body ?? {} });
+const res = await API.delete(`/api/master/companycustomer/${id}/delete`);
+
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -996,6 +1020,16 @@ export const createUserType = async (body:object) => {
 export const customerCategoryList = async (params?: Record<string, string>) => {
   try {
     const res = await API.get("/api/settings/customer-category/list", { params }); 
+    return res.data;
+  } catch (error) {
+    console.error("Customer Category List failed ❌", error);
+    throw error;
+  } 
+};
+
+export const customerCategoryListGlobalSearch = async (params?: Record<string, string>) => {
+  try {
+    const res = await API.get("/api/settings/customer-category/global_search", { params }); 
     return res.data;
   } catch (error) {
     console.error("Customer Category List failed ❌", error);

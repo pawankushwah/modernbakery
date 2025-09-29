@@ -247,7 +247,7 @@ export default function CustomerPage() {
                 },
               },
             ],
-            pageSize: 1,
+            pageSize: 5,
           }}
         />
       </div>

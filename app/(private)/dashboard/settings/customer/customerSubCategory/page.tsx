@@ -11,21 +11,12 @@ import { customerSubCategoryList, deleteCustomerSubCategory } from "@/app/servic
 import BorderIconButton from "@/app/components/borderIconButton";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
-import { Icon } from "@iconify-icon/react";
 
 // ✅ API types
 interface CustomerCategory {
   id: number;
   customer_category_name: string;
 }
-
-const dropdownDataList = [
-  // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
-  { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
 
 interface CustomerSubCategoryAPI {
   id: number;
@@ -62,7 +53,7 @@ export default function CustomerSubCategoryPage() {
         const formatted: CustomerSubCategory[] = (res.data || []).map(
           (s: CustomerSubCategoryAPI) => ({
             id: s.id,
-            customer_category_name: s.customer_category?.customer_category_name || "N/A",
+            customer_category_name:s.customer_category?.customer_category_name || "N/A",
             customer_sub_category_code: s.customer_sub_category_code,
             customer_sub_category_name: s.customer_sub_category_name,
             status: s.status,
@@ -98,7 +89,7 @@ export default function CustomerSubCategoryPage() {
     }
   };
 
-
+  
   const tableData: TableDataType[] = subCategories.map((c) => ({
     id: String(c.id), // Table expects string
     customer_category_name: c.customer_category_name,
@@ -108,33 +99,71 @@ export default function CustomerSubCategoryPage() {
   }));
 
   const columns = [
-    { key: "customer_category_name", label: "Category Name" },
     { key: "customer_sub_category_code", label: "Sub-Category Code" },
     { key: "customer_sub_category_name", label: "Sub-Category Name" },
-    {
-      key: "status",
-      label: "Status",
-      render: (row: TableDataType) => (
-        <div className="flex items-center">
-          {row.status === "Active" ? (
-            <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-              Active
-            </span>
-          ) : (
-            <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-              In Active
-            </span>
-          )}
-        </div>
-      ),
-    },
+    { key: "customer_category_name", label: "Category Name" },
+   {
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => (
+            <div className="flex items-center">
+                {row.status === "Active" ? (
+                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+                        Active
+                    </span>
+                ) : (
+                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+                        In Active
+                    </span>
+                )}
+            </div>
+        ),
+    },
   ];
 
   if (loading) return <Loading />;
 
   return (
     <>
+      {/* Header */}
+      <div className="flex justify-between items-center mb-[20px]">
+        <h1 className="text-[20px] font-semibold text-[#181D27]">
+          Customer Sub-Category
+        </h1>
 
+        <div className="flex gap-[12px] relative">
+          <BorderIconButton icon="gala:file-document" label="Export CSV" />
+          <BorderIconButton icon="mage:upload" />
+
+          <DismissibleDropdown
+            isOpen={showDropdown}
+            setIsOpen={setShowDropdown}
+            button={<BorderIconButton icon="ic:sharp-more-vert" />}
+            dropdown={
+              <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                <CustomDropdown>
+                  {[
+                    "SAP",
+                    "Download QR Code",
+                    "Print QR Code",
+                    "Inactive",
+                    "Delete",
+                  ].map((label, idx) => (
+                    <div
+                      key={idx}
+                      className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                    >
+                      <span className="text-[#181D27] font-[500] text-[16px]">
+                        {label}
+                      </span>
+                    </div>
+                  ))}
+                </CustomDropdown>
+              </div>
+            }
+          />
+        </div>
+      </div>
 
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
@@ -142,48 +171,6 @@ export default function CustomerSubCategoryPage() {
           data={tableData}
           config={{
             header: {
-              title: "Customer Sub Category",
-              wholeTableActions: [
-                <div key={0} className="flex gap-[12px] relative">
-                  <BorderIconButton
-                    icon="ic:sharp-more-vert"
-                    onClick={() =>
-                      setShowDropdown(!showDropdown)
-                    }
-                  />
-
-                  {showDropdown && (
-                    <div className="w-[226px] absolute top-[40px] right-0 z-30">
-                      <CustomDropdown>
-                        {dropdownDataList.map(
-                          (
-                            link,
-                            index: number
-                          ) => (
-                            <div
-                              key={index}
-                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                            >
-                              <Icon
-                                icon={
-                                  link.icon
-                                }
-                                width={
-                                  link.iconWidth
-                                }
-                                className="text-[#717680]"
-                              />
-                              <span className="text-[#181D27] font-[500] text-[16px]">
-                                {link.label}
-                              </span>
-                            </div>
-                          )
-                        )}
-                      </CustomDropdown>
-                    </div>
-                  )}
-                </div>
-              ],
               searchBar: true,
               columnFilter: true,
               actions: [

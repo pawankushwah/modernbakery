@@ -12,14 +12,19 @@ import { regionList, deleteRegion, regionGlobalSearch } from "@/app/services/all
 import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import StatusBtn from "@/app/components/statusBtn2";
 
 interface RegionItem {
   id?: number | string;
   region_code?: string;
   region_name?: string;
-  status?: number | "Active" | "Inactive"; // API may return number
+  status?: number | "Active" | "Inactive";
+  country?: {
+    id?: number;
+    country_name?: string;
+    country_code?: string;   // ✅ Add country_code
+  };
 }
-
 const dropdownDataList = [
   // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
   // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
@@ -41,12 +46,14 @@ export default function Region() {
   type TableRow = TableDataType & { id?: string };
 
   // Normalize API data for table
-  const tableData: TableDataType[] = regions.map((s) => ({
-    id: s.id?.toString() ?? "",
-    region_code: s.region_code ?? "",
-    region_name: s.region_name ?? "",
-    status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive", // ✅ Correct mapping
-  }));
+const tableData: TableDataType[] = regions.map((s) => ({
+  id: s.id?.toString() ?? "",
+  region_code: s.region_code ?? "",
+  region_name: s.region_name ?? "",
+  country_code: s.country?.country_code ?? "",   
+  country_name: s.country?.country_name ?? "", 
+  status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive",
+}));
 
   // async function fetchRegions() {
   //     const listRes = await regionList();
@@ -191,7 +198,7 @@ export default function Region() {
                   href="/dashboard/settings/region/add"
                   leadingIcon="lucide:plus"
                   label="Add Region"
-                  labelTw="hidden sm:block"
+                  labelTw="hidden lg:block"
                   isActive
                 />,
               ],
@@ -203,19 +210,7 @@ export default function Region() {
               {
                 key: "status",
                 label: "Status",
-                render: (row: RegionItem) => (
-                  <div className="flex items-center">
-                    {row.status === "Active" ? (
-                      <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-                ),
+                render: (row: TableDataType) => (<StatusBtn isActive={row.status ? true : false} />),
               },
             ],
             rowSelection: true,
