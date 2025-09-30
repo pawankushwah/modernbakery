@@ -254,7 +254,7 @@ const AddAgentCustomerPage = () => {
                   )}
                 </div>
                 <div>
-                  <InputFields required label="Customer Type" name="customer_type" value={form.customer_type?.toString() ?? ""} onChange={handleChange} error={touched.customer_type && errors.customer_type} />
+                  <InputFields required label="Customer Type" options={customerTypeOptions} name="customer_type" value={form.customer_type?.toString() ?? ""} onChange={handleChange} error={touched.customer_type && errors.customer_type} />
                   {touched.customer_type && errors.customer_type && (
                     <div className="text-red-500 text-xs mt-1">{errors.customer_type}</div>
                   )}
