@@ -8,7 +8,6 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Loading from "@/app/components/Loading";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -56,6 +55,7 @@ export default function ChannelList() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [deleteId, setDeleteId] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -108,6 +108,7 @@ export default function ChannelList() {
       showSnackbar(res.message || "Channel deleted successfully", "success");
       setShowDeletePopup(false);
       fetchChannels();
+      setRefreshKey(prev => prev+1);
     }
   }
 
@@ -117,6 +118,7 @@ export default function ChannelList() {
       <div className="max-h-[calc(100%-60px)]">
         { channels && <Table
           // data={channels}
+          refreshKey={refreshKey}
           config={{
             api: {
               list: fetchChannel,

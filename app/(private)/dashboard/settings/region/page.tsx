@@ -12,6 +12,7 @@ import { regionList, deleteRegion, regionGlobalSearch } from "@/app/services/all
 import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import StatusBtn from "@/app/components/statusBtn2";
 
 interface RegionItem {
   id?: number | string;
@@ -197,7 +198,7 @@ const tableData: TableDataType[] = regions.map((s) => ({
                   href="/dashboard/settings/region/add"
                   leadingIcon="lucide:plus"
                   label="Add Region"
-                  labelTw="hidden sm:block"
+                  labelTw="hidden lg:block"
                   isActive
                 />,
               ],
@@ -209,19 +210,7 @@ const tableData: TableDataType[] = regions.map((s) => ({
               {
                 key: "status",
                 label: "Status",
-                render: (row: RegionItem) => (
-                  <div className="flex items-center">
-                    {row.status === "Active" ? (
-                      <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
-                ),
+                render: (row: TableDataType) => (<StatusBtn isActive={row.status ? true : false} />),
               },
             ],
             rowSelection: true,

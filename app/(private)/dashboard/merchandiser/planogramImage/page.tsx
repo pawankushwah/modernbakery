@@ -71,7 +71,9 @@ export default function PlanogramImage() {
       setShowDeletePopup(false);
     }
   };
+
   type TableRow = TableDataType & { id?: string };
+
   return (
     <>
       {/* Header */}
@@ -120,7 +122,7 @@ export default function PlanogramImage() {
               actions: [
                 <SidebarBtn
                   key="name"
-                  href="/dashboard/merchandiser/planogramImage/add" 
+                  href="/dashboard/merchandiser/planogramImage/add"
                   leadingIcon="lucide:plus"
                   label="Add Planogram Image"
                   labelTw="hidden sm:block"

@@ -10,18 +10,9 @@ import Table, { listReturnType, TableDataType } from "@/app/components/customTab
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { deleteShelves, shelvesList } from "@/app/services/merchandiserApi";
 import { useLoading } from "@/app/services/loadingContext";
-
-interface ShelfDisplayItem {
-  id: string;
-  date: string;
-  name: string;
-  customer_code: string;
-  customer_name: string;
-  valid_from: string;
-  valid_to: string;
-}
+import { chillerList, deleteChiller, deleteServiceTypes, serviceTypesList } from "@/app/services/assetsApi";
+import StatusBtn from "@/app/components/statusBtn2";
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -32,44 +23,44 @@ export default function ShelfDisplay() {
   const {setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<ShelfDisplayItem | null>(null);
+  const [deleteSelectedRow, setDeleteSelectedRow] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
   const handleConfirmDelete = async () => {
-    if (selectedRow) {
-      setLoading(true);
-      const res = await deleteShelves(String(selectedRow.id));
-      setLoading(false);
-      if (res.error) {
-        showSnackbar(res.data.message || "Failed to delete row", "error");
+    if (deleteSelectedRow) {
+      // Call the API to delete the row
+      const res = await deleteChiller(deleteSelectedRow.toString());
+      if(res.error) {
+        showSnackbar(res.data.message || "failed to delete the chiller", "error");
+        throw new Error("Unable to delete the chiller");
       } else {
-        setRefreshKey(refreshKey + 1);
-        showSnackbar(res.message || `Deleted Shelf Display successfully`, "success");
+          showSnackbar( res.message || `Deleted chiller with ID: ${deleteSelectedRow}`, "success");
+          setShowDeletePopup(false);
+          setRefreshKey(prev => prev +1);
       }
-      setShowDeletePopup(false);
     }
   };
 
-  const fetchShelfDisplay = useCallback(
+  const fetchServiceTypes = useCallback(
     async ( pageNo: number = 1, pageSize: number = 10) : Promise<listReturnType> => {
       setLoading(true);
-      const res = await shelvesList({
+      const res = await chillerList({
         page: pageNo.toString(),
         per_page: pageSize.toString(),
       });
       setLoading(false);
       if(res.error) {
-        showSnackbar(res.data.message || "failed to fetch the shelf display", "error");
-        throw new Error("Unable to fetch the shelf display");
+        showSnackbar(res.data.message || "failed to fetch the Chillers", "error");
+        throw new Error("Unable to fetch the Chillers");
       } else {
         return {
           data: res.data || [],
-          currentPage: res?.pagination?.current_page || 1,
-          pageSize: res?.pagination?.per_page || pageSize,
-          total: res?.pagination?.last_page || 0,
+          currentPage: res?.pagination?.page || 0,
+          pageSize: res?.pagination?.limit || 10,
+          total: res?.pagination?.totalPages || 0,
         };
       }
     }, []
@@ -84,15 +75,16 @@ export default function ShelfDisplay() {
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          refreshKey={refreshKey}
+        refreshKey={refreshKey}
           config={{
             api: {
-              list: fetchShelfDisplay
+              list: fetchServiceTypes
             },
             header: {
-              title: "Shelf Display",
+              title: "Chillers",
               wholeTableActions: [
                 <div key={0} className="flex gap-[12px] relative">
+                  {/* <BorderIconButton icon="gala:file-document" label="Export CSV" /> */}
                   <DismissibleDropdown
                     isOpen={showDropdown}
                     setIsOpen={setShowDropdown}
@@ -120,9 +112,9 @@ export default function ShelfDisplay() {
               actions: [
                 <SidebarBtn
                   key="name"
-                  href="/dashboard/merchandiser/shelfDisplay/add"
+                  href="/dashboard/assets/chiller/add"
                   leadingIcon="lucide:plus"
-                  label="Add Shelf Display"
+                  label="Add Chiller"
                   labelTw="hidden lg:block"
                   isActive
                 />,
@@ -130,36 +122,37 @@ export default function ShelfDisplay() {
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "shelf_name", label: "Name" },
-              { key: "height", label: "Name" },
-              { key: "width", label: "Customer Code" },
-              { key: "depth", label: "Customer Name" },
-              { key: "valid_from", label: "Valid From" },
-              { key: "valid_to", label: "Valid To" },
-              { key: "customer_details", label: "Customer Name", render: (data: TableDataType) => {
-                if (Array.isArray(data.customer_details) && data.customer_details.length > 0) {
-                  return data.customer_details
-                    .map((customer) => `${customer.customer_code} - ${customer.owner_name}`)
-                    .join(", ");
-                }
-                return "-";
-               }},
-          
+              { key: "serial_number", label: "Serial Number" },
+              { key: "sap_code", label: "SAP Code" },
+              { key: "asset_number", label: "Asset Number" },
+              { key: "model_number", label: "Model Number" },
+              { key: "description", label: "Description" },
+              { key: "acquisition", label: "Acquisition" },
+              { key: "vender_details", label: "Vender Details" },
+              { key: "document_id", label: "Document Id" },
+              { key: "document_type", label: "Document Type" },
+              { key: "manufacturer", label: "Manufacturer" },
+              { key: "country_id", label: "Country Id" },
+              { key: "type_name", label: "Type Name" },
+              { key: "is_assign", label: "Is Assign" },
+              { key: "customer_id", label: "Country Id" },
+              { key: "agreement_id", label: "Agreement Id" },
+              { key: "status", label: "Status", render: (data: TableDataType) => (
+                  <StatusBtn isActive={data.status && data.status.toString() === "1" ? true : false} />
+              )},
             ],
             rowSelection: true,
             rowActions: [
               {
                 icon: "lucide:edit-2",
-                onClick: (data: object) => {
-                  const row = data as TableDataType;
-                  router.push(`/dashboard/merchandiser/shelfDisplay/update/${row.id}`);
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/assets/chiller/update/${data.uuid}`);
                 },
               },
               {
                 icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableDataType;
-                  setSelectedRow({ id: row.id, ...row } as ShelfDisplayItem);
+                onClick: (data: TableDataType) => {
+                  setDeleteSelectedRow(data?.uuid ? String(data.uuid) : data.uuid);
                   setShowDeletePopup(true);
                 },
               },
