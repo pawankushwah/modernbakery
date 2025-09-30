@@ -39,10 +39,16 @@ const columns = [
     { key: "tin_no", label: "TIN No." },
     { key: "name", label: "Name" },
     { key: "business_name", label: "Business Name" },
-    { 
-        key: "customer_type", 
-        label: "Customer Type",
-    },
+        { 
+                key: "customer_type", 
+                label: "Customer Type",
+                render: (row: TableDataType) => {
+                    if (typeof row.customer_type === "object" && row.customer_type !== null && 'name' in row.customer_type) {
+                        return (row.customer_type as { name?: string }).name || "-";
+                    }
+                    return row.customer_type || "-";
+                }
+        },
     { 
         key: "category", 
         label: "Customer Category",
@@ -83,18 +89,21 @@ const columns = [
                 ? (row.area as { area_name?: string }).area_name || '-'
                 : '-'
     },
-    { 
-        key: "route_id", 
+     { 
+        key: "route", 
         label: "Route",
+            render: (row: TableDataType) => {
+                if (typeof row.route === "object" && row.route !== null && 'name' in row.route) {
+                    return (row.route as { name?: string }).name || "-";
+                }
+                return row.route || "-";
+            }
     },
     { key: "email", label: "Email" },
     { key: "whatsapp_no", label: "Whatsapp No." },
     { key: "buyertype", label: "Buyer Type" },
     { key: "payment_type", label: "Payment Type" },
     { key: "creditday", label: "Credit Day" },
-    { key: "longitude", label: "Longitude" },
-    { key: "latitude", label: "Latitude" },
-    { key: "accuracy", label: "Accuracy" },
     { key: "threshold_radius", label: "Threshold Radius" },
     { key: "language", label: "Language" },
     {
