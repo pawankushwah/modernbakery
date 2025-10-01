@@ -332,7 +332,7 @@ export default function AgentCustomer() {
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
                                     router.push(
-                                        `/dashboard/master/agentCustomer/update/${row.uuid}`
+                                        `/dashboard/master/agentCustomer/${row.uuid}`
                                     );
                                 },
                             },
