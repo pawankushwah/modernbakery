@@ -20,6 +20,7 @@ import {
   vehicleListData,
   customerCategoryList,
   customerSubCategoryList,
+  getMenuList,
   salesmanList,
   agentCustomerList
 } from '@/app/services/allApi';
@@ -44,6 +45,7 @@ interface DropdownDataContextType {
   vehicleList: VehicleListItem[];
   customerCategory: CustomerCategory[];
   customerSubCategory: CustomerSubCategory[];
+  menuList: MenuList[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -65,6 +67,7 @@ interface DropdownDataContextType {
   vehicleListOptions: { value: string; label: string }[];
   customerCategoryOptions: { value: string; label: string }[];
   customerSubCategoryOptions: { value: string; label: string }[];
+  menuOptions: { value: string; label: string }[];
   vendorOptions: { value: string; label: string }[];
   salesmanOptions: { value: string; label: string }[];
   agentCustomerOptions: { value: string; label: string }[];
@@ -177,6 +180,11 @@ interface CustomerSubCategory {
   customer_sub_category_code?: string;
   customer_sub_category_name?: string;
 }
+interface MenuList {
+  id?: number | string;
+  osa_code?: string;
+  name?: string;
+}
 
 interface VendorList {
   id: number,
@@ -234,6 +242,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [VehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
   const [customerCategory, setCustomerCategory] = useState<VehicleListItem[]>([]);
   const [customerSubCategory, setCustomerSubCategory] = useState<VehicleListItem[]>([]);
+  const [menuList, setMenuList] = useState<MenuList[]>([]);
   const [salesman, setSalesman] = useState<SalesmanList[]>([]);
   const [agentCustomer, setAgentCustomer] = useState<AgentCustomerList[]>([]);
   const [vendor, setVendor] = useState<VendorList[]>([]);
@@ -338,6 +347,11 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
     label: c.customer_sub_category_code && c.customer_sub_category_name ? `${c.customer_sub_category_code} - ${c.customer_sub_category_name}` : (c.customer_sub_category_name ?? '')
   }));
 
+  const menuOptions = (Array.isArray(menuList) ? menuList : []).map((c: MenuList) => ({
+    value: String(c.id ?? ''),
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+  }));
+
   const vendorOptions = (Array.isArray(vendor) ? vendor : []).map((c: VendorList) => ({
     value: String(c.id ?? ''),
     label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
@@ -375,6 +389,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         vehicleListData(),
         customerCategoryList(),
         customerSubCategoryList(),
+        getMenuList(),
         vendorList(),
         salesmanList(),
         agentCustomerList()
@@ -408,6 +423,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
   setVehicleList(normalize(res[15]) as VehicleListItem[]);
   setCustomerCategory(normalize(res[16]) as CustomerCategory[]);
   setCustomerSubCategory(normalize(res[17]) as CustomerSubCategory[]);
+  setMenuList(normalize(res[18]) as MenuList[]);
   setVendor(normalize(res[18]) as VendorList[]);
   setSalesman(normalize(res[19]) as SalesmanList[]);
   setAgentCustomer(normalize(res[20]) as AgentCustomerList[]);
@@ -433,6 +449,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setVehicleList([]);
       setCustomerCategory([]);
       setCustomerSubCategory([]);
+      setMenuList([]);
       setVendor([]);
       setSalesman([]);
       setAgentCustomer([]);
@@ -468,6 +485,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         vehicleList: VehicleList,
         customerCategory: customerCategory,
         customerSubCategory: customerSubCategory,
+        menuList: menuList,
         companyOptions,
         countryOptions,
         onlyCountryOptions,
@@ -488,6 +506,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         vehicleListOptions,
         customerCategoryOptions,
         customerSubCategoryOptions,
+        menuOptions,
         vendorOptions,
         salesmanOptions,
         agentCustomerOptions,
