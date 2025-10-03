@@ -4,15 +4,31 @@ import React from "react";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Formik, Form, ErrorMessage, FormikHelpers, FormikErrors, FormikTouched } from "formik";
+import {
+  Formik,
+  Form,
+  ErrorMessage,
+  FormikHelpers,
+  FormikErrors,
+  FormikTouched,
+} from "formik";
 import * as Yup from "yup";
 
+import { useState, useEffect } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { useParams } from "next/navigation";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { addCompanyCustomers } from "@/app/services/allApi";
-import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
+import {
+  addCompanyCustomers,
+  getCompanyCustomerById,
+  updateCompanyCustomer,
+} from "@/app/services/allApi";
+import StepperForm, {
+  useStepperForm,
+  StepperStep,
+} from "@/app/components/stepperForm";
 
 // ---------------------- API Call ----------------------
 interface CompanyCustomerPayload {
@@ -67,13 +83,21 @@ const CompanyCustomerSchema = Yup.object().shape({
   ownerNumber: Yup.string().required("Owner Number is required."),
   email: Yup.string().email("Invalid email").required("Email is required."),
   language: Yup.string().required("Language is required."),
-  balance: Yup.number().typeError("Balance must be a number").required("Balance is required."),
+  balance: Yup.number()
+    .typeError("Balance must be a number")
+    .required("Balance is required."),
   paymentType: Yup.string().required("Payment Type is required."),
   bankName: Yup.string().required("Bank Name is required."),
   bankAccountNumber: Yup.string().required("Bank Account Number is required."),
-  creditDay: Yup.number().typeError("Credit Day must be a number").required("Credit Day is required."),
-  creditLimit: Yup.number().typeError("Credit Limit must be a number").required("Credit Limit is required."),
-  totalCreditLimit: Yup.number().typeError("Total Credit Limit must be a number").required("Total Credit Limit is required."),
+  creditDay: Yup.number()
+    .typeError("Credit Day must be a number")
+    .required("Credit Day is required."),
+  creditLimit: Yup.number()
+    .typeError("Credit Limit must be a number")
+    .required("Credit Limit is required."),
+  totalCreditLimit: Yup.number()
+    .typeError("Total Credit Limit must be a number")
+    .required("Total Credit Limit is required."),
   guaranteeName: Yup.string().required("Guarantee Name is required."),
   guaranteeAmount: Yup.number().required("Guarantee Amount is required."),
   guaranteeFrom: Yup.date().required("Guarantee From is required."),
@@ -124,13 +148,23 @@ const stepSchemas = [
     thresholdRadius: Yup.number().required("Threshold Radius is required."),
   }),
   Yup.object({
-    balance: Yup.number().typeError("Balance must be a number").required("Balance is required."),
+    balance: Yup.number()
+      .typeError("Balance must be a number")
+      .required("Balance is required."),
     paymentType: Yup.string().required("Payment Type is required."),
     bankName: Yup.string().required("Bank Name is required."),
-    bankAccountNumber: Yup.string().required("Bank Account Number is required."),
-    creditDay: Yup.number().typeError("Credit Day must be a number").required("Credit Day is required."),
-    creditLimit: Yup.number().typeError("Credit Limit must be a number").required("Credit Limit is required."),
-    totalCreditLimit: Yup.number().typeError("Total Credit Limit must be a number").required("Total Credit Limit is required."),
+    bankAccountNumber: Yup.string().required(
+      "Bank Account Number is required."
+    ),
+    creditDay: Yup.number()
+      .typeError("Credit Day must be a number")
+      .required("Credit Day is required."),
+    creditLimit: Yup.number()
+      .typeError("Credit Limit must be a number")
+      .required("Credit Limit is required."),
+    totalCreditLimit: Yup.number()
+      .typeError("Total Credit Limit must be a number")
+      .required("Total Credit Limit is required."),
     guaranteeName: Yup.string().required("Guarantee Name is required."),
     guaranteeAmount: Yup.number().required("Guarantee Amount is required."),
     guaranteeFrom: Yup.date().required("Guarantee From is required."),
@@ -188,7 +222,10 @@ type CompanyCustomerFormValues = {
 export default function AddCompanyCustomer() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { regionOptions, areaOptions, customerTypeOptions } = useAllDropdownListData();
+  const params = useParams();
+  const [isEditMode, setIsEditMode] = useState(false);
+  const { regionOptions, areaOptions, customerTypeOptions } =
+    useAllDropdownListData();
 
   const steps: StepperStep[] = [
     { id: 1, label: "Company Customer" },
@@ -197,50 +234,119 @@ export default function AddCompanyCustomer() {
     { id: 4, label: "Financial" },
   ];
 
-  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
-    useStepperForm(steps.length);
+  const {
+    currentStep,
+    nextStep,
+    prevStep,
+    markStepCompleted,
+    isStepCompleted,
+    isLastStep,
+  } = useStepperForm(steps.length);
 
-  const initialValues: CompanyCustomerFormValues = {
-    sapCode: "",
-    customerCode: "",
-    businessName: "",
-    customerType: "",
-    ownerName: "",
-    ownerNumber: "",
-    isWhatsapp: "1",
-    whatsappNo: "",
-    email: "",
-    language: "",
-    contactNo2: "",
-    buyerType: "0",
-    roadStreet: "",
-    town: "",
-    landmark: "",
-    district: "",
-    region: "",
-    area: "",
-    balance: "",
-    paymentType: "",
-    bankName: "",
-    bankAccountNumber: "",
-    creditDay: "",
-    tinNo: "",
-    accuracy: "",
-    creditLimit: "",
-    guaranteeName: "",
-    guaranteeAmount: "",
-    guaranteeFrom: "",
-    guaranteeTo: "",
-    totalCreditLimit: "",
-    creditLimitValidity: "",
-    vatNo: "",
-    longitude: "",
-    latitude: "",
-    thresholdRadius: "",
-    dChannelId: "",
-    merchendiser_ids: "",
-    status: "1",
-  };
+  const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>(
+    {
+      sapCode: "SAP001",
+      customerCode: "CUST001",
+      businessName: "Test Business",
+      customerType: "1",
+      ownerName: "John Doe",
+      ownerNumber: "1234567890",
+      isWhatsapp: "1",
+      whatsappNo: "1234567890",
+      email: "test@example.com",
+      language: "English",
+      contactNo2: "0987654321",
+      buyerType: "0",
+      roadStreet: "123 Main St",
+      town: "Test Town",
+      landmark: "Near Test Park",
+      district: "Test District",
+      region: "1",
+      area: "1",
+      balance: "0",
+      paymentType: "1",
+      bankName: "Test Bank",
+      bankAccountNumber: "123456789",
+      creditDay: "30",
+      tinNo: "TIN123456",
+      accuracy: "",
+      creditLimit: "10000",
+      guaranteeName: "Test Guarantee",
+      guaranteeAmount: "5000",
+      guaranteeFrom: "2025-01-01",
+      guaranteeTo: "2025-12-31",
+      totalCreditLimit: "15000",
+      creditLimitValidity: "2025-12-31",
+      vatNo: "VAT123456",
+      longitude: "0.0000",
+      latitude: "0.0000",
+      thresholdRadius: "10",
+      dChannelId: "1",
+      status: "1",
+      merchendiser_ids: "",
+    }
+  );
+
+  // 🔹 Fetch data by ID
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const id = params?.id as string;
+        const data = await getCompanyCustomerById(id);
+
+        const mapped: CompanyCustomerFormValues = {
+          sapCode: data.sap_code || "",
+          customerCode: data.customer_code || "",
+          businessName: data.business_name || "",
+          customerType: String(data.customer_type || ""),
+          ownerName: data.owner_name || "",
+          ownerNumber: data.owner_no || "",
+          isWhatsapp: String(data.is_whatsapp ?? "1"),
+          whatsappNo: data.whatsapp_no || "",
+          email: data.email || "",
+          language: data.language || "",
+          contactNo2: data.contact_no2 || "",
+          buyerType: String(data.buyer_type || "0"),
+          roadStreet: data.road_street || "",
+          town: data.town || "",
+          landmark: data.landmark || "",
+          district: data.district || "",
+          region: String(data.region_id || ""),
+          area: String(data.area_id || ""),
+          balance: String(data.balance || ""),
+          paymentType: String(data.payment_type || "1"),
+          bankName: data.bank_name || "",
+          bankAccountNumber: data.bank_account_number || "",
+          creditDay: String(data.creditday || ""),
+          tinNo: data.tin_no || "",
+          accuracy: data.accuracy || "",
+          creditLimit: String(data.credit_limit || ""),
+          guaranteeName: data.guarantee_name || "",
+          guaranteeAmount: String(data.guarantee_amount || ""),
+          guaranteeFrom: data.guarantee_from || "",
+          guaranteeTo: data.guarantee_to || "",
+          totalCreditLimit: String(data.totalcreditlimit || ""),
+          creditLimitValidity: data.credit_limit_validity || "",
+          vatNo: data.vat_no || "",
+          longitude: data.longitude || "",
+          latitude: data.latitude || "",
+          thresholdRadius: String(data.threshold_radius || ""),
+          dChannelId: String(data.dchannel_id || ""),
+          status: String(data.status || "1"),
+          merchendiser_ids: data.merchendiser_ids || "",
+        };
+
+        setInitialValues(mapped);
+      } catch (error) {
+        console.error(error);
+        showSnackbar("Failed to load data ❌", "error");
+      }
+    };
+
+    if (params?.id && params.id !== "add") {
+      fetchData();
+    }
+  }, [params?.id]);
 
   const handleNext = async (
     values: CompanyCustomerFormValues,
@@ -262,7 +368,10 @@ export default function AddCompanyCustomer() {
         );
         actions.setErrors(
           err.inner.reduce(
-            (acc: Partial<Record<keyof CompanyCustomerFormValues, string>>, curr) => ({
+            (
+              acc: Partial<Record<keyof CompanyCustomerFormValues, string>>,
+              curr
+            ) => ({
               ...acc,
               [curr.path as keyof CompanyCustomerFormValues]: curr.message,
             }),
@@ -317,25 +426,31 @@ export default function AddCompanyCustomer() {
         latitude: values.latitude,
         threshold_radius: Number(values.thresholdRadius),
         dchannel_id: Number(values.dChannelId),
-       merchendiser_ids: Array.isArray(values.merchendiser_ids)
-  ? values.merchendiser_ids.map((id) => id.replace(/"/g, "")).join(",")
-  : String(values.merchendiser_ids).replace(/"/g, ""),
+        merchendiser_ids: Array.isArray(values.merchendiser_ids)
+          ? values.merchendiser_ids.map((id) => id.replace(/"/g, "")).join(",")
+          : String(values.merchendiser_ids).replace(/"/g, ""),
         status: Number(values.status),
       };
 
-      console.log("Payload sent:", payload);
-      const res = await addCompanyCustomers(payload);
-      console.log("Response:", res);
-
-      if (res?.errors) {
-        const errs: string[] = [];
-        for (const key in res.errors) errs.push(...res.errors[key]);
-        showSnackbar(errs.join(" | "), "error");
-        return;
+      let res;
+      if (isEditMode && params?.id && params.id !== "add") {
+        res = await updateCompanyCustomer(String(params.id), payload);
+      } else {
+        res = await addCompanyCustomers(payload);
       }
 
-      showSnackbar("Company Customer added successfully ✅", "success");
-      router.push("/dashboard/settings/company/companyCustomer");
+      if (res.error) {
+        showSnackbar(res.data?.message || "Failed to submit form", "error");
+      } else {
+        showSnackbar(
+          res.message ||
+            (isEditMode
+              ? "Route Updated Successfully"
+              : "Route Created Successfully"),
+          "success"
+        );
+        router.push("/dashboard/settings/company/companyCustomer");
+      }
     } catch (error) {
       console.error(error);
       showSnackbar("Failed to add Company Customer ❌", "error");
@@ -358,7 +473,11 @@ export default function AddCompanyCustomer() {
       case 1:
         return (
           <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">Company Customer Details</h2>
+            <h2 className="text-lg font-semibold mb-6">
+              {isEditMode
+                ? "Edit Company Customer Details"
+                : "Add Company Customer Details"}
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               <InputFields
                 label="SAP Code"
@@ -366,7 +485,11 @@ export default function AddCompanyCustomer() {
                 value={values.sapCode}
                 onChange={(e) => setFieldValue("sapCode", e.target.value)}
               />
-              <ErrorMessage name="sapCode" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="sapCode"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Customer Code"
@@ -374,7 +497,11 @@ export default function AddCompanyCustomer() {
                 value={values.customerCode}
                 onChange={(e) => setFieldValue("customerCode", e.target.value)}
               />
-              <ErrorMessage name="customerCode" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="customerCode"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Business Name"
@@ -382,7 +509,11 @@ export default function AddCompanyCustomer() {
                 value={values.businessName}
                 onChange={(e) => setFieldValue("businessName", e.target.value)}
               />
-              <ErrorMessage name="businessName" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="businessName"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Customer Type"
@@ -391,7 +522,11 @@ export default function AddCompanyCustomer() {
                 onChange={(e) => setFieldValue("customerType", e.target.value)}
                 options={customerTypeOptions}
               />
-              <ErrorMessage name="customerType" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="customerType"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Owner Name"
@@ -399,7 +534,11 @@ export default function AddCompanyCustomer() {
                 value={values.ownerName}
                 onChange={(e) => setFieldValue("ownerName", e.target.value)}
               />
-              <ErrorMessage name="ownerName" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="ownerName"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Owner Number"
@@ -407,7 +546,11 @@ export default function AddCompanyCustomer() {
                 value={values.ownerNumber}
                 onChange={(e) => setFieldValue("ownerNumber", e.target.value)}
               />
-              <ErrorMessage name="ownerNumber" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="ownerNumber"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Email"
@@ -415,7 +558,11 @@ export default function AddCompanyCustomer() {
                 value={values.email}
                 onChange={(e) => setFieldValue("email", e.target.value)}
               />
-              <ErrorMessage name="email" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="email"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Language"
@@ -423,10 +570,13 @@ export default function AddCompanyCustomer() {
                 value={values.language}
                 onChange={(e) => setFieldValue("language", e.target.value)}
               />
-              <ErrorMessage name="language" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="language"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
             </div>
           </ContainerCard>
-
         );
       case 2:
         return (
@@ -438,9 +588,16 @@ export default function AddCompanyCustomer() {
                 name="isWhatsapp"
                 value={values.isWhatsapp}
                 onChange={(e) => setFieldValue("isWhatsapp", e.target.value)}
-                options={[{ value: "1", label: "Yes" }, { value: "0", label: "No" }]}
+                options={[
+                  { value: "1", label: "Yes" },
+                  { value: "0", label: "No" },
+                ]}
               />
-              <ErrorMessage name="isWhatsapp" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="isWhatsapp"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Whatsapp Number"
@@ -448,7 +605,11 @@ export default function AddCompanyCustomer() {
                 value={values.whatsappNo}
                 onChange={(e) => setFieldValue("whatsappNo", e.target.value)}
               />
-              <ErrorMessage name="whatsappNo" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="whatsappNo"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Contact No 2"
@@ -456,35 +617,46 @@ export default function AddCompanyCustomer() {
                 value={values.contactNo2}
                 onChange={(e) => setFieldValue("contactNo2", e.target.value)}
               />
-              <ErrorMessage name="contactNo2" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="contactNo2"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Buyer Type"
                 name="buyerType"
                 value={values.buyerType}
                 onChange={(e) => setFieldValue("buyerType", e.target.value)}
-                options={[{ value: "0", label: "Buyer" }, { value: "1", label: "Seller" }]}
+                options={[
+                  { value: "0", label: "Buyer" },
+                  { value: "1", label: "Seller" },
+                ]}
               />
-              <ErrorMessage name="buyerType" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="buyerType"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
             </div>
           </ContainerCard>
-
-
         );
       case 3:
         return (
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">Location Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
               <InputFields
                 label="Town"
                 name="town"
                 value={values.town}
                 onChange={(e) => setFieldValue("town", e.target.value)}
               />
-              <ErrorMessage name="town" component="span" className="text-xs text-red-500 mt-1" />
-
+              <ErrorMessage
+                name="town"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Road Street"
@@ -492,7 +664,11 @@ export default function AddCompanyCustomer() {
                 value={values.roadStreet}
                 onChange={(e) => setFieldValue("roadStreet", e.target.value)}
               />
-              <ErrorMessage name="roadStreet" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="roadStreet"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Landmark"
@@ -500,7 +676,11 @@ export default function AddCompanyCustomer() {
                 value={values.landmark}
                 onChange={(e) => setFieldValue("landmark", e.target.value)}
               />
-              <ErrorMessage name="landmark" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="landmark"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="District"
@@ -508,7 +688,11 @@ export default function AddCompanyCustomer() {
                 value={values.district}
                 onChange={(e) => setFieldValue("district", e.target.value)}
               />
-              <ErrorMessage name="district" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="district"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Region"
@@ -517,7 +701,11 @@ export default function AddCompanyCustomer() {
                 onChange={(e) => setFieldValue("region", e.target.value)}
                 options={regionOptions}
               />
-              <ErrorMessage name="region" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="region"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Area"
@@ -526,7 +714,11 @@ export default function AddCompanyCustomer() {
                 onChange={(e) => setFieldValue("area", e.target.value)}
                 options={areaOptions}
               />
-              <ErrorMessage name="area" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="area"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="TIN No"
@@ -534,7 +726,11 @@ export default function AddCompanyCustomer() {
                 value={values.tinNo}
                 onChange={(e) => setFieldValue("tinNo", e.target.value)}
               />
-              <ErrorMessage name="tinNo" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="tinNo"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Longitude"
@@ -542,7 +738,11 @@ export default function AddCompanyCustomer() {
                 value={values.longitude}
                 onChange={(e) => setFieldValue("longitude", e.target.value)}
               />
-              <ErrorMessage name="longitude" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="longitude"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Latitude"
@@ -550,32 +750,46 @@ export default function AddCompanyCustomer() {
                 value={values.latitude}
                 onChange={(e) => setFieldValue("latitude", e.target.value)}
               />
-              <ErrorMessage name="latitude" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="latitude"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Threshold Radius"
                 name="thresholdRadius"
                 value={values.thresholdRadius}
-                onChange={(e) => setFieldValue("thresholdRadius", e.target.value)}
+                onChange={(e) =>
+                  setFieldValue("thresholdRadius", e.target.value)
+                }
               />
-              <ErrorMessage name="thresholdRadius" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="thresholdRadius"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
             </div>
           </ContainerCard>
-
         );
       case 4:
         return (
           <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">Financial & Bank Details</h2>
+            <h2 className="text-lg font-semibold mb-6">
+              Financial & Bank Details
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-
               <InputFields
                 label="Balance"
                 name="balance"
                 value={values.balance}
                 onChange={(e) => setFieldValue("balance", e.target.value)}
               />
-              <ErrorMessage name="balance" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="balance"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Payment Type"
@@ -587,7 +801,11 @@ export default function AddCompanyCustomer() {
                   { value: "2", label: "Credit" },
                 ]}
               />
-              <ErrorMessage name="paymentType" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="paymentType"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Bank Name"
@@ -595,15 +813,25 @@ export default function AddCompanyCustomer() {
                 value={values.bankName}
                 onChange={(e) => setFieldValue("bankName", e.target.value)}
               />
-              <ErrorMessage name="bankName" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="bankName"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Bank Account Number"
                 name="bankAccountNumber"
                 value={values.bankAccountNumber}
-                onChange={(e) => setFieldValue("bankAccountNumber", e.target.value)}
+                onChange={(e) =>
+                  setFieldValue("bankAccountNumber", e.target.value)
+                }
               />
-              <ErrorMessage name="bankAccountNumber" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="bankAccountNumber"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Credit Day"
@@ -611,7 +839,11 @@ export default function AddCompanyCustomer() {
                 value={values.creditDay}
                 onChange={(e) => setFieldValue("creditDay", e.target.value)}
               />
-              <ErrorMessage name="creditDay" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="creditDay"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Accuracy"
@@ -619,7 +851,11 @@ export default function AddCompanyCustomer() {
                 value={values.accuracy}
                 onChange={(e) => setFieldValue("accuracy", e.target.value)}
               />
-              <ErrorMessage name="accuracy" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="accuracy"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Credit Limit"
@@ -627,24 +863,40 @@ export default function AddCompanyCustomer() {
                 value={values.creditLimit}
                 onChange={(e) => setFieldValue("creditLimit", e.target.value)}
               />
-              <ErrorMessage name="creditLimit" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="creditLimit"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Total Credit Limit"
                 name="totalCreditLimit"
                 value={values.totalCreditLimit}
-                onChange={(e) => setFieldValue("totalCreditLimit", e.target.value)}
+                onChange={(e) =>
+                  setFieldValue("totalCreditLimit", e.target.value)
+                }
               />
-              <ErrorMessage name="totalCreditLimit" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="totalCreditLimit"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Credit Limit Validity"
                 name="creditLimitValidity"
                 value={values.creditLimitValidity}
-                onChange={(e) => setFieldValue("creditLimitValidity", e.target.value)}
+                onChange={(e) =>
+                  setFieldValue("creditLimitValidity", e.target.value)
+                }
                 type="date"
               />
-              <ErrorMessage name="creditLimitValidity" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="creditLimitValidity"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Guarantee Name"
@@ -652,15 +904,25 @@ export default function AddCompanyCustomer() {
                 value={values.guaranteeName}
                 onChange={(e) => setFieldValue("guaranteeName", e.target.value)}
               />
-              <ErrorMessage name="guaranteeName" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="guaranteeName"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Guarantee Amount"
                 name="guaranteeAmount"
                 value={values.guaranteeAmount}
-                onChange={(e) => setFieldValue("guaranteeAmount", e.target.value)}
+                onChange={(e) =>
+                  setFieldValue("guaranteeAmount", e.target.value)
+                }
               />
-              <ErrorMessage name="guaranteeAmount" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="guaranteeAmount"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Guarantee From"
@@ -669,7 +931,11 @@ export default function AddCompanyCustomer() {
                 onChange={(e) => setFieldValue("guaranteeFrom", e.target.value)}
                 type="date"
               />
-              <ErrorMessage name="guaranteeFrom" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="guaranteeFrom"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Guarantee To"
@@ -678,7 +944,11 @@ export default function AddCompanyCustomer() {
                 onChange={(e) => setFieldValue("guaranteeTo", e.target.value)}
                 type="date"
               />
-              <ErrorMessage name="guaranteeTo" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="guaranteeTo"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="VAT No"
@@ -686,7 +956,11 @@ export default function AddCompanyCustomer() {
                 value={values.vatNo}
                 onChange={(e) => setFieldValue("vatNo", e.target.value)}
               />
-              <ErrorMessage name="vatNo" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="vatNo"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Channel ID"
@@ -694,13 +968,19 @@ export default function AddCompanyCustomer() {
                 value={values.dChannelId}
                 onChange={(e) => setFieldValue("dChannelId", e.target.value)}
               />
-              <ErrorMessage name="dChannelId" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="dChannelId"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Merchendiser"
                 name="merchendiser_ids"
                 value={values.merchendiser_ids}
-                onChange={(e) => setFieldValue("merchendiser_ids", e.target.value)}
+                onChange={(e) =>
+                  setFieldValue("merchendiser_ids", e.target.value)
+                }
                 isSingle={false}
                 options={[
                   { value: "1", label: "Merchendiser 1" },
@@ -708,7 +988,11 @@ export default function AddCompanyCustomer() {
                   { value: "3", label: "Merchendiser 3" },
                 ]}
               />
-              <ErrorMessage name="merchendiser_ids" component="span" className="text-xs text-red-500 mt-1" />
+              <ErrorMessage
+                name="merchendiser_ids"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
 
               <InputFields
                 label="Status"
@@ -720,8 +1004,11 @@ export default function AddCompanyCustomer() {
                   { value: "0", label: "Inactive" },
                 ]}
               />
-              <ErrorMessage name="status" component="span" className="text-xs text-red-500 mt-1" />
-
+              <ErrorMessage
+                name="status"
+                component="span"
+                className="text-xs text-red-500 mt-1"
+              />
             </div>
           </ContainerCard>
         );
@@ -733,7 +1020,10 @@ export default function AddCompanyCustomer() {
   return (
     <>
       <div className="flex items-center gap-3 text-gray-600">
-        <Link href="/dashboard/settings/company/companyCustomer" className="hover:underline">
+        <Link
+          href="/dashboard/settings/company/companyCustomer"
+          className="hover:underline"
+        >
           <Icon icon="mdi:arrow-left" className="text-xl" />
         </Link>
         <h1 className="text-xl font-semibold">Add Company Customer</h1>
@@ -744,17 +1034,26 @@ export default function AddCompanyCustomer() {
         validationSchema={CompanyCustomerSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit }) => (
+        {({
+          values,
+          setFieldValue,
+          errors,
+          touched,
+          handleSubmit: formikSubmit,
+        }) => (
           <Form>
             <StepperForm
-              steps={steps.map((step) => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
+              steps={steps.map((step) => ({
+                ...step,
+                isCompleted: isStepCompleted(step.id),
+              }))}
               currentStep={currentStep}
-              onStepClick={() => { }}
+              onStepClick={() => {}}
               onBack={prevStep}
               onNext={() =>
                 handleNext(values, {
-                  setErrors: () => { },
-                  setTouched: () => { },
+                  setErrors: () => {},
+                  setTouched: () => {},
                 } as unknown as FormikHelpers<CompanyCustomerFormValues>)
               }
               onSubmit={() => formikSubmit()}

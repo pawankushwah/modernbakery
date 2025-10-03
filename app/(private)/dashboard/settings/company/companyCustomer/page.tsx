@@ -240,7 +240,7 @@ export default function CompanyCustomers() {
                 icon: "lucide:edit-2",
                 onClick: (row: TableDataType) =>
                   router.push(
-                    `/dashboard/settings/company/companyCustomer/update/${row.id}`
+                    `/dashboard/settings/company/companyCustomer/${row.id}`
                   ),
               },
               {
