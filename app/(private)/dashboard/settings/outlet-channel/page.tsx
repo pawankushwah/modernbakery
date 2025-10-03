@@ -176,7 +176,7 @@ export default function ChannelList() {
               {
                 icon: "lucide:edit-2",
                 onClick: (row: TableDataType) => {
-                  router.push(`/dashboard/settings/outlet-channel/update/${row.id}`);
+                  router.push(`/dashboard/settings/outlet-channel/${row.id}`);
                 },
               },
               {

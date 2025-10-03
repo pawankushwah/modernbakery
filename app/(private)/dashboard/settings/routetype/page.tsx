@@ -221,7 +221,7 @@ const tableData: TableDataType[] = routeType.map((s) => ({
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableRow;
-                  router.push(`/dashboard/settings/routetype/update/${row.id}`);
+                  router.push(`/dashboard/settings/routetype/${row.id}`);
                 },
               },
               {
