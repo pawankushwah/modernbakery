@@ -90,9 +90,9 @@ export default function PricingDetailPage() {
               status: detailRes.data.status ?? 1,
             });
             // 2. Use header_id from detail to fetch header and its uuid
-            if (detailRes.data.header_id) {
-              setHeaderId(detailRes.data.header_id);
-              const headerRes = await pricingHeaderById(detailRes.data.header_id);
+            if (detailUuid) {
+              // setHeaderId(detailUuid);
+              const headerRes = await pricingHeaderById(detailUuid);
               if (headerRes && headerRes.data) {
                 setHeaderInitialValues({
                   name: headerRes.data.name || "",

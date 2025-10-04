@@ -28,8 +28,8 @@ interface DropdownItem {
 
 interface LocalTableDataType {
     [key: string]: string | number | object | null | undefined;
-    category?: { category_name?: string } | string | null;
-    sub_category?: { sub_category_name?: string } | string | null;
+    category?: { name?: string } | string | null;
+    itemSubCategory?: { name?: string } | string | null;
 }
 
 const dropdownDataList: DropdownItem[] = [
@@ -77,24 +77,29 @@ const columns = [
     { key: "description", label: "Description" },
     { key: "community_code", label: "Community Code" },
     { key: "excise_code", label: "Excise Code" },
-    { 
-        key: "category", 
-        label: "Item Category",
-        render: (data: LocalTableDataType) => {
-            if (typeof data.category === "object" && data.category !== null && "category_name" in data.category) {
-                return data.category.category_name?.toString() || "-";
-            }
-            return typeof data.category === "string" ? data.category : "-";
-        }
-    },
-    { key: "sub_category", label: "Item Sub Category",
-         render: (data: LocalTableDataType) => {
-            if (typeof data.sub_category === "object" && data.sub_category !== null && "sub_category_name" in data.sub_category) {
-                return data.sub_category.sub_category_name?.toString() || "-";
-            }
-            return typeof data.sub_category === "string" ? data.sub_category : "-";
-        }
-     },
+    {
+  key: "category",
+  label: "Item Category",
+  render: (data: LocalTableDataType) => {
+    if (data.category && typeof data.category === "object") {
+      return (data.category as { name?: string })?.name || "-";
+    }
+    return typeof data.category === "string" ? data.category : "-";
+  },
+},
+{
+  key: "itemSubCategory",
+  label: "Item Sub Category",
+  render: (data: LocalTableDataType) => {
+    if (data.itemSubCategory && typeof data.itemSubCategory === "object") {
+      return (data.itemSubCategory as { name?: string })?.name || "-";
+    }
+    return typeof data.itemSubCategory === "string"
+      ? data.itemSubCategory
+      : "-";
+  },
+},
+
         { 
             key: "uom", 
             label: "UOM",
@@ -288,6 +293,12 @@ export default function Item() {
                         columns,
                         rowSelection: true,
                         rowActions: [
+                            {
+                icon: "lucide:eye",
+                onClick: (data: TableRow) => {
+                  router.push(`/dashboard/master/item/details/${data.id}`);
+                },
+              },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {

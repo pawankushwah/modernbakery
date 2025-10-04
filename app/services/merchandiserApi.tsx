@@ -31,7 +31,7 @@ export const planogramImageList = async (params: Params) => {
   }
 };
 
-export const planogramImageById = async (id: number, params?: Params) => {
+export const planogramImageById = async (id: string, params?: Params) => {
     try {
     const res = await API.get(`/api/merchendisher/planogram-image/show/${id}`, { params });
     return res.data;

@@ -9,11 +9,13 @@ import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
 export default function Sidebar({
   data,
   onClickHandler,
-  isOpen
+  isOpen,
+  setIsOpen
 }: {
   data: SidebarDataType[];
   onClickHandler: (href: string) => void;
-  isOpen?: boolean;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }) {
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [activeHref, setActiveHref] = useState<string>("");
@@ -29,6 +31,7 @@ export default function Sidebar({
   const handleClick = (href: string, label: string, hasChildren: boolean) => {
     if (hasChildren) {
       toggleMenu(label);
+      setIsOpen(true); // Ensure sidebar is open when interacting with menus
     } else {
       setActiveHref(href);
       onClickHandler(href);

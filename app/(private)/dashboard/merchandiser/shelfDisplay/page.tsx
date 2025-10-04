@@ -154,15 +154,21 @@ export default function ShelfDisplay() {
                 }
                 return "-";
                }},
-          
             ],
             rowSelection: true,
             rowActions: [
               {
+                icon: "lucide:eye",
+                onClick: (data: object) => {
+                  const row = data as TableDataType;
+                  router.push(`/dashboard/merchandiser/shelfDisplay/view/${row.id}`);
+                },
+              },
+              {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {
                   const row = data as TableDataType;
-                  router.push(`/dashboard/merchandiser/shelfDisplay/update/${row.id}`);
+                  router.push(`/dashboard/merchandiser/shelfDisplay/${row.id}`);
                 },
               },
               {

@@ -87,10 +87,7 @@ export default function Roles() {
         ): Promise<listReturnType> => {
             try {
               setLoading(true);
-                const listRes = await roleList({
-                    limit: pageSize.toString(),
-                    page: page.toString(),
-                });
+                const listRes = await roleList();
                 setLoading(false);
                 return {
                     data: listRes.data || [],

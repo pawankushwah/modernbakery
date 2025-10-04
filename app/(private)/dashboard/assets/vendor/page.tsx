@@ -136,6 +136,12 @@ export default function ShelfDisplay() {
             rowSelection: true,
             rowActions: [
               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/assets/vendor/view/${data.uuid}`);
+                },
+              },
+              {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
                   router.push(`/dashboard/assets/vendor/update/${data.uuid}`);

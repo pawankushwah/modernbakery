@@ -2,14 +2,14 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import InputFields from "@/app/components/inputFields";
 import SettingPopUp from "@/app/components/settingPopUp";
 import IconButton from "@/app/components/iconButton";
 import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { agentCustomerById, editAgentCustomer, agentCustomerGenerateCode, addAgentCustomer } from "@/app/services/allApi";
+import { agentCustomerById, editAgentCustomer, genearateCode, addAgentCustomer ,saveFinalCode} from "@/app/services/allApi";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Loading from "@/app/components/Loading";
@@ -41,6 +41,8 @@ interface AgentCustomerFormValues {
 export default function AddEditAgentCustomer() {
 	const { customerTypeOptions, routeOptions, customerCategoryOptions, customerSubCategoryOptions, channelOptions, regionOptions, areaOptions } = useAllDropdownListData();
 	const [isOpen, setIsOpen] = useState(false);
+	const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+	const [prefix, setPrefix] = useState('');
 	const [loading, setLoading] = useState(false);
 	const { showSnackbar } = useSnackbar();
 	const router = useRouter();
@@ -90,6 +92,9 @@ export default function AddEditAgentCustomer() {
 	// Show loader in edit mode while loading (must be after all hooks and before return)
 
 
+
+	// Prevent double call of genearateCode in add mode
+	const codeGeneratedRef = useRef(false);
 	useEffect(() => {
 		if (isEditMode && agentCustomerId) {
 			setLoading(true);
@@ -98,7 +103,7 @@ export default function AddEditAgentCustomer() {
 				const data = res?.data ?? res;
 				if (res && !res.error) {
 					setForm({
-						agent_customer_code: data.osa_code || "",
+						agent_customer_code: data.code || "",
 						name: data.name || "",
 						business_name: data.business_name || "",
 						customer_type: data.customer_type ?? "",
@@ -123,14 +128,23 @@ export default function AddEditAgentCustomer() {
 				}
 				setLoading(false);
 			})();
-		} else if (!isEditMode) {
-			(async () => {
-				const res = await agentCustomerGenerateCode();
-				if (res && res.data) {
-					setForm((prev) => ({ ...prev, agent_customer_code: res.data.osa_code }));
-				}
-			})();
-		}
+			} else if (!isEditMode && !codeGeneratedRef.current) {
+				codeGeneratedRef.current = true;
+				(async () => {
+					const res = await genearateCode({model_name:"agent_customers"});
+					if (res?.code) {
+						setForm((prev) => ({ ...prev, agent_customer_code: res.code }));
+					}
+					if (res?.prefix) {
+						setPrefix(res.prefix);
+					} else if (res?.code) {
+						// fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+						const match = res.prefix;
+						if (match) setPrefix(prefix);
+					}
+				})();
+			}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isEditMode, agentCustomerId]);
 
 	const AgentCustomerSchema = Yup.object().shape({
@@ -162,6 +176,7 @@ export default function AddEditAgentCustomer() {
 		area_id: Yup.string().required("Area is required"),
 		status: Yup.string().required("Status is required"),
 	});
+
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
 		const { name, value } = e.target;
@@ -248,8 +263,14 @@ export default function AddEditAgentCustomer() {
 			if (res?.error) {
 				showSnackbar(res.data?.message || "Failed to submit form", "error");
 			} else {
+				
 				showSnackbar(isEditMode ? "Agent Customer updated successfully" : "Agent Customer added successfully", "success");
 				router.push("/dashboard/master/agentCustomer");
+				try {
+					await saveFinalCode({ reserved_code: form.agent_customer_code, model_name: "agent_customers" });
+				} catch (e) {
+					// Optionally handle error, but don't block success
+				}
 			}
 		} catch (err) {
 			showSnackbar(isEditMode ? "Update Agent Customer failed" : "Add Agent Customer failed", "error");
@@ -265,24 +286,40 @@ export default function AddEditAgentCustomer() {
 							<h2 className="text-lg font-medium text-gray-800 mb-4">Agent Customer Details</h2>
 							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 												<div className="flex items-end gap-2 max-w-[406px]">
-													<InputFields
-															label="Agent Customer Code"
-															name="agent_customer_code"
-															value={form.agent_customer_code}
-															onChange={handleChange}
-															disabled
-													/>
-													{!isEditMode && (
-														<>
-															<IconButton
-																	bgClass="white"
-																	className="mb-2 cursor-pointer text-[#252B37]"
-																	icon="mi:settings"
-																	onClick={() => setIsOpen(true)}
-															/>
-															<SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Agent Customer Code" />
-														</>
-													)}
+																	<InputFields
+																					label="Agent Customer Code"
+																					name="agent_customer_code"
+																					value={form.agent_customer_code}
+																					onChange={e => {
+																						handleChange(e);
+																					}}
+																					disabled={codeMode === 'auto'}
+																	/>
+																	{!isEditMode && (
+																		<>
+																			<IconButton
+																							bgClass="white"
+																							className="mb-2 cursor-pointer text-[#252B37]"
+																							icon="mi:settings"
+																							onClick={() => setIsOpen(true)}
+																			/>
+																			<SettingPopUp
+																				isOpen={isOpen}
+																				onClose={() => setIsOpen(false)}
+																				title="Agent Customer Code"
+																				prefix={prefix}
+																				setPrefix={setPrefix}
+																				onSave={(mode, code) => {
+																					setCodeMode(mode);
+																					if (mode === 'auto' && code) {
+																						setForm((prev) => ({ ...prev, agent_customer_code: code }));
+																					} else if (mode === 'manual') {
+																						setForm((prev) => ({ ...prev, agent_customer_code: '' }));
+																					}
+																				}}
+																			/>
+																		</>
+																	)}
 												</div>
 								<div>
 									<InputFields required label="TIN No" name="tin_no" value={form.tin_no} onChange={handleChange} error={touched.tin_no && errors.tin_no}/>

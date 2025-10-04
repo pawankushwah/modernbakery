@@ -150,6 +150,12 @@ export default function Page() {
             rowSelection: true,
             rowActions: [
               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/assets/chillerRequest/view/${data.uuid}`);
+                },
+              },
+              {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
                   router.push(`/dashboard/assets/chillerRequest/${data.uuid}`);

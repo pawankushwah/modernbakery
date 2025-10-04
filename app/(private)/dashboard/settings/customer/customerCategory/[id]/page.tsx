@@ -4,12 +4,14 @@ import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import SearchableDropdown from "@/app/components/SearchableDropdown";
-import { addCustomerCategory, channelList } from "@/app/services/allApi";
+import { addCustomerCategory, channelList, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import { useFormik } from "formik";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
 
@@ -19,7 +21,13 @@ interface OutletChannel {
 }
 
 export default function AddCustomerCategory() {
-  const [outletChannels, setOutletChannels] = useState<{ value: string; label: string }[]>([]);
+  
+const [outletChannels, setOutletChannels] = useState<{ value: string; label: string }[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
+  const [code, setCode] = useState("");
+  const codeGeneratedRef = useRef(false);
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
@@ -46,11 +54,13 @@ export default function AddCustomerCategory() {
       outlet_channel_id: "",
       customer_category_name: "",
       status: "1",
+      customer_category_code: "",
     },
     validationSchema: Yup.object({
       outlet_channel_id: Yup.string().required("Outlet channel is required"),
       customer_category_name: Yup.string().required("Name is required"),
       status: Yup.string().required("Status is required"),
+      customer_category_code: Yup.string().required("Code is required"),
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
@@ -58,9 +68,10 @@ export default function AddCustomerCategory() {
           outlet_channel_id: Number(values.outlet_channel_id),
           customer_category_name: values.customer_category_name,
           status: Number(values.status),
+          customer_category_code: values.customer_category_code,
         };
         const res = await addCustomerCategory(payload);
-        console.log("✅ Category Added:", res);
+        await saveFinalCode({ reserved_code: values.customer_category_code, model_name: "customer_categories" });
         showSnackbar("Customer category added successfully ✅", "success");
         resetForm();
         router.push("/dashboard/settings/customer/customerCategory");
@@ -70,6 +81,27 @@ export default function AddCustomerCategory() {
       }
     },
   });
+
+  // Generate code on mount (add mode only)
+  useEffect(() => {
+    if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "customer_categories" });
+        if (res?.code) {
+          setCode(res.code);
+          formik.setFieldValue("customer_category_code", res.code);
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
+        }
+      })();
+    }
+  }, []);
 
   return (
     <>
@@ -90,6 +122,39 @@ export default function AddCustomerCategory() {
             Customer Category Details
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Customer Category Code (auto-generated, disabled, with settings icon/popup) */}
+            <div className="flex items-end gap-2 max-w-[406px]">
+              <InputFields
+                label="Customer Category Code"
+                name="customer_category_code"
+                value={formik.values.customer_category_code}
+                onChange={formik.handleChange}
+                disabled={codeMode === 'auto'}
+                error={formik.touched.customer_category_code && formik.errors.customer_category_code}
+              />
+              <IconButton
+                bgClass="white"
+                className="mb-2 cursor-pointer text-[#252B37]"
+                icon="mi:settings"
+                onClick={() => setIsOpen(true)}
+              />
+              <SettingPopUp
+                isOpen={isOpen}
+                onClose={() => setIsOpen(false)}
+                title="Customer Category Code"
+                prefix={prefix}
+                setPrefix={setPrefix}
+                onSave={(mode, code) => {
+                  setCodeMode(mode);
+                  if (mode === 'auto' && code) {
+                    formik.setFieldValue('customer_category_code', code);
+                  } else if (mode === 'manual') {
+                    formik.setFieldValue('customer_category_code', '');
+                  }
+                }}
+              />
+            </div>
+
             <InputFields
               label="Outlet Channel"
               name="outlet_channel_id"

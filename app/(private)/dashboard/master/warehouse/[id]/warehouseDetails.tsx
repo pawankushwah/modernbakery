@@ -19,6 +19,8 @@ type Props = {
 export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue, isEditMode }: Props) {
     const { companyCustomersOptions } = useAllDropdownListData();
     const [isOpen, setIsOpen] = React.useState(false);
+    const [codeMode, setCodeMode] = React.useState<'auto'|'manual'>('auto');
+    const [prefix, setPrefix] = React.useState('');
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -30,6 +32,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     value={values.warehouse_code}
                     onChange={handleChange}
                     error={errors?.warehouse_code && touched?.warehouse_code ? errors.warehouse_code : false}
+                    disabled={codeMode === 'auto'}
                 />
                 {!isEditMode && (
                     <>
@@ -39,7 +42,21 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                             icon="mi:settings"
                             onClick={() => setIsOpen(true)}
                         />
-                        <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Warehouse Code" />
+                        <SettingPopUp
+                            isOpen={isOpen}
+                            onClose={() => setIsOpen(false)}
+                            title="Warehouse Code"
+                            prefix={prefix}
+                            setPrefix={setPrefix}
+                            onSave={(mode, code) => {
+                                setCodeMode(mode);
+                                if (mode === 'auto' && code) {
+                                    setFieldValue('warehouse_code', code);
+                                } else if (mode === 'manual') {
+                                    setFieldValue('warehouse_code', '');
+                                }
+                            }}
+                        />
                     </>
                 )}
             </div>

@@ -150,6 +150,12 @@ export default function ShelfDisplay() {
             rowSelection: true,
             rowActions: [
               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/assets/chiller/view/${data.uuid}`);
+                },
+              },
+              {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
                   router.push(`/dashboard/assets/chiller/update/${data.uuid}`);

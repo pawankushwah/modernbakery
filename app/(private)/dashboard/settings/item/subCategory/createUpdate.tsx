@@ -4,15 +4,14 @@ import Button from "@/app/components/customButton";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputDropdown from "@/app/components/inputDropdown";
 import InputFields from "@/app/components/inputFields";
-import {
-    createItemSubCategory,
-    updateItemSubCategory,
-} from "@/app/services/allApi";
+import { createItemSubCategory, updateItemSubCategory, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { subCategoryType } from "./page";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function CreateUpdate({
@@ -47,11 +46,19 @@ export default function CreateUpdate({
         }
     }, [itemCategory]);
 
+    // Code logic
+    const [isOpen, setIsOpen] = useState(false);
+    const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+    const [prefix, setPrefix] = useState('');
+    const codeGeneratedRef = useRef(false);
+    const [code, setCode] = useState("");
+
     const formik = useFormik({
         initialValues: {
-            category_id: updateItemCategoryData?.category_id.toString() || "",
+            category_id: updateItemCategoryData?.category_id?.toString() || "",
             sub_category_name: updateItemCategoryData?.sub_category_name || "",
             status: updateItemCategoryData?.status || 0,
+            item_sub_category_code: updateItemCategoryData?.item_sub_category_code || "",
         },
         validationSchema: Yup.object({
             category_id: Yup.number()
@@ -64,6 +71,7 @@ export default function CreateUpdate({
             status: Yup.number()
                 .oneOf([0, 1], "Status must be either Active or Inactive")
                 .required("Status is required"),
+            item_sub_category_code: Yup.string().required("Code is required"),
         }),
         onSubmit: async (values) => {
             let res;
@@ -73,6 +81,9 @@ export default function CreateUpdate({
                     values.sub_category_name,
                     values.status === "1" ? 1 : 0
                 );
+                if (!res.error) {
+                    await saveFinalCode({ reserved_code: values.item_sub_category_code, model_name: "item_sub_categories" });
+                }
             }
             if (type === "update") {
                 res = await updateItemSubCategory(
@@ -91,6 +102,27 @@ export default function CreateUpdate({
         },
     });
 
+    // Generate code on mount (add mode only)
+    useEffect(() => {
+        if (type === "create" && !codeGeneratedRef.current) {
+            codeGeneratedRef.current = true;
+            (async () => {
+                const res = await genearateCode({ model_name: "item_sub_categories" });
+                if (res?.code) {
+                    setCode(res.code);
+                    formik.setFieldValue("item_sub_category_code", res.code);
+                }
+                if (res?.prefix) {
+                    setPrefix(res.prefix);
+                } else if (res?.code) {
+                    // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+                    const match = res.prefix;
+                    if (match) setPrefix(prefix);
+                }
+            })();
+        }
+    }, [type]);
+
     return (
         <div>
             <h1 className="text-[20px] font-medium">
@@ -102,6 +134,40 @@ export default function CreateUpdate({
                 onSubmit={formik.handleSubmit}
                 className="mt-[20px] space-y-5"
             >
+
+                {/* Item Sub Category Code (auto-generated, disabled, with settings icon/popup) */}
+                <div className="flex items-end gap-2 max-w-[406px]">
+                    <InputFields
+                        label="Item Sub Category Code"
+                        name="item_sub_category_code"
+                        value={formik.values.item_sub_category_code}
+                        onChange={formik.handleChange}
+                        disabled={codeMode === 'auto'}
+                        error={formik.touched?.item_sub_category_code && formik.errors?.item_sub_category_code}
+                    />
+                    <IconButton
+                        bgClass="white"
+                        className="mb-2 cursor-pointer text-[#252B37]"
+                        icon="mi:settings"
+                        onClick={() => setIsOpen(true)}
+                    />
+                    <SettingPopUp
+                        isOpen={isOpen}
+                        onClose={() => setIsOpen(false)}
+                        title="Item Sub Category Code"
+                        prefix={prefix}
+                        setPrefix={setPrefix}
+                        onSave={(mode, code) => {
+                            setCodeMode(mode);
+                            if (mode === 'auto' && code) {
+                                formik.setFieldValue('item_sub_category_code', code);
+                            } else if (mode === 'manual') {
+                                formik.setFieldValue('item_sub_category_code', '');
+                            }
+                        }}
+                    />
+                </div>
+
                 <InputDropdown
                     label="Category Name"
                     defaultText="Select Category"

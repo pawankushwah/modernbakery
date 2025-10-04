@@ -313,6 +313,12 @@ export default function VehiclePage() {
             columns,
             rowSelection: true,
             rowActions: [
+               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/master/vehicle/details/${data.id}`);
+                },
+              },
               {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {

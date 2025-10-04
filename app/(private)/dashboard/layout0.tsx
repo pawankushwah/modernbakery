@@ -45,7 +45,7 @@ const DashboardLayout0 = ({ children }: { children: React.ReactNode }) => {
 
     return (
         <div className="h-[100vh] w-[100%] m-auto overflow-hidden bg-[#FAFAFA]">
-            {!horizontalSidebar && <Sidebar data={sidebarData} onClickHandler={handleLinkClick} isOpen={isOpen} />}
+            {!horizontalSidebar && <Sidebar data={sidebarData} onClickHandler={handleLinkClick} isOpen={isOpen} setIsOpen={setIsOpen} />}
             <TopBar
                 horizontalSidebar={horizontalSidebar}
                 toggleSidebar={toggleSidebar}

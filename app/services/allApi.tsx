@@ -53,6 +53,26 @@ export const isVerify = async () => {
   }
 };
 
+
+export const genearateCode = async (body:object) => {
+    try {
+    const res = await API.post("/api/codes/reserve", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const saveFinalCode = async (body:object) => {
+    try {
+    const res = await API.post("/api/codes/finalize", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
 export const companyList = async (params?: Params) => {
   try {
     const res = await API.get(`/api/master/company/list_company`, { params: params });
@@ -829,6 +849,16 @@ export const deleteRouteTypeById = async (id: string) => {
   } catch (error: unknown) {
     return handleError(error);
   }
+};
+
+export const subRegionListGlobalSearch = async (params?: Params) => {
+  try {
+     const res = await API.get("/api/master/area/global_search",{ params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
 };
 
 export const getArea = async (params?: Params) => {
@@ -1866,7 +1896,7 @@ export const deletecompanyType = async (uuid:string) => {
 
 export const addCompanyType = async (payload:object) => {
   try {
-         const res = await API.post("/api/settings/company-types/", payload);
+         const res = await API.post("/api/settings/company-types/add", payload);
 
     return res.data;
   } catch (error: unknown) {
@@ -1883,9 +1913,9 @@ export const getComponyTypeById = async (id: string) => {
     return handleError(error);
   }};
 
-export const roleList = async (params?: Params) => {
+export const roleList = async () => {
   try {
-     const res = await API.get("/api/settings/roles/list",{ params: params });
+     const res = await API.get("/web/setting/roles/list");
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

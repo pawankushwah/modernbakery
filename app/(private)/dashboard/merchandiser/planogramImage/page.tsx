@@ -10,8 +10,6 @@ import Table, { listReturnType, TableDataType } from "@/app/components/customTab
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { customer } from "@/app/(private)/data/customerDetails";
-import { image } from "framer-motion/client";
 import { deletePlanogramImage, planogramImageList } from "@/app/services/merchandiserApi";
 import { useLoading } from "@/app/services/loadingContext";
 
@@ -144,9 +142,18 @@ export default function PlanogramImage() {
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns: [
-                            { key: "customer_id", label: "Customer" },
-                            { key: "merchandiser_id", label: "Merchandiser" },
-                            { key: "shelf_id", label: "Shelf" },
+                            { key: "customer_id", label: "Customer", render: (row: TableDataType) => row.customer && row.customer && typeof row.customer === "object" && "name" in row.customer
+                                    ? (row.customer as { name: string }).name || "-"
+                                    : "-" 
+                            },
+                            { key: "merchandiser_id", label: "Merchandiser", render: (row: TableDataType) => row.merchandiser && row.merchandiser && typeof row.merchandiser === "object" && "name" in row.merchandiser
+                                    ? (row.merchandiser as { name: string }).name || "-"
+                                    : "-"
+                            },
+                            { key: "shelf_id", label: "Shelf", render: (row: TableDataType) => row.shelf && row.shelf && typeof row.shelf === "object" && "name" in row.shelf
+                                    ? (row.shelf as { name: string }).name || "-"
+                                    : "-" 
+                            },
                             {
                                 key: "image_url",
                                 label: "Image",
@@ -160,6 +167,14 @@ export default function PlanogramImage() {
                         ],
                         rowSelection: true,
                         rowActions: [
+                            {
+                                icon: "lucide:eye",
+                                onClick: (data: TableDataType) => {
+                                    router.push(
+                                        `/dashboard/merchandiser/planogramImage/view/${data.id}`
+                                    );
+                                },
+                            },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {

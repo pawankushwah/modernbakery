@@ -19,7 +19,7 @@ import {
 } from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { addChillerRequest, chillerByUUID, chillerRequestByUUID, updateChillerRequest } from "@/app/services/assetsApi";
+import { addChillerRequest, chillerRequestByUUID, updateChillerRequest } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useEffect, useState } from "react";
 

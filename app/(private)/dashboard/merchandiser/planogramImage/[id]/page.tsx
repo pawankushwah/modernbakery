@@ -51,7 +51,7 @@ export default function Page() {
   }
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { agentCustomerOptions, salesmanOptions, shelvesOptions } = useAllDropdownListData();
+  const { companyCustomersOptions, salesmanOptions, shelvesOptions } = useAllDropdownListData();
   const [planogramImagesData, setPlanogramImagesData] = useState<PlanogramImageFormValues | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
@@ -59,7 +59,7 @@ export default function Page() {
       const fetchData = async () => {
         if (parsedId !== null) {
           setLoading(true);
-          const res = await planogramImageById(parsedId);
+          const res = await planogramImageById(parsedId.toString());
           setLoading(false);
           if(res.error){
             showSnackbar(res.data.message || "Failed to fetch planogram image data", "error");
@@ -136,8 +136,8 @@ export default function Page() {
                     label="Customer"
                     name="customer_id"
                     value={values.customer_id.toString()}
-                    onChange={(e) =>{ console.log(values, agentCustomerOptions, shelvesOptions, salesmanOptions);setFieldValue("customer_id", e.target.value)}}
-                    options={agentCustomerOptions}
+                    onChange={(e) =>{ setFieldValue("customer_id", e.target.value)}}
+                    options={companyCustomersOptions}
                   />    
                   <ErrorMessage
                     name="customer_id"

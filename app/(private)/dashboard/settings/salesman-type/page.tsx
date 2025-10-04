@@ -53,6 +53,7 @@ export default function SalesmanTypeList() {
     salesman_type_status: string | number; // ✅ allow both
   }
 
+  const [refreshKey, setRefreshKey] = useState(0); // Forcing Table refresh
   const [countries, setCountries] = useState<SalesmanTypeForm[]>([]);
   const { setLoading} = useLoading();
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
@@ -132,6 +133,7 @@ export default function SalesmanTypeList() {
       );
 
       showSnackbar("Salesman Type deleted successfully ✅", "success");
+      setRefreshKey((prev) => prev + 1);
     } catch (error) {
       console.error("Delete failed:", error);
       showSnackbar("Failed to delete salesman type ❌", "error");
@@ -147,7 +149,7 @@ export default function SalesmanTypeList() {
 
       <div className="h-[calc(100%-60px)]">
         <Table
-          
+          key={refreshKey} 
           config={{
             api:{
               list: fetchSalesmanType,
@@ -217,7 +219,7 @@ export default function SalesmanTypeList() {
                 onClick: (data: object) => {
                   const row = data as TableRow;
                   router.push(
-                    `/dashboard/settings/salesman-type/update/${row.id}`
+                    `/dashboard/settings/salesman-type/${row.id}`
                   );
                 },
               },
