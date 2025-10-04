@@ -1981,3 +1981,4 @@ export const deletePermissions = async (uuid:string) => {
     return handleError(error);
   }
 };
+

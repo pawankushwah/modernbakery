@@ -214,23 +214,27 @@ const tableData: TableDataType[] = regions.map((s) => ({
               },
             ],
             rowSelection: true,
-            rowActions: [
-              {
-                icon: "lucide:edit-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  router.push(`/dashboard/settings/region/${row.id}`);
-                },
-              },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  setSelectedRow({ id: row.id });
-                  setShowDeletePopup(true);
-                },
-              },
-            ],
+       rowActions: [
+  {
+    icon: "lucide:eye",
+    onClick: (data: TableDataType) => {
+      router.push(`/dashboard/settings/region/view/${data.id}`);
+    },
+  },
+  {
+    icon: "lucide:edit-2",
+    onClick: (data: TableDataType) => {
+      router.push(`/dashboard/settings/region/${data.id}`);
+    },
+  },
+  {
+    icon: "lucide:trash-2",
+    onClick: (data: TableDataType) => {
+      setSelectedRow({ id: data.id });
+      setShowDeletePopup(true);
+    },
+  },
+],
             pageSize: 5,
           }}
         />

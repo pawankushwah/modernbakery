@@ -59,6 +59,7 @@ const tableData: TableDataType[] = surveys.map((s) => ({
   async function fetchPlanograms() {
       setLoading(true);
       const listRes = await SurveyList();
+      
       if(listRes.error) {
         showSnackbar("Failed to fetch Surveys ❌", "error");
       } else {
@@ -172,6 +173,13 @@ useEffect(() => {
     ],
     rowSelection: true,
     rowActions: [
+       {
+    icon: "lucide:eye",
+    onClick: (data: TableDataType) => {
+      router.push(`/dashboard/merchandiser/survey/view/${data.id}`);
+    },
+  },
+    
       {
         icon: "lucide:edit-2",
         onClick: (data: object) => {
