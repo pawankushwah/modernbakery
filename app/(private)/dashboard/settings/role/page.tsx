@@ -38,37 +38,15 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "role_name", label: "Role Name" ,render: (row: TableDataType) => (
-      <Link
-        href={`/dashboard/settings/role/detail/${row.id}`}
-        className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
-      >
-        {row.role_name}
-      </Link>
-    ),},
-    { key: "role_activity", label: "Role Activity" },
-    { key: "menu_id", label: "Menu Id" },
-    { key: "agent_id", label: "Agent Id" },
-    { key: "warehouse_id", label: "Warehouse Id" },
-    {
-            key: "status",
-            label: "Status",
-            render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status ? true : false} />
-            ),
-        },
+    { key: "name", label: "Name" },
+    { key: "permissions", label: "Permissions", render: (data: TableDataType) => Array.isArray(data.permissions) ? data.permissions.join(", ") : data.permissions },
 ];
 
 export default function Roles() {
     interface RoleItem {
-        id?: number | string;
-        uuid?: number | string;
-        role_name?: string;
-        role_activity?: string;
-        menu_id?: string;
-        agent_id?: string;
-        warehouse_id?: string;
-        status?: string;
+        id: number | string;
+        name: string;
+        permissions: string;
     }
 
     const { setLoading } = useLoading();
@@ -88,8 +66,8 @@ export default function Roles() {
             try {
               setLoading(true);
                 const listRes = await roleList({
-                    limit: pageSize.toString(),
                     page: page.toString(),
+                    per_page: pageSize.toString(),
                 });
                 setLoading(false);
                 return {
@@ -134,8 +112,8 @@ export default function Roles() {
     const handleConfirmDelete = async () => {
         if (!selectedRow) return;
 
-        if (!selectedRow?.uuid) throw new Error("Missing id");
-        const res = await deleteRole(String(selectedRow.uuid));
+        if (!selectedRow?.id) throw new Error("Missing id");
+        const res = await deleteRole(String(selectedRow.id));
         if (res.error)
             return showSnackbar(
                 res.data.message || "Failed to delete Role",
@@ -215,7 +193,7 @@ export default function Roles() {
                                     isActive
                                     leadingIcon="lucide:plus"
                                     label="Add Role"
-                                    labelTw="hidden sm:block"
+                                    labelTw="hidden lg:block"
                                 />,
                             ],
                         },
@@ -225,17 +203,15 @@ export default function Roles() {
                         rowActions: [
                             {
                                 icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(`/dashboard/settings/role/detail/${row.uuid}`);
+                                onClick: (data: TableDataType) => {
+                                    router.push(`/dashboard/settings/role/detail/${data.id}`);
 
                                 },
                             },
                             {
                                 icon: "lucide:trash-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    setSelectedRow({ uuid: row.uuid });
+                                onClick: (data: TableDataType) => {
+                                    setSelectedRow({ id: data.id, name: data.name, permissions: data.permissions } as RoleItem);
                                     setShowDeletePopup(true);
                                 },
                             },

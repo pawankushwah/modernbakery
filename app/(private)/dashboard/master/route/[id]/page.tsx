@@ -1,7 +1,7 @@
 "use client";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import * as yup from "yup";
 import IconButton from "@/app/components/iconButton";
@@ -9,11 +9,14 @@ import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { getRouteById, addRoutes, updateRoute } from "@/app/services/allApi";
+import { getRouteById, addRoutes, updateRoute, genearateCode, saveFinalCode } from "@/app/services/allApi";
+
+
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Loading from "@/app/components/Loading";
 
 export default function AddEditRoute() {
+
   const { routeTypeOptions, warehouseOptions, vehicleListOptions } = useAllDropdownListData();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -21,6 +24,8 @@ export default function AddEditRoute() {
   const routeId = params?.id as string | undefined;
   const isEditMode = routeId !== undefined && routeId !== "add";
   const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
   const [loading, setLoading] = useState(false);
   const [routeCode, setRouteCode] = useState("");
   const [routeName, setRouteName] = useState("");
@@ -30,6 +35,32 @@ export default function AddEditRoute() {
   const [status, setStatus] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Auto-generate route code only once on add
+  const codeGeneratedRef = useRef(false);
+  useEffect(() => {
+    if (!isEditMode && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        try {
+          const res = await genearateCode({ model_name: "routes" });
+          if (res?.code) {
+            setRouteCode(res.code);
+          }
+          if (res?.prefix) {
+            setPrefix(res.prefix);
+          } else if (res?.code) {
+            // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+            const match = res.prefix;
+            if (match) setPrefix(prefix);
+          }
+        } catch (e) {
+          // Optionally handle error
+        }
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode]);
 
   useEffect(() => {
     if (isEditMode && routeId) {
@@ -97,6 +128,11 @@ export default function AddEditRoute() {
       } else {
         showSnackbar(isEditMode ? "Route updated successfully" : "Route added successfully", "success");
         router.push("/dashboard/master/route");
+        try {
+          await saveFinalCode({ reserved_code: routeCode, model_name: "routes" });
+        } catch (e) {
+          // Optionally handle error, but don't block success
+        }
       }
       setSubmitting(false);
     } catch (err) {
@@ -150,6 +186,7 @@ export default function AddEditRoute() {
                   label="Route Code"
                   value={routeCode}
                   onChange={(e) => setRouteCode(e.target.value)}
+                  disabled={codeMode === 'auto'}
                 />
                 {!isEditMode && (
                   <>
@@ -161,6 +198,16 @@ export default function AddEditRoute() {
                       isOpen={isOpen}
                       onClose={() => setIsOpen(false)}
                       title="Route Code"
+                      prefix={prefix}
+                      setPrefix={setPrefix}
+                      onSave={(mode, code) => {
+                        setCodeMode(mode);
+                        if (mode === 'auto' && code) {
+                          setRouteCode(code);
+                        } else if (mode === 'manual') {
+                          setRouteCode('');
+                        }
+                      }}
                     />
                   </>
                 )}

@@ -16,16 +16,30 @@ import { createPlanogramImage, planogramImageById, updatePlanogramImage } from "
 import { File } from "buffer";
 import Image from "next/image";
 
+const allowedImageTypes = ["image/jpeg", "image/png", "image/jpg"];
+
 const PlanogramImageSchema = Yup.object().shape({
-  customer_id: Yup.string().required("Please select a customer."),
-  merchandiser_id: Yup.string().required("Please select a merchandiser."),
-  shelf_id: Yup.string().required("Please select a shelf."),
-  image: Yup.string().required("Image is required."),
+  customer: Yup.string().required("Please select a customer."),
+  merchandiser: Yup.string().required("Please select a merchandiser."),
+  shelf: Yup.string().required("Please select a shelf."),
+  image: Yup.mixed().nullable().when("image_url", (imageUrlValue, schema) => {
+    const isImageUrlPresent = Boolean(imageUrlValue);
+    if (isImageUrlPresent) return schema;
+    return schema
+      .required("Image is required.")
+      .test("file-type", "Only jpeg/jpg/png files are allowed.", (value: unknown) => {
+        if (!value) return false;
+        const val = value as { type?: string; size?: number };
+        const isFileLike = typeof val.type === "string" && typeof val.size === "number";
+        return isFileLike && allowedImageTypes.includes(val?.type ?? "");
+      });
+  }),
 });
+
 type PlanogramImageFormValues = {
-  customer_id: string;
-  merchandiser_id: string;
-  shelf_id: string;
+  customer: string;
+  merchandiser: string;
+  shelf: string;
   image: File | null;
   image_url?: string | null;
 };
@@ -60,15 +74,18 @@ export default function Page() {
         if (parsedId !== null) {
           setLoading(true);
           const res = await planogramImageById(parsedId.toString());
+          console.log(res.data);
+          console.log(res.data?.customer?.id ? res.data.customer.id : companyCustomersOptions.length > 0 ? companyCustomersOptions[0].value : "");
           setLoading(false);
           if(res.error){
             showSnackbar(res.data.message || "Failed to fetch planogram image data", "error");
           } else {
             setPlanogramImagesData({
-              customer_id: res.data?.customer_id.toString() || "",
-              merchandiser_id: res.data?.merchandiser_id.toString() || "",
-              shelf_id: res.data?.shelf_id.toString() || "",
+              customer: res.data?.customer?.id ? res.data.customer.id : companyCustomersOptions.length > 0 ? companyCustomersOptions[0].value : "",
+              merchandiser: res.data?.merchandiser?.id ? res.data.merchandiser.id : salesmanOptions.length > 0 ? salesmanOptions[0].value : "",
+              shelf: res.data?.shelf?.id ? res.data.shelf.id : shelvesOptions.length > 0 ? shelvesOptions[0].value : "",
               image: null,
+              image_url: res.data?.image_url || null,
             });
             setImageUrl(res.data?.image_url || null);
           }
@@ -78,10 +95,17 @@ export default function Page() {
   }, []);
 
   const initialValues: PlanogramImageFormValues = {
-    customer_id: planogramImagesData?.customer_id || "",
-    merchandiser_id: planogramImagesData?.merchandiser_id || "",
-    shelf_id: planogramImagesData?.shelf_id || "",
+    customer: planogramImagesData?.customer 
+      ? planogramImagesData?.customer 
+      : companyCustomersOptions.length > 0 ? String(companyCustomersOptions[0].value) : "",
+    merchandiser: planogramImagesData?.merchandiser 
+      ? planogramImagesData?.merchandiser
+      : salesmanOptions.length > 0 ? String(salesmanOptions[0].value) : "",
+    shelf: planogramImagesData?.shelf 
+      ? planogramImagesData?.shelf
+      : shelvesOptions.length > 0 ? String(shelvesOptions[0].value) : "",
     image: null,
+    image_url: planogramImagesData?.image_url || null,
   };
 
   const handleSubmit = async (
@@ -89,10 +113,12 @@ export default function Page() {
     { setSubmitting }: FormikHelpers<PlanogramImageFormValues>
   ) => {
     const payload = new FormData();
-    payload.append("customer_id", "82");
-    payload.append("merchandiser_id", values.merchandiser_id);
-    payload.append("shelf_id", values.shelf_id);
-    payload.append("image", values.image as Blob);
+    payload.append("customer_id", values.customer);
+    payload.append("merchandiser_id", values.merchandiser);
+    payload.append("shelf_id", values.shelf);
+    if (values.image) {
+      payload.append("image", values.image as Blob);
+    }
 
     let res;
     if(isEditMode && parsedId !== null) {
@@ -134,13 +160,13 @@ export default function Page() {
                   <InputFields
                     required
                     label="Customer"
-                    name="customer_id"
-                    value={values.customer_id.toString()}
-                    onChange={(e) =>{ setFieldValue("customer_id", e.target.value)}}
+                    name="customer"
+                    value={values.customer.toString()}
+                    onChange={(e) =>{ setFieldValue("customer", e.target.value)}}
                     options={companyCustomersOptions}
                   />    
                   <ErrorMessage
-                    name="customer_id"
+                    name="customer"
                     component="span"
                     className="text-xs text-red-500"
                   />
@@ -149,13 +175,13 @@ export default function Page() {
                   <InputFields
                     required
                     label="Merchandiser"
-                    name="merchandiser_id"
-                    value={values.merchandiser_id.toString()}
-                    onChange={(e) => setFieldValue("merchandiser_id", e.target.value)}
+                    name="merchandiser"
+                    value={values.merchandiser.toString()}
+                    onChange={(e) => {console.log(values);setFieldValue("merchandiser", e.target.value)}}
                     options={salesmanOptions}
                   />    
                   <ErrorMessage
-                    name="merchandiser_id"
+                    name="merchandiser"
                     component="span"
                     className="text-xs text-red-500"
                   />
@@ -164,20 +190,19 @@ export default function Page() {
                   <InputFields
                     required
                     label="Shelf"
-                    name="shelf_id"
-                    value={values.shelf_id.toString()}
-                    onChange={(e) => setFieldValue("shelf_id", e.target.value)}
+                    name="shelf"
+                    value={values.shelf.toString()}
+                    onChange={(e) => setFieldValue("shelf", e.target.value)}
                     options={shelvesOptions}
                   />    
                   <ErrorMessage
-                    name="shelf_id"
+                    name="shelf"
                     component="span"
                     className="text-xs text-red-500"
                   />
                 </div>
                   <div>
                     <InputFields
-                      required
                       label="Add Image"
                       name="image"
                       type="file"

@@ -10,9 +10,9 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import * as Yup from 'yup';
-import { addWarehouse, getWarehouseById, updateWarehouse } from '@/app/services/allApi';
+import { addWarehouse, getWarehouseById, updateWarehouse, genearateCode, saveFinalCode } from '@/app/services/allApi';
 import StepperForm, { StepperStep, useStepperForm } from "@/app/components/stepperForm";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Loading from "@/app/components/Loading";
 
 type FormValues = {
@@ -117,6 +117,21 @@ export default function AddEditWarehouse() {
     const [errors, setErrors] = useState<Partial<Record<keyof FormValues, string>>>({});
     const [touched, setTouched] = useState<Partial<Record<keyof FormValues, boolean>>>({});
     const [loading, setLoading] = useState(false);
+
+    // Prevent double call of genearateCode in add mode
+    const codeGeneratedRef = useRef(false);
+    useEffect(() => {
+        if (!isEditMode && !codeGeneratedRef.current) {
+            codeGeneratedRef.current = true;
+            (async () => {
+                const res = await genearateCode({ model_name: "warehouse" });
+                if (res?.code) {
+                    setForm(prev => ({ ...prev, warehouse_code: res.code }));
+                }
+            })();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEditMode]);
 
     useEffect(() => {
         if (isEditMode && warehouseId) {
@@ -318,6 +333,12 @@ export default function AddEditWarehouse() {
         if(res.error) showSnackbar(res.data?.message || "Failed to submit form", "error");
         else {
             showSnackbar(res.message || (isEditMode ? "Warehouse updated successfully" : "Warehouse added successfully"), "success");
+            // Finalize the reserved code after successful add/update
+            try {
+                await saveFinalCode({ reserved_code: form.warehouse_code, model_name: "warehouse" });
+            } catch (e) {
+                // Optionally handle error, but don't block success
+            }
             router.push("/dashboard/master/warehouse");
         }
     };

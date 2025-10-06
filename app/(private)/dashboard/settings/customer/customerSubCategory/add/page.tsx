@@ -4,12 +4,14 @@ import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import SearchableDropdown from "@/app/components/SearchableDropdown";
-import { addCustomerSubCategory, customerCategoryList } from "@/app/services/allApi";
+import { addCustomerSubCategory, customerCategoryList, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import { useFormik } from "formik";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import * as Yup from "yup";
 import { useRouter } from "next/navigation";
 
@@ -20,7 +22,8 @@ interface CustomerCategory {
 }
 
 export default function AddCustomerSubCategory() {
-  const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
+  
+const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
@@ -43,17 +46,26 @@ export default function AddCustomerSubCategory() {
     fetchCategories();
   }, []);
 
+  // Code logic
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
+  const codeGeneratedRef = useRef(false);
+  const [code, setCode] = useState("");
+
   // ✅ Formik setup
   const formik = useFormik({
     initialValues: {
       customer_category_id: "",
       customer_sub_category_name: "",
       status: "1",
+      customer_sub_category_code: "",
     },
     validationSchema: Yup.object({
       customer_category_id: Yup.string().required("Customer category is required"),
       customer_sub_category_name: Yup.string().required("Sub category name is required"),
       status: Yup.string().required("Status is required"),
+      customer_sub_category_code: Yup.string().required("Code is required"),
     }),
     onSubmit: async (values, { resetForm }) => {
       try {
@@ -61,9 +73,10 @@ export default function AddCustomerSubCategory() {
           customer_category_id: Number(values.customer_category_id),
           customer_sub_category_name: values.customer_sub_category_name,
           status: Number(values.status),
+          customer_sub_category_code: values.customer_sub_category_code,
         };
         const res = await addCustomerSubCategory(payload);
-        console.log("✅ Sub Category Added:", res);
+        await saveFinalCode({ reserved_code: values.customer_sub_category_code, model_name: "customer_sub_categories" });
         showSnackbar("Customer Sub Category added successfully ✅", "success");
         resetForm();
         router.push("/dashboard/settings/customer/customerSubCategory");
@@ -73,6 +86,27 @@ export default function AddCustomerSubCategory() {
       }
     },
   });
+
+  // Generate code on mount (add mode only)
+  useEffect(() => {
+    if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "customer_sub_categories" });
+        if (res?.code) {
+          setCode(res.code);
+          formik.setFieldValue("customer_sub_category_code", res.code);
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
+        }
+      })();
+    }
+  }, []);
 
   return (
     <>
@@ -95,6 +129,39 @@ export default function AddCustomerSubCategory() {
             Customer Sub Category Details
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Customer Sub Category Code (auto-generated, disabled, with settings icon/popup) */}
+            <div className="flex items-end gap-2 max-w-[406px]">
+              <InputFields
+                label="Customer Sub Category Code"
+                name="customer_sub_category_code"
+                value={formik.values.customer_sub_category_code}
+                onChange={formik.handleChange}
+                disabled={codeMode === 'auto'}
+                error={formik.touched.customer_sub_category_code && formik.errors.customer_sub_category_code}
+              />
+              <IconButton
+                bgClass="white"
+                className="mb-2 cursor-pointer text-[#252B37]"
+                icon="mi:settings"
+                onClick={() => setIsOpen(true)}
+              />
+              <SettingPopUp
+                isOpen={isOpen}
+                onClose={() => setIsOpen(false)}
+                title="Customer Sub Category Code"
+                prefix={prefix}
+                setPrefix={setPrefix}
+                onSave={(mode, code) => {
+                  setCodeMode(mode);
+                  if (mode === 'auto' && code) {
+                    formik.setFieldValue('customer_sub_category_code', code);
+                  } else if (mode === 'manual') {
+                    formik.setFieldValue('customer_sub_category_code', '');
+                  }
+                }}
+              />
+            </div>
+
             {/* Customer Category Dropdown */}
             <InputFields
               label="Customer Category"

@@ -4,7 +4,7 @@ import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepp
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import FormInputField from "@/app/components/formInputField";
-import { addCompany, getCompanyById, updateCompany } from "@/app/services/allApi";
+import { addCompany, getCompanyById, updateCompany, genearateCode, saveFinalCode } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useParams, useRouter } from "next/navigation";
 import * as Yup from "yup";
@@ -12,7 +12,9 @@ import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
-import { useEffect, useState } from "react";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
+import { useEffect, useState, useRef } from "react";
 
 interface CompanyFormValues {
   company_name: string;
@@ -100,6 +102,9 @@ const stepSchemas = [
 ];
 
 export default function AddEditCompany() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
   const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency } = useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -132,7 +137,8 @@ export default function AddEditCompany() {
     status: "1",
   });
 
-  // Load company for edit mode
+  // Load company for edit mode or generate code for add mode
+  const codeGeneratedRef = useRef(false);
   useEffect(() => {
     if (params?.id && params.id !== "add") {
       setIsEditMode(true);
@@ -140,6 +146,25 @@ export default function AddEditCompany() {
         const res = await getCompanyById(params.id as string);
         if (res && !res.error) {
           setInitialValues(res.data);
+        }
+      })();
+    } else if ((params?.id === "add" || !params?.id) && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        try {
+          const res = await genearateCode({ model_name: "company" });
+          if (res?.code) {
+            setInitialValues((prev) => ({ ...prev, company_code: res.code }));
+          }
+          if (res?.prefix) {
+            setPrefix(res.prefix);
+          } else if (res?.code) {
+            // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+            const match = res.prefix;
+            if (match) setPrefix(prefix);
+          }
+        } catch (e) {
+          // Optionally handle error
         }
       })();
     }
@@ -177,6 +202,11 @@ export default function AddEditCompany() {
       } else {
         showSnackbar(isEditMode ? "Company Updated Successfully" : "Company Created Successfully", "success");
         router.push("/dashboard/master/company");
+        try {
+          await saveFinalCode({ reserved_code: values.company_code, model_name: "companies" });
+        } catch (e) {
+          // Optionally handle error, but don't block success
+        }
       }
     } catch (err) {
       showSnackbar("Validation failed, please check your inputs", "error");
@@ -200,14 +230,41 @@ export default function AddEditCompany() {
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <InputFields
-              required
-                label="Company Code"
-                name="company_code"
-                value={values.company_code}
-                onChange={(e) => setFieldValue("company_code", e.target.value)}
-                error={touched.company_code && errors.company_code}
-              />
+             
+              <div className="flex items-end gap-2 max-w-[406px]">
+                <InputFields
+                  label="Company Code"
+                  name="company_code"
+                  value={values.company_code}
+                  onChange={(e) => setFieldValue("company_code", e.target.value)}
+                  disabled={codeMode === 'auto'}
+                />
+                {!isEditMode && (
+                  <>
+                    <IconButton
+                      bgClass="white"
+                      className="mb-2 cursor-pointer text-[#252B37]"
+                      icon="mi:settings"
+                      onClick={() => setIsOpen(true)}
+                    />
+                    <SettingPopUp
+                      isOpen={isOpen}
+                      onClose={() => setIsOpen(false)}
+                      title="Company Code"
+                      prefix={prefix}
+                      setPrefix={setPrefix}
+                      onSave={(mode, code) => {
+                        setCodeMode(mode);
+                        if (mode === 'auto' && code) {
+                          setFieldValue('company_code', code);
+                        } else if (mode === 'manual') {
+                          setFieldValue('company_code', '');
+                        }
+                      }}
+                    />
+                  </>
+                )}
+              </div>
               <InputFields
               required
                 label="Company Name"

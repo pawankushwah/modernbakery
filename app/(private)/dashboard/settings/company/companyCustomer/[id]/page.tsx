@@ -1,4 +1,49 @@
+// ------
+// ---------------- Form Values Type ----------------------
 "use client";
+
+type CompanyCustomerFormValues = {
+  sapCode: string;
+  company_customer_code: string;
+  customerCode: string;
+  businessName: string;
+  customerType: string;
+  ownerName: string;
+  ownerNumber: string;
+  isWhatsapp: string;
+  whatsappNo: string;
+  email: string;
+  language: string;
+  contactNo2: string;
+  buyerType: string;
+  roadStreet: string;
+  town: string;
+  landmark: string;
+  district: string;
+  region: string;
+  area: string;
+  balance: string;
+  paymentType: string;
+  bankName: string;
+  bankAccountNumber: string;
+  creditDay: string;
+  tinNo: string;
+  accuracy: string;
+  creditLimit: string;
+  guaranteeName: string;
+  guaranteeAmount: string;
+  guaranteeFrom: string;
+  guaranteeTo: string;
+  totalCreditLimit: string;
+  creditLimitValidity: string;
+  vatNo: string;
+  longitude: string;
+  latitude: string;
+  thresholdRadius: string;
+  dChannelId: string;
+  status: string;
+  merchendiser_ids: string;
+};
 
 import React from "react";
 import { Icon } from "@iconify-icon/react";
@@ -14,9 +59,11 @@ import {
 } from "formik";
 import * as Yup from "yup";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useParams } from "next/navigation";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -24,6 +71,8 @@ import {
   addCompanyCustomers,
   getCompanyCustomerById,
   updateCompanyCustomer,
+  genearateCode,
+  saveFinalCode,
 } from "@/app/services/allApi";
 import StepperForm, {
   useStepperForm,
@@ -33,6 +82,7 @@ import StepperForm, {
 // ---------------------- API Call ----------------------
 interface CompanyCustomerPayload {
   sap_code: string;
+  company_customer_code: string;
   customer_code: string;
   business_name: string;
   customer_type: string;
@@ -175,57 +225,16 @@ const stepSchemas = [
   }),
 ];
 
-// ---------------------- Form Values ----------------------
-type CompanyCustomerFormValues = {
-  sapCode: string;
-  customerCode: string;
-  businessName: string;
-  customerType: string;
-  ownerName: string;
-  ownerNumber: string;
-  isWhatsapp: string;
-  whatsappNo: string;
-  email: string;
-  language: string;
-  contactNo2: string;
-  buyerType: string;
-  roadStreet: string;
-  town: string;
-  landmark: string;
-  district: string;
-  region: string;
-  area: string;
-  balance: string;
-  paymentType: string;
-  bankName: string;
-  bankAccountNumber: string;
-  creditDay: string;
-  tinNo: string;
-  accuracy: string;
-  creditLimit: string;
-  guaranteeName: string;
-  guaranteeAmount: string;
-  guaranteeFrom: string;
-  guaranteeTo: string;
-  totalCreditLimit: string;
-  creditLimitValidity: string;
-  vatNo: string;
-  longitude: string;
-  latitude: string;
-  thresholdRadius: string;
-  dChannelId: string;
-  status: string;
-  merchendiser_ids: string;
-};
+
 
 // ---------------------- Component ----------------------
 export default function AddCompanyCustomer() {
-  const { showSnackbar } = useSnackbar();
+  
+const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
-  const { regionOptions, areaOptions, customerTypeOptions } =
-    useAllDropdownListData();
+  const { regionOptions, areaOptions, customerTypeOptions } = useAllDropdownListData();
 
   const steps: StepperStep[] = [
     { id: 1, label: "Company Customer" },
@@ -243,59 +252,62 @@ export default function AddCompanyCustomer() {
     isLastStep,
   } = useStepperForm(steps.length);
 
-  const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>(
-    {
-      sapCode: "SAP001",
-      customerCode: "CUST001",
-      businessName: "Test Business",
-      customerType: "1",
-      ownerName: "John Doe",
-      ownerNumber: "1234567890",
-      isWhatsapp: "1",
-      whatsappNo: "1234567890",
-      email: "test@example.com",
-      language: "English",
-      contactNo2: "0987654321",
-      buyerType: "0",
-      roadStreet: "123 Main St",
-      town: "Test Town",
-      landmark: "Near Test Park",
-      district: "Test District",
-      region: "1",
-      area: "1",
-      balance: "0",
-      paymentType: "1",
-      bankName: "Test Bank",
-      bankAccountNumber: "123456789",
-      creditDay: "30",
-      tinNo: "TIN123456",
-      accuracy: "",
-      creditLimit: "10000",
-      guaranteeName: "Test Guarantee",
-      guaranteeAmount: "5000",
-      guaranteeFrom: "2025-01-01",
-      guaranteeTo: "2025-12-31",
-      totalCreditLimit: "15000",
-      creditLimitValidity: "2025-12-31",
-      vatNo: "VAT123456",
-      longitude: "0.0000",
-      latitude: "0.0000",
-      thresholdRadius: "10",
-      dChannelId: "1",
-      status: "1",
-      merchendiser_ids: "",
-    }
-  );
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
+  const codeGeneratedRef = useRef(false);
+  const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>({
+    sapCode: "SAP001",
+    company_customer_code: "",
+    customerCode: "CUST001",
+    businessName: "Test Business",
+    customerType: "1",
+    ownerName: "John Doe",
+    ownerNumber: "1234567890",
+    isWhatsapp: "1",
+    whatsappNo: "1234567890",
+    email: "test@example.com",
+    language: "English",
+    contactNo2: "0987654321",
+    buyerType: "0",
+    roadStreet: "123 Main St",
+    town: "Test Town",
+    landmark: "Near Test Park",
+    district: "Test District",
+    region: "1",
+    area: "1",
+    balance: "0",
+    paymentType: "1",
+    bankName: "Test Bank",
+    bankAccountNumber: "123456789",
+    creditDay: "30",
+    tinNo: "TIN123456",
+    accuracy: "",
+    creditLimit: "10000",
+    guaranteeName: "Test Guarantee",
+    guaranteeAmount: "5000",
+    guaranteeFrom: "2025-01-01",
+    guaranteeTo: "2025-12-31",
+    totalCreditLimit: "15000",
+    creditLimitValidity: "2025-12-31",
+    vatNo: "VAT123456",
+    longitude: "0.0000",
+    latitude: "0.0000",
+    thresholdRadius: "10",
+    dChannelId: "1",
+    status: "1",
+    merchendiser_ids: "",
+  });
 
-  // 🔹 Fetch data by ID
+  // 🔹 Fetch data by ID or generate code in add mode
   useEffect(() => {
     const fetchData = async () => {
       try {
         const id = params?.id as string;
         const data = await getCompanyCustomerById(id);
-
         const mapped: CompanyCustomerFormValues = {
           sapCode: data.sap_code || "",
+          company_customer_code: data.company_customer_code || "",
           customerCode: data.customer_code || "",
           businessName: data.business_name || "",
           customerType: String(data.customer_type || ""),
@@ -335,16 +347,29 @@ export default function AddCompanyCustomer() {
           status: String(data.status || "1"),
           merchendiser_ids: data.merchendiser_ids || "",
         };
-
         setInitialValues(mapped);
       } catch (error) {
         console.error(error);
         showSnackbar("Failed to load data ❌", "error");
       }
     };
-
     if (params?.id && params.id !== "add") {
       fetchData();
+    } else if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "tbl_company_customer" });
+        if (res?.code) {
+          setInitialValues((prev) => ({ ...prev, company_customer_code: res.code }));
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
+        }
+      })();
     }
   }, [params?.id]);
 
@@ -390,6 +415,7 @@ export default function AddCompanyCustomer() {
     try {
       const payload: CompanyCustomerPayload = {
         sap_code: values.sapCode,
+        company_customer_code: values.company_customer_code,
         customer_code: values.customerCode,
         business_name: values.businessName,
         customer_type: String(values.customerType),
@@ -431,14 +457,12 @@ export default function AddCompanyCustomer() {
           : String(values.merchendiser_ids).replace(/"/g, ""),
         status: Number(values.status),
       };
-
       let res;
       if (isEditMode && params?.id && params.id !== "add") {
         res = await updateCompanyCustomer(String(params.id), payload);
       } else {
         res = await addCompanyCustomers(payload);
       }
-
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
@@ -449,6 +473,10 @@ export default function AddCompanyCustomer() {
               : "Route Created Successfully"),
           "success"
         );
+        // Finalize the reserved code after successful add/update
+        try {
+          await saveFinalCode({ reserved_code: values.company_customer_code, model_name: "tbl_company_customer" });
+        } catch (e) {}
         router.push("/dashboard/settings/company/companyCustomer");
       }
     } catch (error) {
@@ -479,6 +507,42 @@ export default function AddCompanyCustomer() {
                 : "Add Company Customer Details"}
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Company Customer Code (pattern-matched UI) */}
+              <div className="flex items-end gap-2 max-w-[406px]">
+                <InputFields
+                  label="Company Customer Code"
+                  name="company_customer_code"
+                  value={values.company_customer_code}
+                  onChange={(e) => setFieldValue("company_customer_code", e.target.value)}
+                  disabled={codeMode === 'auto'}
+                  error={touched.company_customer_code && errors.company_customer_code}
+                />
+                {!isEditMode && (
+                  <>
+                    <IconButton
+                      bgClass="white"
+                      className="mb-2 cursor-pointer text-[#252B37]"
+                      icon="mi:settings"
+                      onClick={() => setIsOpen(true)}
+                    />
+                    <SettingPopUp
+                      isOpen={isOpen}
+                      onClose={() => setIsOpen(false)}
+                      title="Company Customer Code"
+                      prefix={prefix}
+                      setPrefix={setPrefix}
+                      onSave={(mode, code) => {
+                        setCodeMode(mode);
+                        if (mode === 'auto' && code) {
+                          setFieldValue('company_customer_code', code);
+                        } else if (mode === 'manual') {
+                          setFieldValue('company_customer_code', '');
+                        }
+                      }}
+                    />
+                  </>
+                )}
+              </div>
               <InputFields
                 label="SAP Code"
                 name="sapCode"

@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import Loading from "@/app/components/Loading";
-import { updateUser, addUser, getUserById } from "@/app/services/allApi";
+import { updateUser, addUser, getUserById, genearateCode, saveFinalCode } from "@/app/services/allApi";
 
 import { useSnackbar } from "@/app/services/snackbarContext";
 
@@ -22,6 +23,11 @@ type CountryFormValues = {
 };
 
 export default function AddOrEditUserType() {
+ 
+const [isOpen, setIsOpen] = useState(false);
+
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
@@ -29,6 +35,9 @@ export default function AddOrEditUserType() {
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Prevent double call of genearateCode in add mode
+  const codeGeneratedRef = useRef(false);
 
   // ✅ Formik setup
   const formik = useFormik<CountryFormValues>({
@@ -67,6 +76,12 @@ export default function AddOrEditUserType() {
                 : "User Type Created Successfully"),
             "success"
           );
+          // Finalize the reserved code after successful add/update
+          try {
+            await saveFinalCode({ reserved_code: values.code, model_name: "user_types" });
+          } catch (e) {
+            // Optionally handle error, but don't block success
+          }
           router.push("/dashboard/settings/user-types");
         }
       } catch (error) {
@@ -77,13 +92,12 @@ export default function AddOrEditUserType() {
     },
   });
 
-  // ✅ Load existing data for edit mode
+  // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
     if (params?.id && params.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
-        console.log("Fetching data for ID:", params.id);
         try {
           const res = await getUserById(String(params.id));
           if (res?.data) {
@@ -97,6 +111,21 @@ export default function AddOrEditUserType() {
           console.error("Failed to fetch user type", error);
         } finally {
           setLoading(false);
+        }
+      })();
+    } else if (!isEditMode && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "user_types" });
+        if (res?.code) {
+          formik.setFieldValue("code", res.code);
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
         }
       })();
     }
@@ -124,8 +153,45 @@ export default function AddOrEditUserType() {
         <form onSubmit={formik.handleSubmit}>
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">User Type Details</h2>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Name */}
+              {/* User Type Code (pattern-matched UI) */}
+              <div className="flex items-end gap-2 max-w-[406px]">
+                <InputFields
+                  label="User Type Code"
+                  name="code"
+                  value={formik.values.code}
+                  onChange={formik.handleChange}
+                  disabled={codeMode === 'auto'}
+                  onBlur={formik.handleBlur}
+                  error={formik.touched.code && formik.errors.code}
+                />
+                {!isEditMode && (
+                  <>
+                    <IconButton
+                      bgClass="white"
+                      className="mb-2 cursor-pointer text-[#252B37]"
+                      icon="mi:settings"
+                      onClick={() => setIsOpen(true)}
+                    />
+                    <SettingPopUp
+                      isOpen={isOpen}
+                      onClose={() => setIsOpen(false)}
+                      title="User Type Code"
+                      prefix={prefix}
+                      setPrefix={setPrefix}
+                      onSave={(mode, code) => {
+                        setCodeMode(mode);
+                        if (mode === 'auto' && code) {
+                          formik.setFieldValue('code', code);
+                        } else if (mode === 'manual') {
+                          formik.setFieldValue('code', '');
+                        }
+                      }}
+                    />
+                  </>
+                )}
+              </div>
               <InputFields
                 type="text"
                 name="name"
@@ -135,18 +201,6 @@ export default function AddOrEditUserType() {
                 onBlur={formik.handleBlur}
                 error={formik.touched.name && formik.errors.name}
               />
-
-              {/* Code */}
-              <InputFields
-                type="text"
-                name="code"
-                label="Code"
-                value={formik.values.code}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.code && formik.errors.code}
-              />
-
               {/* Status */}
               <InputFields
                 type="radio"

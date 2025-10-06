@@ -4,15 +4,18 @@ import SidebarBtn from "./dashboardSidebarBtn";
 import InputFields from "./inputFields";
 
 interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   title?: string;
+  prefix?: string;
+  setPrefix?: (val: string) => void;
+  onSave?: (mode: "auto" | "manual", code?: string) => void;
 }
 
-export default function SettingPopUp({ isOpen, onClose, title }: ModalProps) {
-  const [option, setOption] = useState("auto");
-  const [prefix, setPrefix] = useState("");
+export default function SettingPopUp({ isOpen, onClose, title, prefix = "", setPrefix, onSave }: ModalProps) {
+  const [option, setOption] = useState<"auto"|"manual">("auto");
   const [nextNumber, setNextNumber] = useState("");
+  const [manualCode, setManualCode] = useState("");
 
   if (!isOpen) return null;
 
@@ -40,44 +43,43 @@ export default function SettingPopUp({ isOpen, onClose, title }: ModalProps) {
 
         {/* Radio Options */}
         <div className="space-y-3 mb-4">
-             
           <label className="flex items-center gap-2">
-            <input 
+            <input
               type="radio"
               value="auto"
               checked={option === "auto"}
-              onChange={(e) => setOption(e.target.value)}
+              onChange={() => setOption("auto")}
             />
             Continue auto-generating {title}
           </label>
-
-          {/* Show input fields only when auto is selected */}
           {option === "auto" && (
             <div className="ml-6 mt-2 flex gap-3">
-                <InputFields
-                            label="Prefix"
-                            value={prefix}
-                            onChange={(e) => setPrefix(e.target.value)}
-                          />
-              
               <InputFields
-                            label="Next Number"
-                            value={nextNumber}
-                            onChange={(e) => setNextNumber(e.target.value)}
-                          />
-              
+                label="Prefix"
+                value={prefix}
+                onChange={() => {}}
+                disabled
+              />
+              <InputFields
+                label="Next Number"
+                value={nextNumber}
+                onChange={(e) => setNextNumber(e.target.value)}
+              />
             </div>
           )}
-
           <label className="flex items-center gap-2">
             <input
               type="radio"
               value="manual"
               checked={option === "manual"}
-              onChange={(e) => setOption(e.target.value)}
+              onChange={() => {
+                setOption("manual");
+                onSave && onSave("manual", ""); // clear code in parent when switching to manual
+              }}
             />
             I will add them manually each time
           </label>
+          {/* In manual mode, do not show Enter Code input. User will edit in main input field. */}
         </div>
 
         {/* Action Buttons */}
@@ -89,17 +91,16 @@ export default function SettingPopUp({ isOpen, onClose, title }: ModalProps) {
           >
             Cancel
           </button>
-
           <SidebarBtn
             label={`Save ${title}`}
             isActive={true}
-            onClick={() =>
-              console.log({
-                option,
-                prefix,
-                nextNumber,
-              })
-            }
+            onClick={() => {
+              if (option === "auto") {
+                const code = prefix + nextNumber;
+                onSave && onSave("auto", code);
+              }
+              onClose && onClose();
+            }}
           />
         </div>
       </div>

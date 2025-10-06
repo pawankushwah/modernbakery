@@ -28,6 +28,7 @@ export type categoryType = {
     id: number;
     category_name: string;
     status: string;
+    item_category_code?: string;
 };
 
 export default function Category() {
