@@ -28,10 +28,12 @@ export default function ViewPage() {
 
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
-  const [countryDetails, setCountryDetails] = useState<CountryItem | null>(null);
+  const [countryDetails, setCountryDetails] = useState<CountryItem | null>(
+    null
+  );
 
   useEffect(() => {
-    const fetchOutletChannelDetails = async () => {
+    const fetchCountryDetails = async () => {
       setLoading(true);
       const res = await countryById(id);
       setLoading(false);
@@ -45,14 +47,14 @@ export default function ViewPage() {
       }
       setCountryDetails(res.data);
     };
-    fetchOutletChannelDetails();
+    fetchCountryDetails();
   }, []);
 
   return (
     <>
       {/* Header */}
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard/settings/outlet-channel">
+        <Link href="/dashboard/settings/country/">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
         <h1 className="text-xl font-semibold mb-1">{TITLE}</h1>
