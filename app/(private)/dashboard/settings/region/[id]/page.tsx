@@ -2,7 +2,7 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState ,useRef} from "react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
@@ -14,16 +14,22 @@ import { addRegion, getRegionById, updateRegion } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 const RegionSchema = Yup.object().shape({
+  region_code: Yup.string().required("Region Code is required."),
   region_name: Yup.string().required("Region Name is required."),
   status: Yup.string().required("Status is required."),
   country_id: Yup.string().required("Please select a country."),
 });
 
 type RegionFormValues = {
+  region_code: string;
   region_name: string;
   status: string;
   country_id: string;
 };
+
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
+import { genearateCode, saveFinalCode } from "@/app/services/allApi";
 
 export default function AddEditRegion() {
   const router = useRouter();
@@ -39,32 +45,58 @@ export default function AddEditRegion() {
   const queryId = isEditMode ? routeId : "";
 
   const [initialValues, setInitialValues] = useState<RegionFormValues>({
+    region_code: "",
     region_name: "",
     status: "1",
     country_id: "",
   });
 
-  // Fetch region data if editing
+  // Code logic
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
+  const [code, setCode] = useState("");
+  const codeGeneratedRef = useRef(false);
+
+  // Fetch region data if editing, or generate code in add mode
   useEffect(() => {
-    if (!isEditMode) return;
-    let mounted = true;
-    setLoading(true);
-    (async () => {
-      try {
-        const res = await getRegionById(String(queryId));
-        if (!mounted) return;
-        setInitialValues({
-          region_name: res?.data.region_name || "",
-          status: res?.data.status?.toString() ?? "1",
-          country_id: res?.data.country_id?.toString() ?? "",
-        });
-      } catch (err) {
-        console.error("Failed to fetch Region by id", err);
-      } finally {
-        setLoading(false);
-      }
-    })();
-    return () => { mounted = false; };
+    if (isEditMode) {
+      let mounted = true;
+      setLoading(true);
+      (async () => {
+        try {
+          const res = await getRegionById(String(queryId));
+          if (!mounted) return;
+          setInitialValues({
+            region_code: res?.data.region_code || "",
+            region_name: res?.data.region_name || "",
+            status: res?.data.status?.toString() ?? "1",
+            country_id: res?.data.country_id?.toString() ?? "",
+          });
+        } catch (err) {
+          console.error("Failed to fetch Region by id", err);
+        } finally {
+          setLoading(false);
+        }
+      })();
+      return () => { mounted = false; };
+    } else if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "Region" });
+        if (res?.code) {
+          setCode(res.code);
+          setInitialValues((prev) => ({ ...prev, region_code: res.code }));
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
+        }
+      })();
+    }
   }, [isEditMode, queryId]);
 
   // Submit handler
@@ -74,6 +106,7 @@ export default function AddEditRegion() {
   ) => {
     try {
       const payload = {
+        region_code: values.region_code,
         region_name: values.region_name.trim(),
         status: Number(values.status),
         country_id: Number(values.country_id),
@@ -83,6 +116,9 @@ export default function AddEditRegion() {
         showSnackbar("Region updated successfully ✅", "success");
       } else {
         await addRegion(payload);
+        try {
+          await saveFinalCode({ reserved_code: values.region_code, model_name: "Region" });
+        } catch (e) {}
         showSnackbar("Region added successfully ✅", "success");
       }
       router.push("/dashboard/settings/region");
@@ -117,12 +153,48 @@ export default function AddEditRegion() {
         validationSchema={RegionSchema}
         onSubmit={handleSubmit}
       >
-        {({ values, setFieldValue, isSubmitting }) => (
+  {({ values, setFieldValue, isSubmitting, touched, errors }) => (
           <Form>
             <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
               <div className="p-6">
                 <h2 className="text-lg font-medium text-gray-800 mb-4">Region Details</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Region Code (auto-generated, disabled, with settings icon/popup) */}
+                  <div className="flex items-end gap-2 max-w-[406px]">
+                    <InputFields
+                      label="Region Code"
+                      name="region_code"
+                      value={values.region_code}
+                      onChange={(e) => setFieldValue("region_code", e.target.value)}
+                      disabled={codeMode === 'auto'}
+                      error={touched?.region_code && errors?.region_code}
+                    />
+                    {!isEditMode && (
+                      <>
+                        <IconButton
+                          bgClass="white"
+                          className="mb-2 cursor-pointer text-[#252B37]"
+                          icon="mi:settings"
+                          onClick={() => setIsOpen(true)}
+                        />
+                        <SettingPopUp
+                          isOpen={isOpen}
+                          onClose={() => setIsOpen(false)}
+                          title="Region Code"
+                          prefix={prefix}
+                          setPrefix={setPrefix}
+                          onSave={(mode, code) => {
+                            setCodeMode(mode);
+                            if (mode === 'auto' && code) {
+                              setFieldValue('region_code', code);
+                            } else if (mode === 'manual') {
+                              setFieldValue('region_code', '');
+                            }
+                          }}
+                        />
+                      </>
+                    )}
+                  </div>
                   <div>
                     <InputFields
                       label="Region Name"
@@ -136,7 +208,7 @@ export default function AddEditRegion() {
                       className="text-xs text-red-500"
                     />
                   </div>
-                   <div>
+                  <div>
                     <InputFields
                       label="Country"
                       name="country_id"
@@ -168,7 +240,6 @@ export default function AddEditRegion() {
                       className="text-xs text-red-500"
                     />
                   </div>
-                 
                 </div>
               </div>
             </div>
