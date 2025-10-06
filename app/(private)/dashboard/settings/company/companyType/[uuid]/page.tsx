@@ -3,80 +3,104 @@
 import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
-import { addCompanyType, getComponyTypeById, updateCompanyType } from "@/app/services/allApi";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
+import { addCompanyType, getComponyTypeById, updateCompanyType, genearateCode, saveFinalCode } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Form, Formik, FormikHelpers } from "formik";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import * as Yup from "yup";
 
 interface CompanyTypeFormValues {
+  company_type_code: string;
   name: string;
   status: number;
 }
 
 const CompanyTypeSchema = Yup.object().shape({
+  company_type_code: Yup.string().required("Company Type Code is required"),
   name: Yup.string().required("Name is required"),
   status: Yup.number().oneOf([0, 1], "Invalid status").required("Status is required"),
 });
 
+
 export default function AddEditCompanyType() {
-  const router = useRouter();
+ 
+const router = useRouter();
   const params = useParams();
   const { showSnackbar } = useSnackbar();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
+  const codeGeneratedRef = useRef(false);
   const [initialValues, setInitialValues] = useState<CompanyTypeFormValues>({
+    company_type_code: "",
     name: "",
     status: 1,
   });
 
-  // Load company type for edit mode
+  // Load company type for edit mode and generate code in add mode
   useEffect(() => {
     if (params?.uuid && params.uuid !== "add") {
       setIsEditMode(true);
       (async () => {
         const res = await getComponyTypeById(params.uuid as string);
-        console.log(res.data)
         if (res && !res.error) {
           setInitialValues({
-            name: res.data.name,
-            status: res.data.status
+            company_type_code: res.data.company_type_code ?? "",
+            name: res.data.name ?? "",
+            status: res.data.status ?? 1,
           });
         }
       })();
     } else {
-      
       setIsEditMode(false);
-      setInitialValues({
-        name: "",
-        status: 1,
-      });
+      // Only generate code once in add mode
+      if (!codeGeneratedRef.current) {
+        codeGeneratedRef.current = true;
+        (async () => {
+          let code = "";
+          try {
+            const res = await genearateCode({ model_name: "company_types" });
+            if (res?.code) code = res.code;
+            if (res?.prefix) {
+              setPrefix(res.prefix);
+            } else if (res?.code) {
+              // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+              const match = res.prefix;
+              if (match) setPrefix(prefix);
+            }
+          } catch {}
+          setInitialValues({ company_type_code: code, name: "", status: 1 });
+        })();
+      } else {
+        setInitialValues({ company_type_code: "", name: "", status: 1 });
+      }
     }
   }, [params?.uuid]);
 
   const handleSubmit = async (values: CompanyTypeFormValues, { setSubmitting }: FormikHelpers<CompanyTypeFormValues>) => {
     try {
       await CompanyTypeSchema.validate(values, { abortEarly: false });
-
-      // Debug: log payload and mode to help diagnose server 500s
-      console.log("CompanyType submit", { isEditMode, uuid: params?.uuid, values });
-
       let res;
       if (isEditMode) {
-        console.log(values)
         res = await updateCompanyType(params.uuid as string, values);
       } else {
         res = await addCompanyType(values);
       }
-
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(isEditMode ? "Company Type Updated Successfully" : "Company Type Created Successfully", "success");
+        // Finalize the reserved code after successful add/update
+        try {
+          await saveFinalCode({ reserved_code: values.company_type_code, model_name: "company_types" });
+        } catch (e) {}
         router.push("/dashboard/settings/company/companyType");
       }
     } catch (err) {
-      // Provide better feedback in UI and log the error
       console.error("Submit error:", err);
       if (err instanceof Error) {
         showSnackbar(err.message || "An error occurred", "error");
@@ -107,6 +131,42 @@ export default function AddEditCompanyType() {
             <Form>
               <ContainerCard>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Company Type Code (pattern-matched UI) */}
+                  <div className="flex items-end gap-2 max-w-[406px]">
+                    <InputFields
+                      label="Company Type Code"
+                      name="company_type_code"
+                      value={values.company_type_code}
+                      onChange={(e) => setFieldValue("company_type_code", e.target.value)}
+                      disabled={codeMode === 'auto'}
+                      error={touched.company_type_code && errors.company_type_code}
+                    />
+                    {!isEditMode && (
+                      <>
+                        <IconButton
+                          bgClass="white"
+                          className="mb-2 cursor-pointer text-[#252B37]"
+                          icon="mi:settings"
+                          onClick={() => setIsOpen(true)}
+                        />
+                        <SettingPopUp
+                          isOpen={isOpen}
+                          onClose={() => setIsOpen(false)}
+                          title="Company Type Code"
+                          prefix={prefix}
+                          setPrefix={setPrefix}
+                          onSave={(mode, code) => {
+                            setCodeMode(mode);
+                            if (mode === 'auto' && code) {
+                              setFieldValue('company_type_code', code);
+                            } else if (mode === 'manual') {
+                              setFieldValue('company_type_code', '');
+                            }
+                          }}
+                        />
+                      </>
+                    )}
+                  </div>
                   <InputFields
                     required
                     label="Name"

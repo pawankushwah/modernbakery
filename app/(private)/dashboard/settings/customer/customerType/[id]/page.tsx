@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
@@ -10,14 +10,19 @@ import { useRouter, useParams } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import {
   addCustomerType,
   getCustomerTypeById,
   updateCustomerType,
+  genearateCode,
+  saveFinalCode,
 } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface CustomerTypeFormValues {
+  customer_type_code: string;
   name: string;
   status: string; // "active" | "inactive"
 }
@@ -29,20 +34,25 @@ export default function AddCustomerTypePage() {
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const codeGeneratedRef = useRef(false);
 
   // ✅ Formik setup
   const formik = useFormik<CustomerTypeFormValues>({
     initialValues: {
+      customer_type_code: "",
       name: "",
       status: "active",
     },
     validationSchema: Yup.object({
+      customer_type_code: Yup.string().required("Customer Type Code is required"),
       name: Yup.string().required("Name is required"),
       status: Yup.string().required("Status is required"),
     }),
     onSubmit: async (values, { setSubmitting }) => {
       try {
         const payload = {
+          customer_type_code: values.customer_type_code,
           name: values.name,
           status: values.status === "active" ? 1 : 0,
         };
@@ -64,6 +74,10 @@ export default function AddCustomerTypePage() {
                 : "Customer Type Created Successfully"),
             "success"
           );
+          // Finalize the reserved code after successful add/update
+          try {
+            await saveFinalCode({ reserved_code: values.customer_type_code, model_name: "customer_types" });
+          } catch (e) {}
           router.push("/dashboard/settings/customer/customerType");
         }
       } catch (error) {
@@ -74,7 +88,7 @@ export default function AddCustomerTypePage() {
     },
   });
 
-  // ✅ Load existing data for edit mode
+  // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
     if (params?.id && params.id !== "add") {
       setIsEditMode(true);
@@ -84,6 +98,7 @@ export default function AddCustomerTypePage() {
           const res = await getCustomerTypeById(String(params.id));
           if (res?.data) {
             formik.setValues({
+              customer_type_code: res.data.customer_type_code || "",
               name: res.data.name || "",
               status: res.data.status === 1 ? "active" : "inactive",
             });
@@ -92,6 +107,14 @@ export default function AddCustomerTypePage() {
           console.error("Failed to fetch customer type", error);
         } finally {
           setLoading(false);
+        }
+      })();
+    } else if (!isEditMode && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "customer_types" });
+        if (res?.code) {
+          formik.setFieldValue("customer_type_code", res.code);
         }
       })();
     }
@@ -122,6 +145,28 @@ export default function AddCustomerTypePage() {
               Customer Type Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Customer Type Code (pattern-matched UI) */}
+              <div className="flex items-end gap-2 max-w-[406px]">
+                <InputFields
+                  label="Customer Type Code"
+                  name="customer_type_code"
+                  value={formik.values.customer_type_code}
+                  onChange={formik.handleChange}
+                  disabled
+                  error={formik.touched.customer_type_code && formik.errors.customer_type_code}
+                />
+                {!isEditMode && (
+                  <>
+                    <IconButton
+                      bgClass="white"
+                      className="mb-2 cursor-pointer text-[#252B37]"
+                      icon="mi:settings"
+                      onClick={() => setIsOpen(true)}
+                    />
+                    <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Customer Type Code" />
+                  </>
+                )}
+              </div>
               {/* Name */}
               <InputFields
                 type="text"
@@ -132,7 +177,6 @@ export default function AddCustomerTypePage() {
                 onBlur={formik.handleBlur}
                 error={formik.touched.name && formik.errors.name}
               />
-
               {/* Status */}
               <InputFields
                 type="select"

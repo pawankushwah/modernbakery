@@ -89,13 +89,13 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400"
                     },
-                    //         {
-                    //     isActive: false,
-                    //     href: "/dashboard/master/pricing",
-                    //     label: "Pricing",
-                    //     leadingIcon: "mdi:currency-usd",
-                    //     iconColor: "text-yellow-400"
-                    // },
+                            {
+                        isActive: false,
+                        href: "/dashboard/master/pricing",
+                        label: "Pricing",
+                        leadingIcon: "mdi:currency-usd",
+                        iconColor: "text-yellow-400"
+                    },
                     {
                         isActive: false,
                         href: "/dashboard/master/vehicle",

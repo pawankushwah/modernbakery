@@ -6,22 +6,21 @@ import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-
+import Loading from "@/app/components/Loading";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
-import Loading from "@/app/components/Loading";
-import {
-  updateSalesmanType,
-  addSalesmanType,
-  getSalesmanTypeById,
-} from "@/app/services/allApi";
+import { updateSalesmanType, addSalesmanType, getSalesmanTypeById, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import { useRef } from "react";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 
 import { useSnackbar } from "@/app/services/snackbarContext";
 
 type SalesmanTypeForm = {
   salesman_type_name: string;
   salesman_type_status: string;
+  salesman_type_code: string;
 };
 
 const validationSchema = Yup.object({
@@ -30,13 +29,20 @@ const validationSchema = Yup.object({
     .required("Salesman Type Name is required")
     .min(3, "Salesman Type Name must be at least 3 characters")
     .max(50, "Salesman Type Name cannot exceed 50 characters"),
-
   salesman_type_status: Yup.string()
     .oneOf(["active", "inactive"], "Invalid status selected")
     .required("Status is required"),
+  salesman_type_code: Yup.string().required("Code is required"),
 });
 
 export default function AddOrEditSalesmanType() {
+  
+// Code logic
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
+  const codeGeneratedRef = useRef(false);
+  const [code, setCode] = useState("");
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
@@ -49,34 +55,33 @@ export default function AddOrEditSalesmanType() {
     initialValues: {
       salesman_type_name: "",
       salesman_type_status: "",
+      salesman_type_code: "",
     },
     validationSchema: validationSchema,
     onSubmit: async (values, { setSubmitting }) => {
       try {
-        console.log("Submitting form with values:", values);
         const payload = {
           salesman_type_name: values.salesman_type_name,
-          salesman_type_status:
-            values.salesman_type_status === "active" ? 1 : 0,
+          salesman_type_status: values.salesman_type_status === "active" ? 1 : 0,
+          salesman_type_code: values.salesman_type_code,
         };
-
-        console.log("Payload to submit:", payload);
-
         let res;
         if (isEditMode && params?.id && params.id !== "add") {
           res = await updateSalesmanType(String(params.id), payload);
         } else {
           res = await addSalesmanType(payload);
+          if (!res.error) {
+            await saveFinalCode({ reserved_code: values.salesman_type_code, model_name: "salesman_types" });
+          }
         }
-
         if (res.error) {
           showSnackbar(res.data?.message || "Failed to submit form", "error");
         } else {
           showSnackbar(
             res.message ||
               (isEditMode
-                ? "Route Updated Successfully"
-                : "Route Created Successfully"),
+                ? "Salesman Type Updated Successfully"
+                : "Salesman Type Created Successfully"),
             "success"
           );
           router.push("/dashboard/settings/salesman-type");
@@ -88,6 +93,27 @@ export default function AddOrEditSalesmanType() {
       }
     },
   });
+
+  // Generate code on mount (add mode only)
+  useEffect(() => {
+    if (!isEditMode && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "salesman_types" });
+        if (res?.code) {
+          setCode(res.code);
+          formik.setFieldValue("salesman_type_code", res.code);
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
+        }
+      })();
+    }
+  }, [isEditMode]);
 
   // ✅ Load existing data for edit mode
   useEffect(() => {
@@ -103,6 +129,7 @@ export default function AddOrEditSalesmanType() {
               salesman_type_name: res.data.salesman_type_name || "",
               salesman_type_status:
                 res.data.salesman_type_status === 1 ? "active" : "inactive",
+              salesman_type_code: res.data.salesman_type_code || "",
             });
           }
         } catch (error) {
@@ -139,6 +166,43 @@ export default function AddOrEditSalesmanType() {
               Salesman type Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* Salesman Type Code (auto-generated, disabled, with settings icon/popup) */}
+              <div className="flex items-end gap-2 max-w-[406px]">
+                <InputFields
+                  label="Salesman Type Code"
+                  name="salesman_type_code"
+                  value={formik.values.salesman_type_code}
+                  onChange={formik.handleChange}
+                  disabled={codeMode === 'auto'}
+                  error={formik.touched?.salesman_type_code && formik.errors?.salesman_type_code}
+                />
+                {!isEditMode && (
+                  <>
+                    <IconButton
+                      bgClass="white"
+                      className="mb-2 cursor-pointer text-[#252B37]"
+                      icon="mi:settings"
+                      onClick={() => setIsOpen(true)}
+                    />
+                    <SettingPopUp
+                      isOpen={isOpen}
+                      onClose={() => setIsOpen(false)}
+                      title="Salesman Type Code"
+                      prefix={prefix}
+                      setPrefix={setPrefix}
+                      onSave={(mode, code) => {
+                        setCodeMode(mode);
+                        if (mode === 'auto' && code) {
+                          formik.setFieldValue('salesman_type_code', code);
+                        } else if (mode === 'manual') {
+                          formik.setFieldValue('salesman_type_code', '');
+                        }
+                      }}
+                    />
+                  </>
+                )}
+              </div>
+
               {/* Name */}
               <InputFields
                 type="text"

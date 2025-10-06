@@ -13,14 +13,10 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import {
-    permissionList,
-    
-    deletePermissions,
-} from "@/app/services/allApi";
+import { permissionList, deletePermissions } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext"; 
+import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 
 interface DropdownItem {
@@ -38,25 +34,29 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "role_name", label: "Role Name" ,render: (row: TableDataType) => (
-      <Link
-        href={`/dashboard/settings/role/detail/${row.id}`}
-        className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
-      >
-        {row.role_name}
-      </Link>
-    ),},
+    {
+        key: "role_name",
+        label: "Role Name",
+        render: (row: TableDataType) => (
+            <Link
+                href={`/dashboard/settings/role/detail/${row.id}`}
+                className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
+            >
+                {row.role_name}
+            </Link>
+        ),
+    },
     { key: "role_activity", label: "Role Activity" },
     { key: "menu_id", label: "Menu Id" },
     { key: "agent_id", label: "Agent Id" },
     { key: "warehouse_id", label: "Warehouse Id" },
     {
-            key: "status",
-            label: "Status",
-            render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status ? true : false} />
-            ),
-        },
+        key: "status",
+        label: "Status",
+        render: (row: TableDataType) => (
+            <StatusBtn isActive={row.status ? true : false} />
+        ),
+    },
 ];
 
 export default function Permissions() {
@@ -77,7 +77,7 @@ export default function Permissions() {
     const [selectedRow, setSelectedRow] = useState<RoleItem | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
-    const { showSnackbar } = useSnackbar(); 
+    const { showSnackbar } = useSnackbar();
     type TableRow = TableDataType & { id?: string };
 
     const [tableData, setTableData] = useState<TableDataType[]>([]);
@@ -101,33 +101,52 @@ export default function Permissions() {
         setSelectedRow(null);
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
+    const fetchData = useCallback(
+        async (
+            page: number = 1,
+            pageSize: number = 5
+        ): Promise<listReturnType> => {
             setLoading(true);
-            try {
-                const res = await permissionList();
-                // Map API data to TableDataType if needed
-                setTableData(Array.isArray(res.data) ? res.data : []);
-            } catch (e) {
-                setTableData([]);
-            }
+            const listRes = await permissionList({
+                limit: pageSize.toString(),
+                page: page.toString(),
+            });
             setLoading(false);
-        };
-        fetchData();
-    }, [refreshKey, setLoading]);
+            if (listRes.error) {
+                showSnackbar(
+                    listRes.data.message || "Failed to fetch data",
+                    "error"
+                );
+                throw new Error("Failed to fetch data");
+            } else {
+                return {
+                    data: listRes.data || [],
+                    total: listRes.pagination.totalPages,
+                    currentPage: listRes.pagination.page,
+                    pageSize: listRes.pagination.limit,
+                };
+            }
+        },
+        []
+    );
+    useEffect(() => {
+        setLoading(true);
+    }, []);
 
     return (
         <>
             <div className="h-[calc(100%-60px)] pb-[22px]">
-                 <Table
-                     refreshKey={refreshKey}
-                     data={tableData}
-                     config={{
-                         // api: { list: fetchCountries },
-                         header: {
+                <Table
+                    refreshKey={refreshKey}
+                    config={{
+                        api: { list: fetchData },
+                        header: {
                             title: "Permissions",
                             wholeTableActions: [
-                                <div key={0} className="flex gap-[12px] relative">
+                                <div
+                                    key={0}
+                                    className="flex gap-[12px] relative"
+                                >
                                     <DismissibleDropdown
                                         isOpen={showDropdown}
                                         setIsOpen={setShowDropdown}
@@ -153,9 +172,7 @@ export default function Permissions() {
                                                                     className="text-[#717680]"
                                                                 />
                                                                 <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                    {
-                                                                        link.label
-                                                                    }
+                                                                    {link.label}
                                                                 </span>
                                                             </div>
                                                         )
@@ -164,7 +181,7 @@ export default function Permissions() {
                                             </div>
                                         }
                                     />
-                                </div>
+                                </div>,
                             ],
                             searchBar: true,
                             columnFilter: true,
@@ -175,7 +192,7 @@ export default function Permissions() {
                                     isActive
                                     leadingIcon="lucide:plus"
                                     label="Add Permission"
-                                    labelTw="hidden sm:block"
+                                    labelTw="hidden lg:block"
                                 />,
                             ],
                         },
@@ -187,8 +204,9 @@ export default function Permissions() {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    router.push(`/dashboard/settings/permission/detail/${row.uuid}`);
-
+                                    router.push(
+                                        `/dashboard/settings/permission/detail/${row.uuid}`
+                                    );
                                 },
                             },
                             {

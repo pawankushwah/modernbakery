@@ -2,14 +2,14 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import InputFields from "@/app/components/inputFields";
 import SettingPopUp from "@/app/components/settingPopUp";
 import IconButton from "@/app/components/iconButton";
 import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { itemById, addItem, editItem } from "@/app/services/allApi";
+import { itemById, addItem, editItem, genearateCode, saveFinalCode } from "@/app/services/allApi";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Loading from "@/app/components/Loading";
@@ -33,8 +33,12 @@ interface ItemFormValues {
 }
 
 export default function AddEditItem() {
+  // Prevent double call of genearateCode in add mode
+  const codeGeneratedRef = useRef(false);
   const { itemCategoryOptions, itemSubCategoryOptions } = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
@@ -101,6 +105,21 @@ export default function AddEditItem() {
           });
         }
         setLoading(false);
+      })();
+    } else if (!isEditMode && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "items" });
+        if (res?.code) {
+          setForm(prev => ({ ...prev, itemCode: res.code }));
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
+        }
       })();
     }
   }, [isEditMode, itemId]);
@@ -200,6 +219,12 @@ export default function AddEditItem() {
         showSnackbar(res.message || (isEditMode ? res.data.message : "Failed to add item"), "error");
       } else {
         showSnackbar(isEditMode ? "Item updated successfully" : "Item added successfully", "success");
+        // Finalize the reserved code after successful add/update
+        try {
+          await saveFinalCode({ reserved_code: form.itemCode, model_name: "items" });
+        } catch (e) {
+          // Optionally handle error, but don't block success
+        }
         router.push("/dashboard/master/item");
       }
     } catch (err) {
@@ -216,11 +241,32 @@ export default function AddEditItem() {
               <h2 className="text-lg font-medium text-gray-800 mb-4">Item Details</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-end gap-2 max-w-[406px]">
-                  <InputFields required label="Item Code" name="itemCode" value={form.itemCode} onChange={handleChange} />
+                  <InputFields
+                    required
+                    label="Item Code"
+                    name="itemCode"
+                    value={form.itemCode}
+                    onChange={handleChange}
+                    disabled={codeMode === 'auto'}
+                  />
                   {!isEditMode && (
                     <>
                       <IconButton bgClass="white" className="mb-2 cursor-pointer text-[#252B37]" icon="mi:settings" onClick={() => setIsOpen(true)} />
-                      <SettingPopUp isOpen={isOpen} onClose={() => setIsOpen(false)} title="Item Code" />
+                      <SettingPopUp
+                        isOpen={isOpen}
+                        onClose={() => setIsOpen(false)}
+                        title="Item Code"
+                        prefix={prefix}
+                        setPrefix={setPrefix}
+                        onSave={(mode, code) => {
+                          setCodeMode(mode);
+                          if (mode === 'auto' && code) {
+                            setForm((prev) => ({ ...prev, itemCode: code }));
+                          } else if (mode === 'manual') {
+                            setForm((prev) => ({ ...prev, itemCode: '' }));
+                          }
+                        }}
+                      />
                     </>
                   )}
                 </div>

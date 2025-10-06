@@ -10,8 +10,10 @@ import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepp
 import { Formik, Form, FormikHelpers, FormikErrors, FormikTouched } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addSalesman } from "@/app/services/allApi";
+import { addSalesman, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import { useEffect, useRef } from "react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 
@@ -78,6 +80,9 @@ const stepSchemas = [
 ];
 
 export default function AddCustomerStepper() {
+  const codeGeneratedRef = useRef(false);
+  const [generatedSapId, setGeneratedSapId] = useState("");
+
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
@@ -107,11 +112,28 @@ export default function AddCustomerStepper() {
     contact_no: "",
     warehouse_id: "",
     token_no: "",
-    sap_id: "",
+    sap_id: generatedSapId,
     is_login: "0",
     status: "1",
     email: "",
   };
+
+    useEffect(() => {
+    if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        try {
+          const res = await genearateCode({ model_name: "salesman" });
+          if (res?.code) {
+            setGeneratedSapId(res.code);
+          }
+        } catch (e) {
+          // Optionally handle error
+        }
+      })();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleNext = async (
     values: SalesmanFormValues,
@@ -147,26 +169,31 @@ export default function AddCustomerStepper() {
        };
 
   const handleSubmit = async (values: SalesmanFormValues) => {
-     try {
-       await SalesmanSchema.validate(values, { abortEarly: false });
- 
-       // Convert to FormData for API
-       const formData = new FormData();
-       (Object.keys(values) as (keyof SalesmanFormValues)[]).forEach((key) => {
-         formData.append(key, values[key] ?? "");
-       });
- 
-       const res = await addSalesman(formData);
-       if (res.error) {
-         showSnackbar(res.data?.message || "Failed to add salesman ❌", "error");
-       } else {
-         showSnackbar("Salesman added successfully ✅", "success");
-         router.push("/dashboard/master/salesman");
-       }
-     } catch {
-       showSnackbar("Add salesman failed ❌", "error");
-     }
-   };
+    try {
+      await SalesmanSchema.validate(values, { abortEarly: false });
+
+      // Convert to FormData for API
+      const formData = new FormData();
+      (Object.keys(values) as (keyof SalesmanFormValues)[]).forEach((key) => {
+        formData.append(key, values[key] ?? "");
+      });
+
+      const res = await addSalesman(formData);
+      if (res.error) {
+        showSnackbar(res.data?.message || "Failed to add salesman ❌", "error");
+      } else {
+        showSnackbar("Salesman added successfully ✅", "success");
+        router.push("/dashboard/master/salesman");
+        try {
+          await saveFinalCode({ reserved_code: values.sap_id, model_name: "salesman" });
+        } catch (e) {
+          // Optionally handle error, but don't block success
+        }
+      }
+    } catch {
+      showSnackbar("Add salesman failed ❌", "error");
+    }
+  };
 
   const renderStepContent = (
     values: SalesmanFormValues,
@@ -180,7 +207,7 @@ export default function AddCustomerStepper() {
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <InputFields label="Name" name="name" value={values.name} onChange={(e) => setFieldValue("name", e.target.value)} error={touched.name && errors.name} />
-              <InputFields label="SAP ID" name="sap_id" value={values.sap_id} onChange={(e) => setFieldValue("sap_id", e.target.value)} error={touched.sap_id && errors.sap_id} />
+              <InputFields label="SAP ID" name="sap_id" value={values.sap_id} onChange={(e) => setFieldValue("sap_id", e.target.value)} error={touched.sap_id && errors.sap_id} disabled />
               <InputFields label="Salesman Type" name="type" value={values.type} onChange={(e) => setFieldValue("type", e.target.value)} options={salesmanTypeOptions} />
               <InputFields label="Sub Type" name="sub_type" value={values.sub_type} onChange={(e) => setFieldValue("sub_type", e.target.value)} options={[{ value: "0", label: "None" }, { value: "1", label: "Merchandiser" }]} />
               <InputFields label="Designation" name="designation" value={values.designation} onChange={(e) => setFieldValue("designation", e.target.value)} />

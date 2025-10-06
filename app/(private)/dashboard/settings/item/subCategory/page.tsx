@@ -43,6 +43,7 @@ export type subCategoryType = {
     category_id: number;
     sub_category_name: string;
     status: string;
+    item_sub_category_code?: string;
 };
 
 export default function SubCategory() {

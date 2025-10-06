@@ -53,6 +53,26 @@ export const isVerify = async () => {
   }
 };
 
+
+export const genearateCode = async (body:object) => {
+    try {
+    const res = await API.post("/api/codes/reserve", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const saveFinalCode = async (body:object) => {
+    try {
+    const res = await API.post("/api/codes/finalize", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
 export const companyList = async (params?: Params) => {
   try {
     const res = await API.get(`/api/master/company/list_company`, { params: params });
@@ -1893,9 +1913,9 @@ export const getComponyTypeById = async (id: string) => {
     return handleError(error);
   }};
 
-export const roleList = async (params?: Params) => {
+export const roleList = async (params: Params) => {
   try {
-     const res = await API.get("/api/settings/roles/list",{ params: params });
+     const res = await API.get("/web/setting/roles/list", { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1905,37 +1925,33 @@ export const roleList = async (params?: Params) => {
 
 export const addRoles = async (payload:object) => {
   try {
-         const res = await API.post("/api/settings/roles/create", payload);
-
+    const res = await API.post("/api/setting/roles/add", payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const getRoleById = async (uuid: string) => {
+export const getRoleById = async (id: string) => {
   try {
-       const res = await API.get(`/api/settings/roles/get/${uuid}`);
-
+    const res = await API.get(`/api/setting/roles/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const editRoles = async (uuid:string,payload:object) => {
+export const editRoles = async (id:string,payload:object) => {
   try {
-           const res = await API.put(`/api/settings/roles/update/${uuid}`,payload);
-
-
+    const res = await API.put(`/api/setting/roles/${id}`,payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
-export const deleteRole = async (uuid:string) => {
+export const deleteRole = async (id:string) => {
   try {
-           const res = await API.delete(`/api/settings/roles/delete/${uuid}`);
+    const res = await API.delete(`/api/setting/roles/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1953,9 +1969,9 @@ export const getMenuList = async () => {
 
 
 
-export const permissionList = async () => {
+export const permissionList = async (params: Params) => {
   try {
-     const res = await API.get("/web/setting/permissions/list");
+     const res = await API.get("/web/setting/permissions/list", { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1975,10 +1991,146 @@ export const addPermissions = async (payload:object) => {
 
 export const deletePermissions = async (uuid:string) => {
   try {
-           const res = await API.delete(`/web/setting/permissions/delete/${uuid}`);
+           const res = await API.delete(`/api/web/setting/permissions/delete/${uuid}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
+<<<<<<< HEAD
+=======
+
+
+
+export const pricingHeaderList = async (params?: Params) => {
+  try {
+     const res = await API.get("/api/master/pricing-headers/list",{ params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
+};
+
+export const addPricingHeader = async (payload:object) => {
+  try {
+         const res = await API.post("/api/master/pricing-headers/add", payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const pricingHeaderById = async (uuid: string) => {
+  try {
+       const res = await API.get(`/api/master/pricing-headers/${uuid}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editPricingHeader= async (uuid:string,payload:object) => {
+  try {
+           const res = await API.put(`/api/master/pricing-headers/update/${uuid}`,payload);
+
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deletePricingHeader = async (uuid:string) => {
+  try {
+           const res = await API.delete(`/api/master/pricing-headers/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const pricingHeaderGenerateCode = async () => {
+  try {
+           const res = await API.get(`/api/master/pricing-headers/generate-code`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const pricingDetailList = async (params?: Params) => {
+  try {
+     const res = await API.get("/api/master/pricing-details/list",{ params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+  
+};
+
+export const addPricingDetail = async (payload:object) => {
+  try {
+         const res = await API.post("/api/master/pricing-details/add", payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const pricingDetailById = async (uuid: string) => {
+  try {
+       const res = await API.get(`/api/master/pricing-details/${uuid}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editPricingDetail= async (uuid:string,payload:object) => {
+  try {
+           const res = await API.put(`/api/master/pricing-details/${uuid}`,payload);
+
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deletePricingDetail = async (uuid:string) => {
+  try {
+           const res = await API.delete(`/api/master/pricing-details/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const pricingDetailGenerateCode = async () => {
+  try {
+           const res = await API.get(`/api/master/pricing-details/generate-code`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+export const pricingDetailGlobalSearch = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/master/pricing-details/global_search`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+>>>>>>> b72ad6a48e733a12c277fc8d829e358b0f9775ec
