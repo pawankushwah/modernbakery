@@ -66,25 +66,7 @@ export default function Overview() {
                         </div>
                     </ContainerCard>
 
-                    <ContainerCard className="w-full sm:w-[400px] h-[183px] bg-gradient-to-r from-[#E7ECFF] to-[#FFFFFF]">
-                        <SummaryCard
-                            className="justify-between"
-                            icon="mingcute:bill-fill"
-                            iconCircleTw="bg-[#487FFF] text-white w-[60px] h-[60px] p-[15px]"
-                            iconWidth={30}
-                        >
-                            <Toggle
-                                isChecked={isDataShareChecked}
-                                onChange={() => setIsDataShareChecked(!isDataShareChecked)}
-                            />
-                        </SummaryCard>
-
-                        <div className="mt-[17px] text-[16px] text-[#181D27]">
-                            <span className="font-semibold">Client Portal</span>
-                            <span className="font-normal"> allows your customers to keep track of all the transactions between them and your business. </span>
-                            <span className="text-[#EA0A2A] underline underline-offset-[2px]">Learn More</span>
-                        </div>
-                    </ContainerCard>
+                   
                 </div>
 
                 <div className="flex flex-col">

@@ -13,7 +13,8 @@ import * as Yup from "yup";
 import { promotionType } from "./page";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { genearateCode, saveFinalCode } from "@/app/services/allApi";
 
 export default function CreateUpdate({
     type,
@@ -28,6 +29,10 @@ export default function CreateUpdate({
 }) {
     const { showSnackbar } = useSnackbar();
     const [isOpen, setIsOpen] = useState(false);
+    const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+    const [prefix, setPrefix] = useState('');
+    const [code, setCode] = useState("");
+    const codeGeneratedRef = useRef(false);
 
     const formik = useFormik({
         initialValues: {
@@ -37,9 +42,9 @@ export default function CreateUpdate({
         },
         validationSchema: Yup.object({
             code: Yup.string()
-                .required("Code is required")
-                .min(2, "Code must be at least 2 characters")
-                .max(50, "Code cannot exceed 50 characters"),
+                .required("Promotion Code is required")
+                .min(2, "Promotion Code must be at least 2 characters")
+                .max(50, "Promotion Code cannot exceed 50 characters"),
             name: Yup.string()
                 .required("Promotion Type Name is required")
                 .min(2, "Promotion Type Name must be at least 2 characters")
@@ -55,10 +60,13 @@ export default function CreateUpdate({
                     name: values.name,
                     status: values.status,
                 });
+                try {
+                  await saveFinalCode({ reserved_code: values.code, model_name: "promotion_type" });
+                } catch (e) {}
                 if (res.error) return showSnackbar(res.data.message, "error");
                 else {
                     showSnackbar(
-                        res.message || "Item Category Created Successfully",
+                        res.message || "Promotion Type Created Successfully",
                         "success"
                     );
                     onClose();
@@ -77,7 +85,7 @@ export default function CreateUpdate({
                 if (res.error) return showSnackbar(res.data.message, "error");
                 else {
                     showSnackbar(
-                        res.message || "Item Category Updated Successfully",
+                        res.message || "Promotion Type Updated Successfully",
                         "success"
                     );
                     onClose();
@@ -86,6 +94,26 @@ export default function CreateUpdate({
             }
         },
     });
+
+    useEffect(() => {
+      if (type === "create" && !codeGeneratedRef.current) {
+        codeGeneratedRef.current = true;
+        (async () => {
+          const res = await genearateCode({ model_name: "promotion_type" });
+          if (res?.code) {
+            setCode(res.code);
+            formik.setFieldValue("code", res.code);
+          }
+          if (res?.prefix) {
+            setPrefix(res.prefix);
+          } else if (res?.code) {
+            // fallback: extract prefix from code if possible
+            const match = res.prefix;
+            if (match) setPrefix(prefix);
+          }
+        })();
+      }
+    }, [type]);
 
     return (
         <div>
@@ -98,30 +126,42 @@ export default function CreateUpdate({
                 onSubmit={formik.handleSubmit}
                 className="mt-[20px] space-y-5"
             >
-                <div className="flex items-end gap-2 max-w-[406px]">
-                    <InputFields
-                        name="code"
-                        label="Promotion Code"
-                        value={formik.values.code}
-                        onChange={formik.handleChange}
-                        onBlur={formik.handleBlur}
-                        error={
-                            formik.touched.code &&
-                            formik.errors.code
-                        }
-                    />
-                    <IconButton
-                        bgClass="white"
-                        className="cursor-pointer text-[#252B37] h-full mb-3"
-                        icon="mi:settings"
-                        onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                        isOpen={isOpen}
-                        onClose={() => setIsOpen(false)}
-                        title="Promotion Code"
-                    />
-                </div>
+                                <div className="flex items-end gap-2 max-w-[406px]">
+                                        <InputFields
+                                                name="code"
+                                                label="Promotion Code"
+                                                value={formik.values.code}
+                                                onChange={formik.handleChange}
+                                                onBlur={formik.handleBlur}
+                                                error={formik.touched.code && formik.errors.code}
+                                                disabled={codeMode === 'auto' && type === 'create'}
+                                        />
+                                        {type === 'create' && (
+                                            <>
+                                                <IconButton
+                                                    bgClass="white"
+                                                    className="cursor-pointer text-[#252B37] h-full mb-3"
+                                                    icon="mi:settings"
+                                                    onClick={() => setIsOpen(true)}
+                                                />
+                                                <SettingPopUp
+                                                    isOpen={isOpen}
+                                                    onClose={() => setIsOpen(false)}
+                                                    title="Promotion Code"
+                                                    prefix={prefix}
+                                                    setPrefix={setPrefix}
+                                                    onSave={(mode, code) => {
+                                                        setCodeMode(mode);
+                                                        if (mode === 'auto' && code) {
+                                                            formik.setFieldValue('code', code);
+                                                        } else if (mode === 'manual') {
+                                                            formik.setFieldValue('code', '');
+                                                        }
+                                                    }}
+                                                />
+                                            </>
+                                        )}
+                                </div>
 
                 <InputFields
                     id="name"

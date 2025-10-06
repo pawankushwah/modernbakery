@@ -2,7 +2,7 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState,useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
@@ -12,26 +12,41 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import Loading from "@/app/components/Loading";
 import { createDiscountType, getDiscountTypeById, updateDiscountType } from "@/app/services/allApi";
 
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
+import { genearateCode, saveFinalCode } from "@/app/services/allApi";
+
 const DiscountTypeSchema = Yup.object().shape({
+  discount_type_code: Yup.string().required("Discount Type Code is required"),
   discount_name: Yup.string().required("Discount name is required").max(100),
   discount_status: Yup.string().required("Status is required").oneOf(["1", "0"], "Invalid status"),
 });
 
 type DiscountTypeFormValues = {
+  discount_type_code: string;
   discount_name: string;
   discount_status: string;
 };
 
+
 export default function AddEditDiscountType() {
+
+
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const [initialValues, setInitialValues] = useState<DiscountTypeFormValues>({
+    discount_type_code: "",
     discount_name: "",
     discount_status: "",
   });
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
+  const [code, setCode] = useState("");
+  const codeGeneratedRef = useRef(false);
 
   useEffect(() => {
     if (params?.id && params.id !== "add") {
@@ -42,6 +57,7 @@ export default function AddEditDiscountType() {
           const res = await getDiscountTypeById(String(params.id));
           if (res?.data) {
             setInitialValues({
+              discount_type_code: res.data.discount_type_code || "",
               discount_name: res.data.discount_name || "",
               discount_status: String(res.data.discount_status ?? "1"),
             });
@@ -52,6 +68,22 @@ export default function AddEditDiscountType() {
           setLoading(false);
         }
       })();
+    } else if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "Discount_type" });
+        if (res?.code) {
+          setCode(res.code);
+          setInitialValues((prev) => ({ ...prev, discount_type_code: res.code }));
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
+        }
+      })();
     }
   }, [params?.id]);
 
@@ -60,6 +92,7 @@ export default function AddEditDiscountType() {
     { setSubmitting }: FormikHelpers<DiscountTypeFormValues>
   ) => {
     const payload = {
+      discount_type_code: values.discount_type_code,
       discount_name: values.discount_name,
       discount_status: Number(values.discount_status),
     };
@@ -69,6 +102,9 @@ export default function AddEditDiscountType() {
         res = await updateDiscountType(String(params.id), payload);
       } else {
         res = await createDiscountType(payload);
+        try {
+          await saveFinalCode({ reserved_code: values.discount_type_code, model_name: "Discount_type" });
+        } catch (e) {}
       }
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
@@ -121,6 +157,43 @@ export default function AddEditDiscountType() {
                   Discount Type Details
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Discount Type Code (auto-generated, disabled, with settings icon/popup) */}
+                  <div className="flex items-end gap-2 max-w-[406px]">
+                    <InputFields
+                      required
+                      label="Discount Type Code"
+                      name="discount_type_code"
+                      value={values.discount_type_code}
+                      onChange={(e) => setFieldValue("discount_type_code", e.target.value)}
+                      disabled={codeMode === 'auto'}
+                      error={touched?.discount_type_code && errors?.discount_type_code}
+                    />
+                    {!isEditMode && (
+                      <>
+                        <IconButton
+                          bgClass="white"
+                          className="mb-2 cursor-pointer text-[#252B37]"
+                          icon="mi:settings"
+                          onClick={() => setIsOpen(true)}
+                        />
+                        <SettingPopUp
+                          isOpen={isOpen}
+                          onClose={() => setIsOpen(false)}
+                          title="Discount Type Code"
+                          prefix={prefix}
+                          setPrefix={setPrefix}
+                          onSave={(mode, code) => {
+                            setCodeMode(mode);
+                            if (mode === 'auto' && code) {
+                              setFieldValue('discount_type_code', code);
+                            } else if (mode === 'manual') {
+                              setFieldValue('discount_type_code', '');
+                            }
+                          }}
+                        />
+                      </>
+                    )}
+                  </div>
                   <div>
                     <InputFields
                       required
@@ -139,7 +212,6 @@ export default function AddEditDiscountType() {
                       required
                       label="Status"
                       name="discount_status"
-                      
                       value={values.discount_status}
                       options={[
                         { value: "1", label: "Active" },
