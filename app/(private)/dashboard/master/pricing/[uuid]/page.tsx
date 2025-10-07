@@ -35,9 +35,7 @@ export default function AddPricing() {
 
   const [loading, setLoading] = useState(false);
 
-  // Stepper Navigation and Submission Logic
-  const [stepCompleted, setStepCompleted] = useState([false, false, false]);
-  const [currentStepState, setCurrentStepState] = useState(1); // 1-based
+  // Remove custom step state, use useStepperForm
 
   // Functions must be inside the component to access state
   const validateStep = (step: number) => {
@@ -65,32 +63,18 @@ export default function AddPricing() {
   };
 
   const handleNext = () => {
-    console.log("Validating Step:", currentStepState);
-    if(currentStepState === 1) {
-      setCurrentStepState(2);
-      setStepCompleted((prev) => {
-        const arr = [...prev];
-        arr[currentStepState - 1] = true;
-        return arr;
-      });
-      return;
-    };
-    if (!validateStep(currentStepState)) {
+    if (!validateStep(currentStep)) {
       showSnackbar("Please fill in all required fields before proceeding.", "warning");
       return;
     }
-    setStepCompleted((prev) => {
-      const arr = [...prev];
-      arr[currentStepState - 1] = true;
-      return arr;
-    });
-    if (currentStepState < 3) {
-      setCurrentStepState(currentStepState + 1);
+    markStepCompleted(currentStep);
+    if (!isLastStep) {
+      nextStep();
     }
   };
 
   const handleSubmit = () => {
-    if (!validateStep(3)) {
+    if (!validateStep(currentStep)) {
       showSnackbar("Please fill in all required fields before submitting.", "error");
       return;
     }
@@ -138,27 +122,28 @@ export default function AddPricing() {
     Item: [ "Item Category", "Item"],
   };
 
-    const renderStepContent = () => {
-    switch (currentStepState) {
+  const renderStepContent = () => {
+  switch (currentStep) {
       case 1:
         // Step 1: Key Combination (custom component)
         return <SelectKeyCombination setKeyCombo={setKeyCombo} />;
       case 2:
         // ...existing dropdown mapping code...
-        const locationDropdownMap: Record<string, any[]> = {
+        type DropdownOption = { label: string; value: string };
+        const locationDropdownMap: Record<string, DropdownOption[]> = {
           Company: companyOptions,
           Region: regionOptions,
           Warehouse: warehouseOptions,
           Area: areaOptions,
           Route: routeOptions,
         };
-        const customerDropdownMap: Record<string, any[]> = {
+        const customerDropdownMap: Record<string, DropdownOption[]> = {
           "Customer Type": customerTypeOptions,
           Channel: channelOptions,
           "Customer Category": customerCategoryOptions,
           Customer: companyCustomersOptions,
         };
-        const itemDropdownMap: Record<string, any[]> = {
+        const itemDropdownMap: Record<string, DropdownOption[]> = {
           "Item Category": itemCategoryOptions,
           Item: itemOptions,
         };
@@ -283,21 +268,21 @@ export default function AddPricing() {
                       {
                         key: "itemName",
                         label: "Item Name",
-                        render: (row: any) => (
+                        render: (row) => (
                           <span className="font-semibold text-[#181D27] text-[14px]">{row.itemName || "-"}</span>
                         ),
                       },
                       {
                         key: "itemCode",
                         label: "Item Code",
-                        render: (row: any) => (
+                        render: (row) => (
                           <span className="text-[14px]">{row.itemCode || "-"}</span>
                         ),
                       },
                       {
                         key: "price",
                         label: "Price",
-                        render: (row: any) => (
+                        render: (row) => (
                           <InputFields
                             label=""
                             type="text"
@@ -344,13 +329,13 @@ export default function AddPricing() {
       <div className="flex justify-between items-center mb-6">
         <StepperForm
           steps={steps.map(step => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
-          currentStep={currentStepState}
+          currentStep={currentStep}
           onStepClick={() => {}}
-          onBack={() => setCurrentStepState(currentStepState - 1)}
+          onBack={prevStep}
           onNext={handleNext}
           onSubmit={handleSubmit}
-          showSubmitButton={currentStepState === steps.length}
-          showNextButton={currentStepState < steps.length}
+          showSubmitButton={isLastStep}
+          showNextButton={!isLastStep}
           nextButtonText="Save & Next"
           submitButtonText={isEditMode ? "Update" : "Submit"}
         >
