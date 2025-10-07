@@ -83,7 +83,8 @@ export default function CompanyCustomers() {
     const fetchCompanyCustomers = async () => {
       try {
         const data = await getCompanyCustomers();
-        const customersData = Array.isArray(data) ? data : [data]; // Wrap single object
+        const customersData = data.data // Wrap single object
+        console.log("Fetched Customers:", data);
         setCustomers(customersData);
       } catch (error) {
         console.error(error);
@@ -96,6 +97,7 @@ export default function CompanyCustomers() {
 
   /* ---------- Map to TableData ---------- */
   const tableData: TableDataType[] = customers.map((c) => ({
+    id: c.id.toString(),
     sap_code: c.sap_code,
     customer_code: c.customer_code,
     business_name: c.business_name,
@@ -165,6 +167,8 @@ export default function CompanyCustomers() {
       ),
     },
   ];
+
+  console.log(customers);
 
   /* ---------- Render ---------- */
   return (
@@ -238,10 +242,12 @@ export default function CompanyCustomers() {
             rowActions: [
               {
                 icon: "lucide:edit-2",
-                onClick: (row: TableDataType) =>
+                onClick: (row: TableDataType) => {
+                  console.log(row)
                   router.push(
                     `/dashboard/settings/company/companyCustomer/${row.id}`
-                  ),
+                  )
+                }
               },
               {
                 icon: "lucide:trash-2",

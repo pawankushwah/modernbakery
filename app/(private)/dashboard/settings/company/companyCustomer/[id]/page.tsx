@@ -4,7 +4,7 @@
 
 type CompanyCustomerFormValues = {
   sapCode: string;
-  company_customer_code: string;
+  company_customer_code?: string;
   customerCode: string;
   businessName: string;
   customerType: string;
@@ -78,11 +78,12 @@ import StepperForm, {
   useStepperForm,
   StepperStep,
 } from "@/app/components/stepperForm";
+import Loading from "@/app/components/Loading";
 
 // ---------------------- API Call ----------------------
 interface CompanyCustomerPayload {
   sap_code: string;
-  company_customer_code: string;
+  company_customer_code?: string;
   customer_code: string;
   business_name: string;
   customer_type: string;
@@ -121,12 +122,13 @@ interface CompanyCustomerPayload {
   dchannel_id: number;
   merchendiser_ids: string;
   status: number;
+  created_user?: number; // Added for backend
+  updated_user?: number; // Added for backend
 }
 
 // ---------------------- Validation Schema ----------------------
 const CompanyCustomerSchema = Yup.object().shape({
   sapCode: Yup.string().required("SAP Code is required."),
-  customerCode: Yup.string().required("Customer Code is required."),
   businessName: Yup.string().required("Business Name is required."),
   customerType: Yup.string().required("Customer Type is required."),
   ownerName: Yup.string().required("Owner Name is required."),
@@ -166,14 +168,14 @@ const CompanyCustomerSchema = Yup.object().shape({
   longitude: Yup.string().required("Longitude is required."),
   latitude: Yup.string().required("Latitude is required."),
   thresholdRadius: Yup.number().required("Threshold Radius is required."),
-  channelId: Yup.string().required("Channel is required."),
-  merchendiser_ids: Yup.string().required("Merchendiser is required."),
+  dChannelId: Yup.string().required("Channel is required."),
+  // merchendiser_ids: Yup.string(), // Made optional to match backend
 });
 
 const stepSchemas = [
   Yup.object({
     sapCode: Yup.string().required("SAP Code is required."),
-    customerCode: Yup.string().required("Customer Code is required."),
+    // customerCode: Yup.string().required("Customer Code is required."), // Remove if not required by backend
     businessName: Yup.string().required("Business Name is required."),
     customerType: Yup.string().required("Customer Type is required."),
     ownerName: Yup.string().required("Owner Name is required."),
@@ -220,21 +222,18 @@ const stepSchemas = [
     guaranteeFrom: Yup.date().required("Guarantee From is required."),
     guaranteeTo: Yup.date().required("Guarantee To is required."),
     vatNo: Yup.string().required("VAT No is required."),
-    channelId: Yup.string().required("Channel is required."),
-    merchendiser_ids: Yup.string().required("Merchendiser is required."),
+    dChannelId: Yup.string().required("Channel is required."), // Fixed field name
+    merchendiser_ids: Yup.string(), // Make optional if not always required
   }),
 ];
-
-
-
 // ---------------------- Component ----------------------
 export default function AddCompanyCustomer() {
-  
-const { showSnackbar } = useSnackbar();
+  const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
-  const { regionOptions, areaOptions, customerTypeOptions } = useAllDropdownListData();
+  const { regionOptions, areaOptions, customerTypeOptions } =
+    useAllDropdownListData();
 
   const steps: StepperStep[] = [
     { id: 1, label: "Company Customer" },
@@ -253,125 +252,132 @@ const { showSnackbar } = useSnackbar();
   } = useStepperForm(steps.length);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
-  const [prefix, setPrefix] = useState('');
-  const codeGeneratedRef = useRef(false);
-  const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>({
-    sapCode: "SAP001",
-    company_customer_code: "",
-    customerCode: "CUST001",
-    businessName: "Test Business",
-    customerType: "1",
-    ownerName: "John Doe",
-    ownerNumber: "1234567890",
-    isWhatsapp: "1",
-    whatsappNo: "1234567890",
-    email: "test@example.com",
-    language: "English",
-    contactNo2: "0987654321",
-    buyerType: "0",
-    roadStreet: "123 Main St",
-    town: "Test Town",
-    landmark: "Near Test Park",
-    district: "Test District",
-    region: "1",
-    area: "1",
-    balance: "0",
-    paymentType: "1",
-    bankName: "Test Bank",
-    bankAccountNumber: "123456789",
-    creditDay: "30",
-    tinNo: "TIN123456",
-    accuracy: "",
-    creditLimit: "10000",
-    guaranteeName: "Test Guarantee",
-    guaranteeAmount: "5000",
-    guaranteeFrom: "2025-01-01",
-    guaranteeTo: "2025-12-31",
-    totalCreditLimit: "15000",
-    creditLimitValidity: "2025-12-31",
-    vatNo: "VAT123456",
-    longitude: "0.0000",
-    latitude: "0.0000",
-    thresholdRadius: "10",
-    dChannelId: "1",
-    status: "1",
-    merchendiser_ids: "",
-  });
+  const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
+  const [prefix, setPrefix] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>(
+    {
+      sapCode: "",
+      company_customer_code: "",
+      customerCode: "",
+      businessName: "",
+      customerType: "",
+      ownerName: "",
+      ownerNumber: "",
+      isWhatsapp: "",
+      whatsappNo: "",
+      email: "",
+      language: "",
+      contactNo2: "",
+      buyerType: "",
+      roadStreet: "",
+      town: "",
+      landmark: "",
+      district: "",
+      region: "",
+      area: "",
+      balance: "",
+      paymentType: "",
+      bankName: "",
+      bankAccountNumber: "",
+      creditDay: "",
+      tinNo: "",
+      accuracy: "",
+      creditLimit: "",
+      guaranteeName: "",
+      guaranteeAmount: "",
+      guaranteeFrom: "",
+      guaranteeTo: "",
+      totalCreditLimit: "",
+      creditLimitValidity: "",
+      vatNo: "",
+      longitude: "",
+      latitude: "",
+      thresholdRadius: "",
+      dChannelId: "",
+      status: "",
+      merchendiser_ids: "",
+    }
+  );
 
-  // 🔹 Fetch data by ID or generate code in add mode
+  const fetchData = async () => {
+    try {
+      const id = params?.id as string;
+      const data = await getCompanyCustomerById(id);
+      console.log(data);
+      const mapped: CompanyCustomerFormValues = {
+        sapCode: data.sap_code || "",
+        company_customer_code: data.company_customer_code || "",
+        customerCode: data.customer_code || "",
+        businessName: data.business_name || "",
+        customerType: String(data.customer_type || ""),
+        ownerName: data.owner_name || "",
+        ownerNumber: data.owner_no || "",
+        isWhatsapp: String(data.is_whatsapp ?? "1"),
+        whatsappNo: data.whatsapp_no || "",
+        email: data.email || "",
+        language: data.language || "",
+        contactNo2: data.contact_no2 || "",
+        buyerType: String(data.buyer_type || "0"),
+        roadStreet: data.road_street || "",
+        town: data.town || "",
+        landmark: data.landmark || "",
+        district: data.district || "",
+        region: String(data.region_id || ""),
+        area: String(data.area_id || ""),
+        balance: String(data.balance || ""),
+        paymentType: String(data.payment_type || "1"),
+        bankName: data.bank_name || "",
+        bankAccountNumber: data.bank_account_number || "",
+        creditDay: String(data.creditday || ""),
+        tinNo: data.tin_no || "",
+        accuracy: data.accuracy || "",
+        creditLimit: String(data.credit_limit || ""),
+        guaranteeName: data.guarantee_name || "",
+        guaranteeAmount: String(data.guarantee_amount || ""),
+        guaranteeFrom: data.guarantee_from || "",
+        guaranteeTo: data.guarantee_to || "",
+        totalCreditLimit: String(data.totalcreditlimit || ""),
+        creditLimitValidity: data.credit_limit_validity || "",
+        vatNo: data.vat_no || "",
+        longitude: data.longitude || "",
+        latitude: data.latitude || "",
+        thresholdRadius: String(data.threshold_radius || ""),
+        dChannelId: String(data.dchannel_id || ""),
+        status: String(data.status || "1"),
+        merchendiser_ids: data.merchendiser_ids || "",
+      };
+
+      console.log(mapped);
+      setInitialValues(mapped);
+    } catch (error) {
+      console.error(error);
+      showSnackbar("Failed to load data ❌", "error");
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const id = params?.id as string;
-        const data = await getCompanyCustomerById(id);
-        const mapped: CompanyCustomerFormValues = {
-          sapCode: data.sap_code || "",
-          company_customer_code: data.company_customer_code || "",
-          customerCode: data.customer_code || "",
-          businessName: data.business_name || "",
-          customerType: String(data.customer_type || ""),
-          ownerName: data.owner_name || "",
-          ownerNumber: data.owner_no || "",
-          isWhatsapp: String(data.is_whatsapp ?? "1"),
-          whatsappNo: data.whatsapp_no || "",
-          email: data.email || "",
-          language: data.language || "",
-          contactNo2: data.contact_no2 || "",
-          buyerType: String(data.buyer_type || "0"),
-          roadStreet: data.road_street || "",
-          town: data.town || "",
-          landmark: data.landmark || "",
-          district: data.district || "",
-          region: String(data.region_id || ""),
-          area: String(data.area_id || ""),
-          balance: String(data.balance || ""),
-          paymentType: String(data.payment_type || "1"),
-          bankName: data.bank_name || "",
-          bankAccountNumber: data.bank_account_number || "",
-          creditDay: String(data.creditday || ""),
-          tinNo: data.tin_no || "",
-          accuracy: data.accuracy || "",
-          creditLimit: String(data.credit_limit || ""),
-          guaranteeName: data.guarantee_name || "",
-          guaranteeAmount: String(data.guarantee_amount || ""),
-          guaranteeFrom: data.guarantee_from || "",
-          guaranteeTo: data.guarantee_to || "",
-          totalCreditLimit: String(data.totalcreditlimit || ""),
-          creditLimitValidity: data.credit_limit_validity || "",
-          vatNo: data.vat_no || "",
-          longitude: data.longitude || "",
-          latitude: data.latitude || "",
-          thresholdRadius: String(data.threshold_radius || ""),
-          dChannelId: String(data.dchannel_id || ""),
-          status: String(data.status || "1"),
-          merchendiser_ids: data.merchendiser_ids || "",
-        };
-        setInitialValues(mapped);
-      } catch (error) {
-        console.error(error);
-        showSnackbar("Failed to load data ❌", "error");
-      }
-    };
-    if (params?.id && params.id !== "add") {
+    if (!params?.id) return;
+
+    if (params.id.toString().trim().toLowerCase() !== "add") {
+      setIsEditMode(true);
+      setLoading(true);
       fetchData();
-    } else if (!codeGeneratedRef.current) {
-      codeGeneratedRef.current = true;
+      setLoading(false);
+    } else if (params.id.toString().trim().toLowerCase() == "add") {
+      setIsEditMode(false);
       (async () => {
         const res = await genearateCode({ model_name: "tbl_company_customer" });
-        if (res?.code) {
-          setInitialValues((prev) => ({ ...prev, company_customer_code: res.code }));
-        }
+
         if (res?.prefix) {
           setPrefix(res.prefix);
         } else if (res?.code) {
-          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
           const match = res.prefix;
-          if (match) setPrefix(prefix);
+          if (match) setPrefix(match);
         }
       })();
     }
-  }, [params?.id]);
+  }, []);
 
   const handleNext = async (
     values: CompanyCustomerFormValues,
@@ -412,20 +418,24 @@ const { showSnackbar } = useSnackbar();
     values: CompanyCustomerFormValues,
     { setSubmitting }: FormikHelpers<CompanyCustomerFormValues>
   ) => {
+    console.log("🚀 handleSubmit STARTED - Form submission triggered");
+    console.log("📝 Current form values:", values);
+
     try {
+      // Create payload that matches your backend requirements
       const payload: CompanyCustomerPayload = {
         sap_code: values.sapCode,
         company_customer_code: values.company_customer_code,
         customer_code: values.customerCode,
         business_name: values.businessName,
-        customer_type: String(values.customerType),
+        customer_type: values.customerType, // Already string from form
         owner_name: values.ownerName,
         owner_no: values.ownerNumber,
         is_whatsapp: Number(values.isWhatsapp),
-        whatsapp_no: values.whatsappNo || "",
+        whatsapp_no: values.whatsappNo,
         email: values.email,
         language: values.language,
-        contact_no2: values.contactNo2 || "",
+        contact_no2: values.contactNo2,
         buyer_type: Number(values.buyerType),
         road_street: values.roadStreet,
         town: values.town,
@@ -437,7 +447,7 @@ const { showSnackbar } = useSnackbar();
         payment_type: values.paymentType,
         bank_name: values.bankName,
         bank_account_number: values.bankAccountNumber,
-        creditday: String(values.creditDay),
+        creditday: values.creditDay, // Already string from form
         tin_no: values.tinNo,
         accuracy: values.accuracy || "",
         creditlimit: Number(values.creditLimit),
@@ -451,41 +461,164 @@ const { showSnackbar } = useSnackbar();
         longitude: values.longitude,
         latitude: values.latitude,
         threshold_radius: Number(values.thresholdRadius),
-        dchannel_id: Number(values.dChannelId),
-        merchendiser_ids: Array.isArray(values.merchendiser_ids)
-          ? values.merchendiser_ids.map((id) => id.replace(/"/g, "")).join(",")
-          : String(values.merchendiser_ids).replace(/"/g, ""),
+        dchannel_id: Number(values.dChannelId), // Fixed field name mapping
+        merchendiser_ids: values.merchendiser_ids || "",
         status: Number(values.status),
+        // Add user fields that your backend expects
+        created_user: 1, // You might want to get this from auth context
+        updated_user: 2, // You might want to get this from auth context
       };
+
+      console.log(
+        "📦 Final Payload for Backend:",
+        JSON.stringify(payload, null, 2)
+      );
+
       let res;
-      if (isEditMode && params?.id && params.id !== "add") {
-        res = await updateCompanyCustomer(String(params.id), payload);
+      if (isEditMode) {
+        console.log("✏️ Updating existing company customer");
+        // For edit mode, only exclude fields that shouldn't be sent during update
+        const { company_customer_code, created_user, ...updatePayload } =
+          payload;
+        console.log("📤 Edit Payload:", JSON.stringify(updatePayload, null, 2));
+        res = await updateCompanyCustomer(String(params.id), updatePayload);
       } else {
+        console.log("➕ Adding new company customer");
         res = await addCompanyCustomers(payload);
       }
+
+      console.log("📨 API Response:", res);
+
       if (res.error) {
+        console.error("❌ API Error:", res.error);
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
+        console.log("✅ Success - Company customer saved");
         showSnackbar(
           res.message ||
             (isEditMode
-              ? "Route Updated Successfully"
-              : "Route Created Successfully"),
+              ? "Company Customer Updated Successfully"
+              : "Company Customer Created Successfully"),
           "success"
         );
-        // Finalize the reserved code after successful add/update
-        try {
-          await saveFinalCode({ reserved_code: values.company_customer_code, model_name: "tbl_company_customer" });
-        } catch (e) {}
+
+        // Finalize the reserved code after successful add (not for edit)
+        if (!isEditMode) {
+          try {
+            await saveFinalCode({
+              reserved_code: values.company_customer_code || "",
+              model_name: "tbl_company_customer",
+            });
+            console.log("✅ Code finalized successfully");
+          } catch (e) {
+            console.error("❌ Error finalizing code:", e);
+          }
+        }
+
         router.push("/dashboard/settings/company/companyCustomer");
       }
     } catch (error) {
-      console.error(error);
-      showSnackbar("Failed to add Company Customer ❌", "error");
+      console.error("❌ Form submission error:", error);
+      showSnackbar(
+        `Failed to ${isEditMode ? "update" : "add"} Company Customer ❌`,
+        "error"
+      );
     } finally {
+      console.log("🏁 handleSubmit COMPLETED");
       setSubmitting(false);
     }
   };
+
+  //   values: CompanyCustomerFormValues,
+  //   { setSubmitting }: FormikHelpers<CompanyCustomerFormValues>
+  // ) => {
+  //   console.log("Submitting values:", values);
+  //   try {
+  //     const payload: CompanyCustomerPayload = {
+  //       sap_code: values.sapCode,
+  //       company_customer_code: values.company_customer_code,
+  //       customer_code: values.customerCode,
+  //       business_name: values.businessName,
+  //       customer_type: String(values.customerType),
+  //       owner_name: values.ownerName,
+  //       owner_no: values.ownerNumber,
+  //       is_whatsapp: Number(values.isWhatsapp),
+  //       whatsapp_no: values.whatsappNo || "",
+  //       email: values.email,
+  //       language: values.language,
+  //       contact_no2: values.contactNo2 || "",
+  //       buyer_type: Number(values.buyerType),
+  //       road_street: values.roadStreet,
+  //       town: values.town,
+  //       landmark: values.landmark,
+  //       district: values.district,
+  //       region_id: Number(values.region),
+  //       area_id: Number(values.area),
+  //       balance: Number(values.balance),
+  //       payment_type: values.paymentType,
+  //       bank_name: values.bankName,
+  //       bank_account_number: values.bankAccountNumber,
+  //       creditday: String(values.creditDay),
+  //       tin_no: values.tinNo,
+  //       accuracy: values.accuracy || "",
+  //       creditlimit: Number(values.creditLimit),
+  //       totalcreditlimit: Number(values.totalCreditLimit),
+  //       credit_limit_validity: values.creditLimitValidity,
+  //       guarantee_name: values.guaranteeName,
+  //       guarantee_amount: Number(values.guaranteeAmount),
+  //       guarantee_from: values.guaranteeFrom,
+  //       guarantee_to: values.guaranteeTo,
+  //       vat_no: values.vatNo,
+  //       longitude: values.longitude,
+  //       latitude: values.latitude,
+  //       threshold_radius: Number(values.thresholdRadius),
+  //       dchannel_id: Number(values.dChannelId),
+  //       merchendiser_ids: Array.isArray(values.merchendiser_ids)
+  //         ? values.merchendiser_ids.map((id) => id.replace(/"/g, "")).join(",")
+  //         : String(values.merchendiser_ids).replace(/"/g, ""),
+  //       status: Number(values.status),
+  //     };
+
+  //     console.log("Final Payload:", payload);
+
+  //     let res;
+  //     if (isEditMode) {
+  //       const { merchendiser_ids, ...newPayload } = payload;
+  //       console.log("Edit Payload:", newPayload);
+  //       res = await updateCompanyCustomer(String(params.id), newPayload);
+  //     } else {
+  //       res = await addCompanyCustomers(payload);
+  //     }
+
+  //     if (res.error) {
+  //       showSnackbar(res.data?.message || "Failed to submit form", "error");
+  //     } else {
+  //       showSnackbar(
+  //         res.message ||
+  //           (isEditMode
+  //             ? "Company Customer Updated Successfully"
+  //             : "Company Customer Created Successfully"),
+  //         "success"
+  //       );
+  //       // Finalize the reserved code after successful add/update
+  //       try {
+  //         await saveFinalCode({
+  //           reserved_code: values.company_customer_code,
+  //           model_name: "tbl_company_customer",
+  //         });
+  //       } catch (e) {}
+  //       router.push("/dashboard/settings/company/companyCustomer");
+  //     }
+  //   } catch (error) {
+  //     console.error(error);
+  //     showSnackbar(
+  //       `Failed to ${isEditMode ? "update" : "add"} "Company Customer" ❌`,
+  //       "error"
+  //     );
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
 
   const renderStepContent = (
     values: CompanyCustomerFormValues,
@@ -501,11 +634,6 @@ const { showSnackbar } = useSnackbar();
       case 1:
         return (
           <ContainerCard>
-            <h2 className="text-lg font-semibold mb-6">
-              {isEditMode
-                ? "Edit Company Customer Details"
-                : "Add Company Customer Details"}
-            </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {/* Company Customer Code (pattern-matched UI) */}
               <div className="flex items-end gap-2 max-w-[406px]">
@@ -513,9 +641,14 @@ const { showSnackbar } = useSnackbar();
                   label="Company Customer Code"
                   name="company_customer_code"
                   value={values.company_customer_code}
-                  onChange={(e) => setFieldValue("company_customer_code", e.target.value)}
-                  disabled={codeMode === 'auto'}
-                  error={touched.company_customer_code && errors.company_customer_code}
+                  onChange={(e) =>
+                    setFieldValue("company_customer_code", e.target.value)
+                  }
+                  disabled={codeMode === "auto"}
+                  error={
+                    touched.company_customer_code &&
+                    errors.company_customer_code
+                  }
                 />
                 {!isEditMode && (
                   <>
@@ -533,10 +666,10 @@ const { showSnackbar } = useSnackbar();
                       setPrefix={setPrefix}
                       onSave={(mode, code) => {
                         setCodeMode(mode);
-                        if (mode === 'auto' && code) {
-                          setFieldValue('company_customer_code', code);
-                        } else if (mode === 'manual') {
-                          setFieldValue('company_customer_code', '');
+                        if (mode === "auto" && code) {
+                          setFieldValue("company_customer_code", code);
+                        } else if (mode === "manual") {
+                          setFieldValue("company_customer_code", "");
                         }
                       }}
                     />
@@ -1038,25 +1171,29 @@ const { showSnackbar } = useSnackbar();
                 className="text-xs text-red-500 mt-1"
               />
 
-              <InputFields
-                label="Merchendiser"
-                name="merchendiser_ids"
-                value={values.merchendiser_ids}
-                onChange={(e) =>
-                  setFieldValue("merchendiser_ids", e.target.value)
-                }
-                isSingle={false}
-                options={[
-                  { value: "1", label: "Merchendiser 1" },
-                  { value: "2", label: "Merchendiser 2" },
-                  { value: "3", label: "Merchendiser 3" },
-                ]}
-              />
-              <ErrorMessage
-                name="merchendiser_ids"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+              {!isEditMode && (
+                <>
+                  <InputFields
+                    label="Merchendiser"
+                    name="merchendiser_ids"
+                    value={values.merchendiser_ids}
+                    onChange={(e) =>
+                      setFieldValue("merchendiser_ids", e.target.value)
+                    }
+                    isSingle={false}
+                    options={[
+                      { value: "1", label: "Merchendiser 1" },
+                      { value: "2", label: "Merchendiser 2" },
+                      { value: "3", label: "Merchendiser 3" },
+                    ]}
+                  />
+                  <ErrorMessage
+                    name="merchendiser_ids"
+                    component="span"
+                    className="text-xs text-red-500 mt-1"
+                  />
+                </>
+              )}
 
               <InputFields
                 label="Status"
@@ -1081,22 +1218,27 @@ const { showSnackbar } = useSnackbar();
     }
   };
 
+  if (loading) return <Loading />;
+
   return (
     <>
-      <div className="flex items-center gap-3 text-gray-600">
+      <div className="flex align-middle items-center gap-3 text-gray-600 mb-6">
         <Link
           href="/dashboard/settings/company/companyCustomer"
           className="hover:underline"
         >
           <Icon icon="mdi:arrow-left" className="text-xl" />
         </Link>
-        <h1 className="text-xl font-semibold">Add Company Customer</h1>
+        <h1 className="text-xl font-semibold">
+          {isEditMode ? "Update" : "Add"} Company Customer
+        </h1>
       </div>
 
       <Formik
         initialValues={initialValues}
         validationSchema={CompanyCustomerSchema}
-        onSubmit={handleSubmit}
+        onSubmit={handleSubmit} // ✅ Direct function reference
+        enableReinitialize={true}
       >
         {({
           values,
@@ -1104,8 +1246,20 @@ const { showSnackbar } = useSnackbar();
           errors,
           touched,
           handleSubmit: formikSubmit,
+          isSubmitting, // ✅ Add this to get submitting state
         }) => (
           <Form>
+            {/* Temporary debug button */}
+            <button
+              type="button"
+              onClick={() => {
+                console.log("🧪 Manual submit test");
+                formikSubmit();
+              }}
+              className="p-2 bg-red-500 text-white rounded mb-4"
+            >
+              Test Submit (Debug)
+            </button>
             <StepperForm
               steps={steps.map((step) => ({
                 ...step,
@@ -1118,13 +1272,14 @@ const { showSnackbar } = useSnackbar();
                 handleNext(values, {
                   setErrors: () => {},
                   setTouched: () => {},
+                  setSubmitting: () => {},
                 } as unknown as FormikHelpers<CompanyCustomerFormValues>)
               }
-              onSubmit={() => formikSubmit()}
+              onSubmit={formikSubmit} // ✅ This should be the Formik handleSubmit
               showSubmitButton={isLastStep}
               showNextButton={!isLastStep}
               nextButtonText="Save & Next"
-              submitButtonText="Submit"
+              submitButtonText={isSubmitting ? "Submitting..." : "Submit"} // ✅ Show loading state
             >
               {renderStepContent(values, setFieldValue, errors, touched)}
             </StepperForm>
