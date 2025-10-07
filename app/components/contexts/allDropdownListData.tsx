@@ -22,9 +22,12 @@ import {
   customerSubCategoryList,
   itemList,
   getDiscountTypeList,
-  getMenuList,
+  menuList as getMenuList,
   salesmanList,
-  agentCustomerList
+  agentCustomerList,
+  submenuList,
+  permissionList,
+  SurveyList
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -33,6 +36,7 @@ interface DropdownDataContextType {
   companyList: CompanyItem[];
   countryList: CountryItem[];
   regionList: RegionItem[];
+  SurveyList:SurveyItem[];
   routeList: RouteItem[];
   warehouseList: WarehouseItem[];
   routeType: RouteTypeItem[];
@@ -57,6 +61,7 @@ interface DropdownDataContextType {
   onlyCountryOptions: { value: string; label: string }[];
   countryCurrency: {value: string; label: string }[];
   regionOptions: { value: string; label: string }[];
+  surveyOptions: { value: string; label: string }[];
   routeOptions: { value: string; label: string }[];
   warehouseOptions: { value: string; label: string }[];
   routeTypeOptions: { value: string; label: string }[];
@@ -79,6 +84,8 @@ interface DropdownDataContextType {
   salesmanOptions: { value: string; label: string }[];
   agentCustomerOptions: { value: string; label: string }[];
   shelvesOptions: { value: string; label: string }[];
+  submenuOptions: { value: string; label: string }[];
+  permissionsOptions: { value: string; label: string }[];
   refreshDropdowns: () => Promise<void>;
   loading: boolean;
 }
@@ -108,6 +115,12 @@ interface RouteItem {
   route_code?: string;
   route_name?: string;
 }
+interface SurveyItem {
+  id?: number | string;
+  survey_code?: string;
+  survey_name?: string;
+}
+
 
 interface WarehouseItem {
   id?: number | string;
@@ -237,6 +250,15 @@ interface ShelvesList {
     shelf_name: string;
 }
 
+interface submenuList {
+    id: number;
+    name: string;
+}
+interface permissionsList {
+    id: number;
+    name: string;
+}
+
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
 
 export const useAllDropdownListData = () => {
@@ -252,6 +274,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [companyListData, setCompanyListData] = useState<CompanyItem[]>([]);
   const [countryListData, setCountryListData] = useState<CountryItem[]>([]);
   const [regionListData, setRegionListData] = useState<RegionItem[]>([]);
+    const [surveyListData, setSurveyListData] = useState<SurveyItem[]>([]);
   const [routeListData, setRouteListData] = useState<RouteItem[]>([]);
   const [warehouseListData, setWarehouseListData] = useState<WarehouseItem[]>([]);
   const [routeTypeData, setRouteTypeData] = useState<RouteTypeItem[]>([]);
@@ -274,6 +297,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [agentCustomer, setAgentCustomer] = useState<AgentCustomerList[]>([]);
   const [shelves, setShelves] = useState<ShelvesList[]>([]);
   const [vendor, setVendor] = useState<VendorList[]>([]);
+  const [submenu, setSubmenu] = useState<submenuList[]>([]);
+  const [permissions, setPermissions] = useState<permissionsList[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -299,6 +324,10 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const regionOptions = (Array.isArray(regionListData) ? regionListData : []).map((c: RegionItem) => ({
     value: String(c.id ?? ''),
     label: c.region_code && c.region_name ? `${c.region_code} - ${c.region_name}` : (c.region_name ?? '')
+  }));
+    const surveyOptions = (Array.isArray(surveyListData) ? surveyListData : []).map((c: SurveyItem) => ({
+    value: String(c.id ?? ''),
+    label: c.survey_code && c.survey_name ? `${c.survey_code} - ${c.survey_name}` : (c.survey_name ?? '')
   }));
 
   const routeOptions = (Array.isArray(routeListData) ? routeListData : []).map((c: RouteItem) => ({
@@ -410,6 +439,16 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
     label: c.shelf_name ?? ''
   }));
 
+  const submenuOptions = (Array.isArray(submenu) ? submenu : []).map((c: submenuList) => ({
+    value: String(c.id ?? ''),
+    label: c.name ?? ''
+  }));
+
+  const permissionsOptions = (Array.isArray(permissions) ? permissions : []).map((c: permissionsList) => ({
+    value: String(c.id ?? ''),
+    label: c.name ?? ''
+  }));
+
   const refreshDropdowns = async () => {
     setLoading(true);
     try {
@@ -417,6 +456,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         companyList(),
         countryList(),
         regionList(),
+         SurveyList(),
         routeList({}),
         warehouseType(1),
         routeType(),
@@ -439,6 +479,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         salesmanList(),
         agentCustomerList(),
         shelvesList(),
+        submenuList(),
+        permissionList(),
       ]);
 
       // normalize: accept unknown response and extract array of items from `.data` when present
@@ -454,6 +496,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setCompanyListData(normalize(res[0]) as CompanyItem[]);
       setCountryListData(normalize(res[1]) as CountryItem[]);
       setRegionListData(normalize(res[2]) as RegionItem[]);
+        setSurveyListData(normalize(res[3]) as SurveyItem[]);
       setRouteListData(normalize(res[3]) as RouteItem[]);
       setWarehouseListData(normalize(res[4]) as WarehouseItem[]);
       setRouteTypeData(normalize(res[5]) as RouteTypeItem[]);
@@ -464,18 +507,20 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setItemSubCategoryData(normalize(res[10]) as ItemSubCategoryItem[]);
       setChannelListData(normalize(res[11]) as ChannelItem[]);
       setCustomerTypeData(normalize(res[12]) as CustomerType[]);
-  setUserTypesData(normalize(res[13]) as UserTypeItem[]);
+      setUserTypesData(normalize(res[13]) as UserTypeItem[]);
       setSalesmanTypesData(normalize(res[14]) as SalesmanType[]);
-  setVehicleList(normalize(res[15]) as VehicleListItem[]);
-  setCustomerCategory(normalize(res[16]) as CustomerCategory[]);
-  setCustomerSubCategory(normalize(res[17]) as CustomerSubCategory[]);
-  setItem(normalize(res[18]) as Item[]);
-  setDiscountType(normalize(res[19]) as DiscountType[]);
-  setMenuList(normalize(res[20]) as MenuList[]);
-  setVendor(normalize(res[21]) as VendorList[]);
-  setSalesman(normalize(res[22]) as SalesmanList[]);
-  setAgentCustomer(normalize(res[23]) as AgentCustomerList[]);
-  setShelves(normalize(res[24]) as ShelvesList[]);
+      setVehicleList(normalize(res[15]) as VehicleListItem[]);
+      setCustomerCategory(normalize(res[16]) as CustomerCategory[]);
+      setCustomerSubCategory(normalize(res[17]) as CustomerSubCategory[]);
+      setItem(normalize(res[18]) as Item[]);
+      setDiscountType(normalize(res[19]) as DiscountType[]);
+      setMenuList(normalize(res[20]) as MenuList[]);
+      setVendor(normalize(res[21]) as VendorList[]);
+      setSalesman(normalize(res[22]) as SalesmanList[]);
+      setAgentCustomer(normalize(res[23]) as AgentCustomerList[]);
+      setShelves(normalize(res[24]) as ShelvesList[]);
+      setSubmenu(normalize(res[25]) as submenuList[]);
+      setPermissions(normalize(res[26]) as permissionsList[]);
   
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -483,6 +528,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setCompanyListData([]);
       setCountryListData([]);
       setRegionListData([]);
+      setSurveyListData([]);
       setRouteListData([]);
       setWarehouseListData([]);
       setRouteTypeData([]);
@@ -505,6 +551,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
       setSalesman([]);
       setAgentCustomer([]);
       setShelves([]);
+      setSubmenu([]);
+      setPermissions([]);
     } finally {
       setLoading(false);
     }
@@ -522,6 +570,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         companyList: companyListData,
         countryList: countryListData,
         regionList: regionListData,
+        SurveyList: surveyListData,
         routeList: routeListData,
         warehouseList: warehouseListData,
         routeType: routeTypeData,
@@ -545,6 +594,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         onlyCountryOptions,
         countryCurrency,
         regionOptions,
+        surveyOptions,
         routeOptions,
         warehouseOptions,
         routeTypeOptions,
@@ -567,6 +617,8 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
         salesmanOptions,
         agentCustomerOptions,
         shelvesOptions,
+        submenuOptions,
+        permissionsOptions,
         refreshDropdowns,
         loading
       }}

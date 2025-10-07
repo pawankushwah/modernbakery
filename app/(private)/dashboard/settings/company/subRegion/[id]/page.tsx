@@ -13,7 +13,7 @@ import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { addArea, getAreaById, updateAreaById, genearateCode, saveFinalCode } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData copy";
 
 // ✅ Yup Schema
 const SubRegionSchema = Yup.object().shape({

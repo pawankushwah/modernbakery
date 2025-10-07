@@ -94,8 +94,8 @@ export default function AddPricing() {
     Item: [],
   });
   
-  // Use Record<string, string> so we can dynamically store values for any selected key
-  const [keyValue, setKeyValue] = useState<Record<string, string>>({});
+  // Use Record<string, string[]> for multi-select values
+  const [keyValue, setKeyValue] = useState<Record<string, string[]>>({});
 
   // Step 3: Promotion
   const [promotion, setPromotion] = useState({
@@ -161,9 +161,10 @@ export default function AddPricing() {
                       <InputFields
                         label=""
                         type="select"
+                        isSingle={false}
                         options={locationDropdownMap[locKey] ? [{ label: `Select ${locKey}`, value: "" }, ...locationDropdownMap[locKey]] : [{ label: `Select ${locKey}`, value: "" }]}
-                        value={keyValue[locKey] || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setKeyValue(s => ({ ...s, [locKey]: e.target.value }))}
+                        value={keyValue[locKey] || []}
+                        onChange={e => setKeyValue(s => ({ ...s, [locKey]: Array.isArray(e.target.value) ? e.target.value : [] }))}
                         width="w-full"
                       />
                     </div>
@@ -179,9 +180,10 @@ export default function AddPricing() {
                       <InputFields
                         label=""
                         type="select"
+                        isSingle={false}
                         options={customerDropdownMap[custKey] ? [{ label: `Select ${custKey}`, value: "" }, ...customerDropdownMap[custKey]] : [{ label: `Select ${custKey}`, value: "" }]}
-                        value={keyValue[custKey] || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setKeyValue(s => ({ ...s, [custKey]: e.target.value }))}
+                        value={keyValue[custKey] || []}
+                        onChange={e => setKeyValue(s => ({ ...s, [custKey]: Array.isArray(e.target.value) ? e.target.value : [] }))}
                         width="w-full"
                       />
                     </div>
@@ -197,9 +199,10 @@ export default function AddPricing() {
                       <InputFields
                         label=""
                         type="select"
+                        isSingle={false}
                         options={itemDropdownMap[itemKey] ? [{ label: `Select ${itemKey}`, value: "" }, ...itemDropdownMap[itemKey]] : [{ label: `Select ${itemKey}`, value: "" }]}
-                        value={keyValue[itemKey] || ""}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setKeyValue(s => ({ ...s, [itemKey]: e.target.value }))}
+                        value={keyValue[itemKey] || []}
+                        onChange={e => setKeyValue(s => ({ ...s, [itemKey]: Array.isArray(e.target.value) ? e.target.value : [] }))}
                         width="w-full"
                       />
                     </div>
@@ -257,12 +260,17 @@ export default function AddPricing() {
               {/* Order Item Table using Table component */}
               <div className="mb-6">
                 <Table
-                  data={keyCombo.Item.map((itemKey, idx) => ({
-                    itemName: itemKey,
-                    itemCode: keyValue[itemKey] || "",
-                    price: promotion.orderItems[idx]?.price || "",
-                    idx: idx.toString(),
-                  }))}
+                  data={keyCombo.Item.flatMap((itemKey, idx) => {
+                    const codes = keyValue[itemKey] || [];
+                    return codes.map((code, codeIdx) => ({
+                      itemName: itemKey,
+                      itemCode: code,
+                      price: promotion.orderItems.find(
+                        oi => oi.itemName === itemKey && oi.itemCode === code
+                      )?.price || "",
+                      idx: `${idx}-${codeIdx}`,
+                    }));
+                  })}
                   config={{
                     columns: [
                       {
@@ -291,9 +299,14 @@ export default function AddPricing() {
                               const val = e.target.value;
                               setPromotion(s => {
                                 const arr = [...s.orderItems];
-                                // Ensure array length matches selected items
-                                while (arr.length < keyCombo.Item.length) arr.push({ itemName: row.itemName, itemCode: row.itemCode, quantity: "", toQuantity: "", uom: "CTN", price: "" });
-                                arr[parseInt(row.idx)].price = val;
+                                const idxFound = arr.findIndex(
+                                  oi => oi.itemName === row.itemName && oi.itemCode === row.itemCode
+                                );
+                                if (idxFound !== -1) {
+                                  arr[idxFound].price = val;
+                                } else {
+                                  arr.push({ itemName: row.itemName, itemCode: row.itemCode, quantity: "", toQuantity: "", uom: "CTN", price: val });
+                                }
                                 return { ...s, orderItems: arr };
                               });
                             }}

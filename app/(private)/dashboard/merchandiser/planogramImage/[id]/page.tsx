@@ -11,7 +11,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData copy";
 import { createPlanogramImage, planogramImageById, updatePlanogramImage } from "@/app/services/merchandiserApi";
 import { File } from "buffer";
 import Image from "next/image";

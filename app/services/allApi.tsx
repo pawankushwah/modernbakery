@@ -911,6 +911,16 @@ export const deleteArea = async (id:string) => {
   }
 };
 
+
+export const subRegionByID = async (id: string, params?: Params) => {
+    try {
+        const res = await API.get(`/api/master/area/area/${id}`, { params: params });
+        return res.data;
+    } catch (error: unknown) {
+        return handleError(error);
+    }
+};
+
 export const getCustomerCategory = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/customer-category/list`, { params: params });
@@ -1492,7 +1502,7 @@ export const getSalesmanById = async (uuid: string) => {
 };
 export const updateSalesman = async (uuid: string,body:object) => {
   try {
-    const res = await API.put(`/api/master/salesmen/master/${uuid}`,body);
+    const res = await API.put(`/api/master/salesmen/update/${uuid}`,body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1798,13 +1808,11 @@ export const addSurvey = async (payload: PayloadSurvey) => {
   }
 }
 type updateSurvey = {
-
   survey_name: string;
   start_date: string;
   end_date: string;
   status: string;
 };
-
 export const updateSurvey = async (id: string, payload: updateSurvey) => {
   try {
     // ✅ Send payload directly
@@ -1839,6 +1847,18 @@ export const SurveyQuestionList = async () => {
     return handleError(error);
   }
 };
+// Get survey by ID
+
+
+export const getSurveyQuestions = async (surveyId: string) => {
+  try {
+    // removed `/questions` from the endpoint
+    const res = await API.get(`/api/merchendisher/survey-questions/get/${surveyId}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 export const deleteSurveyQuestion = async (id:string) => {
   try {
@@ -1848,7 +1868,25 @@ export const deleteSurveyQuestion = async (id:string) => {
     return handleError(error);
   }
 };
+export const getSurveyQuestionBySurveyId = async (surveyId: string | number) => {
+  try {
+    const res = await API.get(`/api/merchendisher/survey-questions/get/${surveyId}`);
 
+    // normalize response
+    const data = res.data?.data;
+    if (Array.isArray(data)) {
+      return data; // ✅ direct array
+    } else if (Array.isArray(data?.questions)) {
+      return data.questions; // ✅ nested case
+    } else {
+      console.error("Unexpected response:", res.data);
+      return []; // fallback
+    }
+  } catch (error: unknown) {
+    console.error("Error fetching survey questions:", error);
+    return [];
+  }
+};
 
  type PayloadSurveyQuestion = {
   survey_id: number;                    // ID of the survey this question belongs to
@@ -1865,6 +1903,27 @@ export const addSurveyQuestion = async (payload: PayloadSurveyQuestion) => {
   }
 }
 
+ type UpdateSurveyQuestion = {
+  survey_id: number;                    // ID of the survey this question belongs to
+  question: string;                     // The question text
+  question_type: "checkbox" | "radio" | "textbox" | "selectbox" | "commentbox"; // Type of question
+  question_based_selected?: string;     // Comma-separated options for types that require multiple choices
+};
+
+export const UpdateSurveyQuestion = async (id: string, payload:  {
+          survey_id: string,
+          question: string,
+          question_type: string,
+          question_based_selected?: string,
+        }) => {
+  try {
+    // ✅ Send payload directly
+    const res = await API.put(`/api/merchendisher/survey-questions/${id}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 export const companyTypeList = async (params?: Params) => {
   try {
      const res = await API.get("/api/settings/company-types/list",{ params: params });
@@ -1913,37 +1972,44 @@ export const getComponyTypeById = async (id: string) => {
     return handleError(error);
   }};
 
-export const roleList = async (params: Params) => {
-  try {
-     const res = await API.get("/web/setting/roles/list", { params });
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-  
-};
 
-export const addRoles = async (payload:object) => {
+// Roles 
+export const roleList = async (params?: Params) => {
   try {
-    const res = await API.post("/api/setting/roles/add", payload);
+     const res = await API.get("/api/settings/roles/list", { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const getRoleById = async (id: string) => {
+export const getRoleById = async (id: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/setting/roles/${id}`);
+    const res = await API.get(`/api/settings/roles/${id}`, {params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const editRoles = async (id:string,payload:object) => {
+type roletype = {
+  name: string;
+  guard_name: string;
+  permissions: number[];
+};
+
+export const addRoles = async (payload: roletype) => {
   try {
-    const res = await API.put(`/api/setting/roles/${id}`,payload);
+    const res = await API.post("/api/settings/roles/add", payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editRoles = async (id: string, payload: roletype) => {
+  try {
+    const res = await API.put(`/api/settings/roles/${id}`,payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1951,47 +2017,57 @@ export const editRoles = async (id:string,payload:object) => {
 };
 export const deleteRole = async (id:string) => {
   try {
-    const res = await API.delete(`/api/setting/roles/${id}`);
+    const res = await API.delete(`/api/settings/roles/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const getMenuList = async () => {
+export const permissionList = async (params?: Params) => {
   try {
-           const res = await API.get(`/api/settings/menus/list`);
+     const res = await API.get("/api/settings/permissions/list", { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-
-
-export const permissionList = async (params: Params) => {
+export const permissionListById = async (id: string, params?: Params) => {
   try {
-     const res = await API.get("/web/setting/permissions/list", { params });
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-  
-};
-
-export const addPermissions = async (payload:object) => {
-  try {
-         const res = await API.post("/api/web/setting/permissions/create", payload);
-
+     const res = await API.get(`/api/settings/permissions/${id}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
-export const deletePermissions = async (uuid:string) => {
+type permissionType = {
+  name: string;
+};
+
+
+export const addPermission = async (payload:permissionType) => {
   try {
-           const res = await API.delete(`/api/web/setting/permissions/delete/${uuid}`);
+    const res = await API.post("/api/settings/permissions/add", payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updatePermission = async (id: string, payload: permissionType) => {
+  try {
+    const res = await API.put(`/api/settings/permissions/${id}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deletePermissions = async (id:string) => {
+  try {
+    const res = await API.delete(`/api/settings/permissions/${id}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -2131,3 +2207,149 @@ export const pricingDetailGlobalSearch = async (params?:Params) => {
   }
 };
 
+// menu APIs
+export const menuList = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/settings/menus/list`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const menuByUUID = async (uuid: string, params?:Params) => {
+  try {
+    const res = await API.get(`/api/settings/menus/${uuid}`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const menuGenerateCode = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/settings/menus/generate-code`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const menuGlobalSearch = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/settings/menus/global-search`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+type menuType = {
+  name: string,
+  icon: string,
+  url: string,
+  display_order: number,
+  is_visible: number,
+  status: number
+}
+
+export const addMenu = async (payload: menuType) => {
+  try {
+    const res = await API.post(`/api/settings/menus/add`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateMenu = async (uuid: string, payload: menuType) => {
+  try {
+    const res = await API.put(`/api/settings/menus/update/${uuid}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteMenu = async (uuid: string) => {
+  try {
+    const res = await API.delete(`/api/settings/menus/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+// sub menu APIs
+export const submenuList = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/settings/submenu/list`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const submenuByUUID = async (uuid: string, params?:Params) => {
+  try {
+    const res = await API.get(`/api/settings/submenu/${uuid}`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const submenuGenerateCode = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/settings/submenu/generate-code`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const submenuGlobalSearch = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/settings/submenu/global_search`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+type submenuType = {
+  name: string,
+  menu_id: number,
+  parent_id: number | null,
+  url: string,
+  display_order: number,
+  action_type: number,
+  is_visible: number
+}
+
+export const addSubmenu = async (payload: submenuType) => {
+  try {
+    const res = await API.post(`/api/settings/submenu/add`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateSubmenu = async (uuid: string, payload: submenuType) => {
+  try {
+    const res = await API.put(`/api/settings/submenu/${uuid}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deleteSubmenu = async (uuid: string) => {
+  try {
+    const res = await API.delete(`/api/settings/submenu/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
