@@ -12,6 +12,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { addRoles, getRoleById, editRoles } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { useLoading } from "@/app/services/loadingContext";
+import RolesPermissionTable from "./table2";
 
 const RoleSchema = Yup.object().shape({
   name: Yup.string().required("Role Name is required."),
@@ -170,6 +171,7 @@ export default function AddEditRole() {
                   </div>
                 </div>
               </div>
+              {/* <RolesPermissionTable /> */}
             </div>
             <div className="flex justify-end gap-4 mt-6 pr-0">
               <button

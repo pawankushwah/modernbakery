@@ -55,17 +55,18 @@ type configType = {
         nextPrevBtn?: boolean;
         pagination?: boolean;
     };
-    localStorageKey?: string; // yet to implement
+    localStorageKey?: string;
     pageSize?: number;
     pageSizeOptions?: number[]; // yet to implement
     rowSelection?: boolean;
     dragableColumn?: boolean; // yet to implement
     columns: {
         key: string;
-        label: string;
+        label: string | React.ReactNode;
         width?: number;
         render?: (row: TableDataType) => React.ReactNode;
         align?: "left" | "center" | "right"; // yet to implement
+        sticky?: string; // yet to implement
         isSortable?: boolean;
         filter?: {
             isFilterable?: boolean;
@@ -389,7 +390,7 @@ function ColumnFilter() {
                                         className="flex gap-[8px] p-[10px]"
                                     >
                                         <CustomCheckbox
-                                            id={col.label + index}
+                                            id={index.toString()}
                                             checked={selectedColumns.includes(
                                                 index
                                             )}
@@ -503,7 +504,7 @@ function TableBody() {
                                     return (
                                         selectedColumns.includes(index) && (
                                             <th
-                                                className={`w-[${col.width}px] px-[24px] py-[12px] font-[500] whitespace-nowrap`}
+                                                className={`w-[${col.width}px] ${col.sticky === "left" ? 'sticky left-0' : ''} ${col.sticky === "right" ? 'sticky right-0' : ''} ${col.sticky === "center" ? 'sticky' : ''} px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap`}
                                                 key={index}
                                             >
                                                 <div className="flex items-center gap-[4px] capitalize">
@@ -587,7 +588,7 @@ function TableBody() {
                                                     <td
                                                         key={index}
                                                         width={col.width}
-                                                        className={`px-[24px] py-[12px]`}
+                                                        className={`px-[24px] py-[12px] ${col.sticky === "left" ? 'sticky left-0 bg-white' : ''} ${col.sticky === "right" ? 'sticky right-0 bg-white' : ''}`}
                                                     >
                                                         {col.render ? (
                                                             col.render(row)
