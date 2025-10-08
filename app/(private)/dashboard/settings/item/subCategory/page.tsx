@@ -1,6 +1,6 @@
 "use client";
 
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import Loading from "@/app/components/Loading";
 import Popup from "@/app/components/popUp";
@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import CreateUpdate from "./createUpdate";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
+import { useLoading } from "@/app/services/loadingContext";
 
 const columns = [
     { key: "category_id", label: "Category Id" },
@@ -47,10 +48,7 @@ export type subCategoryType = {
 };
 
 export default function SubCategory() {
-    const [categoryData, setCategoryData] = useState<TableDataType[]>(
-        [] as TableDataType[]
-    );
-    const [loading, setLoading] = useState<boolean>(true);
+    const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
     const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
     const [showCreatePopup, setShowCreatePopup] = useState<boolean>(false);
@@ -59,6 +57,7 @@ export default function SubCategory() {
         number | undefined
     >();
     const [updateItemCategoryData, setUpdateItemCategoryData] = useState<subCategoryType>({} as subCategoryType);
+    const [refreshKey, setRefreshKey] = useState<number>(0);
 
     async function deleteCategory() {
         if (!deleteItemCategoryId) return;
@@ -66,29 +65,63 @@ export default function SubCategory() {
         if(listRes.error) showSnackbar(listRes.data.message, "error");
         else{
             showSnackbar(listRes.message, "success");
-            fetchItemSubCategory();
+            setRefreshKey((prev) => prev + 1);
         } 
         setShowDeletePopup(false);
     }
 
-    async function fetchItemSubCategory() {
+    async function fetchItemSubCategory(pageNo: number = 1, pageSize: number = 10): Promise<listReturnType> {
         setLoading(true);
-        const listRes = await itemSubCategoryList();
-        if (listRes.error) {
-            showSnackbar(listRes.data.message, "error");
-        } else {
-            setCategoryData(listRes.data);
+        try {
+            const listRes = await itemSubCategoryList({
+                page: pageNo.toString(),
+                per_page: pageSize.toString()
+            });
+            if (listRes.error) {
+                showSnackbar(listRes.data.message, "error");
+                throw new Error("Unable to fetch Data");
+            } else {
+                return {
+                    data: listRes.data || [],
+                    total: listRes.pagination.totalPages || 10,
+                    currentPage: listRes.pagination.page || 1,
+                    pageSize: listRes.pagination.limit || 10,
+                };
+            }
+        } finally {
+            setLoading(false);
         }
-        setLoading(false);
+    }
+
+    async function searchItemSubCategory(searchQuery: string, pageSize: number = 10, columnName?: string): Promise<listReturnType> {
+        setLoading(true);
+        try {
+            if (!columnName || columnName === "") throw new Error("Column Name is Invalid");
+            const listRes = await itemSubCategoryList({
+                per_page: pageSize.toString(),
+                [columnName]: searchQuery
+            });
+            if (listRes.error) {
+                showSnackbar(listRes.data.message, "error");
+                throw new Error("Unable to fetch Data");
+            } else {
+                return {
+                    data: listRes.data || [],
+                    total: listRes.pagination.totalPages || 10,
+                    currentPage: listRes.pagination.page || 1,
+                    pageSize: listRes.pagination.limit || 10,
+                };
+            }
+        } finally {
+            setLoading(false);
+        }
     }
 
     useEffect(() => {
-        fetchItemSubCategory();
-    }, []);
+        setLoading(true);
+    }, [setLoading]);
 
-    return loading ? (
-        <Loading />
-    ) : (
+    return (
         <>
             <div className="flex justify-between items-center mb-[20px]">
                 <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
@@ -111,7 +144,7 @@ export default function SubCategory() {
                     <CreateUpdate
                         type="create"
                         onClose={() => setShowCreatePopup(false)}
-                        onRefresh={fetchItemSubCategory}
+                        onRefresh={() => setRefreshKey((prev) => prev + 1)}
                     />
                 </Popup>
             )}
@@ -122,15 +155,20 @@ export default function SubCategory() {
                         type="update"
                         updateItemCategoryData={updateItemCategoryData}
                         onClose={() => setShowUpdatePopup(false)}
-                        onRefresh={fetchItemSubCategory}
+                        onRefresh={() => setRefreshKey((prev) => prev + 1)}
                     />
                 </Popup>
             )}
 
             <div className="h-[calc(100%-60px)]">
                 <Table
-                    data={categoryData}
+                    // data={categoryData}
+                    refreshKey={refreshKey}
                     config={{
+                        api: {
+                            list: fetchItemSubCategory,
+                            search: searchItemSubCategory
+                        },
                         header: {
                             searchBar: false,
                             columnFilter: true,

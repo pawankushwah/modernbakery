@@ -144,12 +144,21 @@ export default function Route() {
         async (
             searchQuery: string,
             pageSize: number = 10,
+            columnName?: string
         ): Promise<searchReturnType> => {
             setLoading(true);
-            const result = await routeGlobalSearch({
-                search: searchQuery,
-                per_page: pageSize.toString(),
-            });
+            let result;
+            if(columnName && columnName !== ""){
+                result = await routeList({
+                    per_page: pageSize.toString(),
+                    [columnName]: searchQuery,
+                });
+            } else {
+                result = await routeGlobalSearch({
+                    search: searchQuery,
+                    per_page: pageSize.toString(),
+                });
+            }
             setLoading(false);
             if (result.error) throw new Error(result.data.message);
             const pagination = result.pagination && result.pagination.pagination ? result.pagination.pagination : {};
