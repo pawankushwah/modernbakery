@@ -89,8 +89,8 @@ export default function AddEditExpenseType() {
   ) => {
     const payload = {
       expense_type_code: values.expense_type_code,
-      expense_name: values.expense_name,
-      expense_status: Number(values.expense_status),
+      expense_type_name: values.expense_name,
+      expense_type_status: Number(values.expense_status),
     };
     try {
       let res;

@@ -81,10 +81,7 @@ const columns = [
                 ? (row.region as { region_name?: string }).region_name || '-'
                 : '-'
 },
-  { key: "osa_code", label: "Agent Customer Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
-  { key: "tin_no", label: "TIN No." },
   { key: "name", label: "Name" },
-  { key: "business_name", label: "Business Name" },
   { key: "business_name", label: "Business Name" },
         { 
                 key: "customer_type", 
@@ -138,14 +135,7 @@ const columns = [
         ? (row.area as { area_name?: string }).area_name || '-'
         : '-'
   },
-  { 
-    key: "route", 
-    label: "Route",
-    render: (row: TableDataType) => 
-      typeof row.route === "object" && row.route !== null && "route_name" in row.route
-        ? (row.route as { name?: string }).name || '-'
-        : '-'
-  },
+ 
   { key: "email", label: "Email" },
   { key: "whatsapp_no", label: "Whatsapp No." },
   { key: "buyertype", label: "Buyer Type" },
@@ -191,7 +181,7 @@ export default function AgentCustomer() {
               setLoading(true);
                 const listRes = await agentCustomerList({
                     // limit: pageSize.toString(),
-                    // page: page.toString(),
+                    page: page.toString(),
                 });
                 setLoading(false);
                 return {
@@ -208,7 +198,29 @@ export default function AgentCustomer() {
         },
         []
     );
-
+    // const searchCountries = useCallback(
+    //     async (
+    //         searchQuery: string,
+    //         pageSize: number
+    //     ): Promise<searchReturnType> => {
+    //         setLoading(true);
+    //         const result = await countryListGlobalSearch({
+    //             query: searchQuery,
+    //             per_page: pageSize.toString(),
+    //         });
+    //         setLoading(false);
+    //         if (result.error) throw new Error(result.data.message);
+    //         else {
+    //             return {
+    //                 data: result.data || [],
+    //                 total: result.pagination.pagination.totalPages || 0,
+    //                 currentPage: result.pagination.pagination.current_page || 0,
+    //                 pageSize: result.pagination.pagination.limit || pageSize,
+    //             };
+    //         }
+    //     },
+    //     []
+    // );
     // const searchCountries = useCallback(
     //     async (
     //         searchQuery: string,
@@ -349,7 +361,7 @@ export default function AgentCustomer() {
                                 },
                             },
                         ],
-                        pageSize: 5,
+                        pageSize: 10,
                     }}
                 />
             </div>

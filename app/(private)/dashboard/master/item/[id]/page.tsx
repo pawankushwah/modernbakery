@@ -209,17 +209,18 @@ export default function AddEditItem() {
         res = await editItem(itemId, payload);
       } else {
         res = await addItem(payload);
+        if (!res?.error) {
+          try {
+            await saveFinalCode({ reserved_code: form.itemCode, model_name: "items" });
+          } catch (e) {
+            // Optionally handle error, but don't block success
+          }
+        }
       }
       if (res?.error) {
         showSnackbar(res.message || (isEditMode ? res.data.message : "Failed to add item"), "error");
       } else {
         showSnackbar(isEditMode ? "Item updated successfully" : "Item added successfully", "success");
-        // Finalize the reserved code after successful add/update
-        try {
-          await saveFinalCode({ reserved_code: form.itemCode, model_name: "items" });
-        } catch (e) {
-          // Optionally handle error, but don't block success
-        }
         router.push("/dashboard/master/item");
       }
     } catch (err) {

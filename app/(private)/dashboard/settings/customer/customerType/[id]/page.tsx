@@ -6,7 +6,7 @@ import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
-
+import Loading from "@/app/components/Loading";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
@@ -74,10 +74,12 @@ export default function AddCustomerTypePage() {
                 : "Customer Type Created Successfully"),
             "success"
           );
-          // Finalize the reserved code after successful add/update
-          try {
-            await saveFinalCode({ reserved_code: values.customer_type_code, model_name: "customer_types" });
-          } catch (e) {}
+          // Finalize the reserved code only after successful add
+          if (!isEditMode || params?.id === "add") {
+            try {
+              await saveFinalCode({ reserved_code: values.customer_type_code, model_name: "customer_types" });
+            } catch (e) {}
+          }
           router.push("/dashboard/settings/customer/customerType");
         }
       } catch (error) {
@@ -98,7 +100,7 @@ export default function AddCustomerTypePage() {
           const res = await getCustomerTypeById(String(params.id));
           if (res?.data) {
             formik.setValues({
-              customer_type_code: res.data.customer_type_code || "",
+              customer_type_code: res.data.code || "",
               name: res.data.name || "",
               status: res.data.status === 1 ? "active" : "inactive",
             });
@@ -137,7 +139,7 @@ export default function AddCustomerTypePage() {
 
       {/* Form */}
       {loading ? (
-        <p>Loading...</p>
+        <Loading></Loading>
       ) : (
         <form onSubmit={formik.handleSubmit}>
           <ContainerCard>

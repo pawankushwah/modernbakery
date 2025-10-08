@@ -71,10 +71,16 @@ const [outletChannels, setOutletChannels] = useState<{ value: string; label: str
           customer_category_code: values.customer_category_code,
         };
         const res = await addCustomerCategory(payload);
-        await saveFinalCode({ reserved_code: values.customer_category_code, model_name: "customer_categories" });
-        showSnackbar("Customer category added successfully ✅", "success");
-        resetForm();
-        router.push("/dashboard/settings/customer/customerCategory");
+        if (!res.error) {
+          try {
+            await saveFinalCode({ reserved_code: values.customer_category_code, model_name: "customer_categories" });
+          } catch (e) {}
+          showSnackbar("Customer category added successfully ✅", "success");
+          resetForm();
+          router.push("/dashboard/settings/customer/customerCategory");
+        } else {
+          showSnackbar("Failed to add customer category ❌", "error");
+        }
       } catch (error) {
         console.error("❌ Add Customer Category failed", error);
         showSnackbar("Failed to add customer category ❌", "error");

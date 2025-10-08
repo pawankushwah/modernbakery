@@ -64,6 +64,13 @@ const [isOpen, setIsOpen] = useState(false);
           res = await updateUser(String(params.id), payload);
         } else {
           res = await addUser(payload);
+          if (!res?.error) {
+            try {
+              await saveFinalCode({ reserved_code: values.code, model_name: "user_types" });
+            } catch (e) {
+              // Optionally handle error, but don't block success
+            }
+          }
         }
 
         if (res.error) {
@@ -76,12 +83,6 @@ const [isOpen, setIsOpen] = useState(false);
                 : "User Type Created Successfully"),
             "success"
           );
-          // Finalize the reserved code after successful add/update
-          try {
-            await saveFinalCode({ reserved_code: values.code, model_name: "user_types" });
-          } catch (e) {
-            // Optionally handle error, but don't block success
-          }
           router.push("/dashboard/settings/user-types");
         }
       } catch (error) {

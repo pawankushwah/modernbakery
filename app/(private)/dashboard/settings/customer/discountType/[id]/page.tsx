@@ -102,13 +102,16 @@ export default function AddEditDiscountType() {
         res = await updateDiscountType(String(params.id), payload);
       } else {
         res = await createDiscountType(payload);
-        try {
-          await saveFinalCode({ reserved_code: values.discount_type_code, model_name: "Discount_type" });
-        } catch (e) {}
       }
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
+        // Finalize the reserved code only after successful add
+        if (!isEditMode || params?.id === "add") {
+          try {
+            await saveFinalCode({ reserved_code: values.discount_type_code, model_name: "Discount_type" });
+          } catch (e) {}
+        }
         showSnackbar(
           res.message || (isEditMode ? "Discount Type Updated Successfully" : "Discount Type Created Successfully"),
           "success"

@@ -244,17 +244,19 @@ export default function AddEditVehicleWithStepper() {
         res = await updateVehicle(id, payload);
       } else {
         res = await addVehicle(payload);
+        if (!res?.error) {
+          try {
+            await saveFinalCode({ reserved_code: form.vehicle_code, model_name: "vehicle" });
+          } catch (e) {
+            // Optionally handle error, but don't block success
+          }
+        }
       }
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(isEditMode ? "Vehicle updated successfully ✅" : "Vehicle added successfully ✅", "success");
         router.push("/dashboard/master/vehicle");
-        try {
-          await saveFinalCode({ reserved_code: form.vehicle_code, model_name: "vehicle" });
-        } catch (e) {
-          // Optionally handle error, but don't block success
-        }
       }
     } catch (err) {
       showSnackbar(isEditMode ? "Update vehicle failed ❌" : "Add vehicle failed ❌", "error");

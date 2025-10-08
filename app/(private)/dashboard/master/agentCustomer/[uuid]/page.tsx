@@ -15,7 +15,7 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 import Loading from "@/app/components/Loading";
 
 interface AgentCustomerFormValues {
-	agent_customer_code: string;
+	osa_code: string;
 	name: string;
 	business_name: string;
 	customer_type: number | string;
@@ -63,7 +63,7 @@ export default function AddEditAgentCustomer() {
 	} = useStepperForm(steps.length);
 
 	const [form, setForm] = useState<AgentCustomerFormValues>({
-		agent_customer_code: "",
+		osa_code: "",
 		name: "",
 		business_name: "",
 		customer_type: "",
@@ -103,11 +103,11 @@ export default function AddEditAgentCustomer() {
 				const data = res?.data ?? res;
 				if (res && !res.error) {
 					setForm({
-						agent_customer_code: data.code || "",
+						osa_code: data.code || data.osa_code || "",
 						name: data.name || "",
 						business_name: data.business_name || "",
-						customer_type: data.customer_type ?? "",
-						route_id: data.route_id ?? "",
+						customer_type: String(data.customer_type?.id) ?? "",
+						route_id: data.route?.id ?? "",
 						is_whatsapp: data.is_whatsapp ?? "",
 						whatsapp_no: data.whatsapp_no || "",
 						email: data.email || "",
@@ -118,11 +118,11 @@ export default function AddEditAgentCustomer() {
 						creditday: data.creditday ?? "",
 						tin_no: data.tin_no || "",
 						threshold_radius: data.threshold_radius ?? "",
-						outlet_channel_id: data.outlet_channel_id ?? "",
-						category_id: data.category_id ?? "",
-						subcategory_id: data.subcategory_id ?? "",
-						region_id: data.region_id ?? "",
-						area_id: data.area_id ?? "",
+						outlet_channel_id: data.outlet_channel?.id ?? "",
+						category_id: data.category?.id ?? "",
+						subcategory_id: data.subcategory?.id ?? "",
+						region_id: data.region?.id ?? "",
+						area_id: data.area?.id ?? "",
 						status: data.status ?? "1",
 					});
 				}
@@ -133,7 +133,7 @@ export default function AddEditAgentCustomer() {
 				(async () => {
 					const res = await genearateCode({model_name:"agent_customers"});
 					if (res?.code) {
-						setForm((prev) => ({ ...prev, agent_customer_code: res.code }));
+						setForm((prev) => ({ ...prev, osa_code: res.code }));
 					}
 					if (res?.prefix) {
 						setPrefix(res.prefix);
@@ -148,7 +148,7 @@ export default function AddEditAgentCustomer() {
 	}, [isEditMode, agentCustomerId]);
 
 	const AgentCustomerSchema = Yup.object().shape({
-		agent_customer_code: Yup.string().required("Agent Customer Code is required"),
+		osa_code: Yup.string().required("Agent Customer Code is required"),
 		name: Yup.string().required("Name is required"),
 		business_name: Yup.string().required("Business Name is required"),
 		customer_type: Yup.string().required("Customer Type is required"),
@@ -192,7 +192,7 @@ export default function AddEditAgentCustomer() {
 	const validateCurrentStep = async (step: number) => {
 		let fields: (keyof AgentCustomerFormValues)[] = [];
 		if (step === 1) fields = [
-		  "agent_customer_code", "tin_no", "name", "business_name", "customer_type", "is_whatsapp", "whatsapp_no", "email", "language"
+		  "osa_code", "tin_no", "name", "business_name", "customer_type", "is_whatsapp", "whatsapp_no", "email", "language"
 		];
 		if (step === 2) fields = [
 		  "buyertype", "payment_type", "creditday", "threshold_radius", "route_id", "outlet_channel_id", "category_id", "subcategory_id", "region_id", "area_id"
@@ -259,6 +259,11 @@ export default function AddEditAgentCustomer() {
 				res = await editAgentCustomer(agentCustomerId, payload);
 			} else {
 				res = await addAgentCustomer(payload);
+				try {
+					await saveFinalCode({ reserved_code: form.osa_code, model_name: "agent_customers" });
+				} catch (e) {
+					// Optionally handle error, but don't block success
+				}
 			}
 			if (res?.error) {
 				showSnackbar(res.data?.message || "Failed to submit form", "error");
@@ -266,11 +271,7 @@ export default function AddEditAgentCustomer() {
 				
 				showSnackbar(isEditMode ? "Agent Customer updated successfully" : "Agent Customer added successfully", "success");
 				router.push("/dashboard/master/agentCustomer");
-				try {
-					await saveFinalCode({ reserved_code: form.agent_customer_code, model_name: "agent_customers" });
-				} catch (e) {
-					// Optionally handle error, but don't block success
-				}
+				
 			}
 		} catch (err) {
 			showSnackbar(isEditMode ? "Update Agent Customer failed" : "Add Agent Customer failed", "error");
@@ -288,8 +289,8 @@ export default function AddEditAgentCustomer() {
 												<div className="flex items-end gap-2 max-w-[406px]">
 																	<InputFields
 																					label="Agent Customer Code"
-																					name="agent_customer_code"
-																					value={form.agent_customer_code}
+																					name="osa_code"
+																					value={form.osa_code}
 																					onChange={e => {
 																						handleChange(e);
 																					}}
@@ -312,9 +313,9 @@ export default function AddEditAgentCustomer() {
 																				onSave={(mode, code) => {
 																					setCodeMode(mode);
 																					if (mode === 'auto' && code) {
-																						setForm((prev) => ({ ...prev, agent_customer_code: code }));
+																						setForm((prev) => ({ ...prev, osa_code: code }));
 																					} else if (mode === 'manual') {
-																						setForm((prev) => ({ ...prev, agent_customer_code: '' }));
+																						setForm((prev) => ({ ...prev, osa_code: '' }));
 																					}
 																				}}
 																			/>

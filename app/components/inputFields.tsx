@@ -55,9 +55,12 @@ export default function InputFields({
   const isSingleSelect = (options && options.length > 0 && isSingle !== false) || (loading && isSingle !== false);
   const selectedValues: string[] = Array.isArray(value) ? value : [];
 
-  const filteredOptions = options?.filter(opt =>
-    opt.label.toLowerCase().includes(search.toLowerCase())
-  ) || [];
+  const filteredOptions = (options?.filter(opt => {
+    const label = opt.label.toLowerCase();
+    // Remove options like 'Select Region', 'Select Item', 'Select ...'
+    if (label.startsWith('select ')) return false;
+    return label.includes(search.toLowerCase());
+  })) || [];
 
 useEffect(() => {
     const dropdown = dropdownRef.current;
@@ -167,9 +170,27 @@ useEffect(() => {
             <span className={`truncate flex-1 ${selectedValues.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
               {loading
                 ? <span className="flex items-center gap-2 text-gray-400"><svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>Loading...</span>
-                : (selectedValues.length === 0 ? `Select ${label}` : options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label).join(", "))
-            }
+                : (() => {
+                    const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
+                    if (selectedValues.length === 0) {
+                      return `Select ${label}`;
+                    }
+                    if (selectedLabels.length <= 2) {
+                      return selectedLabels.join(", ");
+                    } else {
+                      return selectedLabels.slice(0, 2).join(", ");
+                    }
+                  })()
+              }
             </span>
+            {/* Show +N before the arrow if more than 2 selected */}
+            {(() => {
+              const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
+              if (selectedLabels.length > 2) {
+                return <span className="ml-2 font-medium text-gray-700">+{selectedLabels.length - 2}</span>;
+              }
+              return null;
+            })()}
             <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
           </div>
           {dropdownOpen && !loading && (
@@ -185,12 +206,19 @@ useEffect(() => {
                     className="w-full border-none outline-none text-sm"
                   />
                 </div>
-                <div className="flex items-center px-3 py-2 border-b" style={{ borderBottomColor: '#9ca3af' }}>
+                <div
+                  className="flex items-center px-3 py-2 border-b cursor-pointer"
+                  style={{ borderBottomColor: '#9ca3af' }}
+                  onClick={handleSelectAll}
+                >
                   <input
                     type="checkbox"
                     checked={selectedValues.length === filteredOptions.length && filteredOptions.length > 0}
-                    onChange={handleSelectAll}
-                    className="mr-2"
+                    onChange={e => {
+                      e.stopPropagation();
+                      handleSelectAll();
+                    }}
+                    className="mr-2 cursor-pointer"
                     style={selectedValues.length === filteredOptions.length && filteredOptions.length > 0 ? { accentColor: '#EA0A2A' } : {}}
                   />
                   <span className="text-sm select-none">Select All</span>
@@ -201,7 +229,11 @@ useEffect(() => {
                   ) : filteredOptions.map((opt, idx) => (
                     <div
                       key={opt.value + idx}
-                      className="flex items-center px-3 py-2 hover:bg-gray-100"
+                      className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={e => {
+                        e.preventDefault();
+                        handleCheckbox(opt.value);
+                      }}
                     >
                       <input
                         type="checkbox"
@@ -215,10 +247,7 @@ useEffect(() => {
                       />
                       <label
                         className="text-sm select-none cursor-pointer"
-                        onClick={e => {
-                          e.preventDefault();
-                          handleCheckbox(opt.value);
-                        }}
+                        // Remove onClick from label, handled by parent div
                       >
                         {opt.label}
                       </label>

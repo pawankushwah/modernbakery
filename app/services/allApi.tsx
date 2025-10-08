@@ -1868,7 +1868,6 @@ export const deleteSurveyQuestion = async (id:string) => {
     return handleError(error);
   }
 };
-
 export const getSurveyQuestionBySurveyId = async (surveyId: string | number) => {
   try {
     const res = await API.get(`/api/merchendisher/survey-questions/get/${surveyId}`);
@@ -1904,6 +1903,13 @@ export const addSurveyQuestion = async (payload: PayloadSurveyQuestion) => {
   }
 }
 
+ type UpdateSurveyQuestion = {
+  survey_id: number;                    // ID of the survey this question belongs to
+  question: string;                     // The question text
+  question_type: "checkbox" | "radio" | "textbox" | "selectbox" | "commentbox"; // Type of question
+  question_based_selected?: string;     // Comma-separated options for types that require multiple choices
+};
+
 export const UpdateSurveyQuestion = async (id: string, payload:  {
           survey_id: string,
           question: string,
@@ -1918,14 +1924,6 @@ export const UpdateSurveyQuestion = async (id: string, payload:  {
     return handleError(error);
   }
 };
- type UpdateSurveyQuestion = {
-  survey_id: number;                    // ID of the survey this question belongs to
-  question: string;                     // The question text
-  question_type: "checkbox" | "radio" | "textbox" | "selectbox" | "commentbox"; // Type of question
-  question_based_selected?: string;     // Comma-separated options for types that require multiple choices
-};
-
-
 export const companyTypeList = async (params?: Params) => {
   try {
      const res = await API.get("/api/settings/company-types/list",{ params: params });
@@ -1974,8 +1972,6 @@ export const getComponyTypeById = async (id: string) => {
     return handleError(error);
   }};
 
-
-// Roles 
 
 // Roles 
 export const roleList = async (params?: Params) => {
@@ -2049,7 +2045,6 @@ export const permissionListById = async (id: string, params?: Params) => {
 type permissionType = {
   name: string;
 };
-
 
 
 export const addPermission = async (payload:permissionType) => {
@@ -2284,7 +2279,6 @@ export const deleteMenu = async (uuid: string) => {
     return handleError(error);
   }
 };
-
 
 // sub menu APIs
 export const submenuList = async (params?:Params) => {

@@ -76,10 +76,16 @@ const [categories, setCategories] = useState<{ value: string; label: string }[]>
           customer_sub_category_code: values.customer_sub_category_code,
         };
         const res = await addCustomerSubCategory(payload);
-        await saveFinalCode({ reserved_code: values.customer_sub_category_code, model_name: "customer_sub_categories" });
-        showSnackbar("Customer Sub Category added successfully ✅", "success");
-        resetForm();
-        router.push("/dashboard/settings/customer/customerSubCategory");
+        if (!res.error) {
+          try {
+            await saveFinalCode({ reserved_code: values.customer_sub_category_code, model_name: "customer_sub_categories" });
+          } catch (e) {}
+          showSnackbar("Customer Sub Category added successfully ✅", "success");
+          resetForm();
+          router.push("/dashboard/settings/customer/customerSubCategory");
+        } else {
+          showSnackbar("Failed to add sub category ❌", "error");
+        }
       } catch (error) {
         console.error("❌ Add Customer Sub Category failed", error);
         showSnackbar("Failed to add sub category ❌", "error");
