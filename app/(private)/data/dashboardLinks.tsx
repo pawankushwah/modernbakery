@@ -129,6 +129,23 @@ export const initialLinkData: SidebarDataType[] = [
             {
                 isActive: false,
                 href: "#",
+                label: "Harris Transaction",
+                leadingIcon: "streamline-freehand:money-bag",
+                iconColor: "text-green-500",
+                trailingIcon: "mdi-light:chevron-right",
+                children: [ 
+                    {
+                        isActive: false,
+                        href: "/dashboard/harrisTransaction/customerOrder",
+                        label: "Harris Customer Order",
+                        leadingIcon: "mdi:package-variant",
+                        iconColor: "text-cyan-500"
+                    },
+                ]
+            },
+            {
+                isActive: false,
+                href: "#",
                 label: "Merchandisers",
                 leadingIcon: "picon:business",
                 trailingIcon: "mdi-light:chevron-right",
