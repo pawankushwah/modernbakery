@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
@@ -9,7 +8,6 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import Table, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { SurveyList, deleteSurvey } from "@/app/services/allApi";
-import Loading from "@/app/components/Loading";
 import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";

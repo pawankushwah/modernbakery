@@ -1850,11 +1850,11 @@ export const getSurveyQuestions = async (surveyId: string) => {
   }
 };
 
-export const deleteSurveyQuestion = async (id:string) => {
+export const deleteSurveyQuestion = async (id: string | number) => {
   try {
-              const res = await API.delete(`/api/merchendisher/survey-questions/${id}`);  
+    const res = await API.delete(`/api/merchendisher/survey-questions/${id}`);
     return res.data;
-  } catch (error: unknown) {  
+  } catch (error: unknown) {
     return handleError(error);
   }
 };

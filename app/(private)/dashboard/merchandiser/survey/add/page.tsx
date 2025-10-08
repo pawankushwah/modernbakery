@@ -13,7 +13,7 @@ import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { addSurvey, addSurveyQuestion } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 // Question types
 const typesWithOptions = ["check box", "radio", "selectbox"];
 const questionTypes = ["comment box", "check box", "radio", "textbox", "selectbox"];
@@ -263,14 +263,24 @@ export default function AddSurveyTabs() {
                 <ErrorMessage name="status" component="span" className="text-xs text-red-500" />
               </div>
             </div>
-
-            <button
-              type="button"
-              onClick={() => handleCreateSurvey(values, formikHelpers)}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
-            >
-              Create Survey & Go to Questions
-            </button>
+                 <div className="flex justify-end gap-4 mt-6">
+                                 <button
+                                              type="button"
+                                              onClick={() => router.push("/dashboard/merchandiser/survey")}
+                                              className="px-6 py-2 rounded-lg  border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                            >
+                                              Cancel
+                                            </button>
+                             
+                                   <SidebarBtn
+                                           type="button"
+                                            leadingIcon="mdi:check"
+                                          label="Create Survey"
+                                          labelTw="hidden sm:block"
+                                          isActive
+                              onClick={() => handleCreateSurvey(values, formikHelpers)}         />,
+                               
+                              </div>
           </ContainerCard>
         );
 
@@ -279,17 +289,7 @@ export default function AddSurveyTabs() {
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-4">Add Question</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div>
-                <InputFields
-                  label="Question"
-                  name="question"
-                  value={values.question}
-                  onChange={(e) => setFieldValue("question", e.target.value)}
-                />
-                <ErrorMessage name="question" component="span" className="text-xs text-red-500" />
-              </div>
-
-              <div>
+                     <div>
                 <InputFields
                   label="Survey Id"
                   name="survey_id"
@@ -300,6 +300,17 @@ export default function AddSurveyTabs() {
                 />
                 <ErrorMessage name="survey_id" component="span" className="text-xs text-red-500" />
               </div>
+              <div>
+                <InputFields
+                  label="Question"
+                  name="question"
+                  value={values.question}
+                  onChange={(e) => setFieldValue("question", e.target.value)}
+                />
+                <ErrorMessage name="question" component="span" className="text-xs text-red-500" />
+              </div>
+
+       
 
               <div>
                 <InputFields
@@ -354,13 +365,25 @@ export default function AddSurveyTabs() {
               )}
             </div>
 
-              <button
-                type="button"
-                onClick={() => handleAddQuestion(values, formikHelpers)}
-                className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
-              >
-                Submit Question
-              </button>
+             
+               <div className="flex justify-end gap-4 mt-6">
+                                 <button
+                                              type="button"
+                                              onClick={() => router.push("/dashboard/merchandiser/survey")}
+                                              className="px-6 py-2 rounded-lg  border border-gray-300 text-gray-700 hover:bg-gray-100"
+                                            >
+                                              Cancel
+                                            </button>
+                             
+                                   <SidebarBtn
+                                           type="button"
+                                            leadingIcon="mdi:check"
+                                          label="Submit"
+                                          labelTw="hidden sm:block"
+                                          isActive
+                              onClick={() => handleAddQuestion(values, formikHelpers)}           />,
+                               
+                              </div>
               
           </ContainerCard>
         );

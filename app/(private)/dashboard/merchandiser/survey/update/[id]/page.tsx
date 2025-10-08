@@ -9,11 +9,14 @@ import * as Yup from "yup";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
   getSurveyById,
   updateSurvey,
   UpdateSurveyQuestion,
   getSurveyQuestionBySurveyId,
+  deleteSurveyQuestion
 } from "@/app/services/allApi";
 
 const questionTypes = ["comment box", "check box", "radio button", "textbox", "selectbox"];
@@ -40,19 +43,22 @@ interface SurveyFormValues {
 }
 
 interface Question {
+  id: number | string;
   question: string;
   question_type: string;
   survey_id: number | string;
   question_id: string;
-  question_based_selected?: string;
+  question_based_selected?: string | string[];
 }
 
 export default function UpdateSurveyTabs() {
   const router = useRouter();
   const params = useParams();
+  const [questionToDelete, setQuestionToDelete] = useState<Question | null>(null);
+
   const surveyId = params.id;
   const { showSnackbar } = useSnackbar();
-
+  const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [activeTab, setActiveTab] = useState<number>(1);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [initialValues, setInitialValues] = useState<SurveyFormValues>({
@@ -154,37 +160,58 @@ export default function UpdateSurveyTabs() {
       actions.setSubmitting(false);
     }
   };
+const handleConfirmDelete = async (id: string | number) => { 
 
-  const handleUpdateAllQuestions = async () => {
-    try {
-      for (const q of questions) {
-        if (!q.question_id) continue;
 
-        const payload: {
-          survey_id: string,
-          question: string,
-          question_type: string,
-          question_based_selected?: string,
-        } = {
-          survey_id: (surveyId ? surveyId.toString() : ""),
-          question: q.question,
-          question_type: mapQuestionType(q.question_type),
-        };
+  try {
+    const res = await deleteSurveyQuestion(id);
 
-        // Only send question_based_selected if question type requires options
-        if (typesWithOptions.includes(payload.question_type) && q.question_based_selected) {
-          payload.question_based_selected = q.question_based_selected;
-        }
-
-        await UpdateSurveyQuestion(q.question_id, payload);
-      }
-      showSnackbar("All questions updated successfully ✅", "success");
-      router.push("/dashboard/merchandiser/survey");
-    } catch (err) {
-      console.error(err);
-      showSnackbar("Failed to update questions ❌", "error");
+    if (res?.error) {
+      showSnackbar(res.data?.message || "Failed to delete question ❌", "error");
+    } else {
+      showSnackbar(res.message || "Question deleted successfully ✅", "success");
+      // Remove deleted question from state
+      setQuestions((prev) => prev.filter((q) => q.id !== id));
     }
-  };
+  } catch (error) {
+    console.error(error);
+    showSnackbar("Error deleting question ❌", "error");
+  }
+};
+
+
+const handleUpdateAllQuestions = async () => {
+  try {
+    for (const q of questions) {
+      if (!q.question_id) continue;
+
+      const payload = {
+        survey_id: surveyId ? surveyId.toString() : "",
+        question: q.question,
+        question_type: mapQuestionType(q.question_type),
+        question_based_selected: "",
+      };
+
+      // 👇 Correct logic — always send string (joined if array)
+      if (typesWithOptions.includes(payload.question_type)) {
+        payload.question_based_selected =
+          Array.isArray(q.question_based_selected)
+            ? q.question_based_selected.join(",")
+            : typeof q.question_based_selected === "string"
+            ? q.question_based_selected
+            : "";
+      }
+
+      await UpdateSurveyQuestion(q.question_id, payload);
+    }
+
+    showSnackbar("Questions updated successfully ✅", "success");
+    router.push("/dashboard/merchandiser/survey");
+  } catch (err) {
+    console.error(err);
+    showSnackbar("Failed to update questions ❌", "error");
+  }
+};
 
   const renderTabContent = (
     values: SurveyFormValues,
@@ -228,67 +255,180 @@ export default function UpdateSurveyTabs() {
                 ]}
               />
             </div>
-            <button
-              type="button"
-              onClick={() =>
+               <div className="flex justify-end gap-4 mt-6">
+                   <button
+                                type="button"
+                                onClick={() => router.push("/dashboard/merchandiser/survey")}
+                                className="px-6 py-2 rounded-lg  border border-gray-300 text-gray-700 hover:bg-gray-100"
+                              >
+                                Cancel
+                              </button>
+               
+                     <SidebarBtn
+                             type="button"
+                              leadingIcon="mdi:check"
+                            label=" Update"
+                            labelTw="hidden sm:block" 
+                            isActive
+                               onClick={() =>
                 handleUpdateSurvey(values, {
                   setErrors: () => {},
                   setSubmitting: () => {},
                 } as Partial<FormikHelpers<SurveyFormValues>> as FormikHelpers<SurveyFormValues>)
               }
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded"
-            >
-
-
-              Update Survey & Go to Questions
-            </button>
+                          />,
+                 
+                </div>
+            
           </ContainerCard>
         );
       case 2:
         return (
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-4">Update Questions</h2>
-            {questions.length === 0 ? (
-              <p className="text-gray-500">No questions found for this survey.</p>
-            ) : (
-              <>
-                {questions.map((q, idx) => (
-                  <div key={idx} className="grid grid-cols-2 gap-4 mb-4">
-                    <InputFields
-                      label={`Question ${idx + 1}`}
-                      name={`question-${idx}`}
-                      value={q.question}
-                      onChange={(e) => {
-                        const newQuestions = [...questions];
-                        newQuestions[idx].question = e.target.value;
-                        setQuestions(newQuestions);
-                      }}
-                    />
-                    <InputFields
-                      label="Question Type"
-                      type="select"
-                      name={`questionType-${idx}`}
-                      value={q.question_type}
-                      onChange={(e) => {
-                        const newQuestions = [...questions];
-                        newQuestions[idx].question_type = e.target.value;
-                        setQuestions(newQuestions);
-                      }}
-                      options={questionTypes.map((t) => ({ value: t, label: t }))}
-                    />
-                  </div>
-                ))}
-                <div className="flex justify-end mt-6">
-                  <button
-                    type="button"
-                    className="bg-red-600 text-white px-5 py-2 rounded-lg"
-                    onClick={handleUpdateAllQuestions}
-                  >
-                    Update All Questions
-                  </button>
+{questions.length === 0 ? (
+  <p className="text-gray-500">No questions found for this survey.</p>
+) : (
+  <>
+    {questions.map((q, idx) => (
+      <div key={q.id} className="mb-6 grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
+        <InputFields
+          label="Question"
+          name={`question-${idx}`}
+          value={q.question}
+          onChange={(e) => {
+            const newQuestions = [...questions];
+            newQuestions[idx].question = e.target.value;
+            setQuestions(newQuestions);
+          }}
+        />
+        <InputFields
+          label="Question Type "
+          type="select"
+          name={`type-${idx}`}
+          value={q.question_type}
+          onChange={(e) => {
+            const newQuestions = [...questions];
+            newQuestions[idx].question_type = e.target.value;
+            // Reset options if type changes to one without options
+            if (!typesWithOptions.includes(e.target.value)) {
+              newQuestions[idx].question_based_selected = "";
+            } else if (
+              !Array.isArray(newQuestions[idx].question_based_selected)
+            ) {
+              newQuestions[idx].question_based_selected = [""];
+            }
+            setQuestions(newQuestions);
+          }}
+          options={questionTypes.map((type) => ({
+            value: type,
+            label: type.charAt(0).toUpperCase() + type.slice(1),
+          }))}
+        />
+         <button
+      type="button"
+      className="bg-white border border-gray-300 h-10 w-10 p-1 mt-9 rounded flex items-center justify-center hover:bg-gray-100 transition"
+      onClick={() => {
+        setQuestionToDelete(q);
+        setShowDeletePopup(true);
+      }}
+    >
+      <Icon icon="lucide:trash-2" width={22} height={22} />
+    </button>
+        {typesWithOptions.includes(q.question_type) && (
+          <div className="col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Options
+            </label>
+            <div className="flex flex-wrap gap-3">
+              {(Array.isArray(q.question_based_selected)
+                ? q.question_based_selected
+                : typeof q.question_based_selected === "string" && q.question_based_selected
+                ? q.question_based_selected.split(",")
+                : []
+              ).map((opt, optIdx) => (
+                <input
+                  key={optIdx}
+                  type="text"
+                  value={opt}
+                  onChange={(e) => {
+                    const newQuestions = [...questions];
+                    let optionsArr: string[] = [];
+                    if (Array.isArray(newQuestions[idx].question_based_selected)) {
+                      optionsArr = [...newQuestions[idx].question_based_selected];
+                    } else if (
+                      typeof newQuestions[idx].question_based_selected === "string" &&
+                      newQuestions[idx].question_based_selected
+                    ) {
+                      optionsArr = newQuestions[idx].question_based_selected.split(",");
+                    }
+                    optionsArr[optIdx] = e.target.value;
+                    newQuestions[idx].question_based_selected = optionsArr;
+                    setQuestions(newQuestions);
+                  }}
+                  className="border border-gray-300 rounded-lg px-3 h-11 py-2 w-[395px] "
+                  placeholder={`Option ${optIdx + 1}`}
+                />
+              ))}
+              <button
+  type="button"
+  onClick={() => {
+    const newQuestions = [...questions];
+    let optionsArr: string[] = [];
+    if (Array.isArray(newQuestions[idx].question_based_selected)) {
+      optionsArr = [...newQuestions[idx].question_based_selected];
+    } else if (
+      typeof newQuestions[idx].question_based_selected === "string" &&
+      newQuestions[idx].question_based_selected
+    ) {
+      optionsArr = newQuestions[idx].question_based_selected.split(",");
+    }
+
+    if (optionsArr.length >= 6) {
+      showSnackbar("Maximum of 6 options allowed ❌", "warning");
+      return;
+    }
+
+    optionsArr.push("");
+    newQuestions[idx].question_based_selected = optionsArr;
+    setQuestions(newQuestions);
+  }}
+  className="px-3 py-2 border border-dashed border-gray-400 rounded-lg text-sm text-gray-600 hover:bg-gray-100"
+>
+  + Add Option
+</button>
+
+            </div>
+          </div>
+        )}
+      </div>
+    ))}
+
+
+
+                <div className="flex justify-end gap-4 mt-6">
+                   <button
+                                type="button"
+                                onClick={() => router.push("/dashboard/merchandiser/survey")}
+                                className="px-6 py-2 rounded-lg  border border-gray-300 text-gray-700 hover:bg-gray-100"
+                              >
+                                Cancel
+                              </button>
+               
+                     <SidebarBtn
+                             type="button"
+                              leadingIcon="mdi:check"
+                            label="Update Question"
+                            labelTw="hidden sm:block"
+                            isActive
+                               onClick={handleUpdateAllQuestions}
+                          />,
+                 
                 </div>
+                  
               </>
             )}
+            
           </ContainerCard>
         );
       default:
@@ -331,6 +471,15 @@ export default function UpdateSurveyTabs() {
           );
         }}
       </Formik>
+       {showDeletePopup && questionToDelete && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
+    <DeleteConfirmPopup
+      title="Survey Question"
+      onClose={() => setShowDeletePopup(false)}
+      onConfirm={() => questionToDelete && handleConfirmDelete(questionToDelete.id)} // fixed argument
+    />
+  </div>
+)}
     </div>
   );
 }
