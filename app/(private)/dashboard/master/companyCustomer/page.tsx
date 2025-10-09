@@ -230,7 +230,7 @@ export default function CompanyCustomers() {
               actions: [
                 <SidebarBtn
                   key="add-company-customer"
-                  href="/dashboard/settings/company/companyCustomer/add"
+                  href="/dashboard/master/companyCustomer/add"
                   leadingIcon="lucide:plus"
                   label="Add Company Customer"
                   labelTw="hidden sm:block"
@@ -246,7 +246,7 @@ export default function CompanyCustomers() {
               {
                 icon: "lucide:eye",
                 onClick: (data: TableDataType) => {
-                  router.push(`/dashboard/settings/company/companyCustomer/details/${data.id}`);
+                  router.push(`/dashboard/master/companyCustomer/details/${data.id}`);
                 },
               },
               {
@@ -254,7 +254,7 @@ export default function CompanyCustomers() {
                 onClick: (row: TableDataType) => {
                   console.log(row)
                   router.push(
-                    `/dashboard/settings/company/companyCustomer/${row.id}`
+                    `/dashboard/master/companyCustomer/${row.id}`
                   )
                 }
               },
