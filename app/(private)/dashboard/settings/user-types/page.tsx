@@ -35,7 +35,13 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "code", label: "User Code" },
+  { key: "code", label: "User Type Code" ,
+    render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.code}
+            </span>
+        ),
+  },
   { key: "name", label: "User Name" },
   {
     key: "status",

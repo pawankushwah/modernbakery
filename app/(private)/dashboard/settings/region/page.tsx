@@ -205,7 +205,11 @@ const tableData: TableDataType[] = regions.map((s) => ({
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "region_code", label: "Region Code" },
+              { key: "region_code", label: "Region Code",render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.region_code}
+            </span>
+        ), },
               { key: "region_name", label: "Region Name" },
               {
                 key: "status",

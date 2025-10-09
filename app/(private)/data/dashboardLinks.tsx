@@ -26,13 +26,7 @@ export const initialLinkData: SidebarDataType[] = [
     //             leadingIcon: "hugeicons:home-01",
     //             iconColor: "text-blue-500"
     //         },
-    //         {
-    //             isActive: false,
-    //             href: "/dashboard/promotion",
-    //             label: "Promotion",
-    //             leadingIcon: "hugeicons:promotion",
-    //             iconColor: "text-red-500"
-    //         },
+    //        
     //     ],
     // },
     {
@@ -139,7 +133,7 @@ export const initialLinkData: SidebarDataType[] = [
                     //     leadingIcon: "mdi:currency-usd",
                     //     iconColor: "text-yellow-400"
                     // },
-                   
+                 
                    
                    
                 ],
@@ -159,6 +153,13 @@ export const initialLinkData: SidebarDataType[] = [
                     //     leadingIcon: "mdi:currency-usd",
                     //     iconColor: "text-yellow-400"
                     // },
+                       // {
+    //             isActive: false,
+    //             href: "/dashboard/master/promotion",
+    //             label: "Promotion",
+    //             leadingIcon: "hugeicons:promotion",
+    //             iconColor: "text-red-500"
+    //         },
                    
             {
                 isActive: false,

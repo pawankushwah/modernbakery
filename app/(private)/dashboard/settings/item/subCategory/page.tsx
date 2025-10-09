@@ -15,8 +15,14 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
 
 const columns = [
-    { key: "category_id", label: "Category Id" },
-    { key: "sub_category_code", label: "Sub Category Code" },
+
+    { key: "sub_category_code", label: "Sub Category Code",
+        render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.sub_category_code}
+            </span>
+        ),
+     },
     { key: "sub_category_name", label: "Sub Category Name" },
     {
         key: "status",

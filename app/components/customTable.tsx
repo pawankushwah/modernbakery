@@ -571,10 +571,10 @@ function TableBody() {
     <td
         className={`sm:sticky right-0 z-[50] py-[12px] border-[#E9EAEB] bg-white whitespace-nowrap before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB] ${
             rowActions.length === 1
-                ? 'px-[12px] min-w-[48px] max-w-[56px]'
+                ? 'px-[12px] min-w-[48px] max-w-[56px] px-[5px]'
                 : rowActions.length === 2
-                ? 'px-[18px] min-w-[72px] max-w-[80px]'
-                : 'px-[2px] min-w-[90px] max-w-[120px]'
+                ? 'px-[18px] min-w-[72px] max-w-[80px] px-5'
+                : 'px-[2px] min-w-[90px] max-w-[120px] px-5'
         }`}
         style={{
             position: "sticky",
@@ -583,13 +583,13 @@ function TableBody() {
             zIndex: 50,
         }}
     >
-        <div className="flex items-center gap-[4px] justify-center">
+        <div className="flex items-center gap-[3px] justify-center">
             {rowActions.map((action, index) => (
                 <Icon
                     key={index}
                     icon={action.icon}
                     width={20}
-                    className="p-[10px] cursor-pointer text-[#5E5E5E] transition-all duration-200 ease-in-out hover:text-[#EA0A2A] hover:scale-110"
+                    className="p-[10px] cursor-pointer text-[#5E5E5E] transition-all duration-200 ease-in-out hover:text-[#EA0A2A] hover:scale-110 "
                     onClick={() => action.onClick && action.onClick(row)}
                 />
             ))}

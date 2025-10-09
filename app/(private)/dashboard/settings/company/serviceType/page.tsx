@@ -122,7 +122,13 @@ export default function ShelfDisplay() {
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "code", label: "Code" },
+              { key: "code", label: "Code",
+                render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.code}
+            </span>
+        ),
+               },
               { key: "name", label: "Name" },
               { key: "status", label: "Status", render: (data: TableDataType) => (
                   <StatusBtn isActive={data.status && data.status.toString() === "1" ? true : false} />

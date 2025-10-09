@@ -13,9 +13,9 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import {
-    countryList,
-    countryListGlobalSearch,
-    deleteCountry,
+    pricingHeaderList,
+    deletePricingHeader,
+    pricingDetailGlobalSearch,
 } from "@/app/services/allApi";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
@@ -37,15 +37,27 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "country_code", label: "Country Code" ,
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.country_code}
-            </span>
-        ),
-    },
-    { key: "country_name", label: "Country Name" },
-    { key: "currency", label: "Currency" },
+    { key: "code", label: "Promotion Code" },
+    { key: "name", label: "Name" },
+    { key: "start_date", label: "Start Date" },
+    { key: "end_date", label: "End Date" },
+    { key: "apply_on", label: "Apply On" },
+    { key: "warehouse", label: "Warehouse Code",render: (data: TableDataType) => {
+            const typeObj = data.warehouse ? JSON.parse(JSON.stringify(data.warehouse)) : null;
+            return typeObj?.warehouse_code ? typeObj.warehouse_code : "-";
+        }, },
+    { key: "warehouse", label: "Warehouse Name",render: (data: TableDataType) => {
+            const typeObj = data.warehouse ? JSON.parse(JSON.stringify(data.warehouse)) : null;
+            return typeObj?.warehouse_name ? typeObj.warehouse_name : "-";
+        }, },
+    { key: "item_type", label: "Item Code",render: (data: TableDataType) => {
+            const typeObj = data.item_type ? JSON.parse(JSON.stringify(data.item_type)) : null;
+            return typeObj?.category_code ? typeObj.category_code : "-";
+        }, },
+    { key: "item_type", label: "Item Name",render: (data: TableDataType) => {
+            const typeObj = data.item_type ? JSON.parse(JSON.stringify(data.item_type)) : null;
+            return typeObj?.category_name ? typeObj.category_name : "-";
+        }, },
     {
             key: "status",
             label: "Status",
@@ -55,10 +67,12 @@ const columns = [
         },
 ];
 
-export default function Country() {
-    interface CountryItem {
+export default function Pricing() {
+    interface PricingItem {
+
+        uuid?: string;
         id?: number | string;
-        country_code?: string;
+        ose_code?: string;
         country_name?: string;
         currency?: string;
     }
@@ -66,11 +80,11 @@ export default function Country() {
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<CountryItem | null>(null);
+    const [selectedRow, setSelectedRow] = useState<PricingItem | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar(); 
-    type TableRow = TableDataType & { id?: string };
+    type TableRow = TableDataType & { uuid?: string };
 
     const fetchCountries = useCallback(
         async (
@@ -79,8 +93,8 @@ export default function Country() {
         ): Promise<listReturnType> => {
             try {
               setLoading(true);
-                const listRes = await countryList({
-                    limit: pageSize.toString(),
+                const listRes = await pricingHeaderList({
+                    // limit: pageSize.toString(),
                     page: page.toString(),
                 });
                 setLoading(false);
@@ -105,7 +119,7 @@ export default function Country() {
             pageSize: number
         ): Promise<searchReturnType> => {
             setLoading(true);
-            const result = await countryListGlobalSearch({
+            const result = await pricingDetailGlobalSearch({
                 query: searchQuery,
                 per_page: pageSize.toString(),
             });
@@ -126,15 +140,15 @@ export default function Country() {
     const handleConfirmDelete = async () => {
         if (!selectedRow) return;
 
-        if (!selectedRow?.id) throw new Error("Missing id");
-        const res = await deleteCountry(String(selectedRow.id));
+        if (!selectedRow?.uuid) throw new Error("Missing id");
+        const res = await deletePricingHeader(String(selectedRow.uuid));
         if (res.error)
             return showSnackbar(
-                res.data.message || "Failed to delete country",
+                res.data.message || "Failed to delete Promotion",
                 "error"
             );
         else {
-            showSnackbar("Country deleted successfully ", "success");
+            showSnackbar("Promotion deleted successfully ", "success");
             setRefreshKey(refreshKey + 1);
         }
         setLoading(false);
@@ -157,7 +171,7 @@ export default function Country() {
                             search: searchCountries,
                         },
                         header: {
-                            title: "Country",
+                            title: "Promotion",
                             wholeTableActions: [
                                 <div key={0} className="flex gap-[12px] relative">
                                     <DismissibleDropdown
@@ -203,10 +217,10 @@ export default function Country() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/dashboard/settings/country/add"
+                                    href="/dashboard/master/promotion/add"
                                     isActive
                                     leadingIcon="lucide:plus"
-                                    label="Add Country"
+                                    label="Add Promotion"
                                     labelTw="hidden sm:block"
                                 />,
                             ],
@@ -215,30 +229,15 @@ export default function Country() {
                         columns,
                         rowSelection: true,
                         rowActions: [
-                             {
-                                icon: "lucide:eye",
-                                onClick: (data: TableDataType) => {
-                                router.push(
-                                    `/dashboard/settings/country/details/${data.id}`
-                                );
-                                },
-                            },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: object) => {
                                     const row = data as TableRow;
-                                    router.push(`/dashboard/settings/country/${row.id}`);
+                                    router.push(`/dashboard/master/promotion/${row.uuid}`);
 
                                 },
                             },
-                            // {
-                            //     icon: "lucide:trash-2",
-                            //     onClick: (data: object) => {
-                            //         const row = data as TableRow;
-                            //         setSelectedRow({ id: row.id });
-                            //         setShowDeletePopup(true);
-                            //     },
-                            // },
+                            
                         ],
                         pageSize: 10,
                     }}
@@ -248,7 +247,7 @@ export default function Country() {
             {showDeletePopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                     <DeleteConfirmPopup
-                        title="Country"
+                        title="Promotion"
                         onClose={() => setShowDeletePopup(false)}
                         onConfirm={handleConfirmDelete}
                     />

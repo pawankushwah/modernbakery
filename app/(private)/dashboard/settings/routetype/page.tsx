@@ -30,7 +30,13 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-  { key: "route_type_code", label: "Route Type Code" },
+  { key: "route_type_code", label: "Route Type Code" ,
+    render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.route_type_code}
+            </span>
+        ),
+  },
   { key: "route_type_name", label: "Route Type Name" },
   {
     key: "status",
