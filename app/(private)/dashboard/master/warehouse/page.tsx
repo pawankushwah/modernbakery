@@ -337,6 +337,12 @@ export default function Warehouse() {
             columns,
             rowSelection: true,
             rowActions: [
+                {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/master/warehouse/details/${data.id}`);
+                },
+              },
 
               {
                 icon: "lucide:edit-2",

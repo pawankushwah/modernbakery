@@ -87,14 +87,16 @@ const columns = [
       return "-";
     },
   },
-  {
-    key: "status",
-    label: "Status",
-    render: (row: TableDataType) => (
-      <StatusBtn isActive={row.status === "1"} />
-    ),
-  },
+ {
+  key: "status",
+  label: "Status",
+  render: (row: TableDataType) => (
+    <StatusBtn isActive={String(row.status) === "1"} />
+  ),
+},
+
 ];
+
 
 const SalesmanPage = () => {
   const { setLoading } = useLoading();
@@ -207,11 +209,17 @@ const SalesmanPage = () => {
             columns,
             rowSelection: true,
             rowActions: [
+               {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/master/salesman/details/${data.uuid}`);
+                },
+              },
               {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
-                  router.push(`/dashboard/master/salesman/updateSalesman/${r.uuid}`);
+                  router.push(`/dashboard/master/salesman/${r.uuid}`);
                 },
               },
               {

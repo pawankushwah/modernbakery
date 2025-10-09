@@ -63,6 +63,7 @@ const CompanySchema = Yup.object().shape({
   toll_free_no: Yup.string().required("Toll free number is required"),
 });
 
+
 // 🔹 Step-wise schemas
 const stepSchemas = [
   Yup.object({
@@ -144,9 +145,31 @@ export default function AddEditCompany() {
       setIsEditMode(true);
       (async () => {
         const res = await getCompanyById(params.id as string);
-        if (res && !res.error) {
-          setInitialValues(res.data);
-        }
+       if (res && !res.error) {
+    setInitialValues({
+        ...res.data,
+        country_id: res.data.country?.id?.toString() || "",
+        region: res.data.region?.id?.toString() || "",
+        sub_region: res.data.sub_region?.id?.toString() || "",
+        selling_currency: res.data.selling_currency || "USD",
+        purchase_currency: res.data.purchase_currency || "USD",
+        primary_contact: res.data.primary_contact || "",
+        toll_free_no: res.data.toll_free_no || "",
+        company_code: res.data.company_code || "",
+        company_name: res.data.company_name || "",
+        email: res.data.email || "",
+        tin_number: res.data.tin_number || "",
+        vat: res.data.vat || "",
+        street: res.data.street || "",
+        town: res.data.town || "",
+        district: res.data.district || "",
+        landmark: res.data.landmark || "",
+        module_access: res.data.module_access || "",
+        service_type: res.data.service_type || "",
+        status: res.data.status || "1",
+    });
+}
+
       })();
     } else if ((params?.id === "add" || !params?.id) && !codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
@@ -343,7 +366,7 @@ export default function AddEditCompany() {
               required
                 label="Region"
                 name="region"
-                value={values.region}
+                value={String(values.region)}
                 options={regionOptions}
                 onChange={(e) => setFieldValue("region", e.target.value)}
                 error={errors?.region && touched?.region ? errors.region : false}
@@ -352,7 +375,7 @@ export default function AddEditCompany() {
               required
                 label="Sub Region"
                 name="sub_region"
-                value={values.sub_region}
+                value={String(values.sub_region)}
                 options={areaOptions}
                 onChange={(e) => setFieldValue("sub_region", e.target.value)}
                 error={errors?.sub_region && touched?.sub_region ? errors.sub_region : false}

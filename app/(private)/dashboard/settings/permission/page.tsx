@@ -3,13 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-import StatusBtn from "@/app/components/statusBtn2";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Link from "next/link";
 import Table, {
     listReturnType,
-    searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
@@ -26,67 +23,31 @@ interface DropdownItem {
 }
 
 const dropdownDataList: DropdownItem[] = [
-    // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-    // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-    // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 const columns = [
-    {
-        key: "role_name",
-        label: "Role Name",
-        render: (row: TableDataType) => (
-            <Link
-                href={`/dashboard/settings/role/detail/${row.id}`}
-                className="flex items-center cursor-pointer hover:text-[#EA0A2A]"
-            >
-                {row.role_name}
-            </Link>
-        ),
-    },
-    { key: "role_activity", label: "Role Activity" },
-    { key: "menu_id", label: "Menu Id" },
-    { key: "agent_id", label: "Agent Id" },
-    { key: "warehouse_id", label: "Warehouse Id" },
-    {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => (
-            <StatusBtn isActive={row.status ? true : false} />
-        ),
-    },
+    { key: "name", label: "Name" },
 ];
 
 export default function Permissions() {
-    interface RoleItem {
-        id?: number | string;
-        uuid?: number | string;
-        role_name?: string;
-        role_activity?: string;
-        menu_id?: string;
-        agent_id?: string;
-        warehouse_id?: string;
-        status?: string;
+    interface permissionsType {
+        id: number;
+        name: string;
     }
 
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
     const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<RoleItem | null>(null);
+    const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
-    type TableRow = TableDataType & { id?: string };
-
-    const [tableData, setTableData] = useState<TableDataType[]>([]);
 
     const handleConfirmDelete = async () => {
-        if (!selectedRow) return;
-
-        if (!selectedRow?.uuid) throw new Error("Missing id");
-        const res = await deletePermissions(String(selectedRow.uuid));
+        if (!selectedRowId) throw new Error("Missing id");
+        const res = await deletePermissions(String(selectedRowId));
         if (res.error)
             return showSnackbar(
                 res.data.message || "Failed to delete Permission",
@@ -98,7 +59,7 @@ export default function Permissions() {
         }
         setLoading(false);
         setShowDeletePopup(false);
-        setSelectedRow(null);
+        setSelectedRowId(null);
     };
 
     const fetchData = useCallback(
@@ -183,7 +144,7 @@ export default function Permissions() {
                                     />
                                 </div>,
                             ],
-                            searchBar: true,
+                            searchBar: false,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn
@@ -202,18 +163,16 @@ export default function Permissions() {
                         rowActions: [
                             {
                                 icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
+                                onClick: (data: TableDataType) => {
                                     router.push(
-                                        `/dashboard/settings/permission/detail/${row.uuid}`
+                                        `/dashboard/settings/permission/${data.id}`
                                     );
                                 },
                             },
                             {
                                 icon: "lucide:trash-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    setSelectedRow({ uuid: row.uuid });
+                                onClick: (data: TableDataType) => {
+                                    setSelectedRowId(Number(data.id));
                                     setShowDeletePopup(true);
                                 },
                             },

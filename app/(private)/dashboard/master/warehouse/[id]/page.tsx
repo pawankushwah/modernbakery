@@ -329,16 +329,17 @@ export default function AddEditWarehouse() {
             res = await updateWarehouse(warehouseId, payload);
         } else {
             res = await addWarehouse(payload);
+            if (!res?.error) {
+                try {
+                    await saveFinalCode({ reserved_code: form.warehouse_code, model_name: "warehouse" });
+                } catch (e) {
+                    // Optionally handle error, but don't block success
+                }
+            }
         }
         if(res.error) showSnackbar(res.data?.message || "Failed to submit form", "error");
         else {
             showSnackbar(res.message || (isEditMode ? "Warehouse updated successfully" : "Warehouse added successfully"), "success");
-            // Finalize the reserved code after successful add/update
-            try {
-                await saveFinalCode({ reserved_code: form.warehouse_code, model_name: "warehouse" });
-            } catch (e) {
-                // Optionally handle error, but don't block success
-            }
             router.push("/dashboard/master/warehouse");
         }
     };

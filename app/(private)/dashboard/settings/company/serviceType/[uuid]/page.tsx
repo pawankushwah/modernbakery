@@ -5,7 +5,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
-import { addServiceTypes, getServiceTypesByUUID, updateServiceTypes, serviceTypesGenerateCode } from "@/app/services/assetsApi";
+import { addServiceTypes, getServiceTypesByUUID, updateServiceTypes } from "@/app/services/assetsApi";
 import { genearateCode, saveFinalCode } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Form, Formik, FormikHelpers } from "formik";
@@ -68,11 +68,7 @@ export default function AddEditServiceType() {
         (async () => {
           let code = "";
           let prefixVal = "";
-          try {
-            const res = await serviceTypesGenerateCode();
-            if (res?.code) code = res.data.code;
-            if (res?.prefix) prefixVal = res.data.prefix;
-          } catch {}
+          
           if (!code) {
             const res2 = await genearateCode({ model_name: "service_type" });
             if (res2?.code) code = res2.data.code;
@@ -95,15 +91,16 @@ export default function AddEditServiceType() {
         res = await updateServiceTypes(params.uuid as string, values);
       } else {
         res = await addServiceTypes(values);
+        if (!res?.error) {
+          try {
+            await saveFinalCode({ reserved_code: values.service_type_code, model_name: "service_type" });
+          } catch (e) {}
+        }
       }
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(isEditMode ? "Service Type Updated Successfully" : "Service Type Created Successfully", "success");
-        // Finalize the reserved code after successful add/update
-        try {
-          await saveFinalCode({ reserved_code: values.service_type_code, model_name: "service_type" });
-        } catch (e) {}
         router.push("/dashboard/settings/company/serviceType");
       }
     } catch (err) {

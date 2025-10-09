@@ -2,7 +2,7 @@
 
 import BorderIconButton from "@/app/components/borderIconButton";
 import { Icon } from "@iconify-icon/react";
-import { useEffect, useState ,useCallback} from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
@@ -11,7 +11,7 @@ import Table, {
     searchReturnType
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { routeList, deleteRoute,routeGlobalSearch } from "@/app/services/allApi";
+import { routeList, deleteRoute, routeGlobalSearch } from "@/app/services/allApi";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
@@ -27,7 +27,7 @@ const columns = [
         ),
     },
     { key: "route_name", label: "Route Name", isSortable: true, render: (data: TableDataType) => data.route_name ? data.route_name : "-" },
-   
+
     {
         key: "route_Type",
         label: "Route Type",
@@ -61,7 +61,7 @@ const columns = [
         key: "warehouse",
         label: "Warehouse",
         width: 218,
-        render: (data: TableDataType) =>  (typeof data.warehouse === "object" && data.warehouse !== null) ? (data.warehouse as { warehouse_name?: string }).warehouse_name : "-",
+        render: (data: TableDataType) => (typeof data.warehouse === "object" && data.warehouse !== null) ? (data.warehouse as { warehouse_name?: string }).warehouse_name : "-",
         filter: {
             isFilterable: true,
             render: (data: TableDataType[]) => (
@@ -80,7 +80,7 @@ const columns = [
             ),
         },
     },
-     {
+    {
         key: "vehicle_code",
         label: "Vehicle",
         render: (data: TableDataType) => {
@@ -140,28 +140,28 @@ export default function Route() {
             setLoading(false);
         }
     };
-      const searchRoute = useCallback(
+    const searchRoute = useCallback(
         async (
-          searchQuery: string,
-          pageSize: number=10,
+            searchQuery: string,
+            pageSize: number = 10,
         ): Promise<searchReturnType> => {
-          setLoading(true);
-          const result = await routeGlobalSearch({
-            search: searchQuery,
-            per_page: pageSize.toString(),
-          });
-          setLoading(false);
-          if (result.error) throw new Error(result.data.message);
-          const pagination = result.pagination && result.pagination.pagination ? result.pagination.pagination : {};
-          return {
-            data: result.data || [],
-            total: pagination.totalPages || 10,
-            currentPage: pagination.page || 1,
-            pageSize: pagination.limit || 10,
-          };
+            setLoading(true);
+            const result = await routeGlobalSearch({
+                search: searchQuery,
+                per_page: pageSize.toString(),
+            });
+            setLoading(false);
+            if (result.error) throw new Error(result.data.message);
+            const pagination = result.pagination && result.pagination.pagination ? result.pagination.pagination : {};
+            return {
+                data: result.data || [],
+                total: pagination.totalPages || 10,
+                currentPage: pagination.page || 1,
+                pageSize: pagination.limit || 10,
+            };
         },
         []
-      );
+    );
     useEffect(() => {
         setLoading(true);
     }, []);
@@ -194,46 +194,46 @@ export default function Route() {
                         header: {
                             title: "Routes",
                             wholeTableActions: [
-                                    <div key={0} className="flex gap-[12px] relative">
-                                        <BorderIconButton
-                                            icon="ic:sharp-more-vert"
-                                            onClick={() =>
-                                                setShowDropdown(!showDropdown)
-                                            }
-                                        />
+                                <div key={0} className="flex gap-[12px] relative">
+                                    <BorderIconButton
+                                        icon="ic:sharp-more-vert"
+                                        onClick={() =>
+                                            setShowDropdown(!showDropdown)
+                                        }
+                                    />
 
-                                        {showDropdown && (
-                                            <div className="w-[226px] absolute top-[40px] right-0 z-30">
-                                                <CustomDropdown>
-                                                    {dropdownDataList.map(
-                                                        (
-                                                            link,
-                                                            index: number
-                                                        ) => (
-                                                            <div
-                                                                key={index}
-                                                                className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                            >
-                                                                <Icon
-                                                                    icon={
-                                                                        link.icon
-                                                                    }
-                                                                    width={
-                                                                        link.iconWidth
-                                                                    }
-                                                                    className="text-[#717680]"
-                                                                />
-                                                                <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                    {link.label}
-                                                                </span>
-                                                            </div>
-                                                        )
-                                                    )}
-                                                </CustomDropdown>
-                                            </div>
-                                        )}
-                                    </div>
-                                ],
+                                    {showDropdown && (
+                                        <div className="w-[226px] absolute top-[40px] right-0 z-30">
+                                            <CustomDropdown>
+                                                {dropdownDataList.map(
+                                                    (
+                                                        link,
+                                                        index: number
+                                                    ) => (
+                                                        <div
+                                                            key={index}
+                                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                                        >
+                                                            <Icon
+                                                                icon={
+                                                                    link.icon
+                                                                }
+                                                                width={
+                                                                    link.iconWidth
+                                                                }
+                                                                className="text-[#717680]"
+                                                            />
+                                                            <span className="text-[#181D27] font-[500] text-[16px]">
+                                                                {link.label}
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                )}
+                                            </CustomDropdown>
+                                        </div>
+                                    )}
+                                </div>
+                            ],
                             searchBar: true,
                             columnFilter: true,
                             actions: [
@@ -254,6 +254,12 @@ export default function Route() {
                         columns: columns,
                         rowSelection: true,
                         rowActions: [
+                            // {
+                            //     icon: "lucide:eye",
+                            //     onClick: (data: TableDataType) => {
+                            //         router.push(`/dashboard/master/route/details/${data.id}`);
+                            //     },
+                            // },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {

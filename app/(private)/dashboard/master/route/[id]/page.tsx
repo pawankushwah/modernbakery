@@ -122,17 +122,19 @@ export default function AddEditRoute() {
         res = await updateRoute(String(routeId), payload);
       } else {
         res = await addRoutes(payload);
+        if (!res?.error) {
+          try {
+            await saveFinalCode({ reserved_code: routeCode, model_name: "routes" });
+          } catch (e) {
+            // Optionally handle error, but don't block success
+          }
+        }
       }
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(isEditMode ? "Route updated successfully" : "Route added successfully", "success");
         router.push("/dashboard/master/route");
-        try {
-          await saveFinalCode({ reserved_code: routeCode, model_name: "routes" });
-        } catch (e) {
-          // Optionally handle error, but don't block success
-        }
       }
       setSubmitting(false);
     } catch (err) {

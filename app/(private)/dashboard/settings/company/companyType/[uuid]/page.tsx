@@ -89,15 +89,16 @@ const router = useRouter();
         res = await updateCompanyType(params.uuid as string, values);
       } else {
         res = await addCompanyType(values);
+        if (!res?.error) {
+          try {
+            await saveFinalCode({ reserved_code: values.company_type_code, model_name: "company_types" });
+          } catch (e) {}
+        }
       }
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(isEditMode ? "Company Type Updated Successfully" : "Company Type Created Successfully", "success");
-        // Finalize the reserved code after successful add/update
-        try {
-          await saveFinalCode({ reserved_code: values.company_type_code, model_name: "company_types" });
-        } catch (e) {}
         router.push("/dashboard/settings/company/companyType");
       }
     } catch (err) {

@@ -2,7 +2,7 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
 import * as Yup from "yup";
@@ -11,7 +11,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { addCountry, countryById, editCountry } from "@/app/services/allApi";
+import { addCountry, countryById, editCountry, genearateCode, saveFinalCode } from "@/app/services/allApi";
 import Loading from "@/app/components/Loading";
 
 // ✅ Yup Schema
@@ -27,6 +27,10 @@ export default function AddEditCountry() {
   const router = useRouter();
   const params = useParams();
   const [isOpen, setIsOpen] = useState(false);
+  const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
+  const [prefix, setPrefix] = useState('');
+  const [code, setCode] = useState("");
+  const codeGeneratedRef = useRef(false);
   const [initialValues, setInitialValues] = useState({
     country_code: "",
     country_name: "",
@@ -65,6 +69,22 @@ export default function AddEditCountry() {
           setLoading(false);
         }
       })();
+    } else if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({ model_name: "country" });
+        if (res?.code) {
+          setCode(res.code);
+          setInitialValues((prev) => ({ ...prev, country_code: res.code }));
+        }
+        if (res?.prefix) {
+          setPrefix(res.prefix);
+        } else if (res?.code) {
+          // fallback: extract prefix from code if possible
+          const match = res.prefix;
+          if (match) setPrefix(prefix);
+        }
+      })();
     }
   }, [params?.id]);
 
@@ -83,6 +103,9 @@ export default function AddEditCountry() {
       res = await editCountry(String(params.id), payload); // 👈 API call
     } else {
       res = await addCountry(payload);
+      try {
+        await saveFinalCode({ reserved_code: values.country_code, model_name: "country" });
+      } catch (e) {}
     }
 
     if (res.error) {
@@ -141,9 +164,8 @@ export default function AddEditCountry() {
                         required
                         label="Country Code"
                         value={values.country_code}
-                        onChange={(e) =>
-                          setFieldValue("country_code", e.target.value)
-                        }
+                        onChange={(e) => setFieldValue("country_code", e.target.value)}
+                        disabled={codeMode === 'auto' && !isEditMode}
                       />
                       <ErrorMessage
                         name="country_code"
@@ -163,6 +185,16 @@ export default function AddEditCountry() {
                           isOpen={isOpen}
                           onClose={() => setIsOpen(false)}
                           title="Country Code"
+                          prefix={prefix}
+                          setPrefix={setPrefix}
+                          onSave={(mode, code) => {
+                            setCodeMode(mode);
+                            if (mode === 'auto' && code) {
+                              setFieldValue('country_code', code);
+                            } else if (mode === 'manual') {
+                              setFieldValue('country_code', '');
+                            }
+                          }}
                         />
                       </>
                     )}

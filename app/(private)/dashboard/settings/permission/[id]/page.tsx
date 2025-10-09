@@ -11,40 +11,16 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { addShelves, shelvesListById, updateShelves } from "@/app/services/merchandiserApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { addPermission, permissionListById, updatePermission } from "@/app/services/allApi";
 
-const ShelfDisplaySchema = Yup.object().shape({
-  shelf_name: Yup.string().required("Name is required."),
-  valid_from: Yup.date()
-    .required("Field is required.")
-    .typeError("Please enter a valid date"),
-  valid_to: Yup.date()
-    .required("Field is required.")
-    .typeError("Please enter a valid date")
-    .min(
-      Yup.ref("valid_from"),
-      "Valid To date cannot be before Valid From date"
-    ),
-
-  height: Yup.number().required("Height is required."),
-  width: Yup.number().required("Width is required."),
-  depth: Yup.number().required("Depth is required."),
-  customer_ids: Yup.array()
-    .of(Yup.number().required())
-    .min(1, "Please select at least one customer.")
-    .required("Please select at least one customer."),
+const permissionSchema = Yup.object().shape({
+  name: Yup.string().required("Name is required."),
 });
 
-type shelvesType = {
-  shelf_name: string;
-  valid_from: string;
-  valid_to: string;
-  height: string;
-  width: string;
-  depth: string;
-  customer_ids: Array<string>;
-};
+type permissionType = {
+  name: string;
+}
 
 export default function AddShelfDisplay() {
   const { setLoading } = useLoading();
@@ -64,75 +40,53 @@ export default function AddShelfDisplay() {
       ID = ID[0] || "";
   }
 
-  const { companyCustomersOptions } = useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const [shelves, setShelves] = useState<shelvesType | null>(null);
+  const [permission, setPermission] = useState<permissionType | null>(null);
 
   useEffect(() => {
     if (!isEditMode) return;
-    const fetchShelfDisplay = async () => {
+    const fetchPermission = async () => {
         setLoading(true);
-        const res = await shelvesListById(id as string);
+        const res = await permissionListById(id as string);
         setLoading(false);
         if(res.error) {
             showSnackbar(res.data.message || "Unable to fetch Shelf Display List", "error");
             throw new Error("Unable to fetch Shelf Display List");
         } else {
-          setShelves(res.data);
+          setPermission(res.data);
         }
     }
-    fetchShelfDisplay();
+    fetchPermission();
   }, []);
 
-  const getSimpleDate = (isoDateString: string | undefined): string => {
-    if (!isoDateString) return "";
-    return isoDateString.substring(0, 10);
-  };
-
-  const initialValues: shelvesType = {
-    shelf_name: shelves?.shelf_name || "",
-    valid_from: getSimpleDate(shelves?.valid_from),
-    valid_to: getSimpleDate(shelves?.valid_to),
-    height: shelves?.height || "",
-    width: shelves?.width || "",
-    depth: shelves?.depth || "",
-    customer_ids: shelves?.customer_ids
-      ? Array.isArray(shelves.customer_ids)
-        ? shelves.customer_ids.map(String)
-        : (shelves.customer_ids as string).split(",")
-      : [companyCustomersOptions[0]?.value],
+  const initialValues: permissionType = {
+    name: permission?.name || "",
   };
 
   const handleSubmit = async (
-    values: shelvesType,
-    { setSubmitting }: FormikHelpers<shelvesType>
+    values: permissionType,
+    { setSubmitting }: FormikHelpers<permissionType>
   ) => {
     const localPayload = {
-      shelf_name: values.shelf_name.trim(),
-      valid_from: values.valid_from.trim(),
-      valid_to: values.valid_to.trim(),
-      height: Number(values.height.trim()),
-      width: Number(values.width.trim()),
-      depth: Number(values.depth.trim()),
-      customer_ids: values.customer_ids.map(Number),
+      name: values.name.trim(),
     };
 
     setLoading(true);
     let res;
     if (isEditMode && ID) {
-      res = await updateShelves(ID, localPayload);
+      res = await updatePermission(ID, localPayload);
     } else {
-      res = await addShelves(localPayload);
+      res = await addPermission(localPayload);
     }
     setLoading(false);
 
     if(res.error) {
       showSnackbar(res.data.message, "error");
-      throw new Error("Unable to add Shelf Display");
+      throw new Error("Unable to add Permission");
     } else {
-      showSnackbar(res.message || "Shelf Display added locally", "success");
-      router.push("/dashboard/merchandiser/shelfDisplay");
+      showSnackbar(res.message || "Permission Added Successfully", "success");
+      router.push("/dashboard/settings/permission");
     }
     setSubmitting(false);
   };
@@ -140,127 +94,36 @@ export default function AddShelfDisplay() {
   return (
     <div className="w-full h-full p-4">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/dashboard/merchandiser/shelfDisplay">
+        <Link href="/dashboard/settings/permission">
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold">{isEditMode ? "Edit Shelf Display" : "Add New Shelf Display"}</h1>
+        <h1 className="text-xl font-semibold">{isEditMode ? "Edit Permission" : "Add New Permission"}</h1>
       </div>
 
       <Formik
         initialValues={initialValues}
-        validationSchema={ShelfDisplaySchema}
+        validationSchema={permissionSchema}
         enableReinitialize={true}
         onSubmit={handleSubmit}
       >
         {({ values, setFieldValue, isSubmitting, touched, errors }) => (
           <Form>
             <ContainerCard>
-              <h2 className="text-lg font-semibold mb-6">
-                Shelf Display Details
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {/* <h2 className="text-lg font-semibold mb-6">
+                Permission Details
+              </h2> */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <InputFields
                     required
                     label="Name"
-                    name="shelf_name"
-                    value={values.shelf_name}
-                    onChange={(e) => setFieldValue("shelf_name", e.target.value)}
-                    error={touched.shelf_name && errors.shelf_name}
+                    name="name"
+                    value={values.name}
+                    onChange={(e) => setFieldValue("name", e.target.value)}
+                    error={touched.name && errors.name}
                   />
                   <ErrorMessage
-                    name="shelf_name"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
-                <div>
-                  <InputFields
-                    required
-                    label="Customer"
-                    name="customer_ids"
-                    value={values.customer_ids}
-                    isSingle={false}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-                        setFieldValue("customer_ids", e.target.value);
-                    }}
-                    options={companyCustomersOptions}
-                  />
-                  <ErrorMessage
-                    name="customer_ids"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
-
-                <div>
-                  <InputFields
-                    required
-                    label="Valid From"
-                    type="date"
-                    name="valid_from"
-                    value={values.valid_from}
-                    onChange={(e) => setFieldValue("valid_from", e.target.value)}
-                  />
-                  <ErrorMessage
-                    name="valid_from"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
-                <div>
-                  <InputFields
-                    required
-                    label="Valid To"
-                    type="date"
-                    name="valid_to"
-                    value={values.valid_to}
-                    onChange={(e) => setFieldValue("valid_to", e.target.value)}
-                  />
-                  <ErrorMessage
-                    name="valid_to"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
-                <div>
-                  <InputFields
-                    required
-                    label="Height(CM)"
-                    name="height"
-                    value={values.height}
-                    onChange={(e) => setFieldValue("height", e.target.value)}
-                  />
-                  <ErrorMessage
-                    name="height"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
-                <div>
-                  <InputFields
-                    required
-                    label=" Width(CM)"
-                    name="width"
-                    value={values.width}
-                    onChange={(e) => setFieldValue("width", e.target.value)}
-                  />
-                  <ErrorMessage
-                    name="width"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
-                <div>
-                  <InputFields
-                    required
-                    label="Depth(CM)"
-                    name="depth"
-                    value={values.depth}
-                    onChange={(e) => setFieldValue("depth", e.target.value)}
-                  />
-                  <ErrorMessage
-                    name="depth"
+                    name="name"
                     component="span"
                     className="text-xs text-red-500"
                   />

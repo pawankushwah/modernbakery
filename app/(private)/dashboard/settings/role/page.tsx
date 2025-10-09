@@ -85,30 +85,6 @@ export default function Roles() {
         []
     );
 
-    // const searchCountries = useCallback(
-    //     async (
-    //         searchQuery: string,
-    //         pageSize: number
-    //     ): Promise<searchReturnType> => {
-    //         setLoading(true);
-    //         const result = await countryListGlobalSearch({
-    //             query: searchQuery,
-    //             per_page: pageSize.toString(),
-    //         });
-    //         setLoading(false);
-    //         if (result.error) throw new Error(result.data.message);
-    //         else {
-    //             return {
-    //                 data: result.data || [],
-    //                 total: result.pagination.pagination.totalPages || 0,
-    //                 currentPage: result.pagination.pagination.current_page || 0,
-    //                 pageSize: result.pagination.pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     []
-    // );
-
     const handleConfirmDelete = async () => {
         if (!selectedRow) return;
 
@@ -184,7 +160,7 @@ export default function Roles() {
                                     />
                                 </div>
                             ],
-                            searchBar: true,
+                            searchBar: false,
                             columnFilter: true,
                             actions: [
                                 <SidebarBtn

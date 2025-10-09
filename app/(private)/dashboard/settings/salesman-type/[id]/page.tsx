@@ -70,13 +70,16 @@ export default function AddOrEditSalesmanType() {
           res = await updateSalesmanType(String(params.id), payload);
         } else {
           res = await addSalesmanType(payload);
-          if (!res.error) {
-            await saveFinalCode({ reserved_code: values.salesman_type_code, model_name: "salesman_types" });
-          }
         }
         if (res.error) {
           showSnackbar(res.data?.message || "Failed to submit form", "error");
         } else {
+          // Finalize the reserved code only after successful add
+          if (!isEditMode || params?.id === "add") {
+            try {
+              await saveFinalCode({ reserved_code: values.salesman_type_code, model_name: "salesman_types" });
+            } catch (e) {}
+          }
           showSnackbar(
             res.message ||
               (isEditMode

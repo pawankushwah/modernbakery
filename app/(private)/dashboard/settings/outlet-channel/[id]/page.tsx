@@ -60,6 +60,13 @@ const { showSnackbar } = useSnackbar();
           res = await updateOutletChannel(String(params.id), payload);
         } else {
           res = await addOutletChannel(payload);
+          if (!res?.error) {
+            try {
+              await saveFinalCode({ reserved_code: values.outlet_channel_code, model_name: "outlet_channel" });
+            } catch (e) {
+              // Optionally handle error, but don't block success
+            }
+          }
         }
         if (res.error) {
           showSnackbar(res.data?.message || "Failed to submit form", "error");
@@ -71,12 +78,6 @@ const { showSnackbar } = useSnackbar();
                 : "Channel Created Successfully"),
             "success"
           );
-          // Finalize the reserved code after successful add/update
-          try {
-            await saveFinalCode({ reserved_code: values.outlet_channel_code, model_name: "outlet_channel" });
-          } catch (e) {
-            // Optionally handle error, but don't block success
-          }
           router.push("/dashboard/settings/outlet-channel");
         }
       } catch (error) {

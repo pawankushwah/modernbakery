@@ -225,11 +225,17 @@ const DiscountPage = () => {
                         rowSelection: true,
                         rowActions: [
                             {
+                icon: "lucide:eye",
+                onClick: (data: TableDataType) => {
+                  router.push(`/dashboard/master/discount/details/${data.uuid}`);
+                },
+              },
+                            {
                                 icon: "lucide:edit-2",
                                 onClick: (row: object) => {
                                     const r = row as TableDataType;
                                     router.push(
-                                        `/dashboard/master/discount/updateDiscount/${r.uuid}`
+                                        `/dashboard/master/discount/${r.uuid}`
                                     );
                                 },
                             },

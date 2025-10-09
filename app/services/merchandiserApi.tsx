@@ -51,7 +51,7 @@ export const createPlanogramImage = async (body: FormData) => {
 
 export const updatePlanogramImage = async (id: number, body: FormData) => {
     try {
-    const res = await APIFormData.put(`/api/merchendisher/planogram-image/update/${id}`, body);
+    const res = await APIFormData.post(`/api/merchendisher/planogram-image/update/${id}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
