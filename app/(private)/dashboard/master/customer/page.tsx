@@ -200,6 +200,9 @@ export default function Customer() {
                 },
               },
             ],
+            table: {
+              height: "calc(100vh - 300px)",  // can be 300, 200 etc
+            },
             pageSize: 10,
           }}
         />

@@ -77,7 +77,7 @@ const columns = [
     { key: "company_type", label: "Company Type", filter: {
         isFilterable: true,
         render: (data: TableDataType[]) => {
-            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.company_type}</div>);
+            return data.map((item, index) => <div key={index} className="w-full text-left p-2">{item.company_type}</div>);
         }
     } },
     { key: "email", label: "Email", filter: {
@@ -319,6 +319,9 @@ const CompanyPage = () => {
                             ],
                         },
                         localStorageKey: "company-table",
+                        table: {
+                            height: 200,
+                        },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
                         rowSelection: false,
