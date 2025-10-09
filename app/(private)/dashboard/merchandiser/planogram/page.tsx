@@ -1,98 +1,149 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Icon } from "@iconify-icon/react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import CustomDropdown from "@/app/components/customDropdown";
-import BorderIconButton from "@/app/components/borderIconButton";
-import Table, { TableDataType } from "@/app/components/customTable";
+import { Icon } from "@iconify-icon/react";
+import Table, { TableDataType, listReturnType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { planogramList, deletePlanogram } from "@/app/services/allApi";
-import Loading from "@/app/components/Loading";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import BorderIconButton from "@/app/components/borderIconButton";
+import CustomDropdown from "@/app/components/customDropdown";
+import DismissibleDropdown from "@/app/components/dismissibleDropdown";
+import StatusBtn from "@/app/components/statusBtn2";
+import { planogramList } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
+
 interface PlanogramItem {
-  id?: number | string;
-  name?: string;
-  valid_from?: string;
-  valid_to?: string;
-  status?: number | "Active" | "Inactive";
-  
+  id: number | string;
+  name: string;
+  valid_from: string;
+  valid_to: string;
+  status: number | string;
 }
-const dropdownDataList = [
-  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+
+interface DropdownItem {
+  icon: string;
+  label: string;
+  iconWidth: number;
+}
+
+const dropdownDataList: DropdownItem[] = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 export default function Planogram() {
-    const {setLoading} = useLoading();
-  const [planograms, setPlanograms] = useState<PlanogramItem[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<PlanogramItem | null>(null);
-console.log("planograms", planograms);
   const router = useRouter();
+  const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   type TableRow = TableDataType & { id?: string };
 
-  // Normalize API data for table
-const tableData: TableDataType[] = planograms.map((s) => ({
-  id: s.id?.toString() ?? "",
-  name: s.name ?? "",
-  valid_from: s.valid_from ?? "",
-  valid_to: s.valid_to ?? "", 
-  status: s.status === 1 || s.status === "Active" ? "Active" : "Inactive",
-}));
-
-  async function fetchPlanograms() {
+  // Fetch planogram list
+  const fetchPlanogram = useCallback(
+    async (page: number = 1, pageSize: number = 10): Promise<listReturnType> => {
       setLoading(true);
-      const listRes = await planogramList();
-      if(listRes.error) {
-        showSnackbar("Failed to fetch Planograms ❌", "error");
-      } else {
-        setPlanograms(listRes.data);
+    
+      try {
+        const res = await planogramList({ page: page.toString(), limit: pageSize.toString() });
+        setLoading(false);
+        if (res.error) throw new Error(res.message || "Failed to fetch planograms");
+
+        // Normalize status
+        const data: TableDataType[] = res.data.map((item: PlanogramItem) => ({
+          id: item.id.toString(),
+          name: item.name,
+          valid_from: item.valid_from,
+          valid_to: item.valid_to,
+          status: item.status === 1 || String(item.status).toLowerCase() === "active" ? "Active" : "Inactive",
+        }));
+
+        return {
+          data,
+          total: res.pagination?.last_page || 0,
+          currentPage: res.pagination?.current_page || 1,
+          pageSize: res.pagination?.per_page || pageSize,
+        };
+      } catch (err) {
+        setLoading(false);
+        showSnackbar((err as Error).message, "error");
+        return { data: [], total: 0, currentPage: 1, pageSize };
       }
-      setLoading(false);
-    };
-
-  useEffect(() => {
-    fetchPlanograms();
-  }, []);
-
- const handleConfirmDelete = async () => {
-  if (!selectedRow?.id) return;
-
-  const res = await deletePlanogram(String(selectedRow.id));
-  if(res.error) {
-    showSnackbar(res.data.message || "Failed to delete Planogram","error");
-  } else {
-    showSnackbar(res.message || "Planogram deleted successfully", "success");
-    fetchPlanograms();
-  }
-  setShowDeletePopup(false);
-};
+    },
+    [setLoading, showSnackbar]
+  );
 
 
- useEffect(() => {
+  // Global search
+const searchPlanogram = useCallback(
+  async (searchQuery: string): Promise<searchReturnType> => {
     setLoading(true);
-  }, [])
+    try {
+      console.log(searchQuery)
+      // always start from page 1 for a new search
+      const res = await planogramList({
+        search: searchQuery,
+     
+      });
 
+      setLoading(false);
+      if (res.error) throw new Error(res.message || "Search failed");
+
+      const data: TableDataType[] = res.data.map((item: PlanogramItem) => ({
+        id: item.id.toString(),
+        name: item.name,
+        valid_from: item.valid_from,
+        valid_to: item.valid_to,
+        status:
+          item.status === 1 || String(item.status).toLowerCase() === "active"
+            ? "Active"
+            : "Inactive",
+      }));
+      return {
+        data,
+        total: res.pagination?.total || data.length,
+        currentPage: res.pagination?.current_page || 1,
+        pageSize: res.pagination?.per_page ,
+      };
+    } catch (err) {
+      setLoading(false);
+      showSnackbar((err as Error).message, "error");
+      return { data: [], total: 0, currentPage: 1, pageSize: 10 };
+    }
+  },
+  [setLoading, showSnackbar]
+);
+
+
+  // Table columns
+  const columns = [
+    { key: "name", label: "Name" },
+    { key: "valid_from", label: "Valid From" },
+    { key: "valid_to", label: "Valid To" },
+    {
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => <StatusBtn isActive={row.status === "Active"} />,
+    },
+  ];
 
   return (
-    <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Planogram</h1>
-      <div className="flex gap-[12px] relative">
-                
-      
+    <div className="h-[calc(100%-60px)] pb-[22px]">
+      <Table
+        refreshKey={refreshKey}
+        config={{
+          api: {
+            list: fetchPlanogram,
+            search: searchPlanogram,
+          },
+          header: {
+            title: "Planogram",
+            searchBar: true,
+            columnFilter: true,
+            wholeTableActions: [
+              <div key={0} className="flex gap-[12px] relative">
                 <DismissibleDropdown
                   isOpen={showDropdown}
                   setIsOpen={setShowDropdown}
@@ -105,104 +156,45 @@ const tableData: TableDataType[] = planograms.map((s) => ({
                             key={idx}
                             className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
                           >
-                            <Icon
-                              icon={link.icon}
-                              width={link.iconWidth}
-                              className="text-[#717680]"
-                            />
-                            <span className="text-[#181D27] font-[500] text-[16px]">
-                              {link.label}
-                            </span>
+                            <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
+                            <span className="text-[#181D27] font-[500] text-[16px]">{link.label}</span>
                           </div>
                         ))}
                       </CustomDropdown>
                     </div>
                   }
                 />
-              </div>
-      </div>
-
-      {/* Table */}
-      <div className="h-[calc(100%-60px)]">
-<Table
-  data={tableData}
-  config={{
-    header: {
-      searchBar: false,
-      columnFilter: true,
-      actions: [
-        <SidebarBtn
-          key="add-planogram"
-          href="/dashboard/merchandiser/planogram/add"
-          leadingIcon="lucide:plus"
-          label="Add Planogram"
-          labelTw="hidden sm:block"
-          isActive
-        />,
-      ],
-    },
-    footer: { nextPrevBtn: true, pagination: true },
-    columns: [
-      { key: "name", label: "Name" },
-      { key: "valid_from", label: "Valid From" },
-      { key: "valid_to", label: "Valid To" },
-      {
-        key: "status",
-        label: "Status",
-        render: (row: PlanogramItem) => (
-          <div className="flex items-center">
-            {row.status === "Active" ? (
-              <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                Active
-              </span>
-            ) : (
-              <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                Inactive
-              </span>
-            )}
-          </div>
-        ),
-      },
-    ],
-    rowSelection: true,
-    rowActions: [
-        {
-    icon: "lucide:eye",
-    onClick: (data: TableDataType) => {
-      router.push(`/dashboard/merchandiser/planogram/view/${data.id}`);
-    },
-  },
-      {
-        icon: "lucide:edit-2",
-        onClick: (data: object) => {
-          const row = data as TableRow;
-          router.push(`/dashboard/merchandiser/planogram/update/${row.id}`);
-        },
-      },
-      {
-        icon: "lucide:trash-2",
-        onClick: (data: object) => {
-          const row = data as TableRow;
-          setSelectedRow({ id: row.id });
-          setShowDeletePopup(true);
-        },
-      },
-    ],
-    pageSize: 10,
-  }}
-/>
-      </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Planogram"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
-    </>
+              </div>,
+            ],
+            actions: [
+              <SidebarBtn
+                key="add-planogram"
+                href="/dashboard/merchandiser/planogram/add"
+                leadingIcon="lucide:plus"
+                label="Add"
+                labelTw="hidden sm:block"
+                isActive
+              />,
+            ],
+          },
+          footer: { nextPrevBtn: true, pagination: true },
+          columns,
+          rowSelection: true,
+          rowActions: [
+            {
+              icon: "lucide:eye",
+              onClick: (data: TableDataType) =>
+                router.push(`/dashboard/merchandiser/planogram/view/${data.id}`),
+            },
+            {
+              icon: "lucide:edit-2",
+              onClick: (data: TableDataType) =>
+                router.push(`/dashboard/merchandiser/planogram/update/${data.id}`),
+            },
+          ],
+          pageSize: 10,
+        }}
+      />
+    </div>
   );
 }

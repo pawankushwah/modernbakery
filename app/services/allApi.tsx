@@ -1720,13 +1720,16 @@ export const deleteItem = async (id:string) => {
 };
 
 
-export const planogramList = async () => {
+
+
+
+export const planogramList = async (params?: Params) => {
   try {
-              const res = await API.get("/api/merchendisher/planogram/list");
+     const res = await API.get("/api/merchendisher/planogram/list",{ params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
-  }
+  }  
 };
 export const deletePlanogram = async (id:string) => {
   try {
@@ -1776,13 +1779,16 @@ export const getPlanogramById = async (id:string) => {
     return handleError(error);
   }
 };
-export const SurveyList = async () => {
+
+
+export const SurveyList = async (params?: Params) => {
   try {
-              const res = await API.get("/api/merchendisher/survey/list");
+     const res = await API.get("/api/merchendisher/survey/list",{ params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
+  
 };
 export const deleteSurvey = async (id:string) => {
   try {
@@ -1831,14 +1837,26 @@ export const getSurveyById = async (id:string) => {
   }
 };
 
-export const SurveyListGlobalSearch = async (params?: Params) => {
-  try{
-    const res = await API.get(`/api/merchendisher/survey/global-search`, {params: params})
+// export const SurveyListGlobalSearch = async (params?: Params) => {
+//   try{
+//     const res = await API.get(`/api/merchendisher/survey/global-search`, {params: params})
+//     return res.data;
+//   }catch (error: unknown){
+//     return handleError(error)
+//   }
+// }
+
+  
+
+export const surveyGlobalSearch = async (params?: Params) => {
+  try {
+     const res = await API.get("/api/merchendisher/survey/global-search",{ params: params });
     return res.data;
-  }catch (error: unknown){
-    return handleError(error)
+  } catch (error: unknown) {
+    return handleError(error);
   }
-}
+  
+};
 export const SurveyQuestionList = async () => {
   try {
               const res = await API.get("/api/merchendisher/survey-questions/list");
