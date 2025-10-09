@@ -253,7 +253,7 @@ const CompanyPage = () => {
                         },
                         localStorageKey: "company-table",
                         table: {
-                            height: 200,
+                            height: 500,
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
@@ -267,6 +267,7 @@ const CompanyPage = () => {
                             },
                             {
                                 icon: "lucide:edit-2",
+
                                 onClick: (row: object) => {
                                     const r = row as TableDataType;
                                     router.push(
@@ -283,7 +284,7 @@ const CompanyPage = () => {
                                 },
                             },
                         ],
-                        pageSize: 5,
+                        pageSize: 50,
                     }}
                 />
             </div>
