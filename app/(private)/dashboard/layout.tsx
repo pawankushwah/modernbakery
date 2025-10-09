@@ -39,7 +39,7 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
 
     return loading ? <Loading /> :(
         <>
-            {theme === "layoutTheme2" ? (
+            {theme === "layoutTheme" ? (
                 <DashboardLayout0>{children}</DashboardLayout0>
             ) : (
                 <DashboardLayout1>{children}</DashboardLayout1>
