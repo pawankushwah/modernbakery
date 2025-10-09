@@ -354,8 +354,6 @@ useEffect(() => {
           placeholder={`Enter ${label}`}
         />
       ): null}
-
-     
     </div>
   );
 }
