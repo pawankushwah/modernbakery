@@ -40,7 +40,10 @@ const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
-
+const subTypeMapping: Record<string | number, string> = {
+  0: "None",
+  1: "Merchandiser",
+};
 // 🔹 Table columns
 const columns = [
   { key: "osa_code", label: "Salesman Code",
@@ -61,7 +64,31 @@ const columns = [
       return obj?.salesman_type_name || "-";
     },
   },
-  { key: "sub_type", label: "Type" },
+ {
+  key: "sub_type",
+  label: "Sub Type",
+  render: (row: TableDataType) => {
+    const value = row.sub_type;
+
+    // Agar JSON string hai ("{id:1,name:'Merchandiser'}"), to parse karo
+    if (typeof value === "string" && value.startsWith("{")) {
+      try {
+        const obj = JSON.parse(value);
+        return obj.name || subTypeMapping[obj.id] || "-";
+      } catch {
+        return subTypeMapping[value] || "-";
+      }
+    }
+
+    // Agar number ya string hai, to mapping se text lao
+    if (typeof value === "number" || typeof value === "string") {
+      return subTypeMapping[value] || "-";
+    }
+
+    return "-";
+  },
+},
+
   { key: "designation", label: "Designation" },
   { key: "device_no", label: "Device No" },
   {
@@ -73,7 +100,7 @@ const columns = [
       return obj?.route_name || "-";
     },
   },
-  { key: "salesman_role", label: "Salesman Role" },
+
   { key: "username", label: "Username" },
   { key: "contact_no", label: "Contact No" },
   {
@@ -206,7 +233,7 @@ const SalesmanPage = () => {
                   href="/dashboard/master/salesman/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Salesman"
+                  label="Add"
                   labelTw="hidden sm:block"
                 />,
               ],
@@ -215,7 +242,7 @@ const SalesmanPage = () => {
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
-            rowActions: [
+            rowActions: [ 
                {
                 icon: "lucide:eye",
                 onClick: (data: TableDataType) => {
@@ -229,14 +256,7 @@ const SalesmanPage = () => {
                   router.push(`/dashboard/master/salesman/${r.uuid}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (row: object) => {
-                  const r = row as TableDataType;
-                  setSelectedRow({ uuid: r.uuid });
-                  setShowDeletePopup(true);
-                },
-              },
+          
             ],
             pageSize: 5,
           }}

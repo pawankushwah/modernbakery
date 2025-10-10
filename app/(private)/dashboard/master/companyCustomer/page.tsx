@@ -236,7 +236,7 @@ export default function CompanyCustomers() {
                   key="add-company-customer"
                   href="/dashboard/master/companyCustomer/add"
                   leadingIcon="lucide:plus"
-                  label="Add Company Customer"
+                  label="Add"
                   labelTw="hidden sm:block"
                   isActive
                 />,

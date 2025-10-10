@@ -47,33 +47,47 @@ const CompanySchema = Yup.object().shape({
   company_name: Yup.string().required("Company name is required"),
   company_code: Yup.string().required("Company code is required"),
   company_type: Yup.string().required("Company type is required"),
-  website: Yup.string().required("Company website is required"),
+ website: Yup.string()
+  .url("Invalid website URL")
+  .required("Company website is required"),
+    company_logo: Yup.string().required("Company Logo is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
+      region: Yup.string().required("Region is required"),
   country_id: Yup.string().required("Country is required"),
   selling_currency: Yup.string().required("Selling currency is required"),
   purchase_currency: Yup.string().required("Purchase currency is required"),
+   vat: Yup.string()
+  .required("VAT Number is a required field")
+  .max(15, "VAT Number cannot be more than 15 characters"),
+
   service_type: Yup.string().required("Service type is required"),
   status: Yup.string().required("Status is required"),
   district: Yup.string().required("District is required"),
   town: Yup.string().required("Town is required"),
   street: Yup.string().required("Street is required"),
+  landmark: Yup.string().required("Landmark is required"),
   sub_region: Yup.string().required("Sub Region is required"),
   primary_contact: Yup.string().required("Primary contact is required").min(10).max(13),
   toll_free_no: Yup.string().required("Toll free number is required"),
-    module_access: Yup.string(),
+    module_access: Yup.string().required("Module is required field "),
+    
+    
 
 });
 
 
 // 🔹 Step-wise schemas
 const stepSchemas = [
-  Yup.object({
-    company_name: Yup.string().required("Company name is required"),
-    company_code: Yup.string().required("Company code is required"),
-    company_type: Yup.string().required("Company type is required"),
-  website: Yup.string().required("Company website is required"),
-    company_logo: Yup.string(),
-  }),
+Yup.object({
+  company_name: Yup.string().required("Company name is required"),
+  company_code: Yup.string().required("Company code is required"),
+  company_type: Yup.string().required("Company type is required"),
+  website: Yup.string()
+    .url("Invalid website URL")
+    .required("Company website is required"),
+  company_logo: Yup.string().required("Company Logo is required"),
+}),
+
   Yup.object({
     primary_contact: Yup.string().required("Primary contact is required").min(10).max(13),
     primary_code: Yup.string(),
@@ -90,11 +104,19 @@ const stepSchemas = [
     landmark: Yup.string(),
     country_id: Yup.string().required("Country is required"),
   }),
-  Yup.object({
-    selling_currency: Yup.string().required("Selling currency is required"),
-    purchase_currency: Yup.string().required("Purchase currency is required"),
-    vat: Yup.string(),
-  }),
+ 
+Yup.object({
+  selling_currency: Yup.string()
+    .trim()
+    .required("Please select a selling currency"),
+  purchase_currency: Yup.string()
+    .trim()
+    .required("Please select a purchase currency"),
+vat: Yup.string()
+  .required("VAT Number is a required field")
+  .max(15, "VAT Number cannot be more than 15 characters"), 
+}),
+
   Yup.object({
     module_access: Yup.string(),
     service_type: Yup.string().required("Service type is required"),
@@ -129,8 +151,8 @@ export default function AddEditCompany() {
     town: "",
     street: "",
     landmark: "",
-    selling_currency: "USD",
-    purchase_currency: "USD",
+    selling_currency: "",
+    purchase_currency: "",
     vat: "",
     module_access: "",
     service_type: "",
@@ -150,8 +172,8 @@ export default function AddEditCompany() {
             country_id: res.data.country?.id?.toString() || "",
             region: res.data.region?.id?.toString() || "",
             sub_region: res.data.sub_region?.id?.toString() || "",
-            selling_currency: res.data.selling_currency || "USD",
-            purchase_currency: res.data.purchase_currency || "USD",
+            selling_currency: res.data.selling_currency || "",
+            purchase_currency: res.data.purchase_currency || "",
             primary_contact: res.data.primary_contact || "",
             toll_free_no: res.data.toll_free_no || "",
             company_code: res.data.company_code || "",
@@ -331,7 +353,7 @@ export default function AddEditCompany() {
                 <p className="text-red-500 text-sm mt-1">{errors.website}</p>
               )}
             </div>
-
+          <div>
               <InputFields
                 label="Logo"
                 name="company_logo"
@@ -340,6 +362,10 @@ export default function AddEditCompany() {
                 onChange={(e) => setFieldValue("company_logo", e.target.value)}
                 error={touched.company_logo && errors.company_logo}
               />
+                 {errors.company_logo && (
+                <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
+              )}
+               </div>
               
           </div>
         </ContainerCard>

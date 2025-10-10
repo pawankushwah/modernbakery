@@ -304,7 +304,7 @@ export default function VehiclePage() {
                   href="/dashboard/master/vehicle/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Vehicle"
+                  label="Add"
                   labelTw="hidden sm:block"
                 />,
               ],

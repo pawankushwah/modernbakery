@@ -977,17 +977,9 @@ export default function AddCompanyCustomer() {
               Financial & Bank Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <InputFields
-                label="Balance"
-                name="balance"
-                value={values.balance}
-                onChange={(e) => setFieldValue("balance", e.target.value)}
-              />
-              <ErrorMessage
-                name="balance"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+             <div>
+              
+             </div>
 
               <InputFields
                 label="Payment Type"

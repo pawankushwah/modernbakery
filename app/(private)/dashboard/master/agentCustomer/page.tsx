@@ -33,7 +33,24 @@ const dropdownDataList: DropdownItem[] = [
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
+const paymentTypeeMapping: Record<string | number, string> = {
+  0: "Cash",
+  1: "Credit",
+  3: "TC-Bill to Bill",
+ 
+};
+const buyerTypeeMapping: Record<string | number, string> = {
+    0: "B2B",
+  1: "B2C",
 
+};
+const languageTypeeMapping: Record<string | number, string> = {
+  0: "English",
+  1: "Hindi",
+  3: "Spanish",
+  4: "French",
+  5: "German",
+};
 const columns = [
     { key: "osa_code", label: "Agent Customer Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
     { key: "tin_no", label: "TIN No." },
@@ -138,11 +155,82 @@ const columns = [
  
   { key: "email", label: "Email" },
   { key: "whatsapp_no", label: "Whatsapp No." },
-  { key: "buyertype", label: "Buyer Type" },
-  { key: "payment_type", label: "Payment Type" },
+//   { key: "buyertype", label: "Buyer Type" },
+//   { key: "payment_type", label: "Payment Type" },
   { key: "creditday", label: "Credit Day" },
+   {
+  key: "buyertype",
+  label: "Buyer Type",
+  render: (row: TableDataType) => {
+    const value = row.language;
+
+    // Agar JSON string hai ("{id:1,name:'Merchandiser'}"), to parse karo
+    if (typeof value === "string" && value.startsWith("{")) {
+      try {
+        const obj = JSON.parse(value);
+        return obj.name || buyerTypeeMapping[obj.id] || "-";
+      } catch {
+        return buyerTypeeMapping[value] || "-";
+      }
+    }
+
+    // Agar number ya string hai, to mapping se text lao
+    if (typeof value === "number" || typeof value === "string") {
+      return buyerTypeeMapping[value] || "-";
+    }
+
+    return "-";
+  },
+},
+ {
+  key: "payment_type",
+  label: "Payment Type",
+  render: (row: TableDataType) => {
+    const value = row.paymentTypeeMapping;
+
+    // Agar JSON string hai ("{id:1,name:'Merchandiser'}"), to parse karo
+    if (typeof value === "string" && value.startsWith("{")) {
+      try {
+        const obj = JSON.parse(value);
+        return obj.name || paymentTypeeMapping[obj.id] || "-";
+      } catch {
+        return paymentTypeeMapping[value] || "-";
+      }
+    }
+
+    // Agar number ya string hai, to mapping se text lao
+    if (typeof value === "number" || typeof value === "string") {
+      return paymentTypeeMapping[value] || "-";
+    }
+
+    return "-";
+  },
+}, 
   { key: "threshold_radius", label: "Threshold Radius" },
-  { key: "language", label: "Language" },
+ {
+  key: "language",
+  label: "Language",
+  render: (row: TableDataType) => {
+    const value = row.language;
+
+    // Agar JSON string hai ("{id:1,name:'Merchandiser'}"), to parse karo
+    if (typeof value === "string" && value.startsWith("{")) {
+      try {
+        const obj = JSON.parse(value);
+        return obj.name || languageTypeeMapping[obj.id] || "-";
+      } catch {
+        return languageTypeeMapping[value] || "-";
+      }
+    }
+
+    // Agar number ya string hai, to mapping se text lao
+    if (typeof value === "number" || typeof value === "string") {
+      return languageTypeeMapping[value] || "-";
+    }
+
+    return "-";
+  },
+},  
   {
     key: "status",
     label: "Status",
