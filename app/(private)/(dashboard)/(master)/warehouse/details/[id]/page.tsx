@@ -201,17 +201,17 @@ export default function ViewPage() {
                                         { key: "Sub Region Code", value: item?.area?.area_code || "-" },
                                         {
                                             key: "Sub Region Name",
-                                            value: item?.area?.area_name || "-",
-                                        },
+                                            value: item?.area?.area_name || "-" },
                                         { key: "Location", value: item?.location || "-" },
                                         { key: "City", value: item?.city || "-" },
                                         { key: "District", value: item?.district || "-" },
                                         { key: "Town Village", value: item?.town_village || "-" },
                                         { key: "Street", value: item?.street || "-" },
                                         { key: "Landmark", value: item?.landmark || "-" },
-                                       
                                     ]}
                                 />
+                                {/* Map Display */}
+                               
                             </ContainerCard>
                         </div>
                         <div className="flex-1 w-full">
@@ -241,6 +241,20 @@ export default function ViewPage() {
                                         
                                     ]}
                                 />
+                                 {item?.latitude && item?.longitude && (
+                                    <div className="mt-6">
+                                        <div className="text-[18px] mb-2 font-semibold">Map Location</div>
+                                        <iframe
+                                            title="Warehouse Location"
+                                            width="100%"
+                                            height="300"
+                                            style={{ border: 0, borderRadius: '8px' }}
+                                            loading="lazy"
+                                            allowFullScreen
+                                            src={`https://www.google.com/maps?q=${item.latitude},${item.longitude}&hl=es;z=14&output=embed`}
+                                        />
+                                    </div>
+                                )}
                             </ContainerCard>
                         </div>
                     </div>
