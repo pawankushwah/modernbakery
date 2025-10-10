@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBtn from "@/app/components/statusBtn2";
+import WarehouseTabs from "./[tabName]/page";
 
 interface Item {
     id: string;
@@ -94,6 +95,8 @@ export default function ViewPage() {
                 </Link>
                 <h1 className="text-xl font-semibold mb-1">{title}</h1>
             </div>
+           
+           
             <div className="m-auto">
                 <div className="flex flex-wrap gap-x-[20px]">
                     <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
@@ -115,7 +118,6 @@ export default function ViewPage() {
                                         <span className="font-[400]">
                                             {item?.warehouse_code || "-"}
                                         </span>
-
                                     </span>
                                 </span>
                             </div>
@@ -123,8 +125,10 @@ export default function ViewPage() {
                         <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                             <StatusBtn isActive={item?.status === 1 || item?.status === '1'} />
                         </span>
-
                     </ContainerCard>
+                     <div className="mb-4">
+                {/* <WarehouseTabs /> */}
+            </div>
                     <div className="flex flex-col gap-6 w-full md:flex-row md:gap-6">
                         <div className="flex-1 w-full">
                             <ContainerCard className="w-full h-full">
@@ -199,7 +203,6 @@ export default function ViewPage() {
                                         { key: "Street", value: item?.street || "-" },
                                         { key: "Landmark", value: item?.landmark || "-" },
                                        
-                                        { key: "Created By", value: item?.created_by?.firstname + " " + item?.created_by?.lastname || "-" },
                                     ]}
                                 />
                             </ContainerCard>
@@ -219,11 +222,11 @@ export default function ViewPage() {
                                             key: "P12 File",
                                             value: item?.p12_file || "-",
                                         },
-                                        { key: "Password", value: item?.password || "-" },
                                         { key: "Invoice Sync", value: item?.invoice_sync || "-" },
                                         { key: "Is Ifris", value: item?.is_efris || "-" },
                                         { key: "Is Branch", value: item?.is_branch || "-" },
                                         { key: "Branch Id", value: item?.branch_id || "-" },
+                                        
                                     ]}
                                 />
                             </ContainerCard>
@@ -234,3 +237,5 @@ export default function ViewPage() {
         </>
     );
 }
+
+

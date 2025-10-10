@@ -37,9 +37,8 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 const columns = [
-    { key: "code", label: "OSA Code" },
+    { key: "code", label: "Pricing Code" },
     { key: "name", label: "Name" },
-    { key: "description", label: "Description" },
     { key: "start_date", label: "Start Date" },
     { key: "end_date", label: "End Date" },
     { key: "apply_on", label: "Apply On" },
@@ -96,7 +95,7 @@ export default function Pricing() {
               setLoading(true);
                 const listRes = await pricingHeaderList({
                     // limit: pageSize.toString(),
-                    // page: page.toString(),
+                    page: page.toString(),
                 });
                 setLoading(false);
                 return {
@@ -239,14 +238,7 @@ export default function Pricing() {
 
                                 },
                             },
-                            {
-                                icon: "lucide:trash-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    setSelectedRow({ uuid: row.uuid });
-                                    setShowDeletePopup(true);
-                                },
-                            },
+                            
                         ],
                         pageSize: 10,
                     }}

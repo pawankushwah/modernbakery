@@ -141,7 +141,11 @@ export default function CompanyCustomers() {
   /* ---------- Column Configuration ---------- */
   const columns = [
     { key: "sapcode", label: "SAP Code" },
-    { key: "customer_code", label: "Customer Code" },
+    { key: "customer_code", label: "Customer Code",render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.customer_code}
+            </span>
+        ), },
     { key: "business_name", label: "Business Name" },
     { key: "owner_name", label: "Owner Name" },
     { key: "owner_no", label: "Owner Number" },
@@ -230,7 +234,7 @@ export default function CompanyCustomers() {
               actions: [
                 <SidebarBtn
                   key="add-company-customer"
-                  href="/dashboard/settings/company/companyCustomer/add"
+                  href="/dashboard/master/companyCustomer/add"
                   leadingIcon="lucide:plus"
                   label="Add Company Customer"
                   labelTw="hidden sm:block"
@@ -246,7 +250,7 @@ export default function CompanyCustomers() {
               {
                 icon: "lucide:eye",
                 onClick: (data: TableDataType) => {
-                  router.push(`/dashboard/settings/company/companyCustomer/details/${data.id}`);
+                  router.push(`/dashboard/master/companyCustomer/details/${data.id}`);
                 },
               },
               {
@@ -254,7 +258,7 @@ export default function CompanyCustomers() {
                 onClick: (row: TableDataType) => {
                   console.log(row)
                   router.push(
-                    `/dashboard/settings/company/companyCustomer/${row.id}`
+                    `/dashboard/master/companyCustomer/${row.id}`
                   )
                 }
               },
@@ -271,7 +275,7 @@ export default function CompanyCustomers() {
                 },
               },
             ],
-            pageSize: 10,
+            pageSize: 50,
           }}
         />
       </div>

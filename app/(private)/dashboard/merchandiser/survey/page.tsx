@@ -1,218 +1,222 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useState, useCallback } from "react";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
-import Table, { TableDataType } from "@/app/components/customTable";
+import Table, { TableDataType, listReturnType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { SurveyList, deleteSurvey } from "@/app/services/allApi";
+import { SurveyList, surveyGlobalSearch } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import StatusBtn from "@/app/components/statusBtn2";
+
 interface SurveyItem {
-  id?: number | string;
-  survey_code?: string;
-  survey_name?: string;
-  start_date?: string;
-  end_date?: string;
-  status?: number | "Active" | "Inactive";
-  
+  id: number;
+  survey_code: string;
+  survey_name: string;
+  start_date: string;
+  end_date: string;
+  status: number | string;
 }
-const dropdownDataList = [
-  { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+
+interface SurveyApiResponse {
+  error?: boolean;
+  message?: string;
+  data: SurveyItem[];
+  pagination: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+interface DropdownItem {
+  icon: string;
+  label: string;
+  iconWidth: number;
+}
+
+const dropdownDataList: DropdownItem[] = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
   { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 export default function Survey() {
-   const {setLoading} = useLoading();
-  const [surveys, setSurveys] = useState<SurveyItem[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
- 
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<SurveyItem | null>(null);
-
-  const router = useRouter();
+  const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
+  const router = useRouter();
 
-  type TableRow = TableDataType & { id?: string };
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Normalize API data for table
-const tableData: TableDataType[] = surveys.map((s) => ({
-  id: s.id?.toString() ?? "",
-  survey_code: s.survey_code ?? "",
-  survey_name: s.survey_name ?? "",
-  start_date: s.start_date ?? "",
-  end_date: s.end_date ?? "",
-  status:
-    String(s.status).toLowerCase() === "active" || s.status === 1
-      ? "Active"
-      : "Inactive",
-}));
-
-  async function fetchPlanograms() {
+  // ✅ Fetch Surveys (List)
+  const fetchSurveys = useCallback(
+    async (page: number = 1, pageSize: number = 10): Promise<listReturnType> => {
       setLoading(true);
-      const listRes = await SurveyList();
-      
-      if(listRes.error) {
-        showSnackbar("Failed to fetch Surveys ❌", "error");
-      } else {
-        setSurveys(listRes.data);
+      try {
+        const res: SurveyApiResponse = await SurveyList({
+          page: page.toString(),
+          limit: pageSize.toString(),
+        });
+
+        setLoading(false);
+        if (res.error) throw new Error(res.message || "Failed to fetch surveys");
+
+        const data: TableDataType[] = res.data.map((item) => ({
+          id: item.id.toString(),
+          survey_code: item.survey_code,
+          survey_name: item.survey_name,
+          start_date: item.start_date,
+          end_date: item.end_date,
+          status:
+            item.status === 1 || String(item.status).toLowerCase() === "active"
+              ? "Active"
+              : "Inactive",
+        }));
+
+        return {
+          data,
+          total: res.pagination.last_page,
+          currentPage: res.pagination.current_page,
+          pageSize: res.pagination.per_page,
+        };
+      } catch (error) {
+        setLoading(false);
+        showSnackbar((error as Error).message, "error");
+        return { data: [], total: 0, currentPage: 1, pageSize };
       }
-      setLoading(false);
-    };
+    },
+    [setLoading, showSnackbar]
+  );
 
-  useEffect(() => {
-    fetchPlanograms();
-  }, []);
+  // ✅ Global Search (no any)
+  const searchSurvey = useCallback(
+    async (searchQuery: string): Promise<searchReturnType> => {
+    
+      setLoading(true);
+      try {
+        const res: SurveyApiResponse = await surveyGlobalSearch({
+          search: searchQuery,
+       
+        });
 
- const handleConfirmDelete = async () => {
-  if (!selectedRow?.id) return;
+        setLoading(false);
+        if (res.error) throw new Error(res.message || "Search failed");
 
-  const res = await deleteSurvey(String(selectedRow.id));
-  if(res.error) {
-    showSnackbar(res.data.message || "Failed to delete Survey","error");
-  } else {
-    showSnackbar(res.message || "Survey deleted successfully", "success");
-    fetchPlanograms();
-  }
-  setShowDeletePopup(false);
-};
+        const data: TableDataType[] = res.data.map((item) => ({
+          id: item.id.toString(),
+          survey_code: item.survey_code,
+          survey_name: item.survey_name,
+          start_date: item.start_date,
+          end_date: item.end_date,
+          status:
+            item.status === 1 || String(item.status).toLowerCase() === "active"
+              ? "Active"
+              : "Inactive",
+        }));
 
+        return {
+          data,
+          total: res.pagination.last_page,
+          currentPage: res.pagination.current_page,
+          pageSize: res.pagination.per_page,
+        };
+      } catch (error) {
+        setLoading(false);
+        showSnackbar((error as Error).message, "error");
+        return { data: [], total: 0, currentPage: 1, pageSize: 10 };
+      }
+    },
+    [setLoading, showSnackbar]
+  );
 
-useEffect(() => {
-    setLoading(true);
-  }, []);
+  // ✅ Table Columns
+  const columns = [
+    { key: "survey_code", label: "Survey Code" },
+    { key: "survey_name", label: "Survey Name" },
+    { key: "start_date", label: "Start Date" },
+    { key: "end_date", label: "End Date" },
+    {
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => <StatusBtn isActive={row.status === "Active"} />,
+    },
+  ];
 
   return (
-    <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-[20px] font-semibold text-[#181D27]">Survey</h1>
-      <div className="flex gap-[12px] relative">
-                <BorderIconButton icon="gala:file-document" label="Export CSV" />
-                <BorderIconButton icon="mage:upload" />
-      
-                <DismissibleDropdown
-                  isOpen={showDropdown}
-                  setIsOpen={setShowDropdown}
-                  button={<BorderIconButton icon="ic:sharp-more-vert" />}
-                  dropdown={
-                    <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                      <CustomDropdown>
-                        {dropdownDataList.map((link, idx) => (
-                          <div
-                            key={idx}
-                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                          >
-                            <Icon
-                              icon={link.icon}
-                              width={link.iconWidth}
-                              className="text-[#717680]"
-                            />
-                            <span className="text-[#181D27] font-[500] text-[16px]">
-                              {link.label}
-                            </span>
-                          </div>
-                        ))}
-                      </CustomDropdown>
-                    </div>
-                  }
+    <div className="h-[calc(100%-60px)] pb-[22px]">
+      <Table
+        refreshKey={refreshKey}
+        config={{
+          api: {
+            list: fetchSurveys,
+            search: searchSurvey,
+          },
+          header: {
+            title: "Survey",
+            searchBar: true,
+            columnFilter: true,
+            wholeTableActions: [
+              <div key={0} className="flex gap-[12px] relative">
+                <BorderIconButton
+                  icon="ic:sharp-more-vert"
+                  onClick={() => setShowDropdown(!showDropdown)}
                 />
-              </div>
-      </div>
-
-      {/* Table */}
-      <div className="h-[calc(100%-60px)]">
-<Table
-  data={tableData}
-  config={{
-    header: {
-      searchBar: false,
-      columnFilter: true,
-      actions: [
-        <SidebarBtn
-          key="add-survey"
-          href="/dashboard/merchandiser/survey/add"
-          leadingIcon="lucide:plus"
-          label="Add Survey"
-          labelTw="hidden sm:block"
-          isActive
-        />,
-      ],
-    },
-    localStorageKey: "merchandiser-survey-table",
-    footer: { nextPrevBtn: true, pagination: true },
-    columns: [
-      { key: "survey_code", label: "Survey code" },
-      { key: "survey_name", label: "Survey name" },
-      { key: "start_date", label: "Start To" },
-      { key: "end_date", label: "End To" },
-      {
-        key: "status",
-        label: "Status",
-        render: (row: SurveyItem) => (
-          <div className="flex items-center">
-            {row.status === "Active" ? (
-              <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                Active
-              </span>
-            ) : (
-              <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                Inactive
-              </span>
-            )}
-          </div>
-        ),
-      },
-    ],
-    rowSelection: true,
-    rowActions: [
-       {
-    icon: "lucide:eye",
-    onClick: (data: TableDataType) => {
-      router.push(`/dashboard/merchandiser/survey/view/${data.id}`);
-    },
-  },
-  
-    
-      {
-        icon: "lucide:edit-2",
-        onClick: (data: object) => {
-          const row = data as TableRow;
-          router.push(`/dashboard/merchandiser/survey/update/${row.id}`);
-        },
-      },
-      
-      {
-        icon: "lucide:trash-2",
-        onClick: (data: object) => {
-          const row = data as TableRow;
-          setSelectedRow({ id: row.id });
-          setShowDeletePopup(true);
-        },
-      },
-        
-    ],
-    pageSize: 10,
-  }}
-/>
-      </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Survey"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
-    </>
+                {showDropdown && (
+                  <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                    <CustomDropdown>
+                      {dropdownDataList.map((link, idx) => (
+                        <div
+                          key={idx}
+                          className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                        >
+                          <Icon
+                            icon={link.icon}
+                            width={link.iconWidth}
+                            className="text-[#717680]"
+                          />
+                          <span className="text-[#181D27] font-[500] text-[16px]">
+                            {link.label}
+                          </span>
+                        </div>
+                      ))}
+                    </CustomDropdown>
+                  </div>
+                )}
+              </div>,
+            ],
+            actions: [
+              <SidebarBtn
+                key="add-survey"
+                href="/dashboard/merchandiser/survey/add"
+                leadingIcon="lucide:plus"
+                label="Add"
+                labelTw="hidden sm:block"
+                isActive
+              />,
+            ],
+          },
+          footer: { nextPrevBtn: true, pagination: true },
+          columns,
+          rowSelection: true,
+          rowActions: [
+            {
+              icon: "lucide:eye",
+              onClick: (data: TableDataType) =>
+                router.push(`/dashboard/merchandiser/survey/view/${data.id}`),
+            },
+            {
+              icon: "lucide:edit-2",
+              onClick: (data: TableDataType) =>
+                router.push(`/dashboard/merchandiser/survey/update/${data.id}`),
+            },
+          ],
+          pageSize: 10,
+        }}
+      />
+    </div>
   );
 }

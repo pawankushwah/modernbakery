@@ -51,6 +51,12 @@ type configType = {
         icon: string;
         onClick?: (data: TableDataType) => void;
     }[];
+    table?: {
+        width?: number | string;
+        maxWidth?: number | string;
+        maxHeight?: number | string;
+        height?: number | string;
+    };
     footer?: {
         nextPrevBtn?: boolean;
         pagination?: boolean;
@@ -70,7 +76,18 @@ type configType = {
         isSortable?: boolean;
         filter?: {
             isFilterable?: boolean;
-            render: (data: TableDataType[]) => React.ReactNode;
+            width?: number | string;
+            height?: number | string;
+            maxHeight?: number | string;
+            maxWidth?: number | string;
+            render: (
+                data: TableDataType[], 
+                search?: (
+                    search: string,
+                    pageSize: number,
+                    columnName?: string
+                ) => Promise<searchReturnType> | searchReturnType
+            ) => React.ReactNode;
         };
     }[];
 };
@@ -123,7 +140,7 @@ interface TableProps {
     config: configType;
 }
 
-const defaultPageSize = 10;
+const defaultPageSize = 50;
 
 export default function Table({ refreshKey = 0, data, config }: TableProps) {
     return (
@@ -277,7 +294,7 @@ function TableHeader() {
                         </div>
 
                         {/* actions */}
-                        <div className="flex justify-right w-fit gap-[8px]">
+                        <div className="flex justify-right  w-fit gap-[8px]">
                             {config.header?.actions?.map((action) => action)}
 
                             {config.header?.columnFilter && <ColumnFilter />}
@@ -372,7 +389,7 @@ function ColumnFilter() {
                     />
                 }
                 dropdown={
-                    <div className="min-w-[200px] max-w-[350px] w-fit min-h-[200px] max-h-1/2 h-fit fixed right-[50px] translate-y-[10px] z-50 overflow-auto scrollbar-none">
+                    <div className="min-w-[200px] max-w-[350px] w-fit min-h-[200px] max-h-1/2 h-fit fixed right-[50px] translate-y-[10px] z-50 overflow-auto scrollbar-none border-[1px] border-[#E9EAEB] rounded-[8px]">
                         <CustomDropdown>
                             <div className="flex gap-[8px] p-[10px]">
                                 <CustomCheckbox
@@ -479,7 +496,7 @@ function TableBody() {
 
     return (
         <>
-            <div className="overflow-x-auto rounded-lg border border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent">
+            <div className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent" style={displayedData.length > 0 ? { height: config.table?.height, maxHeight: config.table?.maxHeight, width: config.table?.width, maxWidth: config.table?.maxWidth } : undefined}>
                 <table className="table-auto min-w-max w-full">
                     <thead className="text-[12px] bg-[#FAFAFA] text-[#535862] sticky top-0 z-20">
                         <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
@@ -509,12 +526,9 @@ function TableBody() {
                                             >
                                                 <div className="flex items-center gap-[4px] capitalize">
                                                     {col.label}{" "}
-                                                    {col.filter
-                                                        ?.isFilterable && (
-                                                        <FilterTableHeader column={col.key}>
-                                                            {col.filter.render(tableData)}
-                                                        </FilterTableHeader>
-                                                    )}
+                                                    <FilterTableHeader column={col.key} dimensions={col.filter!}>
+                                                        {col.filter?.render(tableData, api?.search)}
+                                                    </FilterTableHeader>
                                                     {col.isSortable && (
                                                         <Icon
                                                             className="cursor-pointer"
@@ -542,7 +556,15 @@ function TableBody() {
 
                             {/* actions */}
                             {rowActions && selectedColumns.length > 0 && (
-                                <th className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]">
+                                <th  className="
+                                sm:sticky right-0 z-[10]
+                                px-[24px] py-[12px] font-[500] text-left
+                                border-[#E9EAEB]
+                                bg-[#FAFAFA] whitespace-nowrap
+                                before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]
+                                "
+                                //  className="sticky top-0 sm:right-0 z-10 px-[24px] py-[12px] font-[500] text-left border-l-[1px] border-[#E9EAEB] bg-[#FAFAFA]"
+                                 >
                                     <div className="flex items-center gap-[4px] whitespace-nowrap">
                                         Actions
                                     </div>
@@ -603,32 +625,34 @@ function TableBody() {
                                         }
                                     )}
 
-                                    {rowActions &&
-                                        selectedColumns.length > 0 && (
-                                            <td className="sm:sticky right-0 z-10 px-[24px] py-[12px] border-l-[1px] border-[#E9EAEB] bg-white whitespace-nowrap">
-                                                <div className="flex items-center gap-[4px]">
-                                                    {rowActions.map(
-                                                        (action, index) => {
-                                                            return (
-                                                                <Icon
-                                                                    key={index}
-                                                                    icon={
-                                                                        action.icon
-                                                                    }
-                                                                    width={20}
-                                                                    className="p-[10px] cursor-pointer"
-                                                                    onClick={() =>
-                                                                        action.onClick &&
-                                                                        action.onClick(
-                                                                            row
-                                                                        )
-                                                                    }
-                                                                />
-                                                            );
-                                                        }
-                                                    )}
-                                                </div>
-                                            </td>
+                                        {rowActions && selectedColumns.length > 0 && (
+                                        <td
+                                            className="
+                                            sm:sticky right-0 z-[10]
+                                            px-[2px] py-[12px]
+                                            border-[#E9EAEB]
+                                            bg-white whitespace-nowrap
+                                            before:content-[''] before:absolute before:top-0 before:left-0 before:w-[1px] before:h-full before:bg-[#E9EAEB]
+                                            "
+                                        >
+                                            <div className="flex items-center gap-[4px]">
+                                            {rowActions.map((action, index) => (
+                                                <Icon
+                                                key={index}
+                                                icon={action.icon}
+                                                width={20}
+                                                className="
+                                                    p-[10px] cursor-pointer
+                                                    text-[#5E5E5E]
+                                                    transition-all duration-200 ease-in-out
+                                                    hover:text-[#EA0A2A]
+                                                    hover:scale-110
+                                                "
+                                                onClick={() => action.onClick && action.onClick(row)}
+                                                />
+                                            ))}
+                                            </div>
+                                        </td>
                                         )}
                                 </tr>
                             ))}
@@ -644,7 +668,7 @@ function TableBody() {
     );
 }
 
-function FilterTableHeader({ column, children }: { column: string; children: React.ReactNode }) {
+function FilterTableHeader({ column, dimensions, children }: { column: string; dimensions: { width?: number|string; height?: number|string; maxWidth?: number|string; maxHeight?: number|string;}; children: React.ReactNode }) {
     const [showFilterDropdown, setShowFilterDropdown] = useState(false);
     const { config } = useContext(Config);
     const { setTableDetails } = useContext(TableDetails);
@@ -677,7 +701,7 @@ function FilterTableHeader({ column, children }: { column: string; children: Rea
                     onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                 />
             }
-            dropdown={<FilterDropdown searchBarValue={searchBarValue} setSearchBarValue={setSearchBarValue} onEnterPress={handleSearch}>{children}</FilterDropdown>}
+            dropdown={<FilterDropdown dimensions={dimensions} searchBarValue={searchBarValue} setSearchBarValue={setSearchBarValue} onEnterPress={handleSearch}>{children}</FilterDropdown>}
         />
     );
 }
