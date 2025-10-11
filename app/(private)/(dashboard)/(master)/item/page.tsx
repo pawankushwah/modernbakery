@@ -212,30 +212,14 @@ export default function Item() {
                         rowSelection: true,
                         rowActions: [
                             {
-<<<<<<< HEAD:app/(private)/dashboard/master/item/page.tsx
                                 icon: "lucide:eye",
                                 onClick: (row: LocalTableDataType) =>
-                                    router.push(`/dashboard/master/item/details/${row.id}`),
+                                    router.push(`/item/details/${row.id}`),
                             },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (row: LocalTableDataType) =>
-                                    router.push(`/dashboard/master/item/${row.id}`),
-=======
-                icon: "lucide:eye",
-                onClick: (data: TableRow) => {
-                  router.push(`/item/details/${data.id}`);
-                },
-              },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(
-                                        `/item/${row.id}`
-                                    );
-                                },
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/page.tsx
+                                    router.push(`/item/${row.id}`),
                             },
                         ],
                         pageSize: 50,

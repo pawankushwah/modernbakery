@@ -47,11 +47,11 @@ export default function Page() {
   const onTabClick = (index: number) => {
     setActiveTab(index);
     // Optionally, if you want route update:
-    // router.replace(`/company/details/${id}/${tabs[index].url}`);
+    // router.replace(`/dashboard/master/company/details/${id}/${tabs[index].url}`);
   };
 
   const title = "Company Details";
-  const backBtnUrl = "/company";
+  const backBtnUrl = "/dashboard/master/company";
 
   useEffect(() => {
     if (!id) return;

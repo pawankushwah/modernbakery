@@ -6,7 +6,7 @@ import { Icon } from "@iconify-icon/react";
 import Image from "next/image";
 
 import ContainerCard from "@/app/components/containerCard";
-import KeyValueData from "@/app/(private)/dashboard/master/customer/[customerId]/keyValueData";
+import KeyValueData from "@/app/components/keyValueData";
 import SummaryCard from "@/app/components/summaryCard";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
@@ -97,7 +97,7 @@ export default function ViewPage() {
         </div>
 
         {/* Right Section */}
-        <div className="w-full flex flex-col gap-y-[20px]">
+        <div className="w-full flex flex-col gap-y-[15px]">
             {item?.description && (
             <ContainerCard className="w-full h-fit">
               <h3 className="text-lg font-semibold mb-3">Description</h3>

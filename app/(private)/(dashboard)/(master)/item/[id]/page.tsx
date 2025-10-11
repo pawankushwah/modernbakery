@@ -61,10 +61,7 @@ export default function AddEditItem() {
     { id: 1, label: "Basic Details" },
     { id: 2, label: "Additional Info" },
     { id: 3, label: "UOM" },
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
     { id: 4, label: "EFRIS" },
-=======
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
   ];
 
   const {
@@ -106,10 +103,7 @@ export default function AddEditItem() {
   const [touched, setTouched] = useState<Partial<Record<keyof ItemFormValues, boolean>>>({});
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
 
-=======
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
   // ---------- Fetch/Edit or Generate Code ----------
   useEffect(() => {
     if (isEditMode && itemId) {
@@ -121,7 +115,6 @@ export default function AddEditItem() {
           const primaryUom = Array.isArray(data.uom) ? data.uom[0] : null;
 
           setForm({
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
   itemCode: data.item_code || "",
   itemName: data.name || "",
   ErpCode: data.erp_code || "",
@@ -180,30 +173,6 @@ export default function AddEditItem() {
 );
 
           }
-=======
-            itemCode: data.code || "",
-            itemName: data.name || "",
-            ErpCode: data.erp_code || "",
-            itemDesc: data.description || "",
-            itemImage: "", // keep file null
-            brand: data.brand || "",
-            itemWeight: data.item_weight || "",
-            itemCategory: data.category_id || "",
-            itemSubCategory: data.sub_category_id || "",
-            shelfLife: data.shelf_life || "",
-            volume: data.volume || "",
-            is_Promotional: data.is_promotional ? "yes" : "no",
-            is_tax_applicable: data.is_tax_applicable ? "yes" : "no",
-            excise: data.excise || "",
-            uom: data.uom || "",
-            uomType: data.uomType || "",
-            upc: data.upc || "",
-            price: data.price || "",
-            is_stock_keeping_unit: data.is_stock_keeping_unit ? "yes" : "no",
-            enable_for: data.enable_for ? "sales" : "return",
-            status: data.status ? "active" : "inactive",
-          });
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
         }
         setLoading(false);
       })();
@@ -224,11 +193,7 @@ export default function AddEditItem() {
     price: string;
     isStockKeepingUnit: string;
     quantity?: string;
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
     enableFor: string;
-=======
-    enableFor: string[];
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
   }
 
   const [uomList, setUomList] = useState<UomRow[]>([]);
@@ -239,17 +204,12 @@ export default function AddEditItem() {
     price: "",
     isStockKeepingUnit: "no",
     quantity: "",
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
     enableFor: "",
-=======
-    enableFor: [],
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
   });
 
   const handleUomChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
     const { name, value } = e.target;
     setUomData((prev) => ({ ...prev, [name]: value }));
   };
@@ -299,43 +259,6 @@ const handleDeleteUom = (index: number) => {
   if (editingIndex === index) setEditingIndex(null); // Reset if deleting the one being edited
   showSnackbar("UOM deleted successfully", "success");
 };
-=======
-    const { name, value, type } = e.target;
-
-    if (type === "checkbox") {
-      const checked = (e.target as HTMLInputElement).checked;
-      setUomData((prev) => ({
-        ...prev,
-        enableFor: checked
-          ? [...prev.enableFor, value]
-          : prev.enableFor.filter((v) => v !== value),
-      }));
-    } else {
-      setUomData((prev) => ({ ...prev, [name]: value }));
-    }
-  };
-
-  const handleAddUom = () => {
-    if (!uomData.uom || !uomData.upc || !uomData.price) {
-      showSnackbar("Please fill all required UOM fields", "error");
-      return;
-    }
-
-    setUomList((prev) => [...prev, uomData]);
-
-    // Reset
-    setUomData({
-      uom: "",
-      uomType: "",
-      upc: "",
-      price: "",
-      isStockKeepingUnit: "no",
-      quantity: "",
-      enableFor: [],
-    });
-    showSnackbar("UOM added successfully", "success");
-  };
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
 
   // ------------------ Form Handlers ------------------
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -381,7 +304,6 @@ const handleDeleteUom = (index: number) => {
     const valid = await validateCurrentStep(currentStep);
     if (!valid) return showSnackbar("Please fill required fields before submit.", "error");
 
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
    const mappedUoms = uomList.map((u) => ({
   uom: u.uom,
   uom_type: u.uomType || "primary",
@@ -436,17 +358,6 @@ const handleDeleteUom = (index: number) => {
   };
 
 
-=======
-    const payload = { ...form, uomList };
-    const res = isEditMode ? await editItem(itemId, payload) : await addItem(payload);
-    if (res?.error) showSnackbar(res.message || "Action failed", "error");
-    else {
-      showSnackbar(isEditMode ? "Item updated" : "Item added", "success");
-      router.push("/dashboard/master/item");
-    }
-  };
-
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
   // ------------------ Render Steps ------------------
   const renderStepContent = () => {
     switch (currentStep) {
@@ -455,7 +366,7 @@ const handleDeleteUom = (index: number) => {
           <div className="bg-white rounded-2xl shadow p-6 mb-6">
             <h2 className="text-lg font-medium mb-4">Basic Details</h2>
             <div className="grid md:grid-cols-3 gap-4">
-              <div className="flex items-start gap-2 max-w-[406px]">
+              <div className="flex items-end gap-2 max-w-[406px]">
                 <InputFields
                   required
                   label="Item Code"
@@ -468,7 +379,7 @@ const handleDeleteUom = (index: number) => {
                   <>
                     <IconButton
                       bgClass="white"
-                       className="  cursor-pointer text-[#252B37] pt-12"
+                      className="mb-2 cursor-pointer text-[#252B37]"
                       icon="mi:settings"
                       onClick={() => setIsOpen(true)}
                     />
@@ -533,7 +444,6 @@ const handleDeleteUom = (index: number) => {
             <h2 className="text-lg font-medium mb-4">UOM</h2>
 
             <div className="grid md:grid-cols-3 gap-4">
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
               <InputFields required label="UOM" name="uom" value={uomData.uom} options={[
                   { label: "Yes", value: "yes" },
                   { label: "No", value: "no" },
@@ -542,10 +452,6 @@ const handleDeleteUom = (index: number) => {
                 { label: "Primary", value: "primary" },
                 { label: "Secondary", value: "secondary" },
               ]} value={uomData.uomType} onChange={handleUomChange} />
-=======
-              <InputFields required label="UOM" name="uom" value={uomData.uom} onChange={handleUomChange} />
-              <InputFields label="UOM Type" name="uomType" value={uomData.uomType} onChange={handleUomChange} />
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
               <InputFields required label="UPC" name="upc" value={uomData.upc} onChange={handleUomChange} />
               <InputFields required label="Price" name="price" value={uomData.price} onChange={handleUomChange} />
               <InputFields
@@ -577,7 +483,6 @@ const handleDeleteUom = (index: number) => {
                   { label: "Return", value: "return" },
                 ]}
               />
-<<<<<<< HEAD:app/(private)/dashboard/master/item/[id]/page.tsx
             </div>
 
             <div className="mt-4 flex justify-end">
@@ -660,50 +565,7 @@ const handleDeleteUom = (index: number) => {
                 onChange={handleChange}
               />
 
-=======
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/[id]/page.tsx
             </div>
-
-            <div className="mt-4 flex justify-end">
-              <SidebarBtn
-                label="Add"
-                isActive={true}
-                leadingIcon="mdi:check"
-                type="button"
-                onClick={handleAddUom}
-              />
-            </div>
-
-            {uomList.length > 0 && (
-              <div className="mt-6 overflow-x-auto">
-                <table className="min-w-full border border-gray-200 rounded-lg">
-                  <thead className="bg-gray-100">
-                    <tr>
-                      <th className="p-2 text-left">UOM</th>
-                      <th className="p-2 text-left">UPC</th>
-                      <th className="p-2 text-left">Price</th>
-                      <th className="p-2 text-left">Stock Keeping Unit</th>
-                      <th className="p-2 text-left">Quantity</th>
-                      <th className="p-2 text-left">UOM Type</th>
-                      <th className="p-2 text-left">Enable For</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {uomList.map((item, idx) => (
-                      <tr key={idx} className="border-t">
-                        <td className="p-2">{item.uom}</td>
-                        <td className="p-2">{item.upc}</td>
-                        <td className="p-2">{item.price}</td>
-                        <td className="p-2">{item.isStockKeepingUnit}</td>
-                        <td className="p-2">{item.quantity || "-"}</td>
-                        <td className="p-2">{item.uomType}</td>
-                        <td className="p-2">{item.enableFor.join(", ")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
           </div>
         );
 

@@ -1,15 +1,5 @@
 "use client";
 
-<<<<<<< HEAD:app/(private)/dashboard/master/item/details/[id]/page.tsx
-=======
-import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
-import ContainerCard from "@/app/components/containerCard";
-import { useLoading } from "@/app/services/loadingContext";
-import { itemById } from "@/app/services/allApi";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/details/[id]/page.tsx
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -34,7 +24,6 @@ interface Item {
   status?: string | number;
 }
 
-<<<<<<< HEAD:app/(private)/dashboard/master/item/details/[id]/page.tsx
 export const tabs = [
   {
     name: "Overview",
@@ -47,10 +36,6 @@ export const tabs = [
     component: <Uom />,
   },
 ];
-=======
-const title = "Item Details";
-const backBtnUrl = "/item";
->>>>>>> 9e5aa16dc8fec75dd2dc093ed4d84dce1ec160fd:app/(private)/(dashboard)/(master)/item/details/[id]/page.tsx
 
 export default function Page() {
   const { id, tabName } = useParams();
