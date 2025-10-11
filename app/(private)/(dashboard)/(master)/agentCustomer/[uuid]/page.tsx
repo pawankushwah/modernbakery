@@ -17,10 +17,11 @@ import {
     genearateCode,
     addAgentCustomer,
     saveFinalCode,
+    routeList,
+    customerSubCategoryList,
 } from "@/app/services/allApi";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import Loading from "@/app/components/Loading";
 import {
     Form,
     Formik,
@@ -28,6 +29,7 @@ import {
     FormikHelpers,
     FormikTouched,
 } from "formik";
+import { useLoading } from "@/app/services/loadingContext";
 
 interface AgentCustomerFormValues {
     osa_code: string;
@@ -68,19 +70,23 @@ const paymentTypeOptions = [
 
 export default function AddEditAgentCustomer() {
     const {
+        loading,
         warehouseOptions,
         routeOptions,
         customerTypeOptions,
         customerCategoryOptions,
         customerSubCategoryOptions,
         channelOptions,
-        onlyCountryOptions
+        // onlyCountryOptions
     } = useAllDropdownListData();
     const [isOpen, setIsOpen] = useState(false);
     const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
     const [prefix, setPrefix] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [filteredRouteOptions, setFilteredRouteOptions] = useState(routeOptions);
+    const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState(customerSubCategoryOptions);
+
     const { showSnackbar } = useSnackbar();
+    const { setLoading } = useLoading();
     const router = useRouter();
     const params = useParams();
     const agentCustomerId = params?.uuid as string | undefined;
@@ -92,8 +98,6 @@ export default function AddEditAgentCustomer() {
         { id: 3, label: "Contact" },
         { id: 4, label: "Financial" },
         { id: 6, label: "Additional" }
-        // { id: 1, label: "Agent Customer Details" },
-        // { id: 2, label: "Location Information" },
     ];
     const {
         currentStep,
@@ -137,7 +141,42 @@ export default function AddEditAgentCustomer() {
         }
     );
 
-    // Show loader in edit mode while loading (must be after all hooks and before return)
+    useEffect(() => {
+        if(loading) setLoading(true);
+        else setLoading(false);
+    }, [loading, setLoading]);
+
+    const fetchRoutes = async (value: string) => {
+        const filteredOptions = await routeList({
+            warehouse_id: value,
+            per_page: "10",
+        });
+        if(filteredOptions.error) {
+            showSnackbar(filteredOptions.data?.message || "Failed to fetch routes", "error");
+            return;
+        }
+        const options = filteredOptions?.data || [];
+        setFilteredRouteOptions(options.map((route: { id: number; route_name: string }) => ({
+            value: String(route.id),
+            label: route.route_name,
+        })));
+    };
+
+    const fetchSubCategories = async (value: string) => {
+        const filteredOptions = await customerSubCategoryList({
+            customer_category_id: value,
+            per_page: "10",
+        });
+        if(filteredOptions.error) {
+            showSnackbar(filteredOptions.data?.message || "Failed to fetch Customer Sub Categories", "error");
+            return;
+        }
+        const options = filteredOptions?.data || [];
+        setFilteredCustomerSubCategoryOptions(options.map((subCategory: { id: number; customer_sub_category_code: string; customer_sub_category_name: string }) => ({
+            value: String(subCategory.id),
+            label: subCategory.customer_sub_category_name + " - " + subCategory.customer_sub_category_code,
+        })));
+    }
 
     // Prevent double call of genearateCode in add mode
     const codeGeneratedRef = useRef(false);
@@ -546,7 +585,7 @@ export default function AddEditAgentCustomer() {
                                 Customer
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="flex items-end gap-2 max-w-[406px]">
+                                <div className="flex items-start gap-2 max-w-[406px]">
                                     <InputFields
                                         label="OSA Code"
                                         name="osa_code"
@@ -563,7 +602,7 @@ export default function AddEditAgentCustomer() {
                                         <>
                                             <IconButton
                                                 bgClass="white"
-                                                className="mb-2 cursor-pointer text-[#252B37]"
+                                                className="mt-[45px] cursor-pointer text-[#252B37]"
                                                 icon="mi:settings"
                                                 onClick={() => setIsOpen(true)}
                                             />
@@ -672,12 +711,12 @@ export default function AddEditAgentCustomer() {
                                         name="warehouse"
                                         value={values.warehouse}
                                         options={warehouseOptions}
-                                        onChange={(e) =>
-                                            setFieldValue(
-                                                "warehouse",
-                                                e.target.value
-                                            )
-                                        }
+                                        onChange={(e) => {
+                                            setFieldValue("warehouse", e.target.value);
+                                            if (values.warehouse !== e.target.value) {
+                                                fetchRoutes(e.target.value);
+                                            }
+                                        }}
                                         error={
                                             touched.warehouse &&
                                             errors.warehouse
@@ -699,15 +738,13 @@ export default function AddEditAgentCustomer() {
                                             values.route_id?.toString() ?? ""
                                         }
                                         onChange={(e) =>
-                                            setFieldValue(
-                                                "route_id",
-                                                e.target.value
-                                            )
+                                            setFieldValue("route_id",e.target.value)
                                         }
+                                        disabled={filteredRouteOptions.length === 0}
                                         error={
                                             touched.route_id && errors.route_id
                                         }
-                                        options={routeOptions}
+                                        options={filteredRouteOptions}
                                     />
                                     {touched.route_id && errors.route_id && (
                                         <div className="text-red-500 text-xs mt-1">
@@ -1092,12 +1129,12 @@ export default function AddEditAgentCustomer() {
                                         value={
                                             values.category_id?.toString() ?? ""
                                         }
-                                        onChange={(e) =>
-                                            setFieldValue(
-                                                "category_id",
-                                                e.target.value
-                                            )
-                                        }
+                                        onChange={(e) => {
+                                            setFieldValue("category_id", e.target.value);
+                                            if (values.category_id !== e.target.value) {
+                                                fetchSubCategories(e.target.value);
+                                            }
+                                        }}
                                         error={
                                             touched.category_id &&
                                             errors.category_id
@@ -1126,11 +1163,12 @@ export default function AddEditAgentCustomer() {
                                                 e.target.value
                                             )
                                         }
+                                        disabled={filteredCustomerSubCategoryOptions.length === 0}
                                         error={
                                             touched.subcategory_id &&
                                             errors.subcategory_id
                                         }
-                                        options={customerSubCategoryOptions}
+                                        options={filteredCustomerSubCategoryOptions}
                                     />
                                     {touched.subcategory_id &&
                                         errors.subcategory_id && (
@@ -1249,13 +1287,6 @@ export default function AddEditAgentCustomer() {
         }
     };
 
-    if (isEditMode && loading) {
-        return (
-            <div className="w-full h-full flex items-center justify-center">
-                <Loading />
-            </div>
-        );
-    }
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
