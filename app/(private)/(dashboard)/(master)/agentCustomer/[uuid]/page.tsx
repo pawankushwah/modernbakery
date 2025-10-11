@@ -36,13 +36,13 @@ interface AgentCustomerFormValues {
     outlet_channel_id: number | string;
     customer_type: number | string;
     contact_no: string;
+    // country_code_contact_no: string;
     contact_no2: string;
     whatsapp_no: string;
     street: string;
     landmark: string;
     town: string;
     district: string;
-    vat: string;
     payment_type: string;
     buyertype: number | string;
     warehouse: string;
@@ -74,6 +74,7 @@ export default function AddEditAgentCustomer() {
         customerCategoryOptions,
         customerSubCategoryOptions,
         channelOptions,
+        onlyCountryOptions
     } = useAllDropdownListData();
     const [isOpen, setIsOpen] = useState(false);
     const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
@@ -87,8 +88,8 @@ export default function AddEditAgentCustomer() {
         agentCustomerId !== undefined && agentCustomerId !== "new";
     const steps: StepperStep[] = [
         { id: 1, label: "Customer" },
-        { id: 2, label: "Contact" },
-        { id: 3, label: "Location" },
+        { id: 2, label: "Location" },
+        { id: 3, label: "Contact" },
         { id: 4, label: "Financial" },
         { id: 6, label: "Additional" }
         // { id: 1, label: "Agent Customer Details" },
@@ -111,13 +112,13 @@ export default function AddEditAgentCustomer() {
             outlet_channel_id: "",
             customer_type: "",
             contact_no: "",
+            // country_code_contact_no: "",
             contact_no2: "",
             whatsapp_no: "",
             street: "",
             landmark: "",
             town: "",
             district: "",
-            vat: "",
             payment_type: "", // will be validated against allowed values
             buyertype: "0", // "0" or "1"
             warehouse: "",
@@ -177,6 +178,7 @@ export default function AddEditAgentCustomer() {
                                 : String(data.enable_promo_txn ?? "0"),
                         // contacts
                         contact_no: String(data.contact_no ?? ""),
+                        // country_code_contact_no: String(data.country_code_contact_no ?? ""),
                         contact_no2: String(data.contact_no2 ?? ""),
                         whatsapp_no:
                             data.whatsapp_no != null
@@ -188,11 +190,10 @@ export default function AddEditAgentCustomer() {
                         town: String(data.town ?? ""),
                         district: String(data.district ?? ""),
                         // financial
-                        vat: String(data.vat ?? data.tin_no ?? ""),
                         vat_no: data.vat_no ?? data.tin_no ?? null,
                         payment_type:
                             data.payment_type != null
-                                ? String(data.payment_type)
+                                ? paymentTypeOptions.find((p) => p.value === String(data.payment_type))?.value || "1"
                                 : "",
                         creditday:
                             data.creditday != null
@@ -261,10 +262,10 @@ export default function AddEditAgentCustomer() {
         osa_code: Yup.string().required("OSA code is required").max(200),
         name: Yup.string().required("Name is required").max(255),
         owner_name: Yup.string().required("Owner Name is required").max(255),
-        customer_type: Yup.mixed().required("Customer type is required"), // validate existence server-side
-        warehouse: Yup.mixed().required("Warehouse is required"),
-        route_id: Yup.mixed().required("Route is required"),
-        outlet_channel_id: Yup.mixed().required("Outlet channel is required"),
+        customer_type: Yup.string().required("Customer type is required"), // validate existence server-side
+        warehouse: Yup.string().required("Warehouse is required"),
+        route_id: Yup.string().required("Route is required"),
+        outlet_channel_id: Yup.string().required("Outlet channel is required"),
 
         // location
         landmark: Yup.string().required("Landmark is required"),
@@ -434,6 +435,7 @@ export default function AddEditAgentCustomer() {
             await AgentCustomerSchema.validate(values, { abortEarly: false });
             const payload = {
                 ...values,
+                is_cash: Number(values.is_cash),
                 customer_type: Number(values.customer_type),
                 route_id: Number(values.route_id),
                 buyertype: Number(values.buyertype),
@@ -833,6 +835,19 @@ export default function AddEditAgentCustomer() {
                                         label="Contact Number"
                                         name="contact_no"
                                         value={values.contact_no}
+                                        // leadingElement={
+                                        //     <InputFields
+                                        //         name="country_code_contact_no"
+                                        //         value={values.country_code_contact_no}
+                                        //         showBorder={false}
+                                        //         onChange={(e) =>
+                                        //             setFieldValue(
+                                        //                 "country_code_contact_no",
+                                        //                 e.target.value
+                                        //             )}
+                                        //         options={onlyCountryOptions}
+                                        //     />
+                                        // }
                                         onChange={(e) =>
                                             setFieldValue(
                                                 "contact_no",
@@ -855,7 +870,7 @@ export default function AddEditAgentCustomer() {
                                 <div>
                                     <InputFields
                                         required
-                                        label="Contact Number"
+                                        label="Contact Number 2"
                                         name="contact_no2"
                                         value={values.contact_no2}
                                         onChange={(e) =>

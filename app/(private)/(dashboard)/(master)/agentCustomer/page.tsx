@@ -41,6 +41,8 @@ const columns = [
             </span>
         ),
     },
+    { key: "outlet_name", label: "Name" },
+    { key: "owner_name", label: "Owner Name" },
     {
         key: "customer_type",
         label: "Customer Type",
@@ -98,51 +100,19 @@ const columns = [
                 ? (row.region as { region_name?: string }).region_name || "-"
                 : "-",
     },
+    { key: "landmark", label: "Landmark" },
+    { key: "district", label: "District" },
+    { key: "street", label: "Street" },
+    { key: "town", label: "Town" },
     {
-        key: "customer_type",
-        label: "Customer Type",
-        render: (row: TableDataType) => {
-            if (
-                typeof row.customer_type === "object" &&
-                row.customer_type !== null &&
-                "name" in row.customer_type
-            ) {
-                return (row.customer_type as { name?: string }).name || "-";
-            }
-            return row.customer_type || "-";
-        },
-    },
-    {
-        key: "category",
-        label: "Customer Category",
+        key: "getWarehouse",
+        label: "Warehouse",
         render: (row: TableDataType) =>
-            typeof row.category === "object" &&
-            row.category !== null &&
-            "customer_category_name" in row.category
-                ? (row.category as { customer_category_name?: string })
-                      .customer_category_name || "-"
-                : "-",
-    },
-    {
-        key: "subcategory",
-        label: "Customer Sub Category",
-        render: (row: TableDataType) =>
-            typeof row.subcategory === "object" &&
-            row.subcategory !== null &&
-            "customer_sub_category_name" in row.subcategory
-                ? (row.subcategory as { customer_sub_category_name?: string })
-                      .customer_sub_category_name || "-"
-                : "-",
-    },
-    {
-        key: "outlet_channel",
-        label: "Outlet Channel",
-        render: (row: TableDataType) =>
-            typeof row.outlet_channel === "object" &&
-            row.outlet_channel !== null &&
-            "outlet_channel" in row.outlet_channel
-                ? (row.outlet_channel as { outlet_channel?: string })
-                      .outlet_channel || "-"
+            typeof row.getWarehouse === "object" &&
+            row.getWarehouse !== null &&
+            "warehouse_name" in row.getWarehouse
+                ? (row.getWarehouse as { warehouse_name?: string })
+                      .warehouse_name || "-"
                 : "-",
     },
     {

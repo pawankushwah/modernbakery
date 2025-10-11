@@ -2,7 +2,7 @@
 
 import InputFields from "@/app/components/inputFields";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 type Props = {
   values: Record<string, string>;
   errors?: Record<string, string>;
@@ -14,8 +14,8 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
 
 
   const { regionOptions, loading, areaOptions, fetchAreaOptions } = useAllDropdownListData();
-  const [localAreaOptions, setLocalAreaOptions] = React.useState<{ value: string; label: string }[]>(areaOptions || []);
-  const [areaLoading, setAreaLoading] = React.useState(false);
+  const [localAreaOptions, setLocalAreaOptions] = useState<{ value: string; label: string }[]>(areaOptions || []);
+  const [areaLoading, setAreaLoading] = useState(false);
 
   useEffect(() => {
     // When region changes, clear area dropdown and reset value instantly
