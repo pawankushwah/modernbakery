@@ -2,17 +2,18 @@
 
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import InputFields from "@/app/components/inputFields";
 import SettingPopUp from "@/app/components/settingPopUp";
 import IconButton from "@/app/components/iconButton";
 import StepperForm, { useStepperForm, StepperStep } from "@/app/components/stepperForm";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { itemById, addItem, editItem, genearateCode, saveFinalCode } from "@/app/services/allApi";
+import { itemById, addItem, editItem, genearateCode } from "@/app/services/allApi";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Loading from "@/app/components/Loading";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 
 interface ItemFormValues {
   itemCode: string;
@@ -35,79 +36,14 @@ interface ItemFormValues {
   price: string;
   is_stock_keeping_unit: string;
   enable_for: string;
+  commodity_goods_code: string;
+  excise_duty_code: string;
   status: string;
 }
 
 const ItemSchema = Yup.object().shape({
-  // Step 1
-  // itemCode: Yup.string().required("Item Code is required"),
   itemName: Yup.string().required("Item Name is required"),
-  // ErpCode: Yup.string().required("ERP Code is required"),
-  // itemDesc: Yup.string(),
-  // // itemImage: Yup.mixed().nullable(),
-  // brand: Yup.string(),
-  // itemCategory: Yup.string().required("Category is required"),
-  // itemSubCategory: Yup.string().required("Sub Category is required"),
-
-  // // Step 2
-  // itemWeight: Yup.string(),
-  // shelfLife: Yup.string(),
-  // volume: Yup.string(),
-  // is_Promotional: Yup.string().required("Please select promotional option"),
-  // is_tax_applicable: Yup.string().required("Please select tax applicability"),
-  // excise: Yup.string(),
-  // status: Yup.string().required("Status is required"),
-
-  // // Step 3
-  // uom: Yup.string().required("UOM is required"),
-  // uomType: Yup.string().required("UOM Type is required"),
-  // upc: Yup.string().nullable(),
-  // price: Yup.string().nullable(),
-  // is_stock_keeping_unit: Yup.string().required("Please select stock keeping option"),
-  // enable_for: Yup.string().required("Please select enable for option"),
 });
-
-// --- Yup Step-based Validation ---
-// const stepSchemas = [
-//   // Step 1: Basic Details
-//   Yup.object({
-//     // itemCode: Yup.string().required("Item Code is required"),
-//     itemName: Yup.string().required("Item Name is required"),
-//     // ErpCode: Yup.string().required("ERP Code is required"),
-//     itemCategory: Yup.string().required("Item Category is required"),
-//     itemSubCategory: Yup.string().required("Item Sub Category is required"),
-//     itemDesc: Yup.string(),
-//     // itemImage: Yup.mixed().nullable(), // optional file
-//     brand: Yup.string(),
-//   }),
-
-//   // Step 2: Additional Info
-//   Yup.object({
-//     itemWeight: Yup.string()
-//       .matches(/^[0-9]*\.?[0-9]*$/, "Weight must be a valid number")
-//       .nullable(),
-//     shelfLife: Yup.string(),
-//     volume: Yup.string(),
-//     is_Promotional: Yup.string().required("Promotional field is required"),
-//     is_tax_applicable: Yup.string().required("Tax applicability is required"),
-//     excise: Yup.string(),
-//     status: Yup.string().required("Status is required"),
-//   }),
-
-//   // Step 3: UOM (Unit of Measurement & others)
-//   Yup.object({
-//     uom: Yup.string().required("UOM is required"),
-//     uomType: Yup.string().required("UOM Type is required"),
-//     upc: Yup.string(),
-//     price: Yup.string()
-//       .matches(/^[0-9]*\.?[0-9]*$/, "Price must be a valid number")
-//       .required("Price is required"),
-//     is_stock_keeping_unit: Yup.string().required("Stock Keeping Unit field is required"),
-//     enable_for: Yup.string().required("Enable For field is required"),
-//   }),
-// ];
-
-
 
 export default function AddEditItem() {
   const { itemCategoryOptions, itemSubCategoryOptions } = useAllDropdownListData();
@@ -119,12 +55,13 @@ export default function AddEditItem() {
   const params = useParams();
   const itemId = params?.id as string | undefined;
   const isEditMode = !!(itemId && itemId !== "add");
-  const [codeMode, setCodeMode] = useState<'auto' | 'manual'>('auto');
+  const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
 
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Details" },
     { id: 2, label: "Additional Info" },
-    { id: 3, label: "UOM"}
+    { id: 3, label: "UOM" },
+    { id: 4, label: "EFRIS" },
   ];
 
   const {
@@ -157,12 +94,17 @@ export default function AddEditItem() {
     price: "",
     is_stock_keeping_unit: "",
     enable_for: "",
+    commodity_goods_code: "",
+    excise_duty_code: "",
     status: "",
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof ItemFormValues, string>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof ItemFormValues, boolean>>>({});
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
+
+  // ---------- Fetch/Edit or Generate Code ----------
   useEffect(() => {
     if (isEditMode && itemId) {
       setLoading(true);
@@ -170,29 +112,67 @@ export default function AddEditItem() {
         const res = await itemById(itemId);
         const data = res?.data ?? res;
         if (!res?.error && data) {
+          const primaryUom = Array.isArray(data.uom) ? data.uom[0] : null;
+
           setForm({
-            itemCode: data.code || "",
-            itemName: data.name || "",
-            ErpCode: data.erp_code || "",
-            itemDesc: data.description || "",
-            itemImage: data.image || "",
-            brand: data.brand || "",
-            itemWeight: data.item_weight || "",
-            itemCategory: data.category_id || "",
-            itemSubCategory: data.sub_category_id || "",
-            shelfLife: data.shelf_life || "",
-            volume: data.volume || "",
-            is_Promotional: data.is_promotional ? "yes" : "no",
-            is_tax_applicable: data.is_tax_applicable ? "yes" : "no",
-            excise: data.excise || "",
-            uom: data.uom || "",
-            uomType: data.uomType || "",
-            upc: data.upc || "",
-            price: data.price || "",
-            is_stock_keeping_unit: data.is_stock_keeping_unit ? "yes" : "no",
-            enable_for: data.enable_for ? "sales" : "return",
-            status: data.status ? "active" : "inactive",
-          });
+  itemCode: data.item_code || "",
+  itemName: data.name || "",
+  ErpCode: data.erp_code || "",
+  itemDesc: data.description || "",
+  itemImage: data.image || "",
+  brand: data.brand || "",
+  itemWeight: data.item_weight?.toString() || "",
+  // ✅ FIXED — use nested object IDs
+  itemCategory: data.category?.id?.toString() || "",
+  itemSubCategory: data.itemSubCategory?.id?.toString() || "",
+  shelfLife: data.shelf_life?.toString() || "",
+  volume: data.volume?.toString() || "",
+  is_Promotional: data.is_promotional ? "yes" : "no",
+  is_tax_applicable: data.is_taxable ? "yes" : "no",
+  excise: data.has_excies ? "yes" : "no", // ✅ derive from boolean
+  uom: data.uom?.[0]?.name || "",
+  uomType: data.uom?.[0]?.uom_type || "primary",
+  upc: data.uom?.[0]?.upc || "",
+  price: data.uom?.[0]?.price?.toString() || "",
+  is_stock_keeping_unit: data.uom?.[0]?.is_stock_keeping ? "yes" : "no",
+  enable_for:
+    typeof data.uom?.[0]?.enable_for === "string"
+      ? data.uom[0].enable_for
+      : Array.isArray(data.uom?.[0]?.enable_for)
+      ? data.uom[0].enable_for.join(", ")
+      : "",
+  commodity_goods_code: data.commodity_goods_code || "",
+  excise_duty_code: data.excise_duty_code || "",
+  status: data.status === 1 ? "active" : "inactive", // ✅ 0/1 mapped correctly
+});
+
+
+         interface UomItem {
+  id: number;
+  item_id: number;
+  uom_type: string;
+  name: string;
+  price: string;
+  is_stock_keeping: boolean | number;
+  upc?: string | null;
+  enable_for: string | string[];
+}
+
+
+          // Prefill UOM table
+          if (Array.isArray(data.uom)) {
+            setUomList(
+  data.uom.map((u: UomItem) => ({
+    uom: u.name || "",
+    uomType: u.uom_type || "primary",
+    upc: u.upc || "",
+    price: u.price?.toString() || "",
+    isStockKeepingUnit: u.is_stock_keeping ? "yes" : "no",
+    enableFor: typeof u.enable_for === "string" ? u.enable_for : u.enable_for.join(", "),
+  }))
+);
+
+          }
         }
         setLoading(false);
       })();
@@ -205,20 +185,94 @@ export default function AddEditItem() {
     }
   }, [isEditMode, itemId]);
 
-  
+  // ------------------ UOM State ------------------
+  interface UomRow {
+    uom: string;
+    uomType: string;
+    upc: string;
+    price: string;
+    isStockKeepingUnit: string;
+    quantity?: string;
+    enableFor: string;
+  }
 
+  const [uomList, setUomList] = useState<UomRow[]>([]);
+  const [uomData, setUomData] = useState<UomRow>({
+    uom: "",
+    uomType: "",
+    upc: "",
+    price: "",
+    isStockKeepingUnit: "no",
+    quantity: "",
+    enableFor: "",
+  });
+
+  const handleUomChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setUomData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddUom = () => {
+  if (!uomData.uom || !uomData.upc || !uomData.price) {
+    showSnackbar("Please fill all required UOM fields", "error");
+    return;
+  }
+
+  if (editingIndex !== null) {
+    // Update existing UOM
+    setUomList((prev) => {
+      const updated = [...prev];
+      updated[editingIndex] = uomData;
+      return updated;
+    });
+    setEditingIndex(null); // Reset editing
+    showSnackbar("UOM updated successfully", "success");
+  } else {
+    // Add new UOM
+    setUomList((prev) => [...prev, uomData]);
+    showSnackbar("UOM added successfully", "success");
+  }
+
+  // Reset input fields
+  setUomData({
+    uom: "",
+    uomType: "",
+    upc: "",
+    price: "",
+    isStockKeepingUnit: "no",
+    quantity: "",
+    enableFor: "",
+  });
+};
+
+
+const handleEditUom = (index: number) => {
+  const u = uomList[index];
+  setUomData(u);
+  setEditingIndex(index);
+};
+
+const handleDeleteUom = (index: number) => {
+  setUomList((prev) => prev.filter((_, i) => i !== index));
+  if (editingIndex === index) setEditingIndex(null); // Reset if deleting the one being edited
+  showSnackbar("UOM deleted successfully", "success");
+};
+
+  // ------------------ Form Handlers ------------------
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setTouched((prev) => ({ ...prev, [name]: true }));
   };
 
-  const validateCurrentStep = async (step: number) => {
-    const fields: Record<number, (keyof ItemFormValues)[]> = {
-      1: ["itemCode", "itemName", "ErpCode", "itemCategory", "itemSubCategory"],
-      2: ["status"],
-    };
+  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0] || null;
+  //   setForm((prev) => ({ ...prev, [e.target.name]: file }));
+  // };
 
+  const validateCurrentStep = async (step: number) => {
     try {
       await ItemSchema.validate(form, { abortEarly: false });
       setErrors({});
@@ -227,8 +281,7 @@ export default function AddEditItem() {
       if (err instanceof Yup.ValidationError) {
         const stepErrors: Partial<Record<keyof ItemFormValues, string>> = {};
         err.inner.forEach((e) => {
-          const path = e.path as keyof ItemFormValues;
-          if (fields[step].includes(path)) stepErrors[path] = e.message;
+          if (e.path) stepErrors[e.path as keyof ItemFormValues] = e.message;
         });
         setErrors(stepErrors);
         return false;
@@ -251,15 +304,61 @@ export default function AddEditItem() {
     const valid = await validateCurrentStep(currentStep);
     if (!valid) return showSnackbar("Please fill required fields before submit.", "error");
 
-    const payload = { ...form };
-    const res = isEditMode ? await editItem(itemId, payload) : await addItem(payload);
-    if (res?.error) showSnackbar(res.message || "Action failed", "error");
-    else {
-      showSnackbar(isEditMode ? "Item updated" : "Item added", "success");
-      router.push("/dashboard/master/item");
+   const mappedUoms = uomList.map((u) => ({
+  uom: u.uom,
+  uom_type: u.uomType || "primary",
+  price: parseFloat(u.price),
+  upc: u.upc || null,
+  is_stock_keeping: u.isStockKeepingUnit === "yes" ? 1 : 0,
+  keeping_quantity:
+    u.isStockKeepingUnit === "yes" ? parseFloat(u.quantity || "0") : undefined,
+  enable_for: u.enableFor || "sales",
+}));
+
+
+    const payload = {
+      code: form.itemCode,
+      erp_code: form.ErpCode,
+      name: form.itemName,
+      description: form.itemDesc,
+      image: form.itemImage || 1, // Replace with uploaded image ID if applicable
+      brand: form.brand,
+      category_id: parseInt(form.itemCategory),
+      sub_category_id: parseInt(form.itemSubCategory),
+      item_weight: parseFloat(form.itemWeight || "0"),
+      shelf_life: parseInt(form.shelfLife || "0"),
+      volume: parseFloat(form.volume || "0"),
+      is_promotional: form.is_Promotional === "yes" ? 1 : 0,
+      is_taxable: form.is_tax_applicable === "yes" ? 1 : 0,
+      has_excies: form.excise ? 1 : 0,
+      status: form.status === "active" ? 1 : 0,
+      commodity_goods_code: form.commodity_goods_code,
+      excise_duty_code: form.excise_duty_code,
+      uoms: mappedUoms,
+    };
+
+    try {
+      const res = isEditMode
+        ? await editItem(itemId, payload)
+        : await addItem(payload);
+
+      if (res?.error) {
+        showSnackbar(res.message || "Action failed", "error");
+      } else {
+        showSnackbar(isEditMode ? "Item updated" : "Item added", "success");
+        router.push("/dashboard/master/item");
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        showSnackbar(error.message || "Something went wrong", "error");
+      } else {
+        showSnackbar("Unexpected error occurred", "error");
+      }
     }
   };
 
+
+  // ------------------ Render Steps ------------------
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -274,7 +373,7 @@ export default function AddEditItem() {
                   name="itemCode"
                   value={form.itemCode}
                   onChange={handleChange}
-                  disabled={codeMode === 'auto'}
+                  disabled={codeMode === "auto"}
                 />
                 {!isEditMode && (
                   <>
@@ -292,10 +391,10 @@ export default function AddEditItem() {
                       setPrefix={setPrefix}
                       onSave={(mode, code) => {
                         setCodeMode(mode);
-                        if (mode === 'auto' && code) {
+                        if (mode === "auto" && code) {
                           setForm((prev) => ({ ...prev, itemCode: code }));
-                        } else if (mode === 'manual') {
-                          setForm((prev) => ({ ...prev, itemCode: '' }));
+                        } else if (mode === "manual") {
+                          setForm((prev) => ({ ...prev, itemCode: "" }));
                         }
                       }}
                     />
@@ -307,7 +406,13 @@ export default function AddEditItem() {
               <InputFields required label="Item Name" name="itemName" value={form.itemName} onChange={handleChange} />
               <InputFields label="Item Description" name="itemDesc" value={form.itemDesc} onChange={handleChange} />
               <InputFields label="Brand" name="brand" value={form.brand} onChange={handleChange} />
-              <InputFields label="Item Image" type="file" name="itemImage" value={form.itemImage} onChange={handleChange} />
+              <InputFields
+                label="Item Image"
+                value={form.itemImage}
+                type="file"
+                name="itemImage"
+                onChange={handleChange}
+              />
               <InputFields required label="Category" name="itemCategory" value={form.itemCategory} onChange={handleChange} options={itemCategoryOptions} />
               <InputFields required label="Sub Category" name="itemSubCategory" value={form.itemSubCategory} onChange={handleChange} options={itemSubCategoryOptions} />
             </div>
@@ -332,19 +437,134 @@ export default function AddEditItem() {
             </div>
           </div>
         );
-        case 3: 
-        return(
+
+      case 3:
+        return (
           <div className="bg-white rounded-2xl shadow p-6">
-            <h2 className="text-lg font-medium mb-4">UOM & Pricing</h2>
+            <h2 className="text-lg font-medium mb-4">UOM</h2>
+
             <div className="grid md:grid-cols-3 gap-4">
-              <InputFields required label="UOM" name="uom" value={form.uom} onChange={handleChange} />
-              <InputFields required label="UOM Type" name="uomType" value={form.uomType} onChange={handleChange} />
-              <InputFields label="UPC" name="upc" value={form.upc} onChange={handleChange} />
-              <InputFields label="Price" name="price" value={form.price} onChange={handleChange} />
-              <InputFields required type="radio" label="Is Stock Keeping Unit" name="is_stock_keeping_unit" value={form.is_stock_keeping_unit} onChange={handleChange}
-                options={[{ value: "yes", label: "Yes" }, { value: "no", label: "No" }]} />
-              <InputFields required type="radio" label="Enable For" name="enable_for" value={form.enable_for} onChange={handleChange}
-                options={[{ value: "sales", label: "Sales" }, { value: "return", label: "Return" }]} />
+              <InputFields required label="UOM" name="uom" value={uomData.uom} options={[
+                  { label: "Yes", value: "yes" },
+                  { label: "No", value: "no" },
+                ]} onChange={handleUomChange} />
+              <InputFields label="UOM Type" name="uomType" options={[
+                { label: "Primary", value: "primary" },
+                { label: "Secondary", value: "secondary" },
+              ]} value={uomData.uomType} onChange={handleUomChange} />
+              <InputFields required label="UPC" name="upc" value={uomData.upc} onChange={handleUomChange} />
+              <InputFields required label="Price" name="price" value={uomData.price} onChange={handleUomChange} />
+              <InputFields
+                type="radio"
+                label="Is Stock Keeping Unit"
+                name="isStockKeepingUnit"
+                value={uomData.isStockKeepingUnit}
+                onChange={handleUomChange}
+                options={[
+                  { label: "Yes", value: "yes" },
+                  { label: "No", value: "no" },
+                ]}
+              />
+              {uomData.isStockKeepingUnit === "yes" && (
+                <InputFields
+                  label="Quantity"
+                  name="quantity"
+                  value={uomData.quantity || ""}
+                  onChange={handleUomChange}
+                />
+              )}
+              <InputFields
+                type="radio"
+                label="Enable For"
+                name="enableFor"
+                onChange={handleUomChange}
+                options={[
+                  { label: "Sales", value: "sales" },
+                  { label: "Return", value: "return" },
+                ]}
+              />
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <SidebarBtn
+                label="Add"
+                isActive={true}
+                leadingIcon="mdi:check"
+                type="button"
+                onClick={handleAddUom}
+              />
+            </div>
+
+            {uomList.length > 0 && (
+  <div className="mt-6 overflow-x-auto rounded-xl ">
+    <table className="min-w-full px-5 border border-[#FAFAFA] text-[#535862] rounded-lg">
+      <thead className="bg-gray-100">
+        <tr>
+          <th className="p-2 text-left">UOM</th>
+          <th className="p-2 text-left">UOM Type</th>
+          <th className="p-2 text-left">UPC</th>
+          <th className="p-2 text-left">Price</th>
+          <th className="p-2 text-left">Stock Keeping Unit</th>
+          <th className="p-2 text-left">Quantity</th>
+          <th className="p-2 text-left">Enable For</th>
+          <th className="p-2 text-left">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {uomList.map((item, idx) => (
+          <tr
+            key={idx}
+            className={`border-t ${editingIndex === idx ? "bg-red-100" : ""}`} // Highlight in red
+          >
+            <td className="p-2">{item.uom}</td>
+            <td className="p-2">{item.uomType}</td>
+            <td className="p-2">{item.upc}</td>
+            <td className="p-2">{item.price}</td>
+            <td className="p-2">{item.isStockKeepingUnit}</td>
+            <td className="p-2">{item.quantity || "-"}</td>
+            <td className="p-2">{item.enableFor}</td>
+            <td className="p-2 flex gap-2">
+              <SidebarBtn
+                isActive={false}
+                leadingIcon="mdi:pencil"
+                type="button"
+                onClick={() => handleEditUom(idx)}
+              />
+              <SidebarBtn
+                isActive={false}
+                leadingIcon="mdi:delete"
+                type="button"
+                onClick={() => handleDeleteUom(idx)}
+              />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}
+
+          </div>
+        );
+
+      case 4:
+        return (
+          <div className="bg-white rounded-2xl shadow p-6">
+            <h2 className="text-lg font-medium mb-4">Additional Information</h2>
+            <div className="grid md:grid-cols-3 gap-4">
+              <InputFields
+                label="Commodity Goods Code"
+                name="commodity_goods_code"
+                value={form.commodity_goods_code}
+                onChange={handleChange}
+              />
+              <InputFields
+                label="Excise Duty Code"
+                name="excise_duty_code"
+                value={form.excise_duty_code}
+                onChange={handleChange}
+              />
+
             </div>
           </div>
         );
@@ -368,7 +588,9 @@ export default function AddEditItem() {
           <Link href="/dashboard/master/item">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
-          <h1 className="text-xl font-semibold text-gray-900">{isEditMode ? "Edit Item" : "Add Item"}</h1>
+          <h1 className="text-xl font-semibold text-gray-900">
+            {isEditMode ? "Edit Item" : "Add Item"}
+          </h1>
         </div>
       </div>
 
