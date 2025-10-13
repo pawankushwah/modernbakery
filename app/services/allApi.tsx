@@ -2512,13 +2512,3 @@ export const deleteSubmenu = async (uuid: string) => {
     return handleError(error);
   }
 };
-export const merchendiserList = async () => {
-  try {
-    const res = await API.get(
-      "/api/merchendisher/planogram/merchendisher-list"
-    );
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};

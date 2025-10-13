@@ -115,7 +115,7 @@ export default function Planogram() {
         // Fetch merchandiser list
         const merchRes = await merchendiserList();
         const merchOptions =
-          merchRes.data?.map((m: any) => ({
+          merchRes.data?.map((m: { id: number; name: string }) => ({
             value: String(m.id),
             label: m.name,
           })) || [];
@@ -228,7 +228,7 @@ export default function Planogram() {
   // --- Step Content Renderer ---
   const renderStepContent = (
     values: PlanogramFormValues,
-    setFieldValue: (field: keyof PlanogramFormValues, value: any) => void,
+    setFieldValue: (field: keyof PlanogramFormValues, value: string | number | number[]) => void,
     errors: FormikErrors<PlanogramFormValues>,
     touched: FormikTouched<PlanogramFormValues>
   ) => {

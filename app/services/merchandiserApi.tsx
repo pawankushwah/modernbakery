@@ -243,3 +243,12 @@ export const getShelfById = async (uuid: string) => {
     return handleError(error);
   }
 };
+
+export const complaintFeedbackList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/complaint-feedback/list", { params });
+    return res.data; 
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
