@@ -21,21 +21,23 @@ type FormValues = {
     warehouse_type: string;
     warehouse_name: string;
     owner_name: string;
-    company_id: string;
-    stock_capital: string;
-    agent_type: string;
+    owner_number: string;
+    warehouse_email: string;
+    owner_email: string;
+    vat_no: string;
+    agreed_stock_capital: string;
+    company: string;
+    // agent_type: string;
     warehouse_manager: string;
     ownerContactCountry: string;
-    owner_number: string;
     managerContactCountry: string;
     warehouse_manager_contact: string;
-    owner_email: string;
     location: string;
     city: string;
     region_id: string;
     area_id: string;
-    district: string;
-    address: string;
+    // district: string;
+    // address: string;
     town_village: string;
     street: string;
     landmark: string;
@@ -75,18 +77,20 @@ export default function AddEditWarehouse() {
     // Validation schema (Yup)
     const validationSchema = Yup.object({
         warehouse_code: Yup.string().required('Warehouse Code is required'),
+        vat_no: Yup.string().required('VAT No. is required'),
         warehouse_type: Yup.string().required('Warehouse Type is required'),
         warehouse_name: Yup.string().required('Warehouse Name is required'),
         owner_name: Yup.string().required('Owner Name is required'),
-        company_id: Yup.string().required('Company Customer ID is required'),
-        stock_capital: Yup.string(),
-        agent_type: Yup.string().required('Agent Type is required'),
+        company: Yup.string().required('Company is required'),
+        agreed_stock_capital: Yup.string(),
+        // agent_type: Yup.string().required('Agent Type is required'),
         warehouse_manager: Yup.string().required('Warehouse Manager is required'),
         owner_number: Yup.string()
         .required('Warehouse Manager Contact is required')
             .matches(/^[\d]+$/, 'Contact must be numeric')
             .min(7, 'Contact must be at least 7 digits'),
-        owner_email: Yup.string().required("Email is required").email('Invalid email format'),
+        warehouse_email: Yup.string().required("Warehouse Email is required").email('Invalid email format'),
+        owner_email: Yup.string().required("Owner Email is required").email('Invalid email format'),
         warehouse_manager_contact: Yup.string()
             .required('Warehouse Manager Contact is required')
             .matches(/^[\d]+$/, 'Contact must be numeric')
@@ -95,8 +99,8 @@ export default function AddEditWarehouse() {
         city: Yup.string().required('City is required'),
         region_id: Yup.string().required('Region is required'),
         area_id: Yup.string().required('Area ID is required'),
-        district: Yup.string(),
-        address: Yup.string().required('Address is required'),
+        // district: Yup.string(),
+        // address: Yup.string().required('Address is required'),
         town_village: Yup.string(),
         street: Yup.string(),
         landmark: Yup.string(),
@@ -106,7 +110,8 @@ export default function AddEditWarehouse() {
         longitude: Yup.string()
             .required('Longitude is required')
             .matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, 'Longitude must be a valid decimal number'),
-        p12_file: Yup.string().required('P12 File is required'),
+        // p12_file: Yup.string().required('P12 File is required'),
+        // p12_file: isEditMode ? Yup.string() : Yup.string().required('P12 File is required'),
         is_efris: Yup.string().required('EFRIS Configuration is required'),
         is_branch: Yup.string(),
     });
@@ -115,15 +120,17 @@ export default function AddEditWarehouse() {
     const stepSchemas = [
         Yup.object().shape({
             warehouse_code: validationSchema.fields.warehouse_code,
+            vat_no: validationSchema.fields.vat_no,
             warehouse_type: validationSchema.fields.warehouse_type,
             warehouse_name: validationSchema.fields.warehouse_name,
             owner_name: validationSchema.fields.owner_name,
-            company_id: validationSchema.fields.company_id,
-            agent_type: validationSchema.fields.agent_type,
+            company: validationSchema.fields.company,
+            // agent_type: validationSchema.fields.agent_type,
             warehouse_manager: validationSchema.fields.warehouse_manager,
         }),
         Yup.object().shape({
             owner_number: validationSchema.fields.owner_number,
+            warehouse_email: validationSchema.fields.warehouse_email,
             owner_email: validationSchema.fields.owner_email,
             warehouse_manager_contact: validationSchema.fields.warehouse_manager_contact,
         }),
@@ -132,12 +139,12 @@ export default function AddEditWarehouse() {
             city: validationSchema.fields.city,
             region_id: validationSchema.fields.region_id,
             area_id: validationSchema.fields.area_id,
-            address: validationSchema.fields.address,
+            // address: validationSchema.fields.address,
         }),
         Yup.object().shape({
             latitude: validationSchema.fields.latitude,
             longitude: validationSchema.fields.longitude,
-            p12_file: validationSchema.fields.p12_file,
+            // p12_file: validationSchema.fields.p12_file,
             is_efris: validationSchema.fields.is_efris,
             is_branch: validationSchema.fields.is_branch,
         }),
@@ -149,21 +156,23 @@ export default function AddEditWarehouse() {
         warehouse_type: "",
         warehouse_name: "",
         owner_name: "",
-        company_id: "",
-        stock_capital: "",
-        agent_type: "",
+        company: "",
+        agreed_stock_capital: "",
+        vat_no: "",
+        // agent_type: "",
         warehouse_manager: "",
         ownerContactCountry: "",
         owner_number: "",
         managerContactCountry: "",
         warehouse_manager_contact: "",
         owner_email: "",
+        warehouse_email: "",
         location: "",
         city: "",
         region_id: "",
         area_id: "",
-        district: "",
-        address: "",
+        // district: "",
+        // address: "",
         town_village: "",
         street: "",
         landmark: "",
@@ -188,21 +197,23 @@ export default function AddEditWarehouse() {
                         warehouse_type: String(data?.warehouse_type || ''),
                         warehouse_name: data?.warehouse_name || '',
                         owner_name: data?.owner_name || '',
-                        company_id: String(data?.company_id || ''),
-                        stock_capital: String(data?.stock_capital || ''),
-                        agent_type: data?.agent_type || '',
+                        company: String(data?.get_company?.id || ''),
+                        agreed_stock_capital: String(data?.agreed_stock_capital || ''),
+                        vat_no: String(data?.vat_no || ''),
+                        // agent_type: data?.agent_type || '',
                         warehouse_manager: data?.warehouse_manager || '',
                         ownerContactCountry: data?.ownerContactCountry || '',
                         owner_number: data?.owner_number || '',
                         managerContactCountry: data?.managerContactCountry || '',
                         warehouse_manager_contact: data?.warehouse_manager_contact || '',
                         owner_email: data?.owner_email || '',
+                        warehouse_email: data?.warehouse_email || '',
                         location: data?.location || '',
                         city: data?.city || '',
                         region_id: String(data?.region_id || ''),
                         area_id: String(data?.area_id || ''),
-                        district: String(data?.district || ''),
-                        address: String(data?.address || ''),
+                        // district: String(data?.district || ''),
+                        // address: String(data?.address || ''),
                         town_village: String(data?.town_village || ''),
                         street: String(data?.street || ''),
                         landmark: data?.landmark || '',
@@ -265,11 +276,21 @@ export default function AddEditWarehouse() {
     const handleSubmit = async (values: FormValues) => {
         try {
             await validationSchema.validate(values, { abortEarly: false });
+            // normalize fields expected by API
+            const isBranchStr = String(values.is_branch).toLowerCase();
+            const isBranchPayload = (isBranchStr === 'true' || isBranchStr === '1' || isBranchStr === 'yes') ? '1' : '0';
+            const payload = {
+                ...values,
+                // send warehouse_type as-is (string: 'agent_customer' | 'company_outlet')
+                warehouse_type: values.warehouse_type,
+                is_branch: isBranchPayload,
+            } as unknown as FormValues;
+
             let res;
             if (isEditMode && warehouseId) {
-                res = await updateWarehouse(warehouseId, values);
+                res = await updateWarehouse(warehouseId, payload);
             } else {
-                res = await addWarehouse(values);
+                res = await addWarehouse(payload);
                 if (!res?.error) {
                     try {
                         await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" });

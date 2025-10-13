@@ -73,8 +73,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     value={values.warehouse_type}
                     onChange={handleChange}
                     options={[
-                        { value: "0", label: "Agent" },
-                        { value: "1", label: "Outlet" },
+                        { value: "agent_customer", label: "Hariss" },
+                        { value: "company_outlet", label: "Outlet" },
                     ]}
                 />
                 {errors?.warehouse_type && touched?.warehouse_type && (
@@ -111,24 +111,31 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 <InputFields
                     required
                     label="Company"
-                    name="company_id"
-                    value={values.company_id}
+                    name="company"
+                    value={values.company}
                     options={companyOptions}
                     onChange={handleChange}
-                    error={errors?.company_id && touched?.company_id ? errors.company_id : false}
+                    error={errors?.company && touched?.company ? errors.company : false}
                 />
-                {errors?.company_id && touched?.company_id && (
-                    <div className="text-xs text-red-500 mt-1">{errors.company_id}</div>
+                {errors?.company && touched?.company && (
+                    <div className="text-xs text-red-500 mt-1">{errors.company}</div>
                 )}
             </div>
             <div className="flex flex-col gap-2">
-                <CustomSecurityCode
-                    label="Stock Capital"
-                    value={values.stock_capital}
-                    onChange={(e) => setFieldValue('stock_capital', e.target.value)}
-                    placeholder="Enter Stock Capital"
+                <InputFields
+                    required
+                    name="owner_number"
+                    label="VAT NO."
+                    value={values.vat_no}
+                    onChange={(e) => setFieldValue('vat_no', e.target.value)}
+                    placeholder="Enter Vat No."
+                    error={errors?.vat_no && touched?.vat_no ? errors.vat_no : false}
                 />
+                {errors?.vat_no && touched?.vat_no && (
+                    <div className="text-xs text-red-500 mt-1">{errors.vat_no}</div>
+                )}
             </div>
+{/*             
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
@@ -145,7 +152,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 {errors?.agent_type && touched?.agent_type && (
                     <div className="text-xs text-red-500 mt-1">{errors.agent_type}</div>
                 )}
-            </div>
+            </div> */}
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
@@ -158,6 +165,14 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 {errors?.warehouse_manager && touched?.warehouse_manager && (
                     <div className="text-xs text-red-500 mt-1">{errors.warehouse_manager}</div>
                 )}
+            </div>
+            <div className="flex flex-col gap-2">
+                <CustomSecurityCode
+                    label="Stock Capital"
+                    value={values.agreed_stock_capital}
+                    onChange={(e) => setFieldValue('agreed_stock_capital', e.target.value)}
+                    placeholder="Enter Stock Capital"
+                />
             </div>
         </div>
     );

@@ -30,7 +30,6 @@ const dropdownDataList: DropdownItem[] = [
     { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
     { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
-
 const columns = [
     {
         key: "osa_code",
@@ -116,7 +115,7 @@ const columns = [
             ) {
                 return (row.route as { route_name?: string }).route_name || "-";
             }
-            return row.route || "-";
+            return typeof row.route === 'string' ? row.route : "-";
         },
     },
     { key: "contact_no", label: "Contact No." },

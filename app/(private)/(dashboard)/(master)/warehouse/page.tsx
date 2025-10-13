@@ -37,8 +37,8 @@ type WarehouseRow = TableDataType & {
   street?: string;
   branch_id?: string;
   town_village?: string;
-  region?: {region_name?:string;}
-  get_company_customer?: {owner_name?:string};
+  region?: {name?:string;}
+  company?:{company_code?:string; company_name?:string};
   city?: string;
   location?: string;
   landmark?: string;
@@ -49,14 +49,14 @@ type WarehouseRow = TableDataType & {
   is_branch?: string;
   p12_file?: string;
   is_efris?: string;
-  stock_capital?: string;
+  agreed_stock_capital?: string;
   deposite_amount?: string;
   phoneNumber?: string;
   address?: string;
   status?: string | boolean | number;
   company_customer_id?:{customer_name: string};
   region_id?:{ region_name:string};
-  area?: {area_name:string};
+  area?: {name:string};
 };
 
 const columns = [
@@ -67,7 +67,8 @@ const columns = [
   { key: "owner_number", label: "Owner Contact No.", render: (row: WarehouseRow) => row.owner_number || "-" },
   { key: "owner_email", label: "Owner Email", render: (row: WarehouseRow) => row.owner_email || "-" },
   { key: "location", label: "Warehouse Location", render: (row: WarehouseRow) => row.location || "-" },
-  { key: "company_customer_id", label: "Customer", render: (row: WarehouseRow) => row.get_company_customer?.owner_name || "-" },
+  { key: "company", label: "Company Code", render: (row: WarehouseRow) => row.company?.company_code || "-" },
+  { key: "company", label: "Company Name", render: (row: WarehouseRow) => row.company?.company_name || "-" },
   { key: "warehouse_manager", label: "Warehouse Manager", render: (row: WarehouseRow) => row.warehouse_manager || "-" },
   { key: "warehouse_manager_contact", label: "Warehouse Manager Contact", render: (row: WarehouseRow) => row.warehouse_manager_contact || "-" },
   {
@@ -90,23 +91,21 @@ const columns = [
   // { key: "region_id", label: "Region"},
   {
     label: 'Region',
-    key: 'region_id',
-    render: (row: WarehouseRow) => row.region?.region_name || '-',
+    key: 'region',
+    render: (row: WarehouseRow) => row.region?.name || '-',
   },
   {
     label: 'Sub Region',
-    key: 'area_name',
-    render: (row: WarehouseRow) => row.area?.area_name || '-',
+    key: 'area',
+    render: (row: WarehouseRow) => row.area?.name || '-',
   },
   // { key: "sub_region_id", label: "Sub Region"},
   { key: "city", label: "City", render: (row: WarehouseRow) => row.city || "-" },
-  { key: "district", label: "District", render: (row: WarehouseRow) => row.district || "-" },
   { key: "location", label: "Location", render: (row: WarehouseRow) => row.location || "-" },
-  { key: "address", label: "Address", render: (row: WarehouseRow) => row.address || "-" },
   { key: "town_village", label: "Town", render: (row: WarehouseRow) => row.town_village || "-" },
   { key: "street", label: "Street", render: (row: WarehouseRow) => row.street || "-" },
   { key: "landmark", label: "Landmark", render: (row: WarehouseRow) => row.landmark || "-" },
-  { key: "stock_capital", label: "Stock Capital", render: (row: WarehouseRow) => row.stock_capital || "-" },
+  { key: "agreed_stock_capital", label: "Stock Capital", render: (row: WarehouseRow) => row.agreed_stock_capital || "-" },
   { key: "is_efris", label: "EFRIS",
      render: (row: WarehouseRow) => {
       const value = row.is_efris;
@@ -173,7 +172,7 @@ export default function Warehouse() {
       is_branch?: string;
       p12_file?: string;
       is_efris?: string;
-      stock_capital?: string;
+      agreed_stock_capital?: string;
       deposite_amount?: string;
       // depotLocation?: string;
       // depotLocation?: string;
@@ -194,8 +193,8 @@ export default function Warehouse() {
                  try {
                    setLoading(true);
                      const listRes = await getWarehouse({
-                         limit: pageSize.toString(),
-                         page: page.toString(),
+                        //  limit: pageSize.toString(),
+                        //  page: page.toString(),
                      });
                      setLoading(false);
                      return {

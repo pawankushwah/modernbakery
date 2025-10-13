@@ -1069,7 +1069,7 @@ export const createUserType = async (body:object) => {
 
 export const customerCategoryList = async (params?: Record<string, string>) => {
   try {
-    const res = await API.get("/api/settings/customer-category/list", { params }); 
+    const res = await API.get("/api/settings/customer-category/list", { params :params}); 
     return res.data;
   } catch (error) {
     console.error("Customer Category List failed ❌", error);
@@ -1079,7 +1079,7 @@ export const customerCategoryList = async (params?: Record<string, string>) => {
 
 export const customerCategoryListGlobalSearch = async (params?: Record<string, string>) => {
   try {
-    const res = await API.get("/api/settings/customer-category/global_search", { params }); 
+    const res = await API.get("/api/settings/customer-category/global_search", { params:params }); 
     return res.data;
   } catch (error) {
     console.error("Customer Category List failed ❌", error);

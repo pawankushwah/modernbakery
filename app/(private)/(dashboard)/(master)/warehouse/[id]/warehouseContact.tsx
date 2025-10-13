@@ -13,15 +13,9 @@ type Props = {
 
 export default function WarehouseContactDetails({ values, errors, touched, handleChange, setFieldValue }: Props) {
   const { onlyCountryOptions } = useAllDropdownListData();
-  // fallback if context not populated
-  const fallbackCountries = [
-    { value: "uae", label: "UAE" },
-    { value: "in", label: "India" },
-    { value: "us", label: "USA" },
-    { value: "uk", label: "UK" },
-  ];
 
-  const countries = onlyCountryOptions && onlyCountryOptions.length > 0 ? onlyCountryOptions : fallbackCountries;
+
+  const countries = onlyCountryOptions && onlyCountryOptions.length > 0 ? onlyCountryOptions : [];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full overflow-x-hidden">
@@ -31,7 +25,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
         <div className="flex w-full">
           <select
             name="ownerContactCountry"
-            value={values.ownerContactCountry ?? onlyCountryOptions ?? ""}
+            value={values.ownerContactCountry ?? ""}
             onChange={handleChange}
             className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
           >
@@ -60,7 +54,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
         <div className="flex w-full">
           <select
             name="managerContactCountry"
-            value={values.managerContactCountry ?? onlyCountryOptions ?? ""}
+            value={values.managerContactCountry ?? ""}
             onChange={handleChange}
             className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
           >
@@ -87,7 +81,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
       {/* Email */}
       <div>
         <InputFields
-          label="Email"
+          label="Owner Email"
           required
           name="owner_email"
           value={values.owner_email}
@@ -96,6 +90,19 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
         />
         {errors?.owner_email && touched?.owner_email && (
           <span className="text-xs text-red-500 mt-1">{errors.owner_email}</span>
+        )}
+      </div>
+      <div>
+        <InputFields
+          label="Warehouse Email"
+          required
+          name="warehouse_email"
+          value={values.warehouse_email}
+          onChange={handleChange}
+          error={errors?.warehouse_email && touched?.warehouse_email ? errors.warehouse_email : false}
+        />
+        {errors?.warehouse_email && touched?.warehouse_email && (
+          <span className="text-xs text-red-500 mt-1">{errors.warehouse_email}</span>
         )}
       </div>
     </div>
