@@ -213,7 +213,7 @@ export default function CustomerCategoryPage() {
                 onClick: (row: object) => {
                   const r = row as TableDataType;
                   router.push(
-                    `/dashboard/settings/customer/customerCategory/updateCustomerCategory/${r.id}`
+                    `/dashboard/settings/customer/customerCategory/${r.id}`
                   );
                 },
               },

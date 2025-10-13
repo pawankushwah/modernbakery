@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useFormik } from "formik";
+import { ErrorMessage, useFormik } from "formik";
 import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -201,32 +201,50 @@ const { showSnackbar } = useSnackbar();
                 )}
               </div>
               {/* Route Type Name */}
-              <InputFields
-                type="text"
-                name="route_type_name"
-                label="Route Type Name"
-                value={formik.values.route_type_name}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={
-                  formik.touched.route_type_name &&
-                  formik.errors.route_type_name
-                }
-              />
+            <InputFields
+  type="text"
+  name="route_type_name"
+  label="Route Type Name"
+  value={formik.values.route_type_name}
+  onChange={formik.handleChange}
+  onBlur={formik.handleBlur}
+  error={
+    formik.touched.route_type_name &&
+    formik.errors.route_type_name
+  }
+/>
+{formik.touched.route_type_name && formik.errors.route_type_name && (
+  <span className="text-xs text-red-500">
+    {formik.errors.route_type_name}
+  </span>
+)}
+
               {/* Status */}
-              <InputFields
-                type="select"
-                name="status"
-                label="Status"
-                value={formik.values.status}
-                onChange={formik.handleChange}
-                onBlur={formik.handleBlur}
-                error={formik.touched.status && formik.errors.status}
-                options={[
-                  { value: "active", label: "Active" },
-                  { value: "inactive", label: "Inactive" },
-                ]}
-              />
+             {/* Status */}
+<div>
+  <InputFields
+    required
+    label="Status"
+    name="status"
+    value={formik.values.status}
+    options={[
+      { value: "active", label: "Active" },
+      { value: "inactive", label: "Inactive" },
+    ]}
+    onChange={(e) => formik.setFieldValue("status", e.target.value)}
+    type="radio"
+    error={
+      formik.errors.status && formik.touched.status
+        ? formik.errors.status
+        : false
+    }
+  />
+  {formik.touched.status && formik.errors.status && (
+    <span className="text-xs text-red-500">{formik.errors.status}</span>
+  )}
+</div>
+
+
             </div>
           </ContainerCard>
 

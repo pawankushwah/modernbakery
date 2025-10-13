@@ -117,7 +117,28 @@ const columns = [
   { key: "device_no", label: "Device No.", render: (row: WarehouseRow) => row.device_no || "-" },
   { key: "p12_file", label: "P12 File", render: (row: WarehouseRow) => row.p12_file || "-" },
   { key: "branch_id", label: "Branch", render: (row: WarehouseRow) => (row.branch_id !== null && row.branch_id !== undefined && row.branch_id !== "" ? row.branch_id : "-") },
-  { key: "is_efris", label: "EFRIS", render: (row: WarehouseRow) => row.is_efris || "-" },
+  // { key: "is_efris", label: "EFRIS", render: (row: WarehouseRow) => row.is_efris || "-" },
+  {
+  key: "is_efris",
+  label: "EFRIS",
+  render: (row: WarehouseRow) => {
+    const value = row.is_efris;
+    // Convert number/string/boolean to Yes/No
+    if (value === "1" || value === 1 || value === true || value === "true") {
+      return (
+        <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
+          Yes
+        </span>
+      );
+    } 
+    return (
+      <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
+        No
+      </span>
+    );
+  },
+},
+
   {
     key: "status",
     label: "Status",

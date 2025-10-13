@@ -11,7 +11,7 @@ export const APIFormData = axios.create({
 
 APIFormData.interceptors.request.use(
   (config) => {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined") { 
       const token = localStorage.getItem("token")
       if (token) {
         config.headers.Authorization = `Bearer ${token}`
@@ -128,5 +128,17 @@ export const deleteShelves = async (id: string) => {
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
+  }
+};
+
+
+export const complaintFeedbackList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher_web/complaint-feedback/list", { params });
+    return res.data;
+    console.log(res)
+  } catch (error: unknown) {
+    return handleError(error);
+
   }
 };

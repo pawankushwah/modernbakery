@@ -65,7 +65,7 @@ export default function CustomerPage() {
 
   // Fetch list for Table
   const fetchCustomerType = useCallback(
-    async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {
+    async (page: number = 1, pageSize: number = 10): Promise<listReturnType> => {
       try {
         setLoading(true);
         const listRes = await getCustomerType({
@@ -73,15 +73,17 @@ export default function CustomerPage() {
           page: page.toString(),
         });
         setLoading(false);
+        console.log("Customer Type List Res:", listRes);
         return {
           data: listRes.data || [],
-          total: listRes.pagination.totalPages,
-          currentPage: listRes.pagination.page,
-          pageSize: listRes.pagination.limit,
+          total: listRes.pagination?.totalPages|| 1,
+          currentPage: listRes.pagination?.page ||1,
+          pageSize: listRes.pagination?.limit || pageSize,
         };
       } catch (error: unknown) {
         console.error("API Error:", error);
         setLoading(false);
+
         throw error;
       }
     },
@@ -189,7 +191,7 @@ export default function CustomerPage() {
               //   },
               // },
             ],
-            pageSize: 5,
+            pageSize: 10,
           }}
         />
       </div>

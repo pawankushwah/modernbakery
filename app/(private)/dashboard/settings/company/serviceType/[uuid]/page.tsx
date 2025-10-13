@@ -8,7 +8,7 @@ import SettingPopUp from "@/app/components/settingPopUp";
 import { addServiceTypes, getServiceTypesByUUID, updateServiceTypes } from "@/app/services/assetsApi";
 import { genearateCode, saveFinalCode } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { Form, Formik, FormikHelpers } from "formik";
+import { ErrorMessage, Form, Formik, FormikHelpers } from "formik";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import * as Yup from "yup";
@@ -62,7 +62,7 @@ export default function AddEditServiceType() {
       })();
     } else {
       setIsEditMode(false);
-      // Only generate code once in add mode
+      // Only generate code once in add modea
       if (!codeGeneratedRef.current) {
         codeGeneratedRef.current = true;
         (async () => {
@@ -178,6 +178,11 @@ export default function AddEditServiceType() {
                     onChange={(e) => setFieldValue("name", e.target.value)}
                     error={touched.name && errors.name}
                   />
+                  <ErrorMessage
+                                        name="name"
+                                        component="span"
+                                        className="text-xs text-red-500"
+                                      />
                   <InputFields
                     required
                     label="Status"

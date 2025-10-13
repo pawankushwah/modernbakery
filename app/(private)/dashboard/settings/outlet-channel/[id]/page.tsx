@@ -188,7 +188,7 @@ const { showSnackbar } = useSnackbar();
                 )}
               </div>
               {/* Outlet Channel Name */}
-              <InputFields
+              {/* <InputFields
                 type="text"
                 name="outlet_channel"
                 label="Outlet Channel Name"
@@ -196,21 +196,47 @@ const { showSnackbar } = useSnackbar();
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
                 error={formik.touched.outlet_channel && formik.errors.outlet_channel}
-              />
-              {/* Status */}
-              <InputFields
-                type="select"
-                name="status"
-                label="Status"
-                value={formik.values.status}
+              /> */}
+                  <InputFields
+                type="text"
+                name="outlet_channel"
+                label="Outlet Channel Name"
+                value={formik.values.outlet_channel}
                 onChange={formik.handleChange}
                 onBlur={formik.handleBlur}
-                error={formik.touched.status && formik.errors.status}
-                options={[
-                  { value: "active", label: "Active" },
-                  { value: "inactive", label: "Inactive" },
-                ]}
+                error={
+                  formik.touched.outlet_channel &&
+                  formik.errors.outlet_channel
+                }
               />
+              {formik.touched.outlet_channel && formik.errors.outlet_channel && (
+                <span className="text-xs text-red-500">
+                  {formik.errors.outlet_channel}
+                </span>
+              )}
+              {/* Status */}
+             <div>
+               <InputFields
+                 required
+                 label="Status"
+                 name="status"
+                 value={formik.values.status}
+                 options={[
+                   { value: "active", label: "Active" },
+                   { value: "inactive", label: "Inactive" },
+                 ]}
+                 onChange={(e) => formik.setFieldValue("status", e.target.value)}
+                 type="radio"
+                 error={
+                   formik.errors.status && formik.touched.status
+                     ? formik.errors.status
+                     : false
+                 }
+               />
+               {formik.touched.status && formik.errors.status && (
+                 <span className="text-xs text-red-500">{formik.errors.status}</span>
+               )}
+             </div>
             </div>
           </ContainerCard>
 
