@@ -9,17 +9,7 @@ import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { deletecompanyType, companyTypeList } from "@/app/services/allApi";
-
-interface CompanyType {
-  id?: string | number;
-  uuid?: string;
-  code?: string;
-  name?: string;
-  status?: number;
-}
+import { companyTypeList } from "@/app/services/allApi";
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -55,18 +45,13 @@ const columns = [
 ];
 
 export default function CompanyPage() {
-  const [companies, setCompanies] = useState<CompanyType[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<CompanyType | null>(null);
   const { setLoading } = useLoading();
-  const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const [refreshKey, setRefreshKey] = useState(0);
 
   // ✅ Fetch companies from API
   const fetchCompanyType = useCallback(
-    async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {
+    async (page: number = 1, pageSize: number = 50): Promise<listReturnType> => {
       try {
         setLoading(true);
         const res = await companyTypeList({
@@ -97,34 +82,10 @@ export default function CompanyPage() {
     [setLoading]
   );
 
-  // ✅ Delete handler
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.uuid) {
-      showSnackbar("UUID not found ❌", "error");
-      return;
-    }
-
-    try {
-      const res = await deletecompanyType(String(selectedRow.uuid));
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to delete company ❌", "error");
-      } else {
-        showSnackbar(res.message || "Company deleted successfully ✅", "success");
-        setRefreshKey((prev) => prev + 1);
-      }
-      setShowDeletePopup(false);
-      setSelectedRow(null);
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Delete failed ❌", "error");
-    }
-  };
-
   return (
     <>
       <div className="h-[calc(100%-60px)]">
         <Table
-         key={refreshKey}
           config={{
             api: { list: fetchCompanyType },
             header: {
@@ -160,7 +121,7 @@ export default function CompanyPage() {
                   key="add-company-type"
                   href="/settings/company/companyType/add"
                   leadingIcon="lucide:plus"
-                  label="Add Company Type"
+                  label="Add"
                   labelTw="hidden sm:block"
                   isActive
                 />,
@@ -178,36 +139,11 @@ export default function CompanyPage() {
                   router.push(`/settings/company/companyType/${r.uuid}`);
                 },
               },
-              {
-                icon: "lucide:trash",
-                onClick: (row: object) => {
-                  const r = row as TableDataType & { uuid?: string };
-                  setSelectedRow({
-                    id: r.id,
-                    uuid: r.uuid, // 👈 Ensure uuid is set here
-                    code: r.code,
-                    name: r.name,
-                    status: Number(r.status),
-                  });
-                  setShowDeletePopup(true);
-                },
-              },
             ],
-            pageSize: 5,
+            pageSize: 50,
           }}
         />
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Delete Company Type"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }
