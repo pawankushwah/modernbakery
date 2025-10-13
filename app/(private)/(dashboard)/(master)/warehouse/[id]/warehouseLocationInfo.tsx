@@ -88,7 +88,7 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
         <div>
           <InputFields
             required
-            label="Sub Region"
+            label="Area"
             name="area_id"
             value={values.area_id}
             onChange={handleChange}

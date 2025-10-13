@@ -188,15 +188,13 @@ export default function Warehouse() {
          const fetchWarehouse = useCallback(
              async (
                  page: number = 1,
-                 pageSize: number = 5
+                 pageSize: number = 50
              ): Promise<listReturnType> => {
                  try {
                    setLoading(true);
                      const listRes = await getWarehouse({
                         //  limit: pageSize.toString(),
-                        //  page: page.toString(),
-                        //  limit: pageSize.toString(),
-                        //  page: page.toString(),
+                         per_page: pageSize.toString(),
                      });
                      setLoading(false);
                      return {
@@ -217,7 +215,7 @@ export default function Warehouse() {
          const searchWarehouse = useCallback(
              async (
                  query: string,
-                 pageSize: number = 5
+                 pageSize: number = 50
              ): Promise<listReturnType> => {
                  try {
                    setLoading(true);
@@ -327,7 +325,7 @@ export default function Warehouse() {
                   href="/warehouse/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add Warehouse"
+                  label="Add"
                   labelTw="hidden sm:block"
                 />,
               ],
@@ -364,7 +362,7 @@ export default function Warehouse() {
               //   },
               // },
             ],
-            pageSize: 10,
+            pageSize: 50,
           }}
         />
       </div>

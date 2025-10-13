@@ -2,12 +2,26 @@
 import React from 'react';
 import InputFields from "@/app/components/inputFields";
 
+// explicit, narrow value type for this form step
+type WarehouseValues = {
+    latitude?: string;
+    longitude?: string;
+    // p12_file can be an existing filename (string) or a File when user uploads a new file
+    p12_file?: File | string | null;
+    is_efris?: string | number | boolean | null;
+    is_branch?: string | number | boolean | null;
+    // allow other keys but keep them typed as unknown to avoid `any`
+    [key: string]: unknown;
+};
+
 type Props = {
-    values: Record<string, string>;
+    // p12_file may be string (existing filename) or File (new upload)
+    values: WarehouseValues;
     errors?: Record<string, string>;
     touched?: Record<string, boolean>;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    setFieldValue: (field: string, value: string) => void;
+    // setFieldValue can accept any new field value, but we type it as unknown instead of any
+    setFieldValue: (field: string, value: unknown) => void;
 };
 
 export default function WarehouseAdditionalInformation({ values, errors, touched, handleChange, setFieldValue }: Props) {
@@ -56,7 +70,8 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                     onChange={(e) => {
                         const file = (e.target as HTMLInputElement).files?.[0];
                         if (file) {
-                            setFieldValue('p12_file', file.name);
+                            // store the File object so submit can send it as 'p12'
+                            setFieldValue('p12_file', file);
                         }
                     }}
                     error={errors?.p12_file && touched?.p12_file ? errors.p12_file : false}
@@ -65,7 +80,7 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                     <span className="text-xs text-red-500 mt-1">{errors.p12_file}</span>
                 )}
                 {values.p12_file && (
-                    <p className="text-sm text-gray-600 mt-1">Current file: {values.p12_file}</p>
+                    <p className="text-sm text-gray-600 mt-1">Current file: {typeof values.p12_file === 'string' ? values.p12_file : values.p12_file.name}</p>
                 )}
             </div>
             <div>
@@ -74,7 +89,7 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                     type='radio'
                     label="Is EFRIS?"
                     name="is_efris"
-                    value={values.is_efris}
+                    value={normalizeIsBranch(values.is_efris)}
                     onChange={handleChange}
                     options={[
                         { value: "1", label: "Enable" },

@@ -468,7 +468,9 @@ export const getWarehouseById = async (id: string) => {
 
 export const updateWarehouse = async (id: string, payload: object) => {
   try {
-    const res = await API.put(`/api/master/warehouse/${id}`, payload);
+  const res = payload instanceof FormData
+    ? await API.put(`/api/master/warehouse/${id}`, payload, { headers: { 'Content-Type': 'multipart/form-data' } })
+    : await API.put(`/api/master/warehouse/${id}`, payload);
 
     return res.data;
   } catch (error: unknown) {
@@ -718,7 +720,9 @@ export const warehouseType = async (type: number) => {
 
 export const addWarehouse = async (body: object) => {
   try {
-    const res = await API.post("/api/master/warehouse/create", body);
+  const res = body instanceof FormData
+    ? await API.post("/api/master/warehouse/create", body, { headers: { 'Content-Type': 'multipart/form-data' } })
+    : await API.post("/api/master/warehouse/create", body);
 
     return res.data;
   } catch (error: unknown) {

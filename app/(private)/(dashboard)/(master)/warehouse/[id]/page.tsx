@@ -22,12 +22,11 @@ type FormValues = {
     warehouse_name: string;
     owner_name: string;
     owner_number: string;
-    warehouse_email: string;
     owner_email: string;
     vat_no: string;
     agreed_stock_capital: string;
     company: string;
-    // agent_type: string;
+    agent_customer: string;
     warehouse_manager: string;
     ownerContactCountry: string;
     managerContactCountry: string;
@@ -43,7 +42,7 @@ type FormValues = {
     landmark: string;
     latitude: string;
     longitude: string;
-    p12_file: string;
+    p12_file: string | File;
     is_efris: string;
     is_branch: string;
     status: string;
@@ -83,13 +82,12 @@ export default function AddEditWarehouse() {
         owner_name: Yup.string().required('Owner Name is required'),
         company: Yup.string().required('Company is required'),
         agreed_stock_capital: Yup.string(),
-        // agent_type: Yup.string().required('Agent Type is required'),
+        agent_customer: Yup.string().required('Agent Customer is required'),
         warehouse_manager: Yup.string().required('Warehouse Manager is required'),
         owner_number: Yup.string()
         .required('Warehouse Manager Contact is required')
             .matches(/^[\d]+$/, 'Contact must be numeric')
             .min(7, 'Contact must be at least 7 digits'),
-        warehouse_email: Yup.string().required("Warehouse Email is required").email('Invalid email format'),
         owner_email: Yup.string().required("Owner Email is required").email('Invalid email format'),
         warehouse_manager_contact: Yup.string()
             .required('Warehouse Manager Contact is required')
@@ -125,12 +123,11 @@ export default function AddEditWarehouse() {
             warehouse_name: validationSchema.fields.warehouse_name,
             owner_name: validationSchema.fields.owner_name,
             company: validationSchema.fields.company,
-            // agent_type: validationSchema.fields.agent_type,
+            agent_customer: validationSchema.fields.agent_customer,
             warehouse_manager: validationSchema.fields.warehouse_manager,
         }),
         Yup.object().shape({
             owner_number: validationSchema.fields.owner_number,
-            warehouse_email: validationSchema.fields.warehouse_email,
             owner_email: validationSchema.fields.owner_email,
             warehouse_manager_contact: validationSchema.fields.warehouse_manager_contact,
         }),
@@ -159,14 +156,13 @@ export default function AddEditWarehouse() {
         company: "",
         agreed_stock_capital: "",
         vat_no: "",
-        // agent_type: "",
+        agent_customer: "",
         warehouse_manager: "",
         ownerContactCountry: "",
         owner_number: "",
         managerContactCountry: "",
         warehouse_manager_contact: "",
         owner_email: "",
-        warehouse_email: "",
         location: "",
         city: "",
         region_id: "",
@@ -200,14 +196,13 @@ export default function AddEditWarehouse() {
                         company: String(data?.get_company?.id || ''),
                         agreed_stock_capital: String(data?.agreed_stock_capital || ''),
                         vat_no: String(data?.vat_no || ''),
-                        // agent_type: data?.agent_type || '',
+                        agent_customer: String(data?.get_company_customer?.id )|| '',
                         warehouse_manager: data?.warehouse_manager || '',
                         ownerContactCountry: data?.ownerContactCountry || '',
                         owner_number: data?.owner_number || '',
                         managerContactCountry: data?.managerContactCountry || '',
                         warehouse_manager_contact: data?.warehouse_manager_contact || '',
                         owner_email: data?.owner_email || '',
-                        warehouse_email: data?.warehouse_email || '',
                         location: data?.location || '',
                         city: data?.city || '',
                         region_id: String(data?.region_id || ''),
@@ -279,22 +274,49 @@ export default function AddEditWarehouse() {
             // normalize fields expected by API
             const isBranchStr = String(values.is_branch).toLowerCase();
             const isBranchPayload = (isBranchStr === 'true' || isBranchStr === '1' || isBranchStr === 'yes') ? '1' : '0';
-            const payload = {
+            // Build payload. The API expects the file key to be 'p12'.
+            const base = {
                 ...values,
-                // send warehouse_type as-is (string: 'agent_customer' | 'company_outlet')
                 warehouse_type: values.warehouse_type,
                 is_branch: isBranchPayload,
-            } as unknown as FormValues;
+            } as Record<string, unknown>;
 
+            const p12 = values.p12_file;
             let res;
-            if (isEditMode && warehouseId) {
-                res = await updateWarehouse(warehouseId, payload);
+
+            if (p12 instanceof File) {
+                const form = new FormData();
+                // append all keys except p12_file
+                Object.keys(base).forEach((k) => {
+                    if (k === 'p12_file') return;
+                    const v = base[k];
+                    if (typeof v === 'object' && v !== null) {
+                        form.append(k, JSON.stringify(v));
+                    } else if (typeof v !== 'undefined') {
+                        form.append(k, String(v));
+                    }
+                });
+                // append file as 'p12' (backend expects p12:p12.xlsx)
+                form.append('p12', p12);
+
+                if (isEditMode && warehouseId) {
+                    res = await updateWarehouse(warehouseId, form as unknown as object);
+                } else {
+                    res = await addWarehouse(form as unknown as object);
+                    if (!res?.error) {
+                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) {}
+                    }
+                }
             } else {
-                res = await addWarehouse(payload);
-                if (!res?.error) {
-                    try {
-                        await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" });
-                    } catch (e) {}
+                // send JSON where backend expects 'p12' key with filename string
+                const jsonPayload = { ...base, p12: typeof p12 === 'string' ? p12 : '' };
+                if (isEditMode && warehouseId) {
+                    res = await updateWarehouse(warehouseId, jsonPayload);
+                } else {
+                    res = await addWarehouse(jsonPayload);
+                    if (!res?.error) {
+                        try { await saveFinalCode({ reserved_code: values.warehouse_code, model_name: "warehouse" }); } catch (e) {}
+                    }
                 }
             }
             if (res.error) {
@@ -313,7 +335,7 @@ export default function AddEditWarehouse() {
         values: FormValues,
         setFieldValue: (
             field: keyof FormValues,
-            value: string | File,
+            value: unknown,
             shouldValidate?: boolean
         ) => void,
         errors: FormikErrors<FormValues>,
@@ -326,11 +348,11 @@ export default function AddEditWarehouse() {
                     <ContainerCard>
                         {heading}
                         <WarehouseDetails
-                            values={values}
+                            values={{ ...values, p12_file: typeof values.p12_file === 'string' ? values.p12_file : '' }}
                             errors={errors}
                             touched={touched}
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
-                            setFieldValue={(field: string, value: string) => setFieldValue(field as keyof FormValues, value)}
+                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File)}
                             isEditMode={isEditMode}
                         />
                     </ContainerCard>
@@ -340,11 +362,11 @@ export default function AddEditWarehouse() {
                     <ContainerCard>
                         {heading}
                         <WarehouseContact
-                            values={values}
+                            values={{ ...values, p12_file: typeof values.p12_file === 'string' ? values.p12_file : '' }}
                             errors={errors}
                             touched={touched}
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
-                            setFieldValue={(field: string, value: string) => setFieldValue(field as keyof FormValues, value)}
+                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File)}
                         />
                     </ContainerCard>
                 );
@@ -353,11 +375,11 @@ export default function AddEditWarehouse() {
                     <ContainerCard>
                         {heading}
                         <WarehouseLocationInformation
-                            values={values}
+                            values={{ ...values, p12_file: typeof values.p12_file === 'string' ? values.p12_file : '' }}
                             errors={errors}
                             touched={touched}
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
-                            setFieldValue={(field: string, value: string) => setFieldValue(field as keyof FormValues, value)}
+                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File)}
                         />
                     </ContainerCard>
                 );
@@ -366,11 +388,11 @@ export default function AddEditWarehouse() {
                     <ContainerCard>
                         {heading}
                         <WarehouseAdditionalInformation
-                            values={values}
+                            values={{ ...values, p12_file: typeof values.p12_file === 'string' ? values.p12_file : '' }}
                             errors={errors}
                             touched={touched}
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
-                            setFieldValue={(field: string, value: string) => setFieldValue(field as keyof FormValues, value)}
+                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File)}
                         />
                     </ContainerCard>
                 );
