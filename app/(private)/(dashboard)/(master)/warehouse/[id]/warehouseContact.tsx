@@ -13,15 +13,9 @@ type Props = {
 
 export default function WarehouseContactDetails({ values, errors, touched, handleChange, setFieldValue }: Props) {
   const { onlyCountryOptions } = useAllDropdownListData();
-  // fallback if context not populated
-  const fallbackCountries = [
-    { value: "uae", label: "UAE" },
-    { value: "in", label: "India" },
-    { value: "us", label: "USA" },
-    { value: "uk", label: "UK" },
-  ];
 
-  const countries = onlyCountryOptions && onlyCountryOptions.length > 0 ? onlyCountryOptions : fallbackCountries;
+
+  const countries = onlyCountryOptions && onlyCountryOptions.length > 0 ? onlyCountryOptions : [];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full overflow-x-hidden">
@@ -31,7 +25,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
         <div className="flex w-full">
           <select
             name="ownerContactCountry"
-            value={values.ownerContactCountry ?? (countries[0]?.value ?? "")}
+            value={values.ownerContactCountry ?? ""}
             onChange={handleChange}
             className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
           >
@@ -51,7 +45,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
             className={`border border-gray-300 rounded-r-md px-3 text-gray-900 placeholder-gray-400 flex-1 h-[44px] w-full ${errors?.owner_number && touched?.owner_number ? 'border-red-500' : ''}`}
           />
         </div>
-        {errors?.owner_number && touched?.owner_number && (
+         {errors?.owner_number && touched?.owner_number && (
           <span className="text-xs text-red-500 mt-1">{errors.owner_number}</span>
         )}
       </div>
@@ -60,7 +54,7 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
         <div className="flex w-full">
           <select
             name="managerContactCountry"
-            value={values.managerContactCountry ?? (countries[0]?.value ?? "")}
+            value={values.managerContactCountry ?? ""}
             onChange={handleChange}
             className="border border-gray-300 rounded-l-md px-3 text-gray-900 h-[44px] w-24 sm:w-28"
           >
