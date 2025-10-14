@@ -19,9 +19,7 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
 
   useEffect(() => {
     const prev = prevRegionRef.current;
-    // If region changed from a previous value, clear area selection and fetch new areas.
     if (prev !== values.region_id) {
-      // Don't clear on initial mount if area already set by initialValues
       if (prev !== undefined) {
         setFieldValue("area_id", "");
       }
@@ -29,7 +27,6 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
         fetchAreaOptions(values.region_id);
       }
     } else {
-      // If region is same but area options are missing (e.g., user navigated back), ensure options are loaded
       if (values.region_id && (!areaOptions || areaOptions.length === 0)) {
         fetchAreaOptions(values.region_id);
       }

@@ -29,11 +29,11 @@ const columns = [
     { key: "route_name", label: "Route Name", isSortable: true, render: (data: TableDataType) => data.route_name ? data.route_name : "-" },
 
     {
-        key: "route_Type",
+        key: "getrouteType",
         label: "Route Type",
         render: (data: TableDataType) => {
-            const typeObj = data.route_Type ? JSON.parse(JSON.stringify(data.route_Type)) : null;
-            return typeObj?.route_type_name ? typeObj.route_type_name : "-";
+            const typeObj = data.getrouteType ? JSON.parse(JSON.stringify(data.getrouteType)) : null;
+            return typeObj?.name ? typeObj.name : "-";
         },
         filter: {
             isFilterable: true,
@@ -61,7 +61,7 @@ const columns = [
         key: "warehouse",
         label: "Warehouse",
         width: 218,
-        render: (data: TableDataType) => (typeof data.warehouse === "object" && data.warehouse !== null) ? (data.warehouse as { warehouse_name?: string }).warehouse_name : "-",
+        render: (data: TableDataType) => (typeof data.warehouse === "object" && data.warehouse !== null) ? (data.warehouse as { code?: string }).code : "-",
         filter: {
             isFilterable: true,
             render: (data: TableDataType[]) => (
@@ -81,13 +81,13 @@ const columns = [
         },
     },
     {
-        key: "vehicle_code",
+        key: "vehicle",
         label: "Vehicle",
         render: (data: TableDataType) => {
             const vehicleObj = typeof data.vehicle === "string"
                 ? JSON.parse(data.vehicle)
                 : data.vehicle;
-            return vehicleObj?.vehicle_code ? vehicleObj.vehicle_code : "-";
+            return vehicleObj?.code ? vehicleObj.code : "-";
         },
     },
     {
@@ -264,12 +264,12 @@ export default function Route() {
                         columns: columns,
                         rowSelection: true,
                         rowActions: [
-                            // {
-                            //     icon: "lucide:eye",
-                            //     onClick: (data: TableDataType) => {
-                            //         router.push(`/route/details/${data.id}`);
-                            //     },
-                            // },
+                            {
+                                icon: "lucide:eye",
+                                onClick: (data: TableDataType) => {
+                                    router.push(`/route/details/${data.id}`);
+                                },
+                            },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {

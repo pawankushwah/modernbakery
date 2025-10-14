@@ -112,7 +112,7 @@ export default function CompanyCustomers() {
     language: c.language,
     district: c.district,
     balance: c.balance.toString(),
-    payment_type: c.payment_type,
+  payment_type: (String(c.payment_type) === '1') ? 'Cash' : (String(c.payment_type) === '2') ? 'Credit' : String(c.payment_type),
     creditlimit: c.creditlimit.toString(),
     totalcreditlimit: c.totalcreditlimit.toString(),
     status: c.status === 1 ? "Active" : "Inactive",
@@ -140,23 +140,27 @@ export default function CompanyCustomers() {
 
   /* ---------- Column Configuration ---------- */
   const columns = [
-    { key: "sapcode", label: "SAP Code" },
     { key: "customer_code", label: "Customer Code",render: (row: TableDataType) => (
             <span className="font-semibold text-[#181D27] text-[14px]">
                 {row.customer_code}
             </span>
         ), },
+    { key: "sap_code", label: "SAP Code" ,render: (row: TableDataType) => (
+            <span className="font-semibold text-[#181D27] text-[14px]">
+                {row.sap_code}
+            </span>
+        ),},
+        { key: "owner_name", label: "Owner Name" },
+        { key: "owner_no", label: "Owner Number" },
     { key: "business_name", label: "Business Name" },
-    { key: "owner_name", label: "Owner Name" },
-    { key: "owner_no", label: "Owner Number" },
     { key: "whatsapp_no", label: "WhatsApp No" },
     { key: "email", label: "Email" },
-    { key: "language", label: "Language" },
     { key: "district", label: "District" },
     { key: "balance", label: "Balance" },
-    { key: "payment_type", label: "Payment Type" },
     { key: "creditlimit", label: "Credit Limit" },
     { key: "totalcreditlimit", label: "Total Credit Limit" },
+    { key: "payment_type", label: "Payment Type" },
+    { key: "language", label: "Language" },
     {
       key: "status",
       label: "Status",
@@ -262,18 +266,18 @@ export default function CompanyCustomers() {
                   )
                 }
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (row: TableDataType) => {
-                  const fullRow = customers.find(
-                    (c) => c.id.toString() === row.id
-                  );
-                  if (fullRow) {
-                    setSelectedRow(fullRow);
-                    setShowDeletePopup(true);
-                  }
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (row: TableDataType) => {
+              //     const fullRow = customers.find(
+              //       (c) => c.id.toString() === row.id
+              //     );
+              //     if (fullRow) {
+              //       setSelectedRow(fullRow);
+              //       setShowDeletePopup(true);
+              //     }
+              //   },
+              // },
             ],
             pageSize: 50,
           }}

@@ -1,8 +1,35 @@
-// ------
-// ---------------- Form Values Type ----------------------
 "use client";
 
-type CompanyCustomerFormValues = {
+import React from "react";
+import RegionWatcher from "./areaOptions";
+import { Icon } from "@iconify-icon/react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Formik, Form, FormikHelpers } from "formik";
+import * as Yup from "yup";
+
+import { useState, useEffect, useRef } from "react";
+import ContainerCard from "@/app/components/containerCard";
+import InputFields from "@/app/components/inputFields";
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useParams } from "next/navigation";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import {
+  addCompanyCustomers,
+  getCompanyCustomerById,
+  updateCompanyCustomer,
+  genearateCode,
+  saveFinalCode,
+} from "@/app/services/allApi";
+import StepperForm, {
+  useStepperForm,
+  StepperStep,
+} from "@/app/components/stepperForm";
+import Loading from "@/app/components/Loading";
+
+export type CompanyCustomerFormValues = {
   sapCode: string;
   company_customer_code?: string;
   customerCode: string;
@@ -27,7 +54,7 @@ type CompanyCustomerFormValues = {
   bankName: string;
   bankAccountNumber: string;
   creditDay: string;
-  tinNo: string;
+  vatNo: string;
   accuracy: string;
   creditLimit: string;
   guaranteeName: string;
@@ -36,7 +63,6 @@ type CompanyCustomerFormValues = {
   guaranteeTo: string;
   totalCreditLimit: string;
   creditLimitValidity: string;
-  vatNo: string;
   longitude: string;
   latitude: string;
   thresholdRadius: string;
@@ -45,45 +71,8 @@ type CompanyCustomerFormValues = {
   merchendiser_ids: string;
 };
 
-import React from "react";
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import {
-  Formik,
-  Form,
-  ErrorMessage,
-  FormikHelpers,
-  FormikErrors,
-  FormikTouched,
-} from "formik";
-import * as Yup from "yup";
-
-import { useState, useEffect, useRef } from "react";
-import ContainerCard from "@/app/components/containerCard";
-import InputFields from "@/app/components/inputFields";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { useParams } from "next/navigation";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import {
-  addCompanyCustomers,
-  getCompanyCustomerById,
-  updateCompanyCustomer,
-  genearateCode,
-  saveFinalCode,
-} from "@/app/services/allApi";
-import StepperForm, {
-  useStepperForm,
-  StepperStep,
-} from "@/app/components/stepperForm";
-import Loading from "@/app/components/Loading";
-
-// ---------------------- API Call ----------------------
 interface CompanyCustomerPayload {
   sap_code: string;
-  // company_customer_code?: string;
   customer_code: string;
   business_name: string;
   customer_type: string;
@@ -106,7 +95,7 @@ interface CompanyCustomerPayload {
   bank_name: string;
   bank_account_number: string;
   creditday: string;
-  tin_no: string;
+  vat_no: string;
   accuracy: string;
   creditlimit: number;
   totalcreditlimit: number;
@@ -115,136 +104,124 @@ interface CompanyCustomerPayload {
   guarantee_amount: number;
   guarantee_from: string;
   guarantee_to: string;
-  vat_no: string;
   longitude: string;
   latitude: string;
   threshold_radius: number;
   dchannel_id: number;
   merchendiser_ids: string;
   status: number;
-  created_user?: number; // Added for backend
-  updated_user?: number; // Added for backend
+  created_user?: number;
+  updated_user?: number;
 }
 
-// ---------------------- Validation Schema ----------------------
-const CompanyCustomerSchema = Yup.object().shape({
-    customerCode: Yup.string().notRequired(),
-
+// Validation schema (Yup)
+const validationSchema = Yup.object({
   sapCode: Yup.string().required("SAP Code is required."),
+  customerCode: Yup.string().required("Customer Code is required."),
   businessName: Yup.string().required("Business Name is required."),
   customerType: Yup.string().required("Customer Type is required."),
   ownerName: Yup.string().required("Owner Name is required."),
   ownerNumber: Yup.string().required("Owner Number is required."),
+  isWhatsapp: Yup.string().required("Whatsapp selection is required."),
+  whatsappNo: Yup.string().required("Whatsapp Number is required."),
   email: Yup.string().email("Invalid email").required("Email is required."),
   language: Yup.string().required("Language is required."),
-  balance: Yup.number()
-    .typeError("Balance must be a number")
-    .required("Balance is required."),
-  paymentType: Yup.string().required("Payment Type is required."),
-  bankName: Yup.string().required("Bank Name is required."),
-  bankAccountNumber: Yup.string().required("Bank Account Number is required."),
-  creditDay: Yup.number()
-    .typeError("Credit Day must be a number")
-    .required("Credit Day is required."),
-  creditLimit: Yup.number()
-    .typeError("Credit Limit must be a number")
-    .required("Credit Limit is required."),
-  totalCreditLimit: Yup.number()
-    .typeError("Total Credit Limit must be a number")
-    .required("Total Credit Limit is required."),
-  guaranteeName: Yup.string().required("Guarantee Name is required."),
-  guaranteeAmount: Yup.number().required("Guarantee Amount is required."),
-  guaranteeFrom: Yup.date().required("Guarantee From is required."),
-  guaranteeTo: Yup.date().required("Guarantee To is required."),
-  town: Yup.string().required("Town is required."),
-  roadStreet: Yup.string().required("Road/Street is required."),
   contactNo2: Yup.string().required("Contact No 2 is required."),
-  whatsappNo: Yup.string().required("WhatsApp No is required."),
+  roadStreet: Yup.string().required("Road/Street is required."),
+  town: Yup.string().required("Town is required."),
   landmark: Yup.string().required("Landmark is required."),
   district: Yup.string().required("District is required."),
   region: Yup.string().required("Region is required."),
   area: Yup.string().required("Area is required."),
-  status: Yup.string().required("Status is required."),
+  balance: Yup.string().required("Balance is required."),
+  paymentType: Yup.string().required("Payment Type is required."),
+  bankName: Yup.string().required("Bank Name is required."),
+  bankAccountNumber: Yup.string().required("Bank Account Number is required."),
+  creditDay: Yup.string().required("Credit Day is required."),
   vatNo: Yup.string().required("VAT No is required."),
-  tinNo: Yup.string().required("TIN No is required."),
-  longitude: Yup.string().required("Longitude is required."),
-  latitude: Yup.string().required("Latitude is required."),
-  thresholdRadius: Yup.number().required("Threshold Radius is required."),
+  accuracy: Yup.string(),
+  creditLimit: Yup.string().required("Credit Limit is required."),
+  guaranteeName: Yup.string().required("Guarantee Name is required."),
+  guaranteeAmount: Yup.string().required("Guarantee Amount is required."),
+  guaranteeFrom: Yup.string().required("Guarantee From is required."),
+  guaranteeTo: Yup.string().required("Guarantee To is required."),
+  totalCreditLimit: Yup.string().required("Total Credit Limit is required."),
+  creditLimitValidity: Yup.string(),
+  longitude: Yup.string().required("Longitude is required.").matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Longitude must be a valid decimal number"),
+  latitude: Yup.string().required("Latitude is required.").matches(/^[-+]?\d{1,3}(?:\.\d+)?$/, "Latitude must be a valid decimal number"),
+  thresholdRadius: Yup.string().required("Threshold Radius is required."),
   dChannelId: Yup.string().required("Channel is required."),
-  // merchendiser_ids: Yup.string(), // Made optional to match backend
+  status: Yup.string().required("Status is required."),
+  merchendiser_ids: Yup.string(),
 });
 
 const stepSchemas = [
   Yup.object({
-    sapCode: Yup.string().required("SAP Code is required."),
-    customerCode: Yup.string().notRequired(),
-    businessName: Yup.string().required("Business Name is required."),
-    customerType: Yup.string().required("Customer Type is required."),
-    ownerName: Yup.string().required("Owner Name is required."),
-    ownerNumber: Yup.string().required("Owner Number is required."),
-    email: Yup.string().email("Invalid email").required("Email is required."),
-    language: Yup.string().required("Language is required."),
+    sapCode: validationSchema.fields.sapCode,
+    customerCode: validationSchema.fields.customerCode,
+    businessName: validationSchema.fields.businessName,
+    customerType: validationSchema.fields.customerType,
+    ownerName: validationSchema.fields.ownerName,
+    language: validationSchema.fields.language,
+    vatNo: validationSchema.fields.vatNo,
+    dChannelId: validationSchema.fields.dChannelId,
+
   }),
   Yup.object({
-    contactNo2: Yup.string().required("Contact No 2 is required."),
-    whatsappNo: Yup.string().required("WhatsApp No is required."),
+     ownerNumber: validationSchema.fields.ownerNumber,
+    email: validationSchema.fields.email,
+    isWhatsapp: validationSchema.fields.isWhatsapp,
+    whatsappNo: validationSchema.fields.whatsappNo,
+    contactNo2: validationSchema.fields.contactNo2,
   }),
   Yup.object({
-    town: Yup.string().required("Town is required."),
-    roadStreet: Yup.string().required("Road/Street is required."),
-    landmark: Yup.string().required("Landmark is required."),
-    district: Yup.string().required("District is required."),
-    region: Yup.string().required("Region is required."),
-    area: Yup.string().required("Area is required."),
-    tinNo: Yup.string().required("TIN No is required."),
-    longitude: Yup.string().required("Longitude is required."),
-    latitude: Yup.string().required("Latitude is required."),
-    thresholdRadius: Yup.number().required("Threshold Radius is required."),
+    town: validationSchema.fields.town,
+    roadStreet: validationSchema.fields.roadStreet,
+    landmark: validationSchema.fields.landmark,
+    district: validationSchema.fields.district,
+    region: validationSchema.fields.region,
+    area: validationSchema.fields.area,
+    longitude: validationSchema.fields.longitude,
+    latitude: validationSchema.fields.latitude,
+    thresholdRadius: validationSchema.fields.thresholdRadius,
   }),
   Yup.object({
-    balance: Yup.number()
-      .typeError("Balance must be a number")
-      .required("Balance is required."),
-    paymentType: Yup.string().required("Payment Type is required."),
-    bankName: Yup.string().required("Bank Name is required."),
-    bankAccountNumber: Yup.string().required(
-      "Bank Account Number is required."
-    ),
-    creditDay: Yup.number()
-      .typeError("Credit Day must be a number")
-      .required("Credit Day is required."),
-    creditLimit: Yup.number()
-      .typeError("Credit Limit must be a number")
-      .required("Credit Limit is required."),
-    totalCreditLimit: Yup.number()
-      .typeError("Total Credit Limit must be a number")
-      .required("Total Credit Limit is required."),
-    guaranteeName: Yup.string().required("Guarantee Name is required."),
-    guaranteeAmount: Yup.number().required("Guarantee Amount is required."),
-    guaranteeFrom: Yup.date().required("Guarantee From is required."),
-    guaranteeTo: Yup.date().required("Guarantee To is required."),
-    vatNo: Yup.string().required("VAT No is required."),
-    dChannelId: Yup.string().required("Channel is required."), // Fixed field name
-    merchendiser_ids: Yup.string(), // Make optional if not always required
+
+    balance: validationSchema.fields.balance,
+    paymentType: validationSchema.fields.paymentType,
+    bankName: validationSchema.fields.bankName,
+    bankAccountNumber: validationSchema.fields.bankAccountNumber,
+    creditDay: validationSchema.fields.creditDay,
+    accuracy: validationSchema.fields.accuracy,
+    creditLimit: validationSchema.fields.creditLimit,
+    totalCreditLimit: validationSchema.fields.totalCreditLimit,
+    creditLimitValidity: validationSchema.fields.creditLimitValidity,
+    guaranteeName: validationSchema.fields.guaranteeName,
+    guaranteeAmount: validationSchema.fields.guaranteeAmount,
+    guaranteeFrom: validationSchema.fields.guaranteeFrom,
+    guaranteeTo: validationSchema.fields.guaranteeTo,
+    merchendiser_ids: validationSchema.fields.merchendiser_ids,
   }),
 ];
-// ---------------------- Component ----------------------
+
 export default function AddCompanyCustomer() {
+
+
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
-  const { regionOptions, areaOptions, customerTypeOptions } =
+  const { regionOptions, areaOptions, customerTypeOptions,channelOptions,fetchAreaOptions } =
     useAllDropdownListData();
 
   const steps: StepperStep[] = [
-    { id: 1, label: "Company Customer" },
-    { id: 2, label: "Contact" },
-    { id: 3, label: "Location" },
-    { id: 4, label: "Financial" },
+    { id: 1, label: "Customer Details" },
+    { id: 2, label: "Customer Contact" },
+    { id: 3, label: "Customer Location" },
+    { id: 4, label: "Customer Financial" },
   ];
 
-  const {
+    const {
     currentStep,
     nextStep,
     prevStep,
@@ -257,6 +234,7 @@ export default function AddCompanyCustomer() {
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [prefix, setPrefix] = useState("");
   const [loading, setLoading] = useState(false);
+  const codeFetchedRef = useRef(false);
   const [initialValues, setInitialValues] = useState<CompanyCustomerFormValues>(
     {
       sapCode: "",
@@ -283,7 +261,7 @@ export default function AddCompanyCustomer() {
       bankName: "",
       bankAccountNumber: "",
       creditDay: "",
-      tinNo: "",
+      vatNo: "",
       accuracy: "",
       creditLimit: "",
       guaranteeName: "",
@@ -292,7 +270,6 @@ export default function AddCompanyCustomer() {
       guaranteeTo: "",
       totalCreditLimit: "",
       creditLimitValidity: "",
-      vatNo: "",
       longitude: "",
       latitude: "",
       thresholdRadius: "",
@@ -301,6 +278,7 @@ export default function AddCompanyCustomer() {
       merchendiser_ids: "",
     }
   );
+
 
   const fetchData = async () => {
     try {
@@ -312,7 +290,7 @@ export default function AddCompanyCustomer() {
         // company_customer_code: data.company_customer_code || "",
         customerCode: data.customer_code || "",
         businessName: data.business_name || "",
-        customerType: String(data.customer_type || ""),
+        customerType: data.customer_type || "",
         ownerName: data.owner_name || "",
         ownerNumber: data.owner_no || "",
         isWhatsapp: String(data.is_whatsapp ?? "1"),
@@ -332,7 +310,7 @@ export default function AddCompanyCustomer() {
         bankName: data.bank_name || "",
         bankAccountNumber: data.bank_account_number || "",
         creditDay: String(data.creditday || ""),
-        tinNo: data.tin_no || "",
+        vatNo: data.vat_no || "",
         accuracy: data.accuracy || "",
         creditLimit: String(data.creditlimit || ""),
         guaranteeName: data.guarantee_name || "",
@@ -341,7 +319,6 @@ export default function AddCompanyCustomer() {
         guaranteeTo: data.guarantee_to || "",
         totalCreditLimit: String(data.totalcreditlimit || ""),
         creditLimitValidity: data.credit_limit_validity || "",
-        vatNo: data.vat_no || "",
         longitude: data.longitude || "",
         latitude: data.latitude || "",
         thresholdRadius: String(data.threshold_radius || ""),
@@ -358,28 +335,29 @@ export default function AddCompanyCustomer() {
     }
   };
 
+
   useEffect(() => {
     if (!params?.id) return;
-
-    if (params.id.toString().trim().toLowerCase() !== "add") {
+    const idStr = params.id.toString().trim().toLowerCase();
+    if (idStr !== "add") {
       setIsEditMode(true);
       setLoading(true);
-      fetchData();
-      setLoading(false);
-    } else if (params.id.toString().trim().toLowerCase() == "add") {
-      setIsEditMode(false);
-      (async () => {
-        const res = await genearateCode({ model_name: "tbl_company_customer" });
-
-        if (res?.prefix) {
-          setPrefix(res.prefix);
-        } else if (res?.code) {
-          const match = res.prefix;
-          if (match) setPrefix(match);
-        }
-      })();
+      fetchData().finally(() => setLoading(false));
+      return;
     }
-  }, []);
+    setIsEditMode(false);
+    if (codeFetchedRef.current) return;
+    codeFetchedRef.current = true;
+    (async () => {
+      try {
+        const res = await genearateCode({ model_name: "tbl_company_customer" });
+        if (res?.code) setInitialValues((prev) => ({ ...prev, customerCode: String(res.code) }));
+        if (res?.prefix) setPrefix(res.prefix);
+      } catch (err) {
+        console.error("Failed to generate code:", err);
+      }
+    })();
+  }, [params?.id]);
 
   const handleNext = async (
     values: CompanyCustomerFormValues,
@@ -401,10 +379,7 @@ export default function AddCompanyCustomer() {
         );
         actions.setErrors(
           err.inner.reduce(
-            (
-              acc: Partial<Record<keyof CompanyCustomerFormValues, string>>,
-              curr
-            ) => ({
+            (acc: Partial<Record<keyof CompanyCustomerFormValues, string>>, curr) => ({
               ...acc,
               [curr.path as keyof CompanyCustomerFormValues]: curr.message,
             }),
@@ -418,18 +393,19 @@ export default function AddCompanyCustomer() {
 
   const handleSubmit = async (
     values: CompanyCustomerFormValues,
-    { setSubmitting }: FormikHelpers<CompanyCustomerFormValues>
+    { setSubmitting, setErrors, setTouched }: FormikHelpers<CompanyCustomerFormValues>
   ) => {
     console.log("🚀 handleSubmit STARTED - Form submission triggered");
     console.log("📝 Current form values:", values);
 
     try {
-      // Create payload that matches your backend requirements
+      await validationSchema.validate(values, { abortEarly: false });
+
       const payload: CompanyCustomerPayload = {
         sap_code: values.sapCode,
         customer_code: values.customerCode,
         business_name: values.businessName,
-        customer_type: values.customerType, // Already string from form
+        customer_type: values.customerType,
         owner_name: values.ownerName,
         owner_no: values.ownerNumber,
         is_whatsapp: Number(values.isWhatsapp),
@@ -448,8 +424,8 @@ export default function AddCompanyCustomer() {
         payment_type: values.paymentType,
         bank_name: values.bankName,
         bank_account_number: values.bankAccountNumber,
-        creditday: values.creditDay, // Already string from form
-        tin_no: values.tinNo,
+        creditday: values.creditDay,
+        vat_no: values.vatNo,
         accuracy: values.accuracy || "",
         creditlimit: Number(values.creditLimit),
         totalcreditlimit: Number(values.totalCreditLimit),
@@ -458,16 +434,14 @@ export default function AddCompanyCustomer() {
         guarantee_amount: Number(values.guaranteeAmount),
         guarantee_from: values.guaranteeFrom,
         guarantee_to: values.guaranteeTo,
-        vat_no: values.vatNo,
         longitude: values.longitude,
         latitude: values.latitude,
         threshold_radius: Number(values.thresholdRadius),
-        dchannel_id: Number(values.dChannelId), // Fixed field name mapping
+        dchannel_id: Number(values.dChannelId),
         merchendiser_ids: values.merchendiser_ids || "",
         status: Number(values.status),
-        // Add user fields that your backend expects
-        created_user: 1, // You might want to get this from auth context
-        updated_user: 2, // You might want to get this from auth context
+        created_user: 1,
+        updated_user: 2,
       };
 
       console.log(
@@ -477,40 +451,28 @@ export default function AddCompanyCustomer() {
 
       let res;
       if (isEditMode) {
-        console.log("✏️ Updating existing company customer");
-        // For edit mode, only exclude fields that shouldn't be sent during update
-        // const { created_user, ...updatePayload } =
-        //   payload;
-        console.log("📤 Edit Payload:", JSON.stringify(payload, null, 2));
         res = await updateCompanyCustomer(String(params.id), payload);
       } else {
-        console.log("➕ Adding new company customer");
         res = await addCompanyCustomers(payload);
       }
 
-      console.log("📨 API Response:", res);
-
       if (res.error) {
-        console.error("❌ API Error:", res.error);
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
-        console.log("✅ Success - Company customer saved");
         showSnackbar(
           res.message ||
-            (isEditMode
-              ? "Company Customer Updated Successfully"
-              : "Company Customer Created Successfully"),
+          (isEditMode
+            ? "Company Customer Updated Successfully"
+            : "Company Customer Created Successfully"),
           "success"
         );
 
-        // Finalize the reserved code after successful add (not for edit)
         if (!isEditMode) {
           try {
             await saveFinalCode({
               reserved_code: values.customerCode || "",
               model_name: "tbl_company_customer",
             });
-            console.log("✅ Code finalized successfully");
           } catch (e) {
             console.error("❌ Error finalizing code:", e);
           }
@@ -519,107 +481,31 @@ export default function AddCompanyCustomer() {
         router.push("/companyCustomer");
       }
     } catch (error) {
-      console.error("❌ Form submission error:", error);
-      showSnackbar(
-        `Failed to ${isEditMode ? "update" : "add"} Company Customer ❌`,
-        "error"
-      );
+      if (error instanceof Yup.ValidationError) {
+        const fields = error.inner.map((e) => e.path);
+        setTouched(
+          fields.reduce(
+            (acc, key) => ({ ...acc, [key!]: true }),
+            {} as Record<string, boolean>
+          )
+        );
+        setErrors(
+          error.inner.reduce(
+            (acc: Partial<Record<keyof CompanyCustomerFormValues, string>>, curr) => ({
+              ...acc,
+              [curr.path as keyof CompanyCustomerFormValues]: curr.message,
+            }),
+            {}
+          )
+        );
+        showSnackbar("Please fix validation errors before submitting", "error");
+      } else {
+        showSnackbar(`Failed to ${isEditMode ? "update" : "add"} Company Customer ❌`, "error");
+      }
     } finally {
-      console.log("🏁 handleSubmit COMPLETED");
       setSubmitting(false);
     }
   };
-
-  //   values: CompanyCustomerFormValues,
-  //   { setSubmitting }: FormikHelpers<CompanyCustomerFormValues>
-  // ) => {
-  //   console.log("Submitting values:", values);
-  //   try {
-  //     const payload: CompanyCustomerPayload = {
-  //       sap_code: values.sapCode,
-  //       company_customer_code: values.company_customer_code,
-  //       customer_code: values.customerCode,
-  //       business_name: values.businessName,
-  //       customer_type: String(values.customerType),
-  //       owner_name: values.ownerName,
-  //       owner_no: values.ownerNumber,
-  //       is_whatsapp: Number(values.isWhatsapp),
-  //       whatsapp_no: values.whatsappNo || "",
-  //       email: values.email,
-  //       language: values.language,
-  //       contact_no2: values.contactNo2 || "",
-  //       buyer_type: Number(values.buyerType),
-  //       road_street: values.roadStreet,
-  //       town: values.town,
-  //       landmark: values.landmark,
-  //       district: values.district,
-  //       region_id: Number(values.region),
-  //       area_id: Number(values.area),
-  //       balance: Number(values.balance),
-  //       payment_type: values.paymentType,
-  //       bank_name: values.bankName,
-  //       bank_account_number: values.bankAccountNumber,
-  //       creditday: String(values.creditDay),
-  //       tin_no: values.tinNo,
-  //       accuracy: values.accuracy || "",
-  //       creditlimit: Number(values.creditLimit),
-  //       totalcreditlimit: Number(values.totalCreditLimit),
-  //       credit_limit_validity: values.creditLimitValidity,
-  //       guarantee_name: values.guaranteeName,
-  //       guarantee_amount: Number(values.guaranteeAmount),
-  //       guarantee_from: values.guaranteeFrom,
-  //       guarantee_to: values.guaranteeTo,
-  //       vat_no: values.vatNo,
-  //       longitude: values.longitude,
-  //       latitude: values.latitude,
-  //       threshold_radius: Number(values.thresholdRadius),
-  //       dchannel_id: Number(values.dChannelId),
-  //       merchendiser_ids: Array.isArray(values.merchendiser_ids)
-  //         ? values.merchendiser_ids.map((id) => id.replace(/"/g, "")).join(",")
-  //         : String(values.merchendiser_ids).replace(/"/g, ""),
-  //       status: Number(values.status),
-  //     };
-
-  //     console.log("Final Payload:", payload);
-
-  //     let res;
-  //     if (isEditMode) {
-  //       const { merchendiser_ids, ...newPayload } = payload;
-  //       console.log("Edit Payload:", newPayload);
-  //       res = await updateCompanyCustomer(String(params.id), newPayload);
-  //     } else {
-  //       res = await addCompanyCustomers(payload);
-  //     }
-
-  //     if (res.error) {
-  //       showSnackbar(res.data?.message || "Failed to submit form", "error");
-  //     } else {
-  //       showSnackbar(
-  //         res.message ||
-  //           (isEditMode
-  //             ? "Company Customer Updated Successfully"
-  //             : "Company Customer Created Successfully"),
-  //         "success"
-  //       );
-  //       // Finalize the reserved code after successful add/update
-  //       try {
-  //         await saveFinalCode({
-  //           reserved_code: values.company_customer_code,
-  //           model_name: "tbl_company_customer",
-  //         });
-  //       } catch (e) {}
-  //       router.push("/dashboard/settings/company/companyCustomer");
-  //     }
-  //   } catch (error) {
-  //     console.error(error);
-  //     showSnackbar(
-  //       `Failed to ${isEditMode ? "update" : "add"} "Company Customer" ❌`,
-  //       "error"
-  //     );
-  //   } finally {
-  //     setSubmitting(false);
-  //   }
-  // };
 
   const renderStepContent = (
     values: CompanyCustomerFormValues,
@@ -628,15 +514,14 @@ export default function AddCompanyCustomer() {
       value: string | File,
       shouldValidate?: boolean
     ) => void,
-    errors: FormikErrors<CompanyCustomerFormValues>,
-    touched: FormikTouched<CompanyCustomerFormValues>
+    errors: Record<string, string>,
+    touched: Record<string, boolean>
   ) => {
     switch (currentStep) {
       case 1:
         return (
           <ContainerCard>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {/* Company Customer Code (pattern-matched UI) */}
               <div className="flex items-start gap-2 max-w-[406px]">
                 <InputFields
                   label="Customer Code"
@@ -646,16 +531,13 @@ export default function AddCompanyCustomer() {
                     setFieldValue("customerCode", e.target.value)
                   }
                   disabled={codeMode === "auto"}
-                  error={
-                    touched.customerCode &&
-                    errors.customerCode
-                  }
+                  error={touched.customerCode && errors.customerCode}
                 />
                 {!isEditMode && (
                   <>
                     <IconButton
                       bgClass="white"
-                       className="  cursor-pointer text-[#252B37] pt-12"
+                      className="  cursor-pointer text-[#252B37] pt-12"
                       icon="mi:settings"
                       onClick={() => setIsOpen(true)}
                     />
@@ -677,102 +559,117 @@ export default function AddCompanyCustomer() {
                   </>
                 )}
               </div>
-              <InputFields
-                label="SAP Code"
-                name="sapCode"
-                value={values.sapCode}
-                onChange={(e) => setFieldValue("sapCode", e.target.value)}
-              />
-              <ErrorMessage
-                name="sapCode"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              {/* <InputFields
-                label="Customer Code"
-                name="customerCode"
-                value={values.customerCode}
-                onChange={(e) => setFieldValue("customerCode", e.target.value)}
-              />
-              <ErrorMessage
-                name="customerCode"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              /> */}
-
-              <InputFields
-                label="Business Name"
-                name="businessName"
-                value={values.businessName}
-                onChange={(e) => setFieldValue("businessName", e.target.value)}
-              />
-              <ErrorMessage
-                name="businessName"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Customer Type"
-                name="customerType"
-                value={values.customerType}
-                onChange={(e) => setFieldValue("customerType", e.target.value)}
-                options={customerTypeOptions}
-              />
-              <ErrorMessage
-                name="customerType"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Owner Name"
-                name="ownerName"
-                value={values.ownerName}
-                onChange={(e) => setFieldValue("ownerName", e.target.value)}
-              />
-              <ErrorMessage
-                name="ownerName"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Owner Number"
-                name="ownerNumber"
-                value={values.ownerNumber}
-                onChange={(e) => setFieldValue("ownerNumber", e.target.value)}
-              />
-              <ErrorMessage
-                name="ownerNumber"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Email"
-                name="email"
-                value={values.email}
-                onChange={(e) => setFieldValue("email", e.target.value)}
-              />
-              <ErrorMessage
-                name="email"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Language"
-                name="language"
-                value={values.language}
-                onChange={(e) => setFieldValue("language", e.target.value)}
-              />
-              <ErrorMessage
-                name="language"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+              <div>
+                <InputFields
+                  required
+                  label="SAP Code"
+                  name="sapCode"
+                  value={values.sapCode}
+                  onChange={(e) => setFieldValue("sapCode", e.target.value)}
+                  error={touched.sapCode && errors.sapCode}
+                />
+                {errors?.sapCode && touched?.sapCode && (
+                  <span className="text-xs text-red-500 mt-1">{errors.sapCode}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="VAT No"
+                  name="vatNo"
+                  value={values.vatNo}
+                  onChange={(e) => setFieldValue("vatNo", e.target.value)}
+                  error={touched.vatNo && errors.vatNo}
+                />
+                {errors?.vatNo && touched?.vatNo && (
+                  <span className="text-xs text-red-500 mt-1">{errors.vatNo}</span>
+                )}
+              </div>
+  <div>
+                <InputFields
+                  required
+                  label="Owner Name"
+                  name="ownerName"
+                  value={values.ownerName}
+                  onChange={(e) => setFieldValue("ownerName", e.target.value)}
+                  error={touched.ownerName && errors.ownerName}
+                />
+                {errors?.ownerName && touched?.ownerName && (
+                  <span className="text-xs text-red-500 mt-1">{errors.ownerName}</span>
+                )}
+              </div>
+              
+              <div>
+                <InputFields
+                  required
+                  label="Business Name"
+                  name="businessName"
+                  value={values.businessName}
+                  onChange={(e) => setFieldValue("businessName", e.target.value)}
+                  error={touched.businessName && errors.businessName}
+                />
+                {errors?.businessName && touched?.businessName && (
+                  <span className="text-xs text-red-500 mt-1">{errors.businessName}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Customer Type"
+                  name="customerType"
+                  value={values.customerType}
+                  onChange={(e) => setFieldValue("customerType", e.target.value)}
+                  options={customerTypeOptions}
+                  error={touched.customerType && errors.customerType}
+                />
+                {errors?.customerType && touched?.customerType && (
+                  <span className="text-xs text-red-500 mt-1">{errors.customerType}</span>
+                )}
+              </div>
+            
+             
+              <div>
+                <InputFields
+                  required
+                  label="Outlet Channel"
+                  name="dChannelId"
+                  options={channelOptions}
+                  value={values.dChannelId}
+                  onChange={(e) => setFieldValue("dChannelId", e.target.value)}
+                  error={touched.dChannelId && errors.dChannelId}
+                />
+                {errors?.dChannelId && touched?.dChannelId && (
+                  <span className="text-xs text-red-500 mt-1">{errors.dChannelId}</span>
+                )}
+              </div>
+               <div>
+                <InputFields
+                  required
+                  label="Language"
+                  name="language"
+                   options={[
+                    { value: "English", label: "English" },
+                    { value: "Hindi", label: "Hindi" },
+                    { value: "Gujarati", label: "Gujarati" },
+                    { value: "Marathi", label: "Marathi" },
+                    { value: "Telugu", label: "Telugu" },
+                    { value: "Tamil", label: "Tamil" },
+                    { value: "Kannada", label: "Kannada" },
+                    { value: "Malayalam", label: "Malayalam" },
+                    { value: "Punjabi", label: "Punjabi" },
+                    { value: "Bengali", label: "Bengali" },
+                    { value: "Odia", label: "Odia" },
+                    { value: "Assamese", label: "Assamese" },
+                    { value: "Urdu", label: "Urdu" },
+                  ]}
+                  value={values.language}
+                  onChange={(e) => setFieldValue("language", e.target.value)}
+                  error={touched.language && errors.language}
+                />
+                {errors?.language && touched?.language && (
+                  <span className="text-xs text-red-500 mt-1">{errors.language}</span>
+                )}
+              </div>
             </div>
           </ContainerCard>
         );
@@ -781,61 +678,92 @@ export default function AddCompanyCustomer() {
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">Contact Details</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <InputFields
-                label="Whatsapp Available?"
-                name="isWhatsapp"
-                value={values.isWhatsapp}
-                onChange={(e) => setFieldValue("isWhatsapp", e.target.value)}
-                options={[
-                  { value: "1", label: "Yes" },
-                  { value: "0", label: "No" },
-                ]}
-              />
-              <ErrorMessage
-                name="isWhatsapp"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+              <div>
 
-              <InputFields
-                label="Whatsapp Number"
-                name="whatsappNo"
-                value={values.whatsappNo}
-                onChange={(e) => setFieldValue("whatsappNo", e.target.value)}
-              />
-              <ErrorMessage
-                name="whatsappNo"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Contact No 2"
-                name="contactNo2"
-                value={values.contactNo2}
-                onChange={(e) => setFieldValue("contactNo2", e.target.value)}
-              />
-              <ErrorMessage
-                name="contactNo2"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Buyer Type"
-                name="buyerType"
-                value={values.buyerType}
-                onChange={(e) => setFieldValue("buyerType", e.target.value)}
-                options={[
-                  { value: "0", label: "Buyer" },
-                  { value: "1", label: "Seller" },
-                ]}
-              />
-              <ErrorMessage
-                name="buyerType"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+                <InputFields
+                  required
+                  label="Owner Number"
+                  name="ownerNumber"
+                  type="contact"
+                  value={values.ownerNumber}
+                  onChange={(e) => setFieldValue("ownerNumber", e.target.value)}
+                  error={touched.ownerNumber && errors.ownerNumber}
+                />
+                {errors?.ownerNumber && touched?.ownerNumber && (
+                  <span className="text-xs text-red-500 mt-1">{errors.ownerNumber}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Email"
+                  name="email"
+                  value={values.email}
+                  onChange={(e) => setFieldValue("email", e.target.value)}
+                  error={touched.email && errors.email}
+                />
+                {errors?.email && touched?.email && (
+                  <span className="text-xs text-red-500 mt-1">{errors.email}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Whatsapp Available?"
+                  name="isWhatsapp"
+                  type="radio"
+                  value={values.isWhatsapp}
+                  onChange={(e) => setFieldValue("isWhatsapp", e.target.value)}
+                  options={[
+                    { value: "1", label: "Yes" },
+                    { value: "0", label: "No" },
+                  ]}
+                />
+                {errors?.isWhatsapp && touched?.isWhatsapp && (
+                  <span className="text-xs text-red-500 mt-1">{errors.isWhatsapp}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Whatsapp Number"
+                  type="contact"
+                  name="whatsappNo"
+                  value={values.whatsappNo}
+                  onChange={(e) => setFieldValue("whatsappNo", e.target.value)}
+                />
+                {errors?.whatsappNo && touched?.whatsappNo && (
+                  <span className="text-xs text-red-500 mt-1">{errors.whatsappNo}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Contact No 2"
+                  name="contactNo2"
+                  type="contact"
+                  value={values.contactNo2}
+                  onChange={(e) => setFieldValue("contactNo2", e.target.value)}
+                  error={touched.contactNo2 && errors.contactNo2}
+                />
+                {errors?.contactNo2 && touched?.contactNo2 && (
+                  <span className="text-xs text-red-500 mt-1">{errors.contactNo2}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  label="Buyer Type"
+                  name="buyerType"
+                  type="radio"
+                  value={values.buyerType}
+                  onChange={(e) => setFieldValue("buyerType", e.target.value)}
+                  options={[
+                    { value: "0", label: "Buyer" },
+                    { value: "1", label: "Seller" },
+                  ]}
+                />
+               
+              </div>
             </div>
           </ContainerCard>
         );
@@ -844,129 +772,135 @@ export default function AddCompanyCustomer() {
           <ContainerCard>
             <h2 className="text-lg font-semibold mb-6">Location Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <InputFields
-                label="Town"
-                name="town"
-                value={values.town}
-                onChange={(e) => setFieldValue("town", e.target.value)}
-              />
-              <ErrorMessage
-                name="town"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+              <div>
+                <InputFields
+                  required
+                  label="Town"
+                  name="town"
+                  value={values.town}
+                  onChange={(e) => setFieldValue("town", e.target.value)}
+                  error={touched.town && errors.town}
+                />
+                {errors?.town && touched?.town && (
+                  <span className="text-xs text-red-500 mt-1">{errors.town}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Road Street"
+                  name="roadStreet"
+                  value={values.roadStreet}
+                  onChange={(e) => setFieldValue("roadStreet", e.target.value)}
+                  error={touched.roadStreet && errors.roadStreet}
+                />
+                {errors?.roadStreet && touched?.roadStreet && (
+                  <span className="text-xs text-red-500 mt-1">{errors.roadStreet}</span>
+                )}
+              </div>
+              <div>
 
-              <InputFields
-                label="Road Street"
-                name="roadStreet"
-                value={values.roadStreet}
-                onChange={(e) => setFieldValue("roadStreet", e.target.value)}
-              />
-              <ErrorMessage
-                name="roadStreet"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+                <InputFields
+                  required
+                  label="Landmark"
+                  name="landmark"
+                  value={values.landmark}
+                  onChange={(e) => setFieldValue("landmark", e.target.value)}
+                  error={touched.landmark && errors.landmark}
+                />
+                {errors?.landmark && touched?.landmark && (
+                  <span className="text-xs text-red-500 mt-1">{errors.landmark}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="District"
+                  name="district"
+                  value={values.district}
+                  onChange={(e) => setFieldValue("district", e.target.value)}
+                  error={touched.district && errors.district}
+                />
+                {errors?.district && touched?.district && (
+                  <span className="text-xs text-red-500 mt-1">{errors.district}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Region"
+                  name="region"
+                  value={values.region}
+                  onChange={(e) => setFieldValue("region", e.target.value)}
+                  options={regionOptions}
+                  error={touched.region && errors.region}
+                />
+                {errors?.region && touched?.region && (
+                  <span className="text-xs text-red-500 mt-1">{errors.region}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Area"
+                  name="area"
+                  value={values.area}
+                  onChange={(e) => setFieldValue("area", e.target.value)}
+                  options={
+                    areaOptions && areaOptions.length > 0
+                      ? areaOptions
+                      : [{ value: "", label: "No options" }]
+                  }
+                  error={touched.area && errors.area}
+                />
+                {errors?.area && touched?.area && (
+                  <span className="text-xs text-red-500 mt-1">{errors.area}</span>
+                )}
+              </div>
 
-              <InputFields
-                label="Landmark"
-                name="landmark"
-                value={values.landmark}
-                onChange={(e) => setFieldValue("landmark", e.target.value)}
-              />
-              <ErrorMessage
-                name="landmark"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
 
-              <InputFields
-                label="District"
-                name="district"
-                value={values.district}
-                onChange={(e) => setFieldValue("district", e.target.value)}
-              />
-              <ErrorMessage
-                name="district"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+              <div>
+                <InputFields
+                  required
+                  label="Longitude"
+                  name="longitude"
+                  value={values.longitude}
+                  onChange={(e) => setFieldValue("longitude", e.target.value)}
+                  error={touched.longitude && errors.longitude}
+                />
+                {errors?.longitude && touched?.longitude && (
+                  <span className="text-xs text-red-500 mt-1">{errors.longitude}</span>
+                )}
+              </div>
+              <div>
 
-              <InputFields
-                label="Region"
-                name="region"
-                value={values.region}
-                onChange={(e) => setFieldValue("region", e.target.value)}
-                options={regionOptions}
-              />
-              <ErrorMessage
-                name="region"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Area"
-                name="area"
-                value={values.area}
-                onChange={(e) => setFieldValue("area", e.target.value)}
-                options={areaOptions}
-              />
-              <ErrorMessage
-                name="area"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="TIN No"
-                name="tinNo"
-                value={values.tinNo}
-                onChange={(e) => setFieldValue("tinNo", e.target.value)}
-              />
-              <ErrorMessage
-                name="tinNo"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Longitude"
-                name="longitude"
-                value={values.longitude}
-                onChange={(e) => setFieldValue("longitude", e.target.value)}
-              />
-              <ErrorMessage
-                name="longitude"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Latitude"
-                name="latitude"
-                value={values.latitude}
-                onChange={(e) => setFieldValue("latitude", e.target.value)}
-              />
-              <ErrorMessage
-                name="latitude"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Threshold Radius"
-                name="thresholdRadius"
-                value={values.thresholdRadius}
-                onChange={(e) =>
-                  setFieldValue("thresholdRadius", e.target.value)
-                }
-              />
-              <ErrorMessage
-                name="thresholdRadius"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
+                <InputFields
+                  required
+                  label="Latitude"
+                  name="latitude"
+                  value={values.latitude}
+                  onChange={(e) => setFieldValue("latitude", e.target.value)}
+                  error={touched.latitude && errors.latitude}
+                />
+                {errors?.latitude && touched?.latitude && (
+                  <span className="text-xs text-red-500 mt-1">{errors.latitude}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Threshold Radius"
+                  name="thresholdRadius"
+                  value={values.thresholdRadius}
+                  onChange={(e) =>
+                    setFieldValue("thresholdRadius", e.target.value)
+                  }
+                  error={touched.thresholdRadius && errors.thresholdRadius}
+                />
+                {errors?.thresholdRadius && touched?.thresholdRadius && (
+                  <span className="text-xs text-red-500 mt-1">{errors.thresholdRadius}</span>
+                )}
+              </div>
             </div>
           </ContainerCard>
         );
@@ -977,232 +911,205 @@ export default function AddCompanyCustomer() {
               Financial & Bank Details
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-             <div>
+              <div>
+
+
+
+                <InputFields
+                  required
+                  label="Payment Type"
+                  name="paymentType"
+                  type="radio"
+                  value={values.paymentType}
+                  onChange={(e) => setFieldValue("paymentType", e.target.value)}
+                  options={[
+                    { value: "1", label: "Cash" },
+                    { value: "2", label: "Credit" },
+                  ]}
+                />
+                {errors?.paymentType && touched?.paymentType && (
+                  <span className="text-xs text-red-500 mt-1">{errors.paymentType}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Bank Name"
+                  name="bankName"
+                  value={values.bankName}
+                  onChange={(e) => setFieldValue("bankName", e.target.value)}
+                  error={touched.bankName && errors.bankName}
+                />
+                {errors?.bankName && touched?.bankName && (
+                  <span className="text-xs text-red-500 mt-1">{errors.bankName}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Bank Account Number"
+                  name="bankAccountNumber"
+                  value={values.bankAccountNumber}
+                  onChange={(e) =>
+                    setFieldValue("bankAccountNumber", e.target.value)
+                  }
+                  error={touched.bankAccountNumber && errors.bankAccountNumber}
+                />
+                {errors?.bankAccountNumber && touched?.bankAccountNumber && (
+                  <span className="text-xs text-red-500 mt-1">{errors.bankAccountNumber}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Credit Day"
+                  name="creditDay"
+                  value={values.creditDay}
+                  onChange={(e) => setFieldValue("creditDay", e.target.value)}
+                  error={touched.creditDay && errors.creditDay}
+                />
+                {errors?.creditDay && touched?.creditDay && (
+                  <span className="text-xs text-red-500 mt-1">{errors.creditDay}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  label="Accuracy"
+                  name="accuracy"
+                  value={values.accuracy}
+                  onChange={(e) => setFieldValue("accuracy", e.target.value)}
+                  error={touched.accuracy && errors.accuracy}
+                />
+                {errors?.accuracy && touched?.accuracy && (
+                  <span className="text-xs text-red-500 mt-1">{errors.accuracy}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Credit Limit"
+                  name="creditLimit"
+                  value={values.creditLimit}
+                  onChange={(e) => setFieldValue("creditLimit", e.target.value)}
+                  error={touched.creditLimit && errors.creditLimit}
+                />
+                {errors?.creditLimit && touched?.creditLimit && (
+                  <span className="text-xs text-red-500 mt-1">{errors.creditLimit}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Total Credit Limit"
+                  name="totalCreditLimit"
+                  value={values.totalCreditLimit}
+                  onChange={(e) =>
+                    setFieldValue("totalCreditLimit", e.target.value)
+                  }
+                  error={touched.totalCreditLimit && errors.totalCreditLimit}
+                />
+                {errors?.totalCreditLimit && touched?.totalCreditLimit && (
+                  <span className="text-xs text-red-500 mt-1">{errors.totalCreditLimit}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  label="Credit Limit Validity"
+                  name="creditLimitValidity"
+                  value={values.creditLimitValidity}
+                  onChange={(e) =>
+                    setFieldValue("creditLimitValidity", e.target.value)
+                  }
+                  type="date"
+                  error={touched.creditLimitValidity && errors.creditLimitValidity}
+                />
+                {errors?.creditLimitValidity && touched?.creditLimitValidity && (
+                  <span className="text-xs text-red-500 mt-1">{errors.creditLimitValidity}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Guarantee Name"
+                  name="guaranteeName"
+                  value={values.guaranteeName}
+                  onChange={(e) => setFieldValue("guaranteeName", e.target.value)}
+                  error={touched.guaranteeName && errors.guaranteeName}
+                />
+                {errors?.guaranteeName && touched?.guaranteeName && (
+                  <span className="text-xs text-red-500 mt-1">{errors.guaranteeName}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Guarantee Amount"
+                  name="guaranteeAmount"
+                  value={values.guaranteeAmount}
+                  onChange={(e) =>
+                    setFieldValue("guaranteeAmount", e.target.value)
+                  }
+                  error={touched.guaranteeAmount && errors.guaranteeAmount}
+                />
+                {errors?.guaranteeAmount && touched?.guaranteeAmount && (
+                  <span className="text-xs text-red-500 mt-1">{errors.guaranteeAmount}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Guarantee From"
+                  name="guaranteeFrom"
+                  value={values.guaranteeFrom}
+                  onChange={(e) => setFieldValue("guaranteeFrom", e.target.value)}
+                  type="date"
+                  error={touched.guaranteeFrom && errors.guaranteeFrom}
+                />
+                {errors?.guaranteeFrom && touched?.guaranteeFrom && (
+                  <span className="text-xs text-red-500 mt-1">{errors.guaranteeFrom}</span>
+                )}
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Guarantee To"
+                  name="guaranteeTo"
+                  value={values.guaranteeTo}
+                  onChange={(e) => setFieldValue("guaranteeTo", e.target.value)}
+                  type="date"
+                  error={touched.guaranteeTo && errors.guaranteeTo}
+                />
+                {errors?.guaranteeTo && touched?.guaranteeTo && (
+                  <span className="text-xs text-red-500 mt-1">{errors.guaranteeTo}</span>
+                )}
+              </div>
+
               
-             </div>
+              <div>
+                {!isEditMode && (
+                  <>
+                    <InputFields
+                      label="Merchendiser"
+                      name="merchendiser_ids"
+                      value={values.merchendiser_ids}
+                      onChange={(e) =>
+                        setFieldValue("merchendiser_ids", e.target.value)
+                      }
+                      isSingle={false}
+                      options={[
+                        { value: "1", label: "Merchendiser 1" },
+                        { value: "2", label: "Merchendiser 2" },
+                        { value: "3", label: "Merchendiser 3" },
+                      ]}
+                      error={touched.merchendiser_ids && errors.merchendiser_ids}
+                    />
+                    {errors?.merchendiser_ids && touched?.merchendiser_ids && (
+                      <span className="text-xs text-red-500 mt-1">{errors.merchendiser_ids}</span>
+                    )}
+                  </>
+                )}
+              </div>
 
-              <InputFields
-                label="Payment Type"
-                name="paymentType"
-                value={values.paymentType}
-                onChange={(e) => setFieldValue("paymentType", e.target.value)}
-                options={[
-                  { value: "1", label: "Cash" },
-                  { value: "2", label: "Credit" },
-                ]}
-              />
-              <ErrorMessage
-                name="paymentType"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Bank Name"
-                name="bankName"
-                value={values.bankName}
-                onChange={(e) => setFieldValue("bankName", e.target.value)}
-              />
-              <ErrorMessage
-                name="bankName"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Bank Account Number"
-                name="bankAccountNumber"
-                value={values.bankAccountNumber}
-                onChange={(e) =>
-                  setFieldValue("bankAccountNumber", e.target.value)
-                }
-              />
-              <ErrorMessage
-                name="bankAccountNumber"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Credit Day"
-                name="creditDay"
-                value={values.creditDay}
-                onChange={(e) => setFieldValue("creditDay", e.target.value)}
-              />
-              <ErrorMessage
-                name="creditDay"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Accuracy"
-                name="accuracy"
-                value={values.accuracy}
-                onChange={(e) => setFieldValue("accuracy", e.target.value)}
-              />
-              <ErrorMessage
-                name="accuracy"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Credit Limit"
-                name="creditLimit"
-                value={values.creditLimit}
-                onChange={(e) => setFieldValue("creditLimit", e.target.value)}
-              />
-              <ErrorMessage
-                name="creditLimit"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Total Credit Limit"
-                name="totalCreditLimit"
-                value={values.totalCreditLimit}
-                onChange={(e) =>
-                  setFieldValue("totalCreditLimit", e.target.value)
-                }
-              />
-              <ErrorMessage
-                name="totalCreditLimit"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Credit Limit Validity"
-                name="creditLimitValidity"
-                value={values.creditLimitValidity}
-                onChange={(e) =>
-                  setFieldValue("creditLimitValidity", e.target.value)
-                }
-                type="date"
-              />
-              <ErrorMessage
-                name="creditLimitValidity"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Guarantee Name"
-                name="guaranteeName"
-                value={values.guaranteeName}
-                onChange={(e) => setFieldValue("guaranteeName", e.target.value)}
-              />
-              <ErrorMessage
-                name="guaranteeName"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Guarantee Amount"
-                name="guaranteeAmount"
-                value={values.guaranteeAmount}
-                onChange={(e) =>
-                  setFieldValue("guaranteeAmount", e.target.value)
-                }
-              />
-              <ErrorMessage
-                name="guaranteeAmount"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Guarantee From"
-                name="guaranteeFrom"
-                value={values.guaranteeFrom}
-                onChange={(e) => setFieldValue("guaranteeFrom", e.target.value)}
-                type="date"
-              />
-              <ErrorMessage
-                name="guaranteeFrom"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Guarantee To"
-                name="guaranteeTo"
-                value={values.guaranteeTo}
-                onChange={(e) => setFieldValue("guaranteeTo", e.target.value)}
-                type="date"
-              />
-              <ErrorMessage
-                name="guaranteeTo"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="VAT No"
-                name="vatNo"
-                value={values.vatNo}
-                onChange={(e) => setFieldValue("vatNo", e.target.value)}
-              />
-              <ErrorMessage
-                name="vatNo"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              <InputFields
-                label="Channel ID"
-                name="dChannelId"
-                value={values.dChannelId}
-                onChange={(e) => setFieldValue("dChannelId", e.target.value)}
-              />
-              <ErrorMessage
-                name="dChannelId"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
-
-              {!isEditMode && (
-                <>
-                  <InputFields
-                    label="Merchendiser"
-                    name="merchendiser_ids"
-                    value={values.merchendiser_ids}
-                    onChange={(e) =>
-                      setFieldValue("merchendiser_ids", e.target.value)
-                    }
-                    isSingle={false}
-                    options={[
-                      { value: "1", label: "Merchendiser 1" },
-                      { value: "2", label: "Merchendiser 2" },
-                      { value: "3", label: "Merchendiser 3" },
-                    ]}
-                  />
-                  <ErrorMessage
-                    name="merchendiser_ids"
-                    component="span"
-                    className="text-xs text-red-500 mt-1"
-                  />
-                </>
-              )}
-
-              <InputFields
-                label="Status"
-                name="status"
-                value={values.status}
-                onChange={(e) => setFieldValue("status", e.target.value)}
-                options={[
-                  { value: "1", label: "Active" },
-                  { value: "0", label: "Inactive" },
-                ]}
-              />
-              <ErrorMessage
-                name="status"
-                component="span"
-                className="text-xs text-red-500 mt-1"
-              />
             </div>
           </ContainerCard>
         );
@@ -1229,20 +1136,24 @@ export default function AddCompanyCustomer() {
 
       <Formik
         initialValues={initialValues}
-        validationSchema={CompanyCustomerSchema}
-        onSubmit={handleSubmit} // ✅ Direct function reference
+        validationSchema={validationSchema}
+        onSubmit={handleSubmit}
         enableReinitialize={true}
       >
         {({
           values,
           setFieldValue,
+          setErrors,
+          setTouched,
+          setSubmitting,
           errors,
           touched,
           handleSubmit: formikSubmit,
-          isSubmitting, // ✅ Add this to get submitting state
+          isSubmitting,
         }) => (
           <Form>
-            
+            {/* Formik-aware watcher for region changes */}
+            <RegionWatcher fetchAreaOptions={fetchAreaOptions} />
             <StepperForm
               steps={steps.map((step) => ({
                 ...step,
@@ -1253,16 +1164,16 @@ export default function AddCompanyCustomer() {
               onBack={prevStep}
               onNext={() =>
                 handleNext(values, {
-                  setErrors: () => {},
-                  setTouched: () => {},
-                  setSubmitting: () => {},
-                } as unknown as FormikHelpers<CompanyCustomerFormValues>)
+                  setErrors,
+                  setTouched,
+                  setSubmitting,
+                } as FormikHelpers<CompanyCustomerFormValues>)
               }
-              onSubmit={formikSubmit} // ✅ This should be the Formik handleSubmit
+              onSubmit={formikSubmit}
               showSubmitButton={isLastStep}
               showNextButton={!isLastStep}
               nextButtonText="Save & Next"
-              submitButtonText={isSubmitting ? "Submitting..." : "Submit"} // ✅ Show loading state
+              submitButtonText={isSubmitting ? "Submitting..." : "Submit"}
             >
               {renderStepContent(values, setFieldValue, errors, touched)}
             </StepperForm>

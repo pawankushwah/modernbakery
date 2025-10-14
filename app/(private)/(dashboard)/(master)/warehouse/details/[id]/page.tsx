@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBtn from "@/app/components/statusBtn2";
+import Map from "@/app/components/map";
 
 interface Item {
     id: string;
@@ -257,18 +258,7 @@ export default function ViewPage() {
                                     ]}
                                 />
                                  {item?.latitude && item?.longitude && (
-                                    <div className="mt-6">
-                                        <div className="text-[18px] mb-2 font-semibold">Map Location</div>
-                                        <iframe
-                                            title="Warehouse Location"
-                                            width="100%"
-                                            height="300"
-                                            style={{ border: 0, borderRadius: '8px' }}
-                                            loading="lazy"
-                                            allowFullScreen
-                                            src={`https://www.google.com/maps?q=${item.latitude},${item.longitude}&hl=es;z=14&output=embed`}
-                                        />
-                                    </div>
+                                    <Map latitude={item.latitude} longitude={item.longitude} title="Warehouse Location" />
                                 )}
                             </ContainerCard>
                         </div>

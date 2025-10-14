@@ -85,7 +85,7 @@ export default function AddEditWarehouse() {
         agent_customer: Yup.string().required('Agent Customer is required'),
         warehouse_manager: Yup.string().required('Warehouse Manager is required'),
         owner_number: Yup.string()
-        .required('Warehouse Manager Contact is required')
+        .required('Owner Contact is required')
             .matches(/^[\d]+$/, 'Contact must be numeric')
             .min(7, 'Contact must be at least 7 digits'),
         owner_email: Yup.string().required("Owner Email is required").email('Invalid email format'),
@@ -352,7 +352,7 @@ export default function AddEditWarehouse() {
                             errors={errors}
                             touched={touched}
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
-                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File)}
+                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File, true)}
                             isEditMode={isEditMode}
                         />
                     </ContainerCard>
@@ -366,7 +366,7 @@ export default function AddEditWarehouse() {
                             errors={errors}
                             touched={touched}
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
-                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File)}
+                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File, true)}
                         />
                     </ContainerCard>
                 );
@@ -379,7 +379,7 @@ export default function AddEditWarehouse() {
                             errors={errors}
                             touched={touched}
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
-                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File)}
+                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File, true)}
                         />
                     </ContainerCard>
                 );
@@ -392,7 +392,7 @@ export default function AddEditWarehouse() {
                             errors={errors}
                             touched={touched}
                             handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
-                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File)}
+                            setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File, true)}
                         />
                     </ContainerCard>
                 );
