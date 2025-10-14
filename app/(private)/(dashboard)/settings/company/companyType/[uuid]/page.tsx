@@ -7,7 +7,7 @@ import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { addCompanyType, getComponyTypeById, updateCompanyType, genearateCode, saveFinalCode } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { ErrorMessage, Form, Formik, FormikHelpers } from "formik";
+import { Form, Formik, FormikHelpers } from "formik";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 import * as Yup from "yup";
@@ -176,11 +176,6 @@ const router = useRouter();
                     onChange={(e) => setFieldValue("name", e.target.value)}
                     error={touched.name && errors.name}
                   />
-                    <ErrorMessage
-                                                          name="name"
-                                                          component="span"
-                                                          className="text-xs text-red-500"
-                                                        />
                   <InputFields
                     required
                     label="Status"

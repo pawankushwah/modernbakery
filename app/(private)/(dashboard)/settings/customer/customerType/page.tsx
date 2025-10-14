@@ -5,20 +5,13 @@ import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
-import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
+import Table, {
+  TableDataType,
+  listReturnType,
+} from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useLoading } from "@/app/services/loadingContext";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { deleteCustomerType, getCustomerType } from "@/app/services/allApi";
-
-interface CustomerType {
-  id?: string | number;
-  code?: string;
-  name?: string;
-  status?: number;
-  [key: string]: string | number | undefined;
-}
+import { getCustomerType } from "@/app/services/allApi";
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -56,66 +49,39 @@ const columns = [
 export default function CustomerPage() {
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<CustomerType | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const { showSnackbar } = useSnackbar();
   const router = useRouter();
 
   // Fetch list for Table
   const fetchCustomerType = useCallback(
-    async (page: number = 1, pageSize: number = 10): Promise<listReturnType> => {
+    async (page: number = 1, pageSize: number = 5): Promise<listReturnType> => {
       try {
         setLoading(true);
         const listRes = await getCustomerType({
           per_page: pageSize.toString(),
           page: page.toString(),
         });
-        console.log(listRes)
+        console.log(listRes);
         setLoading(false);
-        console.log("Customer Type List Res:", listRes);
         return {
           data: listRes.data || [],
-          total: listRes.pagination?.totalPages|| 1,
-          currentPage: listRes.pagination?.page ||1,
-          pageSize: listRes.pagination?.limit || pageSize,
+          total: listRes?.pagination?.totalPages || 1,
+          currentPage: listRes?.pagination?.page || 1, 
+          pageSize: listRes?.pagination?.limit || pageSize,
         };
       } catch (error: unknown) {
         console.error("API Error:", error);
         setLoading(false);
-
         throw error;
       }
     },
     []
   );
 
-  // Delete handler with refresh
-  const handleConfirmDelete = async () => {
-    if (!selectedRow?.id) return;
-    try {
-      const res = await deleteCustomerType(String(selectedRow.id));
-      if (res?.success || res?.message || res) {
-        showSnackbar("Customer deleted successfully ✅", "success");
-        setShowDeletePopup(false);
-        setSelectedRow(null);
-        setRefreshKey((prev) => prev + 1); // <-- trigger table refresh
-      } else {
-        showSnackbar("Failed to delete customer ❌", "error");
-      }
-    } catch (error) {
-      console.error("Delete failed ❌", error);
-      showSnackbar("Delete failed ❌", "error");
-    }
-  };
-
   return (
     <>
       {/* Table */}
       <div className="h-[calc(100%-60px)]">
         <Table
-          refreshKey={refreshKey}
           config={{
             api: {
               list: fetchCustomerType,
@@ -178,35 +144,11 @@ export default function CustomerPage() {
                   );
                 },
               },
-              // {
-              //   icon: "lucide:trash",
-              //   onClick: (row: object) => {
-              //     const r = row as TableDataType;
-              //     setSelectedRow({
-              //       id: r.id,
-              //       code: r.code,
-              //       name: r.name,
-              //       status: Number(r.status) === 1 ? 1 : 0,
-              //     });
-              //     setShowDeletePopup(true);
-              //   },
-              // },
             ],
-            pageSize: 10,
+            pageSize: 5,
           }}
         />
       </div>
-
-      {/* Delete Popup */}
-      {showDeletePopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
-          <DeleteConfirmPopup
-            title="Delete Customer Type"
-            onClose={() => setShowDeletePopup(false)}
-            onConfirm={handleConfirmDelete}
-          />
-        </div>
-      )}
     </>
   );
 }

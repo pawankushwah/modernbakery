@@ -1,311 +1,236 @@
 "use client";
 
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Formik, Form, ErrorMessage, type FormikHelpers } from "formik";
-import * as Yup from "yup";
-
 import ContainerCard from "@/app/components/containerCard";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
-import IconButton from "@/app/components/iconButton";
-import SettingPopUp from "@/app/components/settingPopUp";
-import Loading from "@/app/components/Loading";
-
+import SearchableDropdown from "@/app/components/SearchableDropdown";
 import {
-  addCustomerSubCategory,
-  updateCustomerSubCategory,
-  getCustomerSubCategoryById,
+  addCustomerCategory,
+  channelList,
   genearateCode,
   saveFinalCode,
 } from "@/app/services/allApi";
-
+import IconButton from "@/app/components/iconButton";
+import SettingPopUp from "@/app/components/settingPopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { Icon } from "@iconify-icon/react";
+import { useFormik } from "formik";
+import Link from "next/link";
+import { useEffect, useState, useRef } from "react";
+import * as Yup from "yup";
+import { useRouter } from "next/navigation";
 
-// ✅ Validation Schema
-const CustomerSubCategorySchema = Yup.object().shape({
-  customer_category_id: Yup.string().required("Customer category is required"),
-  customer_sub_category_name: Yup.string().required("Sub category name is required"),
-  status: Yup.string().required("Status is required"),
-  customer_sub_category_code: Yup.string().required("Sub category code is required"),
-});
+interface OutletChannel {
+  id: number;
+  outlet_channel_code: string;
+}
 
-export default function AddEditCustomerSubCategory() {
-  const { showSnackbar } = useSnackbar();
-  const router = useRouter();
-  const params = useParams();
-
-  const { customerCategoryOptions } = useAllDropdownListData(); // ✅ use dropdown context
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  // Code logic
+export default function AddCustomerCategory() {
+  const [outletChannels, setOutletChannels] = useState<
+    { value: string; label: string }[]
+  >([]);
   const [isOpen, setIsOpen] = useState(false);
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [prefix, setPrefix] = useState("");
+  const [code, setCode] = useState("");
   const codeGeneratedRef = useRef(false);
+  const { showSnackbar } = useSnackbar();
+  const router = useRouter();
 
-  const [initialValues, setInitialValues] = useState({
-    customer_category_id: "",
-    customer_sub_category_name: "",
-    status: "1",
-    customer_sub_category_code: "",
+  useEffect(() => {
+    const fetchOutletChannels = async () => {
+      try {
+        const res = await channelList();
+        const dataArray: OutletChannel[] = res?.data || [];
+        const options = dataArray.map((oc) => ({
+          value: String(oc.id),
+          label: oc.outlet_channel_code,
+        }));
+        setOutletChannels(options);
+      } catch (error) {
+        console.error("Failed to fetch outlet channels ❌", error);
+        setOutletChannels([]);
+      }
+    };
+    fetchOutletChannels();
+  }, []);
+
+  const formik = useFormik({
+    initialValues: {
+      outlet_channel_id: "",
+      customer_category_name: "",
+      status: "1",
+      customer_category_code: "",
+    },
+    validationSchema: Yup.object({
+      outlet_channel_id: Yup.string().required("Outlet channel is required"),
+      customer_category_name: Yup.string().required("Name is required"),
+      status: Yup.string().required("Status is required"),
+      customer_category_code: Yup.string().required("Code is required"),
+    }),
+    onSubmit: async (values, { resetForm }) => {
+      try {
+        const payload = {
+          outlet_channel_id: Number(values.outlet_channel_id),
+          customer_category_name: values.customer_category_name,
+          status: Number(values.status),
+          customer_category_code: values.customer_category_code,
+        };
+        const res = await addCustomerCategory(payload);
+        if (!res.error) {
+          try {
+            await saveFinalCode({
+              reserved_code: values.customer_category_code,
+              model_name: "customer_categories",
+            });
+          } catch (e) {}
+          showSnackbar("Customer category added successfully ✅", "success");
+          resetForm();
+          router.push("/settings/customer/customerCategory");
+        } else {
+          showSnackbar("Failed to add customer category ❌", "error");
+        }
+      } catch (error) {
+        console.error("❌ Add Customer Category failed", error);
+        showSnackbar("Failed to add customer category ❌", "error");
+      }
+    },
   });
 
-  // ✅ Fetch for edit mode or generate code for add mode
+  // Generate code on mount (add mode only)
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
-      setIsEditMode(true);
-      setLoading(true);
-      (async () => {
-        try {
-          const res = await getCustomerSubCategoryById(String(params.id));
-          if (res?.data) {
-            setInitialValues({
-              customer_category_id: String(res.data.customer_category_id ?? ""),
-              customer_sub_category_name: res.data.customer_sub_category_name ?? "",
-              status: String(res.data.status ?? "1"),
-              customer_sub_category_code: res.data.customer_sub_category_code ?? "",
-            });
-          }
-        } catch (error) {
-          showSnackbar("Failed to fetch sub category", "error");
-        } finally {
-          setLoading(false);
-        }
-      })();
-    } else if (!codeGeneratedRef.current) {
+    if (!codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
       (async () => {
-        const res = await genearateCode({ model_name: "customer_sub_categories" });
+        const res = await genearateCode({ model_name: "customer_categories" });
         if (res?.code) {
-          setInitialValues((prev) => ({ ...prev, customer_sub_category_code: res.code }));
+          setCode(res.code);
+          formik.setFieldValue("customer_category_code", res.code);
         }
         if (res?.prefix) {
           setPrefix(res.prefix);
         } else if (res?.code) {
+          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
           const match = res.prefix;
           if (match) setPrefix(prefix);
         }
       })();
     }
-  }, [params?.id, showSnackbar]);
+  }, []);
 
-  // ✅ Submit handler
-  const handleSubmit = async (
-    values: typeof initialValues,
-    { setSubmitting }: FormikHelpers<typeof initialValues>
-  ) => {
-    try {
-      const payload = {
-        customer_category_id: Number(values.customer_category_id),
-        customer_sub_category_name: values.customer_sub_category_name,
-        status: Number(values.status),
-        customer_sub_category_code: values.customer_sub_category_code,
-      };
-
-      let res;
-      if (isEditMode && params?.id !== "add") {
-        res = await updateCustomerSubCategory(String(params.id), payload);
-      } else {
-        res = await addCustomerSubCategory(payload);
-        try {
-          await saveFinalCode({
-            reserved_code: values.customer_sub_category_code,
-            model_name: "customer_sub_categories",
-          });
-        } catch (e) {}
-      }
-
-      if (res?.error) {
-        showSnackbar(res.data?.message || "Failed to submit form", "error");
-      } else {
-        showSnackbar(
-          isEditMode
-            ? "Customer Sub Category Updated Successfully ✅"
-            : "Customer Sub Category Added Successfully ✅",
-          "success"
-        );
-        router.push("/dashboard/settings/customer/customerSubCategory");
-      }
-    } catch (error) {
-      console.error("Form submission error:", error);
-      showSnackbar("Something went wrong while submitting", "error");
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // ✅ Loading state
-  if (isEditMode && loading) {
-    return (
-      <div className="w-full h-full flex items-center justify-center">
-        <Loading />
-      </div>
-    );
-  }
-
-  // ✅ JSX
   return (
-    <div className="w-full h-full overflow-x-hidden p-4">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard/settings/customer/customerSubCategory">
+    <>
+      <div className="flex justify-between items-center mb-[20px]">
+        <div className="flex items-center gap-[16px]">
+          <Link href="/settings/customer/customerCategory">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Edit Customer Sub Category" : "Add Customer Sub Category"}
+          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
+            Add Customer Category
           </h1>
         </div>
       </div>
 
-      {/* ✅ Formik Form */}
-      <Formik
-        enableReinitialize
-        initialValues={initialValues}
-        validationSchema={CustomerSubCategorySchema}
-        onSubmit={handleSubmit}
-      >
-        {({ handleSubmit, values, setFieldValue, errors, touched }) => (
-          <Form onSubmit={handleSubmit}>
-            <ContainerCard>
-              <h2 className="text-lg font-medium text-gray-800 mb-4">
-                Customer Sub Category Details
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Sub Category Code */}
-                <div className="flex items-end gap-2 max-w-[406px]">
-                  <div className="w-full">
-                    <InputFields
-                      required
-                      label="Customer Sub Category Code"
-                      value={values.customer_sub_category_code}
-                      onChange={(e) =>
-                        setFieldValue("customer_sub_category_code", e.target.value)
-                      }
-                      disabled={codeMode === "auto"}
-                      error={
-                        touched.customer_sub_category_code &&
-                        errors.customer_sub_category_code
-                      }
-                    />
-                    <ErrorMessage
-                      name="customer_sub_category_code"
-                      component="span"
-                      className="text-xs text-red-500"
-                    />
-                  </div>
-                  {!isEditMode && (
-                    <>
-                      <IconButton
-                        bgClass="white"
-                        className="mb-2 cursor-pointer text-[#252B37]"
-                        icon="mi:settings"
-                        onClick={() => setIsOpen(true)}
-                      />
-                      <SettingPopUp
-                        isOpen={isOpen}
-                        onClose={() => setIsOpen(false)}
-                        title="Customer Sub Category Code"
-                        prefix={prefix}
-                        setPrefix={setPrefix}
-                        onSave={(mode, code) => {
-                          setCodeMode(mode);
-                          if (mode === "auto" && code) {
-                            setFieldValue("customer_sub_category_code", code);
-                          } else if (mode === "manual") {
-                            setFieldValue("customer_sub_category_code", "");
-                          }
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-
-                {/* Customer Category Dropdown */}
-                <div>
-                  <InputFields
-                    required
-                    label="Customer Category"
-                    name="customer_category_id"
-                    value={values.customer_category_id}
-                    options={customerCategoryOptions || []}
-                    onChange={(e) => setFieldValue("customer_category_id", e.target.value)}
-                    error={
-                      touched.customer_category_id && errors.customer_category_id
-                    }
-                  />
-                  <ErrorMessage
-                    name="customer_category_id"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
-
-                {/* Sub Category Name */}
-                <div>
-                  <InputFields
-                    required
-                    label="Sub Category Name"
-                    value={values.customer_sub_category_name}
-                    onChange={(e) =>
-                      setFieldValue("customer_sub_category_name", e.target.value)
-                    }
-                    error={
-                      touched.customer_sub_category_name &&
-                      errors.customer_sub_category_name
-                    }
-                  />
-                  <ErrorMessage
-                    name="customer_sub_category_name"
-                    component="span"
-                    className="text-xs text-red-500"
-                  />
-                </div>
-
-                {/* Status */}
-                <div>
-                  <InputFields
-                    label="Status"
-                    name="status"
-                    value={values.status}
-                    options={[
-                      { value: "1", label: "Active" },
-                      { value: "0", label: "Inactive" },
-                    ]}
-                    onChange={(e) => setFieldValue("status", e.target.value)}
-                    type="radio"
-                    required
-                    error={errors.status && touched.status ? errors.status : false}
-                  />
-                </div>
-              </div>
-            </ContainerCard>
-
-            {/* Buttons */}
-            <div className="flex justify-end gap-4 mt-6 pr-0">
-              <button
-                type="button"
-                onClick={() => router.back()}
-                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-              >
-                Cancel
-              </button>
-              <SidebarBtn
-                label={isEditMode ? "Update" : "Submit"}
-                isActive={true}
-                leadingIcon="mdi:check"
-                type="submit"
+      <form onSubmit={formik.handleSubmit}>
+        <ContainerCard>
+          <h2 className="text-lg font-semibold mb-6">
+            Customer Category Details
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Customer Category Code (auto-generated, disabled, with settings icon/popup) */}
+            <div className="flex items-start gap-2 max-w-[406px]">
+              <InputFields
+                label="Customer Category Code"
+                name="customer_category_code"
+                value={formik.values.customer_category_code}
+                onChange={formik.handleChange}
+                disabled={codeMode === "auto"}
+                error={
+                  formik.touched.customer_category_code &&
+                  formik.errors.customer_category_code
+                }
+              />
+              <IconButton
+                bgClass="white"
+                 className="  cursor-pointer text-[#252B37] pt-12"
+                icon="mi:settings"
+                onClick={() => setIsOpen(true)}
+              />
+              <SettingPopUp
+                isOpen={isOpen}
+                onClose={() => setIsOpen(false)}
+                title="Customer Category Code"
+                prefix={prefix}
+                setPrefix={setPrefix}
+                onSave={(mode, code) => {
+                  setCodeMode(mode);
+                  if (mode === "auto" && code) {
+                    formik.setFieldValue("customer_category_code", code);
+                  } else if (mode === "manual") {
+                    formik.setFieldValue("customer_category_code", "");
+                  }
+                }}
               />
             </div>
-          </Form>
-        )}
-      </Formik>
-    </div>
+
+            <InputFields
+              label="Outlet Channel"
+              name="outlet_channel_id"
+              value={formik.values.outlet_channel_id}
+              options={outletChannels}
+              onChange={(e) =>
+                formik.setFieldValue("outlet_channel_id", e.target.value)
+              }
+              error={
+                formik.touched.outlet_channel_id &&
+                formik.errors.outlet_channel_id
+              }
+            />
+
+            <InputFields
+              name="customer_category_name"
+              label="Category Name"
+              value={formik.values.customer_category_name}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={
+                formik.touched.customer_category_name &&
+                formik.errors.customer_category_name
+              }
+            />
+
+            <InputFields
+              name="status"
+              label="Status"
+              type="radio"
+              value={formik.values.status}
+              onChange={formik.handleChange}
+              onBlur={formik.handleBlur}
+              error={formik.touched.status && formik.errors.status}
+              options={[
+                { value: "1", label: "Active" },
+                { value: "0", label: "Inactive" },
+              ]}
+            />
+          </div>
+        </ContainerCard>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            className="px-4 py-2 h-[40px] w-[80px] rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100"
+            type="button"
+            onClick={() => router.back()}
+          >
+            Cancel
+          </button>
+          <SidebarBtn
+            label="Submit"
+            isActive={true}
+            leadingIcon="mdi:check"
+            type="submit"
+          />
+        </div>
+      </form>
+    </>
   );
 }

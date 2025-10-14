@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { ErrorMessage, useFormik } from "formik";
+import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -46,7 +46,7 @@ export default function AddCustomerTypePage() {
     },
     validationSchema: Yup.object({
       customer_type_code: Yup.string().required("Customer Type Code is required"),
-      name: Yup.string().required(" Customer type Name is required"),
+      name: Yup.string().required("Name is required"),
       status: Yup.string().required("Status is required"),
     }),
     onSubmit: async (values, { setSubmitting }) => {
@@ -170,26 +170,18 @@ export default function AddCustomerTypePage() {
                 )}
               </div>
               {/* Name */}
-             <div className="flex flex-col">
-  <InputFields
-    type="text"
-    name="name"
-    label="Customer Name"
-    value={formik.values.name}
-    onChange={formik.handleChange}
-    onBlur={formik.handleBlur}
-    error={formik.touched.name && formik.errors.name}
-  />
-  {formik.touched.name && formik.errors.name && (
-    <span className="text-xs text-red-500 mt-1">
-      {formik.errors.name}
-    </span>
-  )}
-</div>
-
+              <InputFields
+                type="text"
+                name="name"
+                label="Customer Name"
+                value={formik.values.name}
+                onChange={formik.handleChange}
+                onBlur={formik.handleBlur}
+                error={formik.touched.name && formik.errors.name}
+              />
               {/* Status */}
               <InputFields
-                type="select"
+                type="radio"
                 name="status"
                 label="Status"
                 value={formik.values.status}

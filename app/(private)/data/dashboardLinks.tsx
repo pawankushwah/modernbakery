@@ -226,7 +226,7 @@ export const initialLinkData: SidebarDataType[] = [
                     {
                         isActive: false,
                         href: "/merchandiser/complaintFeedback",
-                        label: "Camplaint Feedbackk",
+                        label: "Complaint Feedback",
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",
                     },

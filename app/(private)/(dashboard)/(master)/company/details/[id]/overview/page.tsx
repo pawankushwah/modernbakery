@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 
-import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
+import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import StatusBtn from "@/app/components/statusBtn2";
 import Toggle from "@/app/components/toggle";
@@ -51,11 +51,8 @@ interface Company {
   street?: string;
   landmark?: string;
   service_type?: string;
-  status?: string | number;
   logo?: string | null;
 }
-
-
 
 export default function ViewPage() {
   const params = useParams();
@@ -99,73 +96,44 @@ export default function ViewPage() {
   return (
     <>
       {/* Header */}
-      
 
       <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
         {/* Left Section */}
         <div>
-         <ContainerCard className="w-[350px] flex flex-col items-center gap-y-[20px] p-[20px]">
-  {/* Company Logo */}
-  <div className="flex justify-center items-center w-full">
-    <Image
-      src={company?.logo || "/logo.png"}
-      alt="Company Logo"
-      width={150}
-      height={150}
-      className="h-[150px] w-[150px] object-cover rounded-full border border-[#E4E4E4] bg-[#E9EAEB]"
-    />
-  </div>
 
-  <span className="text-[#181D27] text-[20px] font-semibold text-center">
-    {company?.company_code || "-"} - {company?.company_name || "-"}
-  </span>
+          <ContainerCard>
+            <div className="text-[18px] font-semibold mb-[25px]">Barcode</div>
 
-  <div className="flex justify-center">
-    <StatusBtn
-      isActive={
-        company?.status == 1 || company?.status === "1" ? true : false
-      }
-    />
-  </div>
-</ContainerCard>
+            <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
+              <SummaryCard
+                icon="prime:barcode"
+                iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
+                iconWidth={30}
+                title={company?.company_code || "ABC-abc-1234"}
+                description="Company Barcode"
+              />
+            </ContainerCard>
 
-                 <ContainerCard >
-                <div className="text-[18px] font-semibold mb-[25px]">
-                  Barcode
-                </div>
-
-                <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
-                  <SummaryCard
-                    icon="prime:barcode"
-                    iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
-                    iconWidth={30}
-                    title={company?.company_code || "ABC-abc-1234"}
-                    description="Company Barcode"
-                  />
-                </ContainerCard>
-
-                <KeyValueData
-                  data={[
-                    {
-                      key: "Promotional Access",
-                      value: "",
-                      component: (
-                        <Toggle
-                          isChecked={isChecked}
-                          onChange={() => setIsChecked(!isChecked)}
-                        />
-                      ),
-                    },
-                    { key: "Tax", value: "VAT" },
-                  ]}
-                />
-              </ContainerCard>
+            <KeyValueData
+              data={[
+                {
+                  key: "Promotional Access",
+                  value: "",
+                  component: (
+                    <Toggle
+                      isChecked={isChecked}
+                      onChange={() => setIsChecked(!isChecked)}
+                    />
+                  ),
+                },
+                { key: "Tax", value: "VAT" },
+              ]}
+            />
+          </ContainerCard>
         </div>
 
         {/* Right Section */}
         <div className="w-full flex flex-col gap-y-[20px]">
-         
-
           {/* Company Information */}
           <ContainerCard className="w-full h-fit">
             <KeyValueData
@@ -174,7 +142,10 @@ export default function ViewPage() {
                 { key: "Company Type", value: company?.company_type || "-" },
                 { key: "Website", value: company?.website || "-" },
                 { key: "Email", value: company?.email || "-" },
-                { key: "Primary Contact", value: company?.primary_contact || "-" },
+                {
+                  key: "Primary Contact",
+                  value: company?.primary_contact || "-",
+                },
                 { key: "Toll Free No", value: company?.toll_free_no || "-" },
                 { key: "Module Access", value: company?.module_access || "-" },
                 { key: "Service Type", value: company?.service_type || "-" },
@@ -183,57 +154,11 @@ export default function ViewPage() {
             />
           </ContainerCard>
 
-          {/* Address Information */}
-          <ContainerCard className="w-full h-fit">
-            <KeyValueData
-              title="Address Information"
-              data={[
-                { key: "Country", value: company?.country?.country_name || "-" },
-                { key: "Region", value: company?.region?.region_name || "-" },
-                {
-                  key: "Sub Region",
-                  value: company?.sub_region?.subregion_name || "-",
-                },
-                { key: "District", value: company?.district || "-" },
-                { key: "Town", value: company?.town || "-" },
-                { key: "Street", value: company?.street || "-" },
-                { key: "Landmark", value: company?.landmark || "-" },
-              ]}
-            />
-          </ContainerCard>
-
-          {/* Currency & Misc */}
-          <div className="flex flex-wrap gap-x-[20px] mt-[20px]">
-            <div className="flex flex-col md:flex-row gap-6 w-full">
-              {/* Currency & Region */}
-              <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                <KeyValueData
-                  title="Currency & Region"
-                  data={[
-                    {
-                      key: "Selling Currency",
-                      value:
-                        company?.selling_currency ||
-                        company?.country?.selling_currency ||
-                        "-",
-                    },
-                    {
-                      key: "Purchase Currency",
-                      value:
-                        company?.purchase_currency ||
-                        company?.country?.purchase_currency ||
-                        "-",
-                    },
-                  ]}
-                />
-              </ContainerCard>
+          
 
               {/* Barcode & Extras */}
-             
             </div>
           </div>
-        </div>
-      </div>
     </>
   );
 }
