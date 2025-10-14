@@ -12,7 +12,6 @@ import { useEffect, useState } from "react";
 import StatusBtn from "@/app/components/statusBtn2";
 import Toggle from "@/app/components/toggle";
 import TabBtn from "@/app/components/tabBtn";
-import Image from "next/image";
 import Map from "@/app/components/map";
 import SummaryCard from "@/app/components/summaryCard";
 
@@ -51,6 +50,12 @@ interface CustomerItem {
   threshold_radius: number;
   dchannel_id: number;
   status: number;
+  get_outlet_channel: {
+            outlet_channel: string,
+            outlet_channel_code: string
+        },
+    get_region: { region_code: string, region_name: string };
+    get_area: { area_code: string, area_name: string };
 }
 
 const title = "Company Customer Details";
@@ -194,6 +199,21 @@ export default function ViewPage() {
               <KeyValueData
                 title="Location Information"
                 data={[
+                  { key: "Region Code", value: customer?.get_region?.region_code || "-" },
+                                        {
+                                            key: "Region Name",
+                                            value: customer?.get_region?.region_name || "-",
+                                        },
+                                        { key: "Sub Region Code", value: customer?.get_area?.area_code || "-" },
+                                        {
+                                            key: "Sub Region Name",
+                                            value: customer?.get_area?.area_name || "-",
+                                        },
+                                        { key: "Outlet Channel Code", value: customer?.get_outlet_channel?.outlet_channel_code || "-" },
+                                        {
+                                            key: "Outlet Channel Name",
+                                            value: customer?.get_outlet_channel?.outlet_channel || "-",
+                                        },
                   { key: "Road / Street", value: customer?.road_street || "-" },
                   { key: "Town", value: customer?.town || "-" },
                   { key: "Landmark", value: customer?.landmark || "-" },

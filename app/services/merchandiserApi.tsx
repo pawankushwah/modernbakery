@@ -251,4 +251,28 @@ export const complaintFeedbackList = async (params?: Params) => {
   } catch (error: unknown) {
     return handleError(error);
   }
+}; 
+
+
+
+
+
+
+export const campaignInformationList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/campagin-info/list", { params });
+    // console.log("Complaint Feedback API Response:", res.data); // <-- log here
+    return res.data; // res.data should have: { data: [...], pagination: {...} }
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const competitorList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/competitor-info/list", { params });
+    // console.log("Complaint Feedback API Response:", res.data); // <-- log here
+    return res.data; // res.data should have: { data: [...], pagination: {...} }
+  } catch (error: unknown) {
+    return handleError(error);
+  }
 };

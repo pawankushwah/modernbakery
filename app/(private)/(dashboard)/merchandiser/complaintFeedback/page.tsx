@@ -155,13 +155,13 @@ export default function ComplaintFeedbackPage() {
                   router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
                 },
               },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: TableDataType) => {
-                  setDeleteSelectedRow(data.uuid);
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: TableDataType) => {
+              //     setDeleteSelectedRow(data.uuid);
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
             pageSize: 10,
           }}
