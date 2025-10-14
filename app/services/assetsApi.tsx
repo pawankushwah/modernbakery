@@ -346,11 +346,7 @@ export const addChillerRequest = async (formData: FormData) => {
     const response = await APIFormData.post("/api/assets/chiller-request/add", formData);
     return response.data;
   } catch (error: unknown) {
-    if (typeof error === "object" && error !== null && "response" in error) {
-      // @ts-ignore
-      throw (error as unknown).response?.data || error;
-    }
-    throw error;
+    handleError(error);
   }
 };
 

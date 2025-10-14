@@ -116,7 +116,7 @@ const SalesmanPage = () => {
   return (
     <>
       {/* Table */}
-      <div className="h-[calc(100%-60px)]">
+      <div className="flex flex-col h-full">
         <Table
           config={{
             api: { list: fetchSalesman },
@@ -180,7 +180,7 @@ const SalesmanPage = () => {
                 icon: "lucide:edit-2",
                 onClick: (row: object) => {
                   const r = row as TableDataType;
-                  router.push(`/dashboard/master/salesman/${r.uuid}`);
+                  router.push(`/salesman/${r.uuid}`);
                 },
               },
             ],

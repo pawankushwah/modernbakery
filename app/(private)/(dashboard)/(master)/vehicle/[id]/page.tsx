@@ -505,7 +505,7 @@ export default function AddEditVehicleWithStepper() {
               <div>
                 <InputFields
                   required
-                  label="fuel_reading"
+                  label="Fuel Reading"
                   value={form.fuel_reading}
                   onChange={handleChange}
                   name="fuel_reading"

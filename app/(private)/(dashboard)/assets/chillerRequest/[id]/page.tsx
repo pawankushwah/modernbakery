@@ -376,7 +376,7 @@ export default function AddCompanyWithStepper() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const params = useParams();
-  let uuid = params?.id;
+  const uuid = params?.id;
 
   const steps: StepperStep[] = [
     { id: 1, label: "Outlet Information" },
@@ -568,11 +568,7 @@ export default function AddCompanyWithStepper() {
   const handleFileChange = (
     fieldName: keyof Chiller,
     event: React.ChangeEvent<HTMLInputElement>,
-    setFieldValue: (
-      field: keyof Chiller,
-      value: any,
-      shouldValidate?: boolean
-    ) => void
+    setFieldValue: FormikHelpers<Chiller>["setFieldValue"]
   ) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -642,11 +638,7 @@ export default function AddCompanyWithStepper() {
     fieldName: keyof Chiller,
     label: string,
     values: Chiller,
-    setFieldValue: (
-      field: keyof Chiller,
-      value: Chiller,
-      shouldValidate?: boolean
-    ) => void,
+    setFieldValue: FormikHelpers<Chiller>["setFieldValue"],
     errors: FormikErrors<Chiller>,
     touched: FormikTouched<Chiller>,
     accept?: string
@@ -873,11 +865,7 @@ export default function AddCompanyWithStepper() {
 
   const renderStepContent = (
     values: Chiller,
-    setFieldValue: (
-      field: keyof Chiller,
-      value: any,
-      shouldValidate?: boolean
-    ) => void,
+    setFieldValue: FormikHelpers<Chiller>["setFieldValue"],
     errors: FormikErrors<Chiller>,
     touched: FormikTouched<Chiller>
   ) => {

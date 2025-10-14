@@ -65,7 +65,7 @@ export default function AddEditRoute() {
           setForm({
             routeCode: data?.route_code || "",
             routeName: data?.route_name || "",
-            routeType: data?.route_Type?.id ? String(data?.route_Type.id) : "",
+            routeType: data?.getrouteType?.id ? String(data?.getrouteType.id) : "",
             vehicleType: data?.vehicle?.id ? String(data?.vehicle.id) : "",
             warehouse: data?.warehouse?.id ? String(data?.warehouse.id) : "",
             status: data?.status !== undefined && data?.status !== null ? String(data.status) : "",
