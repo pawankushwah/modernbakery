@@ -180,12 +180,11 @@ const searchPlanogram = useCallback(
   onClick: (data: TableDataType) =>
     router.push(`/merchandiser/planogram/view/${data.uuid}`)
 },
-            {
-              icon: "lucide:edit-2",
-              onClick: (data: TableDataType) =>
-           
-                router.push(`/merchandiser/planogram/${data.id}`),
-            },
+         {
+  icon: "lucide:edit-2",
+  onClick: (data: TableDataType) =>
+    router.push(`/merchandiser/planogram/${data.uuid}`),
+}
           ],
           pageSize: 10,
         }}

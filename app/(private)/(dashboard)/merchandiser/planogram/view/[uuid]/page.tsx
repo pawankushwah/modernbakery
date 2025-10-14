@@ -5,79 +5,91 @@ import { useEffect, useState } from "react";
 
 import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
+import { useRouter } from "next/navigation";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import Image from "next/image";
-
-import { getPlanogramById } from "@/app/services/allApi";
+import SummaryCard from "@/app/components/summaryCard";
+import { getPlanogramById } from "@/app/services/merchandiserApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
+import { OverviewTab } from "./tabs/overview";
+import { CustomerData } from "./tabs/customer";
+// import { PlanogramTab } from "./tabs/planogram";
 
-import CustomerTab from "./tabs/customer/page";
-import OverviewTab from "./tabs/overview/page";
-interface Company {
-  id?: string | number;
-  company_code?: string;
-  company_name?: string;
-  logo?: string | null;
+
+
+// --- Shelf Interface ---
+interface Customer {
+  uuid: number;
+  customer_code: string;
+  customer_type: string;
+  owner_name: string;
+}
+
+interface Merchandiser {
+  uuid: number;
+  osa_code: string;
+  type: string;
+  name: string;
+}
+
+interface Planogram {
+  uuid: string;
+  name: string;
+//   logo?: string | null;
+  valid_from?: string;
+  valid_to?: string;
+  customers?: Customer[];
+  code: string;
+  merchandisers?: Merchandiser[];
 }
 
 export const tabs = [
-  {
-    name: "Overview",
-    url: "overview",
-    component: <OverviewTab />,
-  },
-  {
-    name: "Customer",
-    url: "customer",
-    component: <CustomerTab />,
-  },
+  { name: "Overview", url: "overview", component: <OverviewTab /> },
+  { name: "Customer", url: "customer", component: <CustomerData /> },
 
 ];
 
 export default function Page() {
-  const { id, tabName } = useParams();
+  const router = useRouter();
+  const { uuid: uuid } = useParams();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [planogram, setPlanogram] = useState<Company | null>(null);
+  const [shelfData, setShelfData] = useState<Planogram | null>(null);
 
   const { showSnackbar } = useSnackbar();
-  const onTabClick = (index: number) => {
-    setActiveTab(index);
-    // Optionally, if you want route update:
-    // router.replace(`/shelf/details/${id}/${tabs[index].url}`);
-  };
+  const onTabClick = (index: number) => setActiveTab(index);
 
-  const title = "Planogram";
-  const backBtnUrl = "/planogram";
+  const title = "Planogram Details";
+  const backBtnUrl = "/merchandiser/planogram/";
 
   useEffect(() => {
-    if (!id) return;
+    if (!uuid) return;
 
-    const fetchShelfDetails = async () => {
+    const fetchShelfData = async () => {
       setLoading(true);
       try {
-        const res = await getPlanogramById(id.toString());
+        const res = await getPlanogramById(uuid.toString());
+        console.log("API Response:", res); // ✅ Now you will see the console
 
-      
+        // Handle response correctly
+        const data = res?.data?.data || res?.data;
+        if (!data) {
+          showSnackbar("Unable to fetch Planogram details", "error");
+          return;
+        }
+
+        setShelfData(data);
       } catch (error) {
+        console.error("Error fetching Planogram data:", error);
         showSnackbar("Unable to fetch shelf details", "error");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchShelfDetails();
-  }, [id, setLoading, showSnackbar]);
-
-  useEffect(() => {
-    if (!tabName) {
-      setActiveTab(0); // default tab
-    } else {
-      const foundIndex = tabs.findIndex((tab) => tab.url === tabName);
-      setActiveTab(foundIndex !== -1 ? foundIndex : 0);
-    }
-  }, [tabName]);
+    fetchShelfData();
+  }, [uuid, showSnackbar]);
 
   return (
     <>
@@ -87,57 +99,53 @@ export default function Page() {
         </Link>
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
-      <div className="flex items-center justify-between p-5 border border-gray-400 my-5 rounded-lg bg-white ">
-        {/* Left Section */}
-        <div className="flex items-center gap-4">
-          {/* Image */}
-          <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center overflow-hidden">
-            <Image
-              src={planogram?.logo || "/logo.png"}
-              alt="Company Logo"
-              width={64} // match container width
-              height={64} // match container height
-              className="object-cover w-full h-full rounded-full"
-            />
+
+      {shelfData && (
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 border border-gray-200 my-5 rounded-lg bg-white gap-6">
+          {/* Shelf Info */}
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 flex-wrap">
+            <div className="p-4 rounded-lg flex flex-col items-start justify-center shadow-sm">
+              <h1 className="font-semibold text-xl text-gray-900">
+                {shelfData.name || "-"}
+              </h1>
+
+              {shelfData.customers && shelfData.customers.length > 0 && (
+                <span className="text-sm text-gray-700 font-medium">
+                  Owner: {shelfData.customers[0].owner_name}
+                </span>
+              )}
+            </div>
+
+           
           </div>
 
-          {/* Owner Info */}
-          <div className="flex flex-col justify-center">
-            <h1 className="font-semibold text-lg text-gray-900">Dummy Data</h1>
-
-            <div className="flex items-center gap-2 mt-1">
-              <h1 className="text-sm text-gray-700 font-medium">
-                Owner: Rajneesh
-              </h1>
-              <button className="flex items-center gap-1 text-xs text-green-700 border border-green-400 px-2 py-0.5 rounded-full bg-green-50">
-                <span className="text-green-600">•</span> Active
-              </button>
-            </div>
+          {/* Shelf Code Card */}
+          <div className="p-4 rounded-lg flex flex-col items-start justify-center shadow-sm">
+            <h1 className="text-xs text-gray-500 uppercase mb-1">Planogram Code</h1>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {shelfData.code || "SHELF-001"}
+            </h2>
           </div>
         </div>
-
-        {/* Right Section (Email Icon) */}
-        <button className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded-lg transition-all duration-200 shadow-sm">
-          <Icon icon="lucide:mail" width={20} />
-          <span className="text-sm font-medium">Send Email</span>
-        </button>
-      </div>
+      )}
 
       {/* Tabs */}
-      <ContainerCard
-        className="w-full flex font-inter   items-center p-1  border-r border-gray-3"
-        padding="4px"
-      >
-        {tabs.map((tab, index) => (
-          <div key={index}> 
-            <TabBtn
-              label={tab.name}
-              isActive={activeTab === index} 
-              onClick={() => onTabClick(index)}
-            />a
-          </div>
-        ))}
-      </ContainerCard>
+      {shelfData && (
+        <ContainerCard
+          className="w-full flex gap-[4px] overflow-x-auto"
+          padding="5px"
+        >
+          {tabs.map((tab, index) => (
+            <div key={index}>
+              <TabBtn
+                label={tab.name}
+                isActive={activeTab === index}
+                onClick={() => onTabClick(index)}
+              />
+            </div>
+          ))}
+        </ContainerCard>
+      )}
 
       {/* Tab Content */}
       <ContainerCard>{tabs[activeTab]?.component}</ContainerCard>
