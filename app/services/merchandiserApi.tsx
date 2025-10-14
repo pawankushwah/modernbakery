@@ -107,16 +107,7 @@ export const shelvesListById = async (id: string, params?: Params) => {
     return handleError(error);
   }
 };
-export const getPlanogramById = async (id:string, params?:Params) => {
-  try {
-    const res = await API.get(`/api/merchendisher/planogram/show/${id}`, {
-      params,
-    });
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
+
 // ✅ Update Planogram
 export const updatePlanogram = async (id: string, body: PlanogramType) => {
   try {
@@ -164,32 +155,6 @@ export type shelvesType = {
 export const addShelves = async (body: shelvesType) => {
   try {
     const res = await API.post("/api/merchendisher/shelves/add", body);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-
-export type PlanogramType = {
-  name: string;
-  valid_from?: string;
-  valid_to?: string;
-  customer_ids: number[];
-};
-export const addPlanogram = async (body: PlanogramType) => {
-  try {
-    const res = await API.post("/api/merchendisher/planogram/create", body);
-    return res.data; // { error: false, data: ... } ya error format
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-export const updatePlanogramById = async (uuid: string, data: PlanogramType) => {
-  try {
-    console.log(data)
-    const res = await API.put(`/api/merchendisher/planogram/update/${uuid}`, data);
-    console.log(res)
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -253,11 +218,6 @@ export const complaintFeedbackList = async (params?: Params) => {
   }
 }; 
 
-
-
-
-
-
 export const campaignInformationList = async (params?: Params) => {
   try {
     const res = await API.get("/api/merchendisher/campagin-info/list", { params });
@@ -272,6 +232,50 @@ export const competitorList = async (params?: Params) => {
     const res = await API.get("/api/merchendisher/competitor-info/list", { params });
     // console.log("Complaint Feedback API Response:", res.data); // <-- log here
     return res.data; // res.data should have: { data: [...], pagination: {...} }
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updatePlanogramById = async (uuid: string, data: {
+  name: string;
+  valid_from?: string;
+  valid_to?: string;
+  merchendisher_id: number[]; // backend expects single integer
+  customer_id: number[]; 
+}) => {
+  try {
+    console.log(data)
+    const res = await API.put(`/api/merchendisher/planogram/update/${uuid}`, data);
+    console.log(res)
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const getPlanogramById = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/merchendisher/planogram/show/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export type PlanogramType = {
+  name: string;
+  valid_from?: string;
+  valid_to?: string;
+  merchendisher_id: number[]; // backend expects single integer
+  customer_id: number[];      // backend expects single integer
+};
+
+
+export const addPlanogram = async (body: PlanogramType) => {
+  try {
+    const res = await API.post("/api/merchendisher/planogram/create", body);
+    return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }

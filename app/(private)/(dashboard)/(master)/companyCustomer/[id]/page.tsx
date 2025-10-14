@@ -78,9 +78,6 @@ interface CompanyCustomerPayload {
   customer_type: string;
   owner_name: string;
   owner_no: string;
-  owner_contact_country?: string;
-  whatsapp_contact_country?: string;
-  contact2_country?: string;
   is_whatsapp: number;
   whatsapp_no?: string;
   email: string;
@@ -402,7 +399,6 @@ export default function AddCompanyCustomer() {
 
     try {
       await validationSchema.validate(values, { abortEarly: false });
-      const stripCountryCode = (num: string) => num.replace(/^\+\d{1,3}\s*/, "");
       const payload: CompanyCustomerPayload = {
   sap_code: values.sapCode,
   customer_code: values.customerCode,
@@ -411,10 +407,10 @@ export default function AddCompanyCustomer() {
   owner_name: values.ownerName,
   owner_no: values.ownerNumber,
         is_whatsapp: Number(values.isWhatsapp),
-        whatsapp_no: stripCountryCode(values.whatsappNo),
+        whatsapp_no: (values.whatsappNo),
         email: values.email,
         language: values.language,
-        contact_no2: stripCountryCode(values.contactNo2),
+        contact_no2: (values.contactNo2),
         buyer_type: Number(values.buyerType),
         road_street: values.roadStreet,
         town: values.town,

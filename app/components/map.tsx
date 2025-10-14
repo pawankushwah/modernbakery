@@ -17,7 +17,7 @@ const Map: React.FC<MapProps> = ({ latitude, longitude, title = "Location", heig
         title={title}
         width={width}
         height={height}
-        style={{ border: 0, borderRadius: "8px" }}
+        style={{ border: 0, borderRadius: "8px", backgroundColor: "#f0f0f0" }}
         loading="lazy"
         allowFullScreen
         src={`https://www.google.com/maps?q=${latitude},${longitude}&hl=es;z=14&output=embed`}

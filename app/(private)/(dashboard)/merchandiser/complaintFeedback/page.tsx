@@ -117,16 +117,16 @@ export default function ComplaintFeedbackPage() {
               ],
               searchBar: false,
               columnFilter: true,
-              actions: [
-                <SidebarBtn
-                  key="add"
-                  href="/merchandiser/complaintFeedback/add"
-                  leadingIcon="lucide:plus"
-                  label="Add Feedback"
-                  labelTw="hidden lg:block"
-                  isActive
-                />,
-              ],
+              // actions: [
+              //   <SidebarBtn
+              //     key="add"
+              //     href="/merchandiser/complaintFeedback/add"
+              //     leadingIcon="lucide:plus"
+              //     label="Add Feedback"
+              //     labelTw="hidden lg:block"
+              //     isActive
+              //   />,
+              // ],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
@@ -148,21 +148,21 @@ export default function ComplaintFeedbackPage() {
               { key: "description", label: "Description" },
             ],
             rowSelection: true,
-            rowActions: [
-              {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
-                },
-              },
-              // {
-              //   icon: "lucide:trash-2",
-              //   onClick: (data: TableDataType) => {
-              //     setDeleteSelectedRow(data.uuid);
-              //     setShowDeletePopup(true);
-              //   },
-              // },
-            ],
+            // rowActions: [
+            //   {
+            //     icon: "lucide:eye",
+            //     onClick: (data: TableDataType) => {
+            //       router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
+            //     },
+            //   },
+            //   // {
+            //   //   icon: "lucide:trash-2",
+            //   //   onClick: (data: TableDataType) => {
+            //   //     setDeleteSelectedRow(data.uuid);
+            //   //     setShowDeletePopup(true);
+            //   //   },
+            //   // },
+            // ],
             pageSize: 10,
           }}
         />

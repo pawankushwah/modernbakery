@@ -202,13 +202,13 @@ export const initialLinkData: SidebarDataType[] = [
                     //     leadingIcon: "mdi:map",
                     //     iconColor: "text-yellow-400"
                     // },
-                    {
-                        isActive: false,
-                        href: "/merchandiser/planogramImage",
-                        label: "Planogram Image",
-                        leadingIcon: "mdi:map",
-                        iconColor: "text-yellow-400",
-                    },
+                    // {
+                    //     isActive: false,
+                    //     href: "/merchandiser/planogramImage",
+                    //     label: "Planogram Image",
+                    //     leadingIcon: "mdi:map",
+                    //     iconColor: "text-yellow-400",
+                    // },
                     {
                         isActive: false,
                         href: "/merchandiser/shelfDisplay",
@@ -216,13 +216,13 @@ export const initialLinkData: SidebarDataType[] = [
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",
                     },
-                    {
-                        isActive: false,
-                        href: "/merchandiser/survey",
-                        label: "Survey",
-                        leadingIcon: "mdi:map",
-                        iconColor: "text-yellow-400",
-                    },
+                    // {
+                    //     isActive: false,
+                    //     href: "/merchandiser/survey",
+                    //     label: "Survey",
+                    //     leadingIcon: "mdi:map",
+                    //     iconColor: "text-yellow-400",
+                    // },
                     {
                         isActive: false,
                         href: "/merchandiser/complaintFeedback",

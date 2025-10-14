@@ -20,25 +20,20 @@ import {
 } from "formik";
 import { useState, useEffect } from "react";
 import * as Yup from "yup";
+
 import { merchendiserList } from "@/app/services/allApi";
 import {
   addPlanogram,
   getPlanogramById,
   updatePlanogramById,
+  shelvesDropdown,
 } from "@/app/services/merchandiserApi";
 import Loading from "@/app/components/Loading";
 
-// --- Dummy Customers ---
-const allCustomers = [
-  { value: 1, label: "Customer 1", merchandiserId: 1 },
-  { value: 2, label: "Customer 2", merchandiserId: 1 },
-  { value: 3, label: "Customer 3", merchandiserId: 2 },
-  { value: 4, label: "Customer 4", merchandiserId: 3 },
-  { value: 5, label: "Customer 5", merchandiserId: 2 },
-];
+// ---------------- TYPES ----------------
 
-// --- Types ---
-type PlanogramFormValues = {
+// Form values for Formik
+type PlanogramfFormValues = {
   name: string;
   valid_from: string;
   valid_to: string;
@@ -46,11 +41,47 @@ type PlanogramFormValues = {
   customer_ids: number[];
 };
 
-// --- Validation ---
+// Backend responses
+type MerchandiserResponse = { id: number; name: string };
+
+type CustomerFromBackend = {
+  id: number;
+  customer_code: string;
+  business_name: string;
+};
+
+type CustomerFromEdit = {
+  customers: number;
+  customer_code: string;
+  customer_type: string;
+  owner_name: string;
+};
+
+type CustomerOption = { value: string; label: string };
+
+// --- Planogram payload type for backend ---
+export type PlanogramType = {
+  name: string;
+  valid_from?: string;
+  valid_to?: string;
+  merchendisher_id: number[]; // backend expects single merchandiser
+  customer_id: number[];      // backend expects single customer
+};
+
+// ---------------- VALIDATION ----------------
+
 const validationSchema = Yup.object({
-  name: Yup.string().trim().required("Shelf Name is required").max(100),
-  valid_from: Yup.date().required("Valid From is required"),
-  valid_to: Yup.date().required("Valid To is required"),
+  name: Yup.string().trim().required(" Name is required").max(100),
+  valid_from: Yup.date()
+    .required("Valid From is required")
+    .typeError("Please enter a valid date"),
+  valid_to: Yup.date()
+    .required("Valid To is required")
+    .typeError("Please enter a valid date")
+    .min(
+      Yup.ref("valid_from"),
+      "Valid To date cannot be before Valid From date"
+    ),
   merchendiser_ids: Yup.array()
     .of(Yup.number())
     .min(1, "Select at least one merchandiser"),
@@ -71,6 +102,8 @@ const stepSchemas = [
   }),
 ];
 
+// ---------------- COMPONENT ----------------
+
 export default function Planogram() {
   const steps: StepperStep[] = [
     { id: 1, label: "Planogram Details" },
@@ -83,10 +116,9 @@ export default function Planogram() {
 
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [merchandiserOptions, setMerchandiserOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [initialValues, setInitialValues] = useState<PlanogramFormValues>({
+  const [merchendiserOptions, setMerchendiserOptions] = useState<CustomerOption[]>([]);
+  const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
+  const [initialValues, setInitialValues] = useState<PlanogramfFormValues>({
     name: "",
     valid_from: "",
     valid_to: "",
@@ -94,78 +126,101 @@ export default function Planogram() {
     customer_ids: [],
   });
 
-  const {
-    currentStep,
-    nextStep,
-    prevStep,
-    markStepCompleted,
-    isStepCompleted,
-    isLastStep,
-  } = useStepperForm(steps.length);
-  console.log(initialValues);
+  const { currentStep, nextStep, prevStep, markStepCompleted, isStepCompleted, isLastStep } =
+    useStepperForm(steps.length);
 
-  // --- Fetch Shelf & Merchandiser Data ---
+  // ---------------- HELPERS ----------------
+  const formatCustomerLabel = (customer: CustomerFromBackend | CustomerFromEdit): string => {
+    if ("business_name" in customer) {
+      return `${customer.customer_code || ""} - ${customer.business_name || ""}`;
+    } else {
+      return `${customer.customer_code || ""} - ${customer.owner_name || ""}`;
+    }
+  };
+
+  // ---------------- FETCH DATA ----------------
   useEffect(() => {
-    if (!id) return;
-
     const fetchData = async () => {
       setLoading(true);
-
       try {
-        // Fetch merchandiser list
         const merchRes = await merchendiserList();
         const merchOptions =
-          merchRes.data?.map((m: { id: number; name: string }) => ({
+          merchRes.data?.map((m: MerchandiserResponse) => ({
             value: String(m.id),
             label: m.name,
           })) || [];
-        setMerchandiserOptions(merchOptions);
+        setMerchendiserOptions(merchOptions);
 
-        if (id.toString() !== "add") {
+        if (id && id !== "add") {
           setIsEditMode(true);
-
-          // Fetch shelf details
           const res = await getPlanogramById(String(id));
-
           if (res?.data) {
+            const planogramData = res.data;
+
+            const customerOptionsForEdit =
+              planogramData.customers?.map((customer: CustomerFromEdit) => ({
+                value: String(customer.customers),
+                label: formatCustomerLabel(customer),
+              })) || [];
+
             setInitialValues({
-              name: res.data.name || "",
-              valid_from: res.data.valid_from
-                ? res.data.valid_from.split("T")[0]
+              name: planogramData.name || "",
+              valid_from: planogramData.valid_from
+                ? planogramData.valid_from.split("T")[0]
                 : "",
-              valid_to: res.data.valid_to
-                ? res.data.valid_to.split("T")[0]
+              valid_to: planogramData.valid_to
+                ? planogramData.valid_to.split("T")[0]
                 : "",
-              merchendiser_ids: res.data.merchendiser_ids || [],
-              customer_ids: res.data.customer_ids || [],
+              merchendiser_ids: planogramData.merchendiser_ids || [],
+              customer_ids: planogramData.customer_ids || [],
             });
+
+            setCustomerOptions(customerOptionsForEdit);
           } else {
-            showSnackbar("Shelf not found", "error");
+            showSnackbar("Planogram not found", "error");
           }
         } else {
           setIsEditMode(false);
-          // ADD mode: no merch selected by default
-          setInitialValues((prev) => ({
-            ...prev,
-            merchendiser_ids: [],
-            customer_ids: [],
-          }));
         }
-      } catch (error) {
-        console.error("Failed to fetch data", error);
-        showSnackbar("Unable to fetch shelf or merchandiser data", "error");
+      } catch (err) {
+        console.error(err);
+        showSnackbar("Unable to fetch Planogram or merchandiser data", "error");
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [id, showSnackbar]);
 
-  // --- Step Navigation ---
+  // ---------------- FETCH CUSTOMERS DYNAMICALLY ----------------
+  const fetchCustomers = async (merchIds: number[]) => {
+    if (!merchIds.length) {
+      setCustomerOptions([]);
+      return;
+    }
+    try {
+      const response = await shelvesDropdown({
+        merchandiser_ids: merchIds.map(String),
+      });
+      if (response?.status && Array.isArray(response.data)) {
+        const formatted = response.data.map((customer: CustomerFromBackend) => ({
+          value: String(customer.id),
+          label: formatCustomerLabel(customer),
+        }));
+        setCustomerOptions(formatted);
+      } else {
+        setCustomerOptions([]);
+      }
+    } catch (err) {
+      console.error(err);
+      setCustomerOptions([]);
+    }
+  };
+
+  // ---------------- STEP NAVIGATION ----------------
   const handleNext = async (
-    values: PlanogramFormValues,
-    actions: FormikHelpers<PlanogramFormValues>
+    values: PlanogramfFormValues,
+    actions: FormikHelpers<PlanogramfFormValues>
   ) => {
     try {
       const schema = stepSchemas[currentStep - 1];
@@ -176,16 +231,13 @@ export default function Planogram() {
       if (err instanceof Yup.ValidationError) {
         const fields = err.inner.map((e) => e.path);
         actions.setTouched(
-          fields.reduce(
-            (acc, key) => ({ ...acc, [key!]: true }),
-            {} as Record<string, boolean>
-          )
+          fields.reduce((acc, key) => ({ ...acc, [key!]: true }), {} as Record<string, boolean>)
         );
         actions.setErrors(
           err.inner.reduce(
-            (acc: Partial<Record<keyof PlanogramFormValues, string>>, curr) => ({
+            (acc: Partial<Record<keyof PlanogramfFormValues, string>>, curr) => ({
               ...acc,
-              [curr.path as keyof PlanogramFormValues]: curr.message,
+              [curr.path as keyof PlanogramfFormValues]: curr.message,
             }),
             {}
           )
@@ -195,183 +247,173 @@ export default function Planogram() {
     }
   };
 
-  // --- Submit Form ---
-  const handleSubmit = async (values: PlanogramFormValues) => {
+  // ---------------- SUBMIT ----------------
+  const handleSubmit = async (values: PlanogramfFormValues) => {
     try {
-      const payload = {
-        ...values,
-    
+      if (!values.customer_ids.length) {
+        showSnackbar("Please select at least one customer", "error");
+        return;
+      }
+
+      const payload: PlanogramType = {
+        name: values.name,
+        valid_from: values.valid_from,
+        valid_to: values.valid_to,
+        merchendisher_id: values.merchendiser_ids, // first merch
+        customer_id: values.customer_ids,          // first customer
       };
 
       const res = isEditMode
         ? await updatePlanogramById(String(id), payload)
         : await addPlanogram(payload);
 
-        console.log(res)
-
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to save shelf", "error");
       } else {
         showSnackbar(
-          isEditMode
-            ? "Shelf updated successfully"
-            : "Shelf added successfully",
+          isEditMode ? "Planogram updated successfully" : "Planogram added successfully",
           "success"
         );
-        router.push("/merchandiser/shelfDisplay");
+        router.push("/merchandiser/planogram");
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       showSnackbar("Something went wrong", "error");
     }
   };
 
-  // --- Step Content Renderer ---
+  // ---------------- RENDER ----------------
   const renderStepContent = (
-    values: PlanogramFormValues,
-    setFieldValue: (field: keyof PlanogramFormValues, value: string | number | number[]) => void,
-    errors: FormikErrors<PlanogramFormValues>,
-    touched: FormikTouched<PlanogramFormValues>
+    values: PlanogramfFormValues,
+    setFieldValue: (field: keyof PlanogramfFormValues, value: string | number | number[]) => void,
+    errors: FormikErrors<PlanogramfFormValues>,
+    touched: FormikTouched<PlanogramfFormValues>
   ) => {
     switch (currentStep) {
-  case 1:
-  return (
-    <ContainerCard>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Name */}
-        <div className="flex flex-col">
-          <InputFields
-            required
-            type="text"
-            label="Name"
-            name="name"
-            value={values.name}
-            onChange={(e) => setFieldValue("name", e.target.value)}
-            error={touched.name && errors.name}
-          />
-          <ErrorMessage
-            name="name"
-            component="span"
-            className="text-xs text-red-500 mt-1"
-          />
-        </div>
-
-        {/* Valid From */}
-        <div className="flex flex-col">
-          <InputFields
-            required
-            type="date"
-            label="Valid From"
-            name="valid_from"
-            value={values.valid_from}
-            onChange={(e) => setFieldValue("valid_from", e.target.value)}
-            error={touched.valid_from && errors.valid_from}
-          />
-          <ErrorMessage
-            name="valid_from"
-            component="span"
-            className="text-xs text-red-500 mt-1"
-          />
-        </div>
-
-        {/* Valid To */}
-        <div className="flex flex-col">
-          <InputFields
-            required
-            type="date"
-            label="Valid To"
-            name="valid_to"
-            value={values.valid_to}
-            onChange={(e) => setFieldValue("valid_to", e.target.value)}
-            error={touched.valid_to && errors.valid_to}
-          />
-          <ErrorMessage
-            name="valid_to"
-            component="span"
-            className="text-xs text-red-500 mt-1"
-          />
-        </div>
-      </div>
-    </ContainerCard>
-  );
-
-      case 2:
-
-        const filteredCustomers = allCustomers.filter((c) =>
-          values.merchendiser_ids.includes(c.merchandiserId)
-        );
-
+      case 1:
         return (
           <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Merchandisers */}
-              <div className="flex flex-col">
-                <InputFields
-                  required
-                  label="Merchandisers"
-                  name="merchendiser_ids"
-                  value={values.merchendiser_ids.map(String)}
-             
-                  isSingle={false}
-                  onChange={(e) => {
-                    const vals = Array.isArray(e.target.value)
-                      ? e.target.value
-                      : [];
-                    setFieldValue("merchendiser_ids", vals.map(Number));
-                    setFieldValue("customer_ids", []); // reset customers when merch changes
-                  }}
-                  error={
-                    touched.merchendiser_ids && errors.merchendiser_ids
-                      ? Array.isArray(errors.merchendiser_ids)
-                        ? errors.merchendiser_ids.join(", ")
-                        : errors.merchendiser_ids
-                      : undefined
-                  }
-                />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <div>
+               <InputFields
+                required
+                type="text"
+                label=" Name"
+                name="name"
+                value={values.name}
+                onChange={(e) => setFieldValue("name", e.target.value)}
+                error={touched.name && errors.name}
+              />
+               <ErrorMessage
+                        name="name"
+                        component="span"
+                        className="text-xs text-red-500"
+                      />
+           </div>
+           <div>
+               <InputFields
+                required
+                type="date"
+                label="Valid From"
+                name="valid_from"
+                value={values.valid_from}
+                onChange={(e) => setFieldValue("valid_from", e.target.value)}
+                error={touched.valid_from && errors.valid_from}
+              />
                 <ErrorMessage
-                  name="merchendiser_ids"
-                  component="span"
-                  className="text-xs text-red-500 mt-1"
-                />
-              </div>
-
-              {/* Customers */}
-              <div className="flex flex-col">
-                <>{console.log(values.merchendiser_ids.length)}</>
+                        name="valid_from"
+                        component="span"
+                        className="text-xs text-red-500"
+                      />
+           </div>
+            <div>
                 <InputFields
-                  required
-                  label="Customers"
-                  name="customer_ids"
-                  value={values.customer_ids.map(String)}
-                  options={allCustomers.map((c) => ({
-                    value: String(c.value),
-                    label: c.label,
-                  }))}
-                  disabled={values.merchendiser_ids.length === 0 ? true : false}
-                  isSingle={false}
-                  onChange={(e) => {
-                    const vals = Array.isArray(e.target.value)
-                      ? e.target.value
-                      : [];
-                    setFieldValue("customer_ids", vals.map(Number)); // correctly set customer_ids
-                  }}
-                  error={
-                    touched.customer_ids && errors.customer_ids
-                      ? Array.isArray(errors.customer_ids)
-                        ? errors.customer_ids.join(", ")
-                        : errors.customer_ids
-                      : undefined
-                  }
-                />
-                <ErrorMessage
-                  name="customer_ids"
-                  component="span"
-                  className="text-xs text-red-500 mt-1"
-                />
-              </div>
+                required
+                type="date"
+                label="Valid To"
+                name="valid_to"
+                value={values.valid_to}
+                onChange={(e) => setFieldValue("valid_to", e.target.value)}
+                error={touched.valid_to && errors.valid_to}
+              />
+               <ErrorMessage
+                        name="valid_to"
+                        component="span"
+                        className="text-xs text-red-500"
+                      />
+            </div>
             </div>
           </ContainerCard>
         );
-
+      case 2:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <InputFields
+                required
+                label="Merchandisers"
+                name="merchendiser_ids"
+                value={values.merchendiser_ids.map(String)}
+                options={merchendiserOptions}
+                isSingle={false}
+                // onChange={(e) => {
+                //   const vals = Array.isArray(e.target.value)
+                //     ? e.target.value
+                //     : [];
+                //   setFieldValue("customer_ids", vals.map(Number));
+                // }}
+                onChange={(e) => {
+                  const vals = Array.isArray(e.target.value) ? e.target.value : [];
+                  const selectedIds = vals.map(Number);
+                  setFieldValue("merchendiser_ids", selectedIds);
+                  setFieldValue("customer_ids", []);
+                  fetchCustomers(selectedIds);
+                }}
+                error={
+                  touched.merchendiser_ids && errors.merchendiser_ids
+                    ? Array.isArray(errors.merchendiser_ids)
+                      ? errors.merchendiser_ids.join(", ")
+                      : errors.merchendiser_ids
+                    : undefined
+                }
+              />
+               <ErrorMessage
+                        name="merchendiser_ids"
+                        component="span"
+                        className="text-xs text-red-500"
+                      />
+            </div>
+        <div>
+                <InputFields
+                required
+                label="Customers"
+                name="customer_ids"
+                value={values.customer_ids.map(String)}
+                options={customerOptions}
+                disabled={values.merchendiser_ids.length === 0 && !isEditMode}
+                isSingle={false}
+                onChange={(e) => {
+                  const vals = Array.isArray(e.target.value) ? e.target.value : [];
+                  setFieldValue("customer_ids", vals.map(Number));
+                }}
+                error={
+                  touched.customer_ids && errors.customer_ids
+                    ? Array.isArray(errors.customer_ids)
+                      ? errors.customer_ids.join(", ")
+                      : errors.customer_ids
+                    : undefined
+                }
+              />
+               <ErrorMessage
+                        name="customer_ids"
+                        component="span"
+                        className="text-xs text-red-500"
+                      />
+        </div>
+            </div>
+          </ContainerCard>
+        );
       default:
         return null;
     }
@@ -399,29 +441,14 @@ export default function Planogram() {
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
         >
-          {({
-            values,
-            setFieldValue,
-            errors,
-            touched,
-            handleSubmit: formikSubmit,
-            setErrors,
-            setTouched,
-            isSubmitting,
-          }) => (
+          {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit, setErrors, setTouched, isSubmitting }) => (
             <Form>
               <StepperForm
-                steps={steps.map((step) => ({
-                  ...step,
-                  isCompleted: isStepCompleted(step.id),
-                }))}
+                steps={steps.map((step) => ({ ...step, isCompleted: isStepCompleted(step.id) }))}
                 currentStep={currentStep}
                 onBack={prevStep}
                 onNext={() =>
-                  handleNext(values, {
-                    setErrors,
-                    setTouched,
-                  } as unknown as FormikHelpers<PlanogramFormValues>)
+                  handleNext(values, { setErrors, setTouched } as unknown as FormikHelpers<PlanogramfFormValues>)
                 }
                 onSubmit={() => formikSubmit()}
                 showSubmitButton={isLastStep}
