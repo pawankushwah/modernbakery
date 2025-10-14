@@ -39,7 +39,7 @@ export default function SidebarBtn({
     isSubmenu?: boolean;
     type?: "button" | "submit";
 }) {
-    const commonClasses = `${buttonTw} rounded-lg flex items-center gap-[12px] justify-between ${
+    const commonClasses = `${buttonTw} rounded-lg flex items-center gap-[6px] justify-between ${
         isActive
             ? "bg-[var(--primary-btn-color)] text-white"
             : "bg-transparent text-[#414651] hover:bg-[var(--secondary-btn-color)] hover:text-[var(--secondary-btn-text-color)]"
@@ -49,7 +49,7 @@ export default function SidebarBtn({
         <>
             <div
                 className={`flex items-center ${
-                    isSubmenu ? "gap-[8px]" : "gap-[12px]"
+                    isSubmenu ? "gap-[8px]" : "gap-[8px]"
                 }`}
             >
                 {leadingIcon && (

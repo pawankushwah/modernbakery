@@ -3,18 +3,6 @@ import React, { useState, useRef, useEffect } from "react";
 import PhoneInput from "react-phone-input-2";
 import 'react-phone-input-2/lib/style.css';
 
-// Ensure phone dropdown is positioned within the input container and scrolls internally
-const phoneDropdownStyles = `
-.react-tel-input .country-list {
-  position: absolute !important;
-  top: calc(100% + 6px) !important;
-  left: 0 !important;
-  z-index: 9999 !important;
-  max-height: 320px !important;
-  overflow: auto !important;
-}
-`;
-
 type Option = {
   value: string;
   label: string;
@@ -84,6 +72,7 @@ export default function InputFields({
     top: "0",
     left: "0"
   })
+  const [dropdownPropertiesString, setDropdownPropertiesString] = useState("");
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -106,6 +95,7 @@ useEffect(() => {
       if (dropdown) {
         const { width, top, left, height } = dropdown.getBoundingClientRect();
         setDropdownProperties({ width: `${width}px`, top: `${top+height}px`, left: `${left}px` });
+        setDropdownPropertiesString(`!w-[${Math.floor(width)}px] !top-[${Math.floor(top+height)}px] !left-[${Math.floor(left)}px]`);
     }
     function handleClick(event: MouseEvent) {
             // Check if the ref exists and if the clicked target is a node
@@ -173,7 +163,6 @@ useEffect(() => {
 
   return (
     <div className={`flex flex-col gap-2 w-full ${width}`}>
-      <style dangerouslySetInnerHTML={{ __html: phoneDropdownStyles }} />
       <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
@@ -474,7 +463,7 @@ useEffect(() => {
           )}
         </div>
         ) : type === "contact" ? (
-    <div className="relative mt-[6px] w-full">
+    <div ref={dropdownRef} className="relative mt-[6px] w-full">
     <PhoneInput
       country={"in"}
       value={value as string}
@@ -495,17 +484,11 @@ useEffect(() => {
         error ? "!border-red-500" : "!border-gray-300"
       } !focus:ring-0 !focus:outline-none !shadow-none ${
         disabled ? "!bg-gray-100 !cursor-not-allowed" : ""
-      } sm:!pl-[56px] md:!pl-[72px] lg:!pl-[96px]`}
-  buttonClass="!border-gray-300 !bg-white !rounded-l-md !h-[44px] !px-2 !flex !items-center !justify-center sm:!min-w-[44px] md:!min-w-[64px] lg:!min-w-[96px]"
-  buttonStyle={{ boxSizing: 'border-box', borderRight: '1px solid #e5e7eb' }}
-      dropdownClass="!z-50 !rounded-md !shadow-lg !border !border-gray-200 !p-2 !absolute !overflow-auto !max-h-[280px]"
-      dropdownStyle={{
-        minWidth: '160px',
-        maxWidth: 'min(90vw, 240px)',
-        borderRadius: '0.5rem',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-        padding: '6px'
-      }}
+      } !pl-[60px]`}
+      buttonClass="!border-gray-300 !bg-white !rounded-l-md !h-[44px] !px-2 !flex !items-center !justify-center"
+      buttonStyle={{ boxSizing: 'border-box', borderRight: '1px solid #e5e7eb' }}
+      dropdownClass={`!z-50 !rounded-md !fixed !bg-white !border !border-gray-300`}
+      dropdownStyle={dropdownProperties}
       searchPlaceholder="Search country"
       placeholder={placeholder || `Enter ${label}`}
     />
