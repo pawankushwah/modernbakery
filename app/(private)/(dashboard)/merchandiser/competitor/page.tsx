@@ -43,9 +43,9 @@ export default function Competitor() {
 
         return {
           data: res?.data || [],
-          currentPage: res?.pagination?.current_page || 1,
-          pageSize: res?.pagination?.per_page || pageSize,
-          total: res?.pagination?.total || 1,
+          currentPage: res?.pagination?.current_page,
+          pageSize: res?.pagination?.per_page,
+          total: res?.pagination?.last_page, // Use last_page for total pages
         };
       } catch (err) {
         setLoading(false);
@@ -57,11 +57,12 @@ export default function Competitor() {
   );
 
   // Handle image popup open
+//   const BASE_URL ="http://127.0.0.1:8000";
 //   const handleOpenImagePopup = (row: any) => {
 //     const images: string[] = [];
-//     if (row.image?.image1) images.push(row.image.image1);
-//     if (row.image?.image2) images.push(row.image.image2);
-//     if (row.image?.image3) images.push(row.image.image3);
+//  if (row.image?.image1) images.push(BASE_URL + row.image.image1);
+//     if (row.image?.image2) images.push(BASE_URL + row.image.image2);
+//     if (row.image?.image3) images.push(BASE_URL + row.image.image3);
 
 //     if (images.length === 0) {
 //       showSnackbar("No images available", "info");
@@ -106,16 +107,16 @@ export default function Competitor() {
               ],
               searchBar: false,
               columnFilter: true,
-              actions: [
-                <SidebarBtn
-                  key="add"
-                  href="/merchandiser/complaintFeedback/add"
-                  leadingIcon="lucide:plus"
-                  label="Add Feedback"
-                  labelTw="hidden lg:block"
-                  isActive
-                />,
-              ],
+              // actions: [
+              //   <SidebarBtn
+              //     key="add"
+              //     href="/merchandiser/complaintFeedback/add"
+              //     leadingIcon="lucide:plus"
+              //     label="Add Feedback"
+              //     labelTw="hidden lg:block"
+              //     isActive
+              //   />,
+              // ],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
@@ -128,33 +129,33 @@ export default function Competitor() {
               { key: "price", label: "Price" },
               { key: "promotion", label: "Promotion" },
               { key: "notes", label: "Notes" },
-            //   {
-            //     key: "image",
-            //     label: "Images",
-            //     render: (row) => {
-            //       const hasImages = row.image?.image1 || row.image?.image2 || row.image?.image3;
-            //       return hasImages ? (
-            //         <button
-            //           onClick={() => handleOpenImagePopup(row)}
-            //           className="text-blue-600 underline hover:text-blue-800"
-            //         >
-            //           View Images
-            //         </button>
-            //       ) : (
-            //         "-"
-            //       );
-            //     },
-            //   },
+              // {
+              //   key: "image",
+              //   label: "Images",
+              //   render: (row) => {
+              //     const hasImages = row.image;
+              //     return hasImages ? (
+              //       <button
+              //         onClick={() => handleOpenImagePopup(row)}
+              //         className="text-blue-600 underline hover:text-blue-800"
+              //       >
+              //         View Images
+              //       </button>
+              //     ) : (
+              //       "-"
+              //     );
+              //   },
+              // },
             ],
             rowSelection: true,
-            rowActions: [
-              {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
-                },
-              },
-            ],
+            // rowActions: [
+            //   // {
+            //   //   icon: "lucide:eye",
+            //   //   onClick: (data: TableDataType) => {
+            //   //     router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
+            //   //   },
+            //   // },
+            // ],
             pageSize: 10,
           }}
         />

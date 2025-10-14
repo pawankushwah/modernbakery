@@ -11,6 +11,8 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBtn from "@/app/components/statusBtn2";
 import Toggle from "@/app/components/toggle";
+import TabBtn from "@/app/components/tabBtn";
+import Map from "@/app/components/map";
 import SummaryCard from "@/app/components/summaryCard";
 
 interface CustomerItem {
@@ -48,6 +50,12 @@ interface CustomerItem {
   threshold_radius: number;
   dchannel_id: number;
   status: number;
+  get_outlet_channel: {
+            outlet_channel: string,
+            outlet_channel_code: string
+        },
+    get_region: { region_code: string, region_name: string };
+    get_area: { area_code: string, area_name: string };
 }
 
 const title = "Company Customer Details";
@@ -63,6 +71,13 @@ export default function ViewPage() {
   const [isChecked, setIsChecked] = useState(false);
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
+
+   const onTabClick = (idx: number) => {
+    // ensure index is within range and set the corresponding tab key
+    if (typeof idx !== "number") return;
+    if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
+    setActiveTab(tabList[idx].key);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -91,6 +106,16 @@ export default function ViewPage() {
     fetchCompanyCustomerDetails();
   }, [id, setLoading, showSnackbar]);
 
+  // Tab logic
+  const [activeTab, setActiveTab] = useState("overview");
+  const tabList = [
+    { key: "overview", label: "Overview" },
+    { key: "address", label: "Location Info" },
+    { key: "financial", label: "Financial Info" },
+    { key: "guarantee", label: "Guarantee Info" },
+    { key: "additional", label: "Additional Info" },
+  ];
+
   return (
     <>
       {/* Header */}
@@ -100,145 +125,194 @@ export default function ViewPage() {
         </Link>
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
-
+ <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
+                                     {/* profile details */}
+                                     <div className="flex flex-col sm:flex-row items-center gap-[20px]">
+                                         <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
+                                             <Icon
+                                                 icon="lucide:user"
+                                                 width={40}
+                                                 className="text-[#535862] scale-[1.5]"
+                                             />
+                                         </div>
+                                         <div className="text-center sm:text-left">
+                                             <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
+                                                 {customer?.owner_name || "-"}
+                                             </h2>
+                                             <span className="flex items-center">
+                                                 <span className="text-[#414651] text-[16px]">
+                                                     <span className="font-[600]">Company Customer Code:</span>{" "}
+                                                     <span className="font-[400]">
+                                                         {customer?.customer_code || "-"}
+                                                     </span>
+                                                    
+                                                 </span>
+                                             </span>
+                                         </div>
+                                     </div>
+                       <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
+                                                         <StatusBtn isActive={customer?.status === 1} />
+                                                     </span>
+                                   
+                                 </ContainerCard>
       <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
-        {/* Left Section */}
-        <div>
-          <ContainerCard className="w-[350px] flex flex-col gap-y-[20px] p-[20px]">
-            <span className="text-[#181D27] text-[20px] font-semibold text-center">
-              {customer?.business_name || "-"}
-            </span>
-            <div className="flex justify-center">
-              <StatusBtn
-                isActive={
-                  customer?.status === 1 || customer?.status === 1
-                }
+       
+         
+
+        <div className="w-full flex flex-col">
+          <div className="flex ">
+           
+            <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
+                        {tabList.map((tab, index) => (
+                          <div key={index}>
+                            <TabBtn
+                              label={tab.label}
+                              isActive={activeTab === tab.key}
+                              onClick={() => onTabClick(index)}
+                            />
+                          </div>
+                        ))}
+                      </ContainerCard>
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === "overview" && (
+            <ContainerCard className="w-full h-fit">
+              <KeyValueData
+                title="Customer Information"
+                data={[
+                  { key: "SAP Code", value: customer?.sap_code || "-" },
+                  { key: "Customer Code", value: customer?.customer_code || "-" },
+                  { key: "Business Name", value: customer?.business_name || "-" },
+                  { key: "Owner Name", value: customer?.owner_name || "-" },
+                  { key: "Owner Contact No", value: customer?.owner_no || "-" },
+                  { key: "WhatsApp No", value: customer?.whatsapp_no || "-" },
+                  { key: "Email", value: customer?.email || "-" },
+                  { key: "Language", value: customer?.language || "-" },
+                  { key: "Contact No 2", value: customer?.contact_no2 || "-" },
+                ]}
               />
-            </div>
-          </ContainerCard>
-        </div>
-
-        {/* Right Section */}
-        <div className="w-full flex flex-col gap-y-[20px]">
-          {/* Basic Info */}
-          <ContainerCard className="w-full h-fit">
-            <KeyValueData
-              title="Customer Information"
-              data={[
-                { key: "SAP Code", value: customer?.sap_code || "-" },
-                { key: "Customer Code", value: customer?.customer_code || "-" },
-                { key: "Business Name", value: customer?.business_name || "-" },
-                { key: "Owner Name", value: customer?.owner_name || "-" },
-                { key: "Owner Contact No", value: customer?.owner_no || "-" },
-                { key: "WhatsApp No", value: customer?.whatsapp_no || "-" },
-                { key: "Email", value: customer?.email || "-" },
-                { key: "Language", value: customer?.language || "-" },
-                { key: "Contact No 2", value: customer?.contact_no2 || "-" },
-              ]}
-            />
-          </ContainerCard>
-
-          {/* Address Info */}
-          <ContainerCard className="w-full h-fit">
-            <KeyValueData
-              title="Address Information"
-              data={[
-                { key: "Road / Street", value: customer?.road_street || "-" },
-                { key: "Town", value: customer?.town || "-" },
-                { key: "Landmark", value: customer?.landmark || "-" },
-                { key: "District", value: customer?.district || "-" },
-                { key: "Latitude", value: customer?.latitude || "-" },
-                { key: "Longitude", value: customer?.longitude || "-" },
-              ]}
-            />
-          </ContainerCard>
-
-          {/* Financial Info */}
-          <ContainerCard className="w-full h-fit">
-            <KeyValueData
-              title="Financial Information"
-              data={[
-                { key: "Balance", value: customer?.balance?.toString() || "-" },
-                { key: "Payment Type", value: customer?.payment_type || "-" },
-                { key: "Bank Name", value: customer?.bank_name || "-" },
-                { key: "Account Number", value: customer?.bank_account_number || "-" },
-                { key: "Credit Days", value: customer?.creditday || "-" },
-                { key: "Credit Limit", value: customer?.creditlimit?.toString() || "-" },
-                { key: "Total Credit Limit", value: customer?.totalcreditlimit?.toString() || "-" },
-                { key: "Credit Limit Validity", value: customer?.credit_limit_validity || "-" },
-              ]}
-            />
-          </ContainerCard>
-
-          {/* Guarantee Info */}
-          <ContainerCard className="w-full h-fit">
-            <KeyValueData
-              title="Guarantee Details"
-              data={[
-                { key: "Guarantee Name", value: customer?.guarantee_name || "-" },
-                { key: "Guarantee Amount", value: customer?.guarantee_amount?.toString() || "-" },
-                { key: "Guarantee From", value: customer?.guarantee_from || "-" },
-                { key: "Guarantee To", value: customer?.guarantee_to || "-" },
-              ]}
-            />
-          </ContainerCard>
-
-          {/* Misc Info */}
-          <div className="flex flex-wrap gap-x-[20px] mt-[20px]">
-            <div className="flex flex-col md:flex-row gap-6 w-full">
-              <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                <KeyValueData
-                  title="Tax & Accuracy"
-                  data={[
-                    { key: "TIN No", value: customer?.tin_no || "-" },
-                    { key: "VAT No", value: customer?.vat_no || "-" },
-                    { key: "Accuracy", value: customer?.accuracy || "-" },
-                  ]}
-                />
-              </ContainerCard>
-
-              {/* Extra */}
-              <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
-                <div className="text-[18px] font-semibold mb-[25px]">
-                  Customer Info
-                </div>
-                <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
-                  <SummaryCard
-                    icon="prime:barcode"
-                    iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
-                    iconWidth={30}
-                    title={customer?.customer_code || "CUST-1234"}
-                    description={"Customer Code"}
+            </ContainerCard>
+          )}
+          {activeTab === "address" && (
+            <ContainerCard className="w-full h-fit">
+              <KeyValueData
+                title="Location Information"
+                data={[
+                  { key: "Region Code", value: customer?.get_region?.region_code || "-" },
+                                        {
+                                            key: "Region Name",
+                                            value: customer?.get_region?.region_name || "-",
+                                        },
+                                        { key: "Sub Region Code", value: customer?.get_area?.area_code || "-" },
+                                        {
+                                            key: "Sub Region Name",
+                                            value: customer?.get_area?.area_name || "-",
+                                        },
+                                        { key: "Outlet Channel Code", value: customer?.get_outlet_channel?.outlet_channel_code || "-" },
+                                        {
+                                            key: "Outlet Channel Name",
+                                            value: customer?.get_outlet_channel?.outlet_channel || "-",
+                                        },
+                  { key: "Road / Street", value: customer?.road_street || "-" },
+                  { key: "Town", value: customer?.town || "-" },
+                  { key: "Landmark", value: customer?.landmark || "-" },
+                  { key: "District", value: customer?.district || "-" },
+                ]}
+              />
+              {customer?.latitude && customer?.longitude && (
+                                    <Map latitude={customer.latitude} longitude={customer.longitude} title="Customer Location" />
+                                )}
+            </ContainerCard>
+          )}
+          {activeTab === "financial" && (
+            <ContainerCard className="w-full h-fit">
+              <KeyValueData
+                title="Financial Information"
+                data={[
+                  { key: "Balance", value: customer?.balance?.toString() || "-" },
+                  { key: "Payment Type", value: customer?.payment_type || "-" },
+                  { key: "Bank Name", value: customer?.bank_name || "-" },
+                  { key: "Account Number", value: customer?.bank_account_number || "-" },
+                  { key: "Credit Days", value: customer?.creditday || "-" },
+                  { key: "Credit Limit", value: customer?.creditlimit?.toString() || "-" },
+                  { key: "Total Credit Limit", value: customer?.totalcreditlimit?.toString() || "-" },
+                  { key: "Credit Limit Validity", value: customer?.credit_limit_validity || "-" },
+                ]}
+              />
+            </ContainerCard>
+          )}
+          {activeTab === "guarantee" && (
+            <ContainerCard className="w-full h-fit">
+              <KeyValueData
+                title="Guarantee Details"
+                data={[
+                  { key: "Guarantee Name", value: customer?.guarantee_name || "-" },
+                  { key: "Guarantee Amount", value: customer?.guarantee_amount?.toString() || "-" },
+                  { key: "Guarantee From", value: customer?.guarantee_from || "-" },
+                  { key: "Guarantee To", value: customer?.guarantee_to || "-" },
+                ]}
+              />
+            </ContainerCard>
+          )}
+          {activeTab === "additional" && (
+            <div className="flex flex-wrap gap-x-[20px] mt-[20px]">
+              <div className="flex flex-col md:flex-row gap-6 w-full">
+                <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
+                  <KeyValueData
+                    title="Tax & Accuracy"
+                    data={[
+                      { key: "TIN No", value: customer?.tin_no || "-" },
+                      { key: "VAT No", value: customer?.vat_no || "-" },
+                      { key: "Accuracy", value: customer?.accuracy || "-" },
+                    ]}
                   />
                 </ContainerCard>
 
-                <KeyValueData
-                  data={[
-                    {
-                      key: "Promotional Access",
-                      value: "",
-                      component: (
-                        <Toggle
-                          isChecked={isChecked}
-                          onChange={() => setIsChecked(!isChecked)}
-                        />
-                      ),
-                    },
-                    {
-                      key: "Threshold Radius",
-                      value: customer?.threshold_radius?.toString() || "-",
-                    },
-                    {
-                      key: "DChannel ID",
-                      value: customer?.dchannel_id?.toString() || "-",
-                    },
-                  ]}
-                />
-              </ContainerCard>
+                {/* Extra */}
+                <ContainerCard className="flex-1 min-w-[320px] max-w-[500px] h-full">
+                  <div className="text-[18px] font-semibold mb-[25px]">
+                    Customer Info
+                  </div>
+                  <ContainerCard className="w-full mb-[25px] bg-gradient-to-r from-[#E7FAFF] to-[#FFFFFF]">
+                    <SummaryCard
+                      icon="prime:barcode"
+                      iconCircleTw="bg-[#00B8F2] text-white w-[60px] h-[60px] p-[15px]"
+                      iconWidth={30}
+                      title={customer?.customer_code || "CUST-1234"}
+                      description={"Customer Code"}
+                    />
+                  </ContainerCard>
+
+                  <KeyValueData
+                    data={[
+                      {
+                        key: "Promotional Access",
+                        value: "",
+                        component: (
+                          <Toggle
+                            isChecked={isChecked}
+                            onChange={() => setIsChecked(!isChecked)}
+                          />
+                        ),
+                      },
+                      {
+                        key: "Threshold Radius",
+                        value: customer?.threshold_radius?.toString() || "-",
+                      },
+                      {
+                        key: "DChannel ID",
+                        value: customer?.dchannel_id?.toString() || "-",
+                      },
+                    ]}
+                  />
+                </ContainerCard>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </>
   );
 }
+

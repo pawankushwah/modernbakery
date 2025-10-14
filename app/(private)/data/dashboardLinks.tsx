@@ -240,7 +240,7 @@ export const initialLinkData: SidebarDataType[] = [
                     {
                         isActive: false,
                         href: "/merchandiser/competitor",
-                        label: "CompetitorInfo",
+                        label: "Competitor Info",
                         leadingIcon: "mdi:map",
                         iconColor: "text-yellow-400",
                     },

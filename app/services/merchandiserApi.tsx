@@ -161,11 +161,6 @@ export const addShelves = async (body: shelvesType) => {
   }
 };
 
-
-
-
-
-
 export const deleteShelves = async (id: string) => {
   try {
     const res = await API.delete(`/api/merchendisher/shelves/${id}`);
@@ -185,6 +180,43 @@ export const complaintFeedbackByUUID = async (uuid: string, params?: Params) => 
   }
 };
 
+export const updateShelfById = async (uuid: string, data: {
+  shelf_name: string;
+  height: number;
+  width: number;
+  depth: number;
+  valid_from: string;
+  valid_to: string;
+  merchendiser_ids: number[];
+  customer_ids: number[];
+}) => {
+  try {
+    console.log(data)
+    const res = await API.put(`/api/merchendisher/shelves/update/${uuid}`, data);
+    console.log(res)
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getShelfById = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/merchendisher/shelves/show/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const complaintFeedbackList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/merchendisher/complaint-feedback/list", { params });
+    return res.data; 
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+}; 
 
 export const campaignInformationList = async (params?: Params) => {
   try {
@@ -198,15 +230,6 @@ export const campaignInformationList = async (params?: Params) => {
 export const competitorList = async (params?: Params) => {
   try {
     const res = await API.get("/api/merchendisher/competitor-info/list", { params });
-    // console.log("Complaint Feedback API Response:", res.data); // <-- log here
-    return res.data; // res.data should have: { data: [...], pagination: {...} }
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-export const complaintFeedbackList = async (params?: Params) => {
-  try {
-    const res = await API.get("/api/merchendisher/complaint-feedback/list", { params });
     // console.log("Complaint Feedback API Response:", res.data); // <-- log here
     return res.data; // res.data should have: { data: [...], pagination: {...} }
   } catch (error: unknown) {
@@ -252,35 +275,6 @@ export type PlanogramType = {
 export const addPlanogram = async (body: PlanogramType) => {
   try {
     const res = await API.post("/api/merchendisher/planogram/create", body);
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-export const updateShelfById = async (uuid: string, data: {
-  shelf_name: string;
-  height: number;
-  width: number;
-  depth: number;
-  valid_from: string;
-  valid_to: string;
-  merchendiser_ids: number[];
-  customer_ids: number[];
-}) => {
-  try {
-    console.log(data)
-    const res = await API.put(`/api/merchendisher/shelves/update/${uuid}`, data);
-    console.log(res)
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-export const getShelfById = async (uuid: string) => {
-  try {
-    const res = await API.get(`/api/merchendisher/shelves/show/${uuid}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

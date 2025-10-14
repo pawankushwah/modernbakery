@@ -49,15 +49,15 @@ export default function CampaignPage() {
           setLoading(false);
 
       const dataArray: TableDataType[] = Array.isArray(res?.data) ? res.data : [];
-      const pagination = res?.pagination || {};
+      const pagination = res?.pagination;
 
       
 
       return {
         data: dataArray,
-        currentPage: pagination.current_page || 1,
-        pageSize: pagination.per_page || pageSize,
-        total: pagination.total || 0,
+        currentPage: pagination.current_page ,
+        pageSize: pagination.per_page ,
+        total: pagination.last_page ,
       };
     } catch (err) {
       setLoading(false);
@@ -180,19 +180,19 @@ export default function CampaignPage() {
             ],
             rowSelection: true,
             rowActions: [
-              {
-                icon: "lucide:eye",
-                onClick: (data: TableDataType) => {
-                  router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
-                },
-              },
-              {
-                icon: "lucide:trash-2",
-                onClick: (data: TableDataType) => {
-                  setDeleteSelectedRow(data.uuid);
-                  setShowDeletePopup(true);
-                },
-              },
+              // {
+              //   icon: "lucide:eye",
+              //   onClick: (data: TableDataType) => {
+              //     router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
+              //   },
+              // },
+              // {
+              //   icon: "lucide:trash-2",
+              //   onClick: (data: TableDataType) => {
+              //     setDeleteSelectedRow(data.uuid);
+              //     setShowDeletePopup(true);
+              //   },
+              // },
             ],
             pageSize: 10,
           }}

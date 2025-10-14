@@ -203,7 +203,7 @@ export default function AddEditRoute() {
                 )}
               </div>
               {errors.routeCode && <p className="text-red-500 text-sm mt-1">{errors.routeCode}</p>}
-            </div>
+           
 
             {/* Route Name */}
             <div className="flex flex-col">
@@ -241,6 +241,7 @@ export default function AddEditRoute() {
             </div>
           </div>
         </div>
+         </div>
       </div>
 
       {/* Additional Information */}
@@ -278,7 +279,9 @@ export default function AddEditRoute() {
           </div>
         </div>
         {/* Buttons */}
-        <div className="flex justify-end gap-4 mt-6  pr-0">
+       
+      </div>
+       <div className="flex justify-end gap-4 mt-6  pr-0">
           <button
             type="button"
             className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
@@ -294,7 +297,6 @@ export default function AddEditRoute() {
             disabled={submitting}
           />
         </div>
-      </div>
     </>
   );
 }
