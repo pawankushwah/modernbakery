@@ -46,6 +46,14 @@ type configType = {
                   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
               }; // yet to implement
         columnFilter?: boolean;
+        threeDot?: {
+            label: string;
+            labelTw?: string;
+            icon?: string;
+            iconWidth?: string;
+            onClick?: (data: TableDataType[], selectedRow?: number[]) => void;
+            showOnSelect?: boolean;
+        }[],
         actions?: React.ReactNode[];
     };
     rowActions?: {
@@ -183,6 +191,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     const { setConfig } = useContext(Config);
     const { setTableDetails } = useContext(TableDetails);
     const { selectedRow } = useContext(SelectedRow);
+    const [showDropdown, setShowDropdown] = useState(false);
 
     async function checkForData() {
         // if data is passed, use default values
@@ -257,9 +266,46 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                             config.header?.wholeTableActions?.map(
                                 (action) => action
                             )}
-                    </div>
 
-                    
+                        {config.header?.threeDot && 
+                            <div className="flex gap-[12px] relative">
+                                <DismissibleDropdown
+                                isOpen={showDropdown}
+                                setIsOpen={setShowDropdown}
+                                button={
+                                    <BorderIconButton icon="ic:sharp-more-vert" />
+                                }
+                                dropdown={
+                                    <div className="absolute top-[40px] right-0 z-30 w-[226px]">
+                                        <CustomDropdown>
+                                            {config.header?.threeDot?.map((option, idx) => {
+                                                const shouldShow = option.showOnSelect ? selectedRow.length > 0 : true;
+                                                if (!shouldShow) return null;
+                                                return (
+                                                    <div
+                                                        key={idx}
+                                                        className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                                    >
+                                                        {option?.icon && (
+                                                            <Icon
+                                                                icon={option.icon}
+                                                                width={option.iconWidth}
+                                                                className="text-[#717680]"
+                                                            />
+                                                        )}
+                                                        <span className={`text-[#181D27] font-[500] text-[16px] ${option?.labelTw}`}>
+                                                            {option.label}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </CustomDropdown>
+                                    </div>
+                                }   
+                                />
+                                </div>
+                        }
+                    </div>
                 </div>
             )}
             <div className="flex flex-col bg-white w-full border-[1px] border-[#E9EAEB] rounded-[8px] overflow-hidden">
