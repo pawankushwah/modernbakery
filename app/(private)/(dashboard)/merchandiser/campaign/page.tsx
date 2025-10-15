@@ -14,6 +14,7 @@ import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { campaignInformationList } from "@/app/services/merchandiserApi";
+import { div } from "framer-motion/client";
 
 
 
@@ -124,6 +125,7 @@ export default function CampaignPage() {
                 //   labelTw="hidden lg:block"
                 //   isActive
                 // />,
+
               ],
             },
             footer: { nextPrevBtn: true, pagination: true },

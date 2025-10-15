@@ -205,6 +205,15 @@ export const getShelfById = async (uuid: string) => {
   }
 };
 
+export const getCompititorById = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/merchendisher/competitor-info/show/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const complaintFeedbackList = async (params?: Params) => {
   try {
     const res = await API.get("/api/merchendisher/complaint-feedback/list", { params });
@@ -274,5 +283,42 @@ export const addPlanogram = async (body: PlanogramType) => {
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
+  }
+};
+
+export const exportCmplaintFeedback = async (params: { format: string }) => {
+  try {
+    const res = await API.get(
+      "/api/merchendisher/complaint-feedback/exportfile",
+      {
+        params,
+        responseType: "blob", 
+      }
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const exportCompetitorFile = async (params: { format: "csv" | "xlsx" }) => {
+  try {
+    const res = await API.get("/api/merchendisher/competitor-info/exportfile", {
+      params,
+      responseType: "blob",
+    });
+
+    const contentType = res.headers["content-type"];
+
+    // If server returned JSON (error), parse it
+    if (contentType?.includes("application/json")) {
+      const text = await res.data.text();
+      const json = JSON.parse(text);
+      return { error: true, data: json };
+    }
+
+    // Otherwise return blob
+    return res.data;
+  } catch (error: unknown) {
+    return await handleError(error);
   }
 };
