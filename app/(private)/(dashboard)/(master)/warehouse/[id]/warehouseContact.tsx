@@ -59,25 +59,9 @@ export default function WarehouseContactDetails({ values, errors, touched, handl
             name="warehouse_manager_contact"
             value={`${values.managerContactCountry ?? '+256'}|${values.warehouse_manager_contact ?? ''}`}
             onChange={(e) => {
-              const combined = (e.target as HTMLInputElement).value || '';
-                if (combined.includes('|')) {
-                const [code = '+256', num = ''] = combined.split('|');
-                const numDigits = num.replace(/\D/g, '');
-                const codeDigits = String(code).replace(/\D/g, '');
-                const localNumber = codeDigits && numDigits.startsWith(codeDigits) ? numDigits.slice(codeDigits.length) : numDigits;
-                setFieldValue('managerContactCountry', code);
-                setFieldValue('warehouse_manager_contact', localNumber);
-              } else {
-                const digits = combined.replace(/\D/g, '');
-                const currentCountry = (values.managerContactCountry || '+256').replace(/\D/g, '');
-                if (currentCountry && digits.startsWith(currentCountry)) {
-                  setFieldValue('managerContactCountry', `+${currentCountry}`);
-                  setFieldValue('warehouse_manager_contact', digits.slice(currentCountry.length));
-                } else {
-                  setFieldValue('warehouse_manager_contact', digits);
-                }
+              e.target.value
               }
-            }}
+            }
             error={errors?.warehouse_manager_contact && touched?.warehouse_manager_contact ? errors.warehouse_manager_contact : false}
           />
            {errors?.warehouse_manager_contact && touched?.warehouse_manager_contact && (

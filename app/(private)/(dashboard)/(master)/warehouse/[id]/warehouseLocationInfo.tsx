@@ -79,9 +79,10 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             label="Region"
             name="region_id"
             disabled={true}
+            showSkeleton={true}
             value={values.region_id}
             onChange={handleChange}
-            options={loading ? [{ value: '', label: 'Loading...' }] : (regionOptions && regionOptions.length > 0 ? regionOptions : [{ value: '', label: 'No options available' }])}
+            options={regionOptions}
             error={errors?.region_id && touched?.region_id ? errors.region_id : false}
           />
           {errors?.region_id && touched?.region_id && (
@@ -93,42 +94,18 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             required
             label="Area"
             disabled={true}
+            showSkeleton={true}
             name="area_id"
             value={values.area_id}
             onChange={handleChange}
-            options={loading ? [{ value: '', label: 'Loading...' }] : (areaOptions.length ? areaOptions : [{ value: '', label: 'No options available' }])}
+            options={areaOptions}
             error={errors?.area_id && touched?.area_id ? errors.area_id : false}
           />
           {errors?.area_id && touched?.area_id && (
             <span className="text-xs text-red-500 mt-1">{errors.area_id}</span>
           )}
         </div>
-        {/* <div>
-          <InputFields
-            label="District"
-            name="district"
-            value={values.district}
-            onChange={handleChange}
-            error={errors?.district && touched?.district ? errors.district : false}
-          />
-          {errors?.district && touched?.district && (
-            <span className="text-xs text-red-500 mt-1">{errors.district}</span>
-          )}
-        </div>
-        <div>
-          <InputFields
-            required
-            label="Address"
-            name="address"
-            value={values.address}
-            onChange={handleChange}
-            error={errors?.address && touched?.address ? errors.address : false}
-          />
-          {errors?.address && touched?.address && (
-            <span className="text-xs text-red-500 mt-1">{errors.address}</span>
-          )}
-        </div> */}
-        {/* Row 2 */}
+        
         <div>
           <InputFields
             label="Town/Village"

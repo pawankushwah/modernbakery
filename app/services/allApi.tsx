@@ -2542,7 +2542,7 @@ export const exportVehicleData = async (body:object) => {
 
 export const vehicleStatusUpdate = async (body:object) => {
   try {
-    const res = await API.post(`/api/master/warehouse/multiple_status_update`,body);
+    const res = await API.post(`/api/master/vehicle/multiple_status_update`,body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

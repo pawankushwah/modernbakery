@@ -1,16 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-
-import BorderIconButton from "@/app/components/borderIconButton";
-import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { vehicleListData, deleteVehicle, vehicleGlobalSearch ,exportVehicleData} from "@/app/services/allApi";
+import { vehicleListData, deleteVehicle, vehicleGlobalSearch ,exportVehicleData,vehicleStatusUpdate} from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
@@ -209,6 +204,24 @@ export default function VehiclePage() {
            }
          };
 
+                const statusUpdate = async (data: Vehicle[]) => {
+                  try {
+                    const selectedRowsData: string[] = (data || [])
+                      .map((item) => item.id)
+                      .filter((id): id is string => !!id);
+                    if (selectedRowsData.length === 0) {
+                      showSnackbar("No vehicle selected", "error");
+                      return;
+                    }
+                    await vehicleStatusUpdate({ vehicle_ids: selectedRowsData, status: 0 });
+                    setRefreshKey((k) => k + 1);
+                    showSnackbar("Vehicle status updated successfully", "success");
+                  } catch (error) {
+                    showSnackbar("Failed to update vehicle status", "error");
+                  } finally {
+                  }
+                };
+                
   const handleConfirmDelete = async () => {
     if (!selectedRow?.id) return;
 
@@ -257,7 +270,7 @@ export default function VehiclePage() {
                   label: "Inactive",
                   labelTw: "text-[12px] hidden sm:block",
                   showOnSelect: true,
-                  // onClick: statusUpdate,
+                  onClick: statusUpdate,
                 },
               ],
               title: "Vehicle",
