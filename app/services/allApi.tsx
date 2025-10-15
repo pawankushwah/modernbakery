@@ -2465,6 +2465,23 @@ export const submenuGenerateCode = async (params?: Params) => {
   }
 };
 
+export const exportRoutesCSV = async (params?: Params): Promise<Blob | null> => {
+  try {
+    const res = await API.post(
+      `/api/master/route/export`,
+      { params }, // 👈 send your params inside a body object
+      { responseType: "blob" } // 👈 ensures file is returned as Blob
+    );
+    return res.data; // this will be a Blob
+  } catch (error: unknown) {
+    handleError(error);
+    return null;
+  }
+};
+
+
+
+
 export const submenuGlobalSearch = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/submenu/global_search`, {
@@ -2566,3 +2583,5 @@ export const vehicleStatusUpdate = async (body:object) => {
     return handleError(error);
   }
 };
+
+
