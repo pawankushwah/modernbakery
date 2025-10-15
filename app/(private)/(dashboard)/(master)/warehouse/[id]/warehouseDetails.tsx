@@ -36,7 +36,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     disabled={codeMode === 'auto'}
                 />
                 
-                {!isEditMode && (
+                {/* {!isEditMode && (
                     <>
                         <IconButton
                             bgClass="white"
@@ -63,7 +63,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 )}
                 {errors?.warehouse_code && touched?.warehouse_code && (
                     <div className="text-xs text-red-500 mt-1">{errors.warehouse_code}</div>
-                )}
+                )} */}
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields

@@ -24,7 +24,7 @@ type FormValues = {
     owner_number: string;
     owner_email: string;
     tin_no: string;
-    p12_password:string;
+    password:string;
     agreed_stock_capital: string;
     company: string;
     agent_customer: string;
@@ -152,7 +152,7 @@ export default function AddEditWarehouse() {
         owner_name: "",
         company: "",
         agreed_stock_capital: "",
-        p12_password:"",
+        password:"",
         tin_no: "",
         agent_customer: "",
         warehouse_manager: "",
@@ -213,7 +213,7 @@ export default function AddEditWarehouse() {
                         latitude: String(data?.latitude || ''),
                         longitude: String(data?.longitude || ''),
                         p12_file: data?.p12_file || '',
-                        p12_password: data?.p12_password || '',
+                        password: data?.password || '',
                         is_efris: String(data?.is_efris || ''),
                         is_branch: String(data?.is_branch || ''),
                         status:"1"
