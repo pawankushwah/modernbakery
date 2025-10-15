@@ -37,7 +37,6 @@ export default function AddEditRoute() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-
   const codeGeneratedRef = useRef(false);
 
   // Auto-generate route code for add mode
@@ -49,7 +48,9 @@ export default function AddEditRoute() {
           const res = await genearateCode({ model_name: "routes" });
           if (res?.code) setForm(prev => ({ ...prev, routeCode: res.code }));
           if (res?.prefix) setPrefix(res.prefix);
-        } catch (e) {}
+        } catch (e) {
+          console.error("Code generation failed", e);
+        }
       })();
     }
   }, [isEditMode]);
@@ -92,12 +93,9 @@ export default function AddEditRoute() {
     status: yup.string().required("Status is required"),
   });
 
-  // Handle input change and clear error immediately
   const handleChange = (field: string, value: string) => {
     setForm(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
+    if (errors[field]) setErrors(prev => ({ ...prev, [field]: "" }));
   };
 
   const handleSubmit = async () => {
@@ -147,8 +145,12 @@ export default function AddEditRoute() {
     }
   };
 
-  if (isEditMode && loading) {
-    return <div className="w-full h-full flex items-center justify-center"><Loading /></div>;
+  if ((isEditMode && loading) || !warehouseOptions || !vehicleListOptions || !routeTypeOptions) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Loading />
+      </div>
+    );
   }
 
   return (
@@ -164,46 +166,46 @@ export default function AddEditRoute() {
           </h1>
         </div>
       </div>
+
       {/* Content */}
-      <div>
-        <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-          {/* Route Details */}
-          <div className="p-6">
-            <h2 className="text-lg font-medium text-gray-800 mb-4">
-              Route Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex items-start gap-2 max-w-[406px]">
-                <InputFields
-                  required
-                  label="Route Code"
-                  value={form.routeCode}
-                  onChange={(e) => handleChange("routeCode", e.target.value)}
-                  disabled={codeMode === "auto"}
-                />
-                {!isEditMode && (
-                  <>
-                    <IconButton bgClass="white"  className="  cursor-pointer text-[#252B37] pt-12"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Route Code"
-                      prefix={prefix}
-                      setPrefix={setPrefix}
-                      onSave={(mode, code) => {
-                        setCodeMode(mode);
-                        if (mode === "auto" && code) handleChange("routeCode", code);
-                        else if (mode === "manual") handleChange("routeCode", "");
-                      }}
-                    />
-                  </>
-                )}
-              </div>
-              {errors.routeCode && <p className="text-red-500 text-sm mt-1">{errors.routeCode}</p>}
-           
+      <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+        <div className="p-6">
+          <h2 className="text-lg font-medium text-gray-800 mb-4">Route Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            {/* Route Code */}
+            <div className="flex items-start gap-2 max-w-[406px]">
+              <InputFields
+                required
+                label="Route Code"
+                value={form.routeCode}
+                onChange={(e) => handleChange("routeCode", e.target.value)}
+                disabled={codeMode === "auto"}
+              />
+              {!isEditMode && (
+                <>
+                  <IconButton
+                    bgClass="white"
+                    className="cursor-pointer text-[#252B37] pt-12"
+                    icon="mi:settings"
+                    onClick={() => setIsOpen(true)}
+                  />
+                  <SettingPopUp
+                    isOpen={isOpen}
+                    onClose={() => setIsOpen(false)}
+                    title="Route Code"
+                    prefix={prefix}
+                    setPrefix={setPrefix}
+                    onSave={(mode, code) => {
+                      setCodeMode(mode);
+                      if (mode === "auto" && code) handleChange("routeCode", code);
+                      else if (mode === "manual") handleChange("routeCode", "");
+                    }}
+                  />
+                </>
+              )}
+            </div>
+            {errors.routeCode && <p className="text-red-500 text-sm mt-1">{errors.routeCode}</p>}
 
             {/* Route Name */}
             <div className="flex flex-col">
@@ -228,27 +230,6 @@ export default function AddEditRoute() {
               {errors.routeType && <p className="text-red-500 text-sm mt-1">{errors.routeType}</p>}
             </div>
 
-            {/* Vehicle */}
-            <div className="flex flex-col">
-              <InputFields
-                required
-                label="Vehicle"
-                value={form.vehicleType}
-                onChange={(e) => handleChange("vehicleType", e.target.value)}
-                options={vehicleListOptions}
-              />
-              {errors.vehicleType && <p className="text-red-500 text-sm mt-1">{errors.vehicleType}</p>}
-            </div>
-          </div>
-        </div>
-         </div>
-      </div>
-
-      {/* Additional Information */}
-      <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-        <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Warehouse */}
             <div className="flex flex-col">
               <InputFields
@@ -259,6 +240,27 @@ export default function AddEditRoute() {
                 onChange={(e) => handleChange("warehouse", e.target.value)}
               />
               {errors.warehouse && <p className="text-red-500 text-sm mt-1">{errors.warehouse}</p>}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Information */}
+      <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
+        <div className="p-6">
+          <h2 className="text-lg font-medium text-gray-800 mb-4">Additional Information</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+            {/* Vehicle */}
+            <div className="flex flex-col">
+              <InputFields
+                required
+                label="Vehicle"
+                value={form.vehicleType}
+                onChange={(e) => handleChange("vehicleType", e.target.value)}
+                options={vehicleListOptions}
+              />
+              {errors.vehicleType && <p className="text-red-500 text-sm mt-1">{errors.vehicleType}</p>}
             </div>
 
             {/* Status */}
@@ -278,25 +280,25 @@ export default function AddEditRoute() {
             </div>
           </div>
         </div>
-        {/* Buttons */}
-       
       </div>
-       <div className="flex justify-end gap-4 mt-6  pr-0">
-          <button
-            type="button"
-            className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-            onClick={() => router.push("/route")}
-          >
-            Cancel
-          </button>
-          <SidebarBtn
-            label={submitting ? (isEditMode ? "Updating..." : "Submitting...") : (isEditMode ? "Update" : "Submit")}
-            isActive={!submitting}
-            leadingIcon="mdi:check"
-            onClick={handleSubmit}
-            disabled={submitting}
-          />
-        </div>
+
+      {/* Buttons */}
+      <div className="flex justify-end gap-4 mt-6 pr-0">
+        <button
+          type="button"
+          className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+          onClick={() => router.push("/route")}
+        >
+          Cancel
+        </button>
+        <SidebarBtn
+          label={submitting ? (isEditMode ? "Updating..." : "Submitting...") : (isEditMode ? "Update" : "Submit")}
+          isActive={!submitting}
+          leadingIcon="mdi:check"
+          onClick={handleSubmit}
+          disabled={submitting}
+        />
+      </div>
     </>
   );
 }
