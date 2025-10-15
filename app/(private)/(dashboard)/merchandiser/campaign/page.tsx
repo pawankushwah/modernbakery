@@ -179,21 +179,21 @@ export default function CampaignPage() {
             
             ],
             rowSelection: true,
-            rowActions: [
-              // {
-              //   icon: "lucide:eye",
-              //   onClick: (data: TableDataType) => {
-              //     router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
-              //   },
-              // },
-              // {
-              //   icon: "lucide:trash-2",
-              //   onClick: (data: TableDataType) => {
-              //     setDeleteSelectedRow(data.uuid);
-              //     setShowDeletePopup(true);
-              //   },
-              // },
-            ],
+            // rowActions: [
+            //   // {
+            //   //   icon: "lucide:eye",
+            //   //   onClick: (data: TableDataType) => {
+            //   //     router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
+            //   //   },
+            //   // },
+            //   // {
+            //   //   icon: "lucide:trash-2",
+            //   //   onClick: (data: TableDataType) => {
+            //   //     setDeleteSelectedRow(data.uuid);
+            //   //     setShowDeletePopup(true);
+            //   //   },
+            //   // },
+            // ],
             pageSize: 10,
           }}
         />

@@ -241,8 +241,8 @@ export const updatePlanogramById = async (uuid: string, data: {
   name: string;
   valid_from?: string;
   valid_to?: string;
-  merchendisher_id: number; // backend expects single integer
-  customer_id: number; 
+  merchendisher_id: number[]; // backend expects single integer
+  customer_id: number[]; 
 }) => {
   try {
     console.log(data)
@@ -267,8 +267,8 @@ export type PlanogramType = {
   name: string;
   valid_from?: string;
   valid_to?: string;
-  merchendisher_id: number; // backend expects single integer
-  customer_id: number;      // backend expects single integer
+  merchendisher_id: number[]; // backend expects single integer
+  customer_id: number[];      // backend expects single integer
 };
 
 

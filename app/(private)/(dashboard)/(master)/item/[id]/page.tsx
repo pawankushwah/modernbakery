@@ -689,52 +689,44 @@ export default function AddEditItem() {
               </div>
               <div>
                 <InputFields
-                  type="radio"
-                  label="Is Promotional"
-                  name="is_Promotional"
-                  value={form.is_Promotional}
-                  onChange={handleChange}
-                  options={[
-                    { value: "yes", label: "Yes" },
-                    { value: "no", label: "No" },
-                  ]}
-                  error={touched.is_Promotional && errors.is_Promotional}
-                />
-                {errors.is_Promotional && (
+                type="radio"
+                label="Is Promotional"
+                name="is_Promotional"
+                value={form.is_Promotional}
+                onChange={handleChange}
+                options={[
+                  { value: "yes", label: "Yes" },
+                  { value: "no", label: "No" },
+                ]}
+              />
+               {errors.is_Promotional && (
                   <p className="text-red-500 text-sm mt-1">{errors.is_Promotional}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                  type="radio"
-                  label="Tax Applicable"
-                  name="is_tax_applicable"
-                  value={form.is_tax_applicable}
-                  onChange={handleChange}
-                  options={[
-                    { value: "yes", label: "Yes" },
-                    { value: "no", label: "No" },
-                  ]}
-                  error={touched.is_tax_applicable && errors.is_tax_applicable}
-                />
-                {errors.is_tax_applicable && (
+                type="radio"
+                label="Tax Applicable"
+                name="is_tax_applicable"
+                value={form.is_tax_applicable}
+                onChange={handleChange}
+                options={[
+                  { value: "yes", label: "Yes" },
+                  { value: "no", label: "No" },
+                ]}
+              />
+               {errors.is_tax_applicable && (
                   <p className="text-red-500 text-sm mt-1">{errors.is_tax_applicable}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                  label="Excise"
-                  type="radio"
-                  name="excise"
-                  value={form.excise}
-                  onChange={handleChange}
-                  options={[
-                    { value: "yes", label: "Yes" },
-                    { value: "no", label: "No" },
-                  ]}
-                  error={touched.excise && errors.excise}
-                />
-                {errors.excise && (
+                label="Excise"
+                name="excise"
+                value={form.excise}
+                onChange={handleChange}
+              />
+               {errors.excise && (
                   <p className="text-red-500 text-sm mt-1">{errors.excise}</p>
                 )}
               </div>

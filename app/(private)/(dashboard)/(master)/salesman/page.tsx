@@ -95,7 +95,7 @@ const SalesmanPage = () => {
             try {
               setLoading(true);
                 const listRes = await salesmanList({
-                    // page: page.toString(),
+                    page: page.toString(),
                 });
                 setLoading(false);
                 return {

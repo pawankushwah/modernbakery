@@ -64,8 +64,8 @@ export type PlanogramType = {
   name: string;
   valid_from?: string;
   valid_to?: string;
-  merchendisher_id: number; // backend expects single merchandiser
-  customer_id: number;      // backend expects single customer
+  merchendisher_id: number[]; // backend expects single merchandiser
+  customer_id: number[];      // backend expects single customer
 };
 
 // ---------------- VALIDATION ----------------
@@ -259,8 +259,8 @@ export default function Planogram() {
         name: values.name,
         valid_from: values.valid_from,
         valid_to: values.valid_to,
-        merchendisher_id: values.merchendiser_ids[0], // first merch
-        customer_id: values.customer_ids[0],          // first customer
+        merchendisher_id: values.merchendiser_ids, // first merch
+        customer_id: values.customer_ids,          // first customer
       };
 
       const res = isEditMode
@@ -357,6 +357,12 @@ export default function Planogram() {
                 value={values.merchendiser_ids.map(String)}
                 options={merchendiserOptions}
                 isSingle={false}
+                // onChange={(e) => {
+                //   const vals = Array.isArray(e.target.value)
+                //     ? e.target.value
+                //     : [];
+                //   setFieldValue("customer_ids", vals.map(Number));
+                // }}
                 onChange={(e) => {
                   const vals = Array.isArray(e.target.value) ? e.target.value : [];
                   const selectedIds = vals.map(Number);
