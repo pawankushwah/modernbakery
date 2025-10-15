@@ -6,11 +6,18 @@ import { useRouter } from "next/navigation";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
-import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
+import Table, {
+  listReturnType,
+  TableDataType,
+} from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { deleteShelves, shelvesList } from "@/app/services/merchandiserApi";
+import {
+  deleteShelves,
+  exportShelveData,
+  shelvesList,
+} from "@/app/services/merchandiserApi";
 import { useLoading } from "@/app/services/loadingContext";
 
 interface ShelfDisplayItem {
@@ -25,12 +32,12 @@ interface ShelfDisplayItem {
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 export default function ShelfDisplay() {
-  const {setLoading} = useLoading();
+  const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   const [selectedRow, setSelectedRow] = useState<ShelfDisplayItem | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -47,24 +54,80 @@ export default function ShelfDisplay() {
         showSnackbar(res.data.message || "Failed to delete row", "error");
       } else {
         setRefreshKey(refreshKey + 1);
-        showSnackbar(res.message || `Deleted Shelf Display successfully`, "success");
+        showSnackbar(
+          res.message || `Deleted Shelf Display successfully`,
+          "success"
+        );
       }
       setShowDeletePopup(false);
     }
   };
 
+  const handleExport = async (fileType: "csv" | "xlsx") => {
+    try {
+      setLoading(true);
+
+      const res = await exportShelveData({ format : fileType });
+      console.log("Export API Response:", res);
+
+      let downloadUrl = "";
+
+      if (res?.url && res.url.startsWith("blob:")) {
+        downloadUrl = res.url;
+      } else if (res?.url && res.url.startsWith("http")) {
+        downloadUrl = res.url;
+      } else if (typeof res === "string" && res.includes(",")) {
+        const blob = new Blob([res], {
+          type:
+            fileType === "csv"
+              ? "text/csv;charset=utf-8;"
+              : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        downloadUrl = URL.createObjectURL(blob);
+      } else {
+        showSnackbar("No valid file or URL returned from server", "error");
+        return;
+      }
+
+      // ⬇️ Trigger browser download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `campaign_export.${fileType}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showSnackbar(
+        `Download started for ${fileType.toUpperCase()} file`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Export error:", error);
+      showSnackbar("Failed to export campaign data", "error");
+    } finally {
+      setLoading(false);
+      setShowExportDropdown(false);
+    }
+  };
+
   const fetchShelfDisplay = useCallback(
-    async ( pageNo: number = 1, pageSize: number = 10) : Promise<listReturnType> => {
+    async (
+      pageNo: number = 1,
+      pageSize: number = 10
+    ): Promise<listReturnType> => {
       setLoading(true);
       const res = await shelvesList({
         page: pageNo.toString(),
         per_page: pageSize.toString(),
       });
 
-      console.log(res)
+      console.log(res);
       setLoading(false);
-      if(res.error) {
-        showSnackbar(res.data.message || "failed to fetch the shelf display", "error");
+      if (res.error) {
+        showSnackbar(
+          res.data.message || "failed to fetch the shelf display",
+          "error"
+        );
         throw new Error("Unable to fetch the shelf display");
       } else {
         return {
@@ -74,25 +137,89 @@ export default function ShelfDisplay() {
           total: res?.pagination?.last_page || 0,
         };
       }
-    }, []
-  )
+    },
+    []
+  );
 
   useEffect(() => {
     setLoading(true);
-  }, [])
+  }, []);
 
   return (
     <>
+      <div className="flex justify-between items-center">
+        <h1 className="text-[20px] font-semibold text-[#181D27]">
+          Shelves Display
+        </h1>
+
+        {/* Export & Options */}
+        <div className="flex gap-2 relative">
+          {/* Export Button */}
+          <div className="relative">
+            <BorderIconButton
+              icon="gala:file-document"
+              label="Export"
+              labelTw="text-[12px] hidden sm:block"
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+            />
+
+            {showExportDropdown && (
+              <div className="absolute top-full right-0 mt-2 z-30 bg-white border border-gray-200 rounded-md shadow-lg inline-block min-w-max">
+                <div className="py-1">
+                  <button
+                    className="text-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                    onClick={() => handleExport("csv")}
+                  >
+                    CSV
+                  </button>
+                  <hr />
+                  <button
+                    className="text-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                    onClick={() => handleExport("xlsx")}
+                  >
+                    XLSX
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Options Dropdown */}
+          <DismissibleDropdown
+            isOpen={showDropdown}
+            setIsOpen={setShowDropdown}
+            button={<BorderIconButton icon="ic:sharp-more-vert" />}
+            dropdown={
+              <div className="absolute top-full right-0 mt-2 z-30 w-[226px] bg-white border border-gray-200 rounded-md shadow-lg">
+                <div className="py-1">
+                  {dropdownDataList.map((link, idx) => (
+                    <button
+                      key={idx}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                    >
+                      <Icon
+                        icon={link.icon}
+                        width={link.iconWidth}
+                        className="text-gray-500"
+                      />
+                      <span>{link.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+        </div>
+      </div>
       {/* Table */}
       <div className="flex flex-col h-full">
         <Table
           refreshKey={refreshKey}
           config={{
             api: {
-              list: fetchShelfDisplay
+              list: fetchShelfDisplay,
             },
             header: {
-              title: "Shelf Display",
               wholeTableActions: [
                 <div key={0} className="flex gap-[12px] relative">
                   <DismissibleDropdown
@@ -107,15 +234,21 @@ export default function ShelfDisplay() {
                               key={idx}
                               className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
                             >
-                              <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
-                              <span className="text-[#181D27] font-[500] text-[16px]">{link.label}</span>
+                              <Icon
+                                icon={link.icon}
+                                width={link.iconWidth}
+                                className="text-[#717680]"
+                              />
+                              <span className="text-[#181D27] font-[500] text-[16px]">
+                                {link.label}
+                              </span>
                             </div>
                           ))}
                         </CustomDropdown>
                       </div>
                     }
                   />
-                </div>
+                </div>,
               ],
               searchBar: false,
               columnFilter: true,
@@ -137,18 +270,26 @@ export default function ShelfDisplay() {
               { key: "height", label: "Height" },
               { key: "width", label: "Width" },
               { key: "depth", label: "Depth" },
-              { key: "valid_from", label: "Valid From", render: (row: TableDataType) => {
+              {
+                key: "valid_from",
+                label: "Valid From",
+                render: (row: TableDataType) => {
                   const dateStr = row.valid_from;
                   if (!dateStr) return "";
                   const [y, m, d] = dateStr.split("T")[0].split("-");
                   return `${d}-${m}-${y}`;
-              }},
-              { key: "valid_to", label: "Valid To", render: (row: TableDataType) => {
+                },
+              },
+              {
+                key: "valid_to",
+                label: "Valid To",
+                render: (row: TableDataType) => {
                   const dateStr = row.valid_to;
                   if (!dateStr) return "";
                   const [y, m, d] = dateStr.split("T")[0].split("-");
                   return `${d}-${m}-${y}`;
-              } },
+                },
+              },
               // { key: "customer_details", label: "Customers", render: (data: TableDataType) => {
               //   if (Array.isArray(data.customer_details) && data.customer_details.length > 0) {
               //     return data.customer_details

@@ -21,7 +21,7 @@ import {
 import { useState, useEffect } from "react";
 import * as Yup from "yup";
 
-import { merchendiserList } from "@/app/services/allApi";
+import { merchandiserList } from "@/app/services/merchandiserApi";
 import {
   addShelves,
   getShelfById,
@@ -65,15 +65,28 @@ const validationSchema = Yup.object({
   height: Yup.number().required("Height is required"),
   width: Yup.number().required("Width is required"),
   depth: Yup.number().required("Depth is required"),
-  valid_from: Yup.date().required("Valid From is required"),
-  valid_to: Yup.date().required("Valid To is required"),
+  valid_from: Yup.date()
+    .nullable()
+    .transform((_, val) => (val === "" ? null : new Date(val)))
+    .required("Valid From is required"),
+  valid_to: Yup.date()
+    .nullable()
+    .transform((_, val) => (val === "" ? null : new Date(val)))
+    .required("Valid To is required")
+    .min(
+      Yup.ref("valid_from"),
+      "Valid To must be the same as or after Valid From"
+    ),
   merchendiser_ids: Yup.array()
     .of(Yup.number())
-    .min(1, "Select at least one merchandiser"),
+    .min(1, "Select at least one merchendiser"),
   customer_ids: Yup.array()
     .of(Yup.number())
     .min(1, "Select at least one customer"),
 });
+
+const capitalizeFirstLetter = (str: string) =>
+  str ? str.charAt(0).toUpperCase() + str.slice(1) : "";
 
 const stepSchemas = [
   Yup.object().shape({
@@ -102,7 +115,7 @@ export default function ShelfDisplay() {
 
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [merchendiserOptions, setMerchendiserOptions] = useState<
+  const [merchandiserOptions, setMerchandiserOptions] = useState<
     CustomerOption[]
   >([]);
   const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
@@ -150,13 +163,13 @@ export default function ShelfDisplay() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const merchRes = await merchendiserList();
+        const merchRes = await merchandiserList();
         const merchOptions =
           merchRes.data?.map((m: MerchandiserResponse) => ({
             value: String(m.id),
             label: m.name,
           })) || [];
-        setMerchendiserOptions(merchOptions);
+        setMerchandiserOptions(merchOptions);
 
         if (id && id.toString() !== "add") {
           setIsEditMode(true);
@@ -209,7 +222,7 @@ export default function ShelfDisplay() {
     }
     try {
       const response = await shelvesDropdown({
-        merchandiser_ids: merchIds.map(String),
+        merchendiser_ids: merchIds.map(String),
       });
       if (response?.status && Array.isArray(response.data)) {
         const formatted = response.data.map(
@@ -257,7 +270,6 @@ export default function ShelfDisplay() {
           )
         );
       }
-      showSnackbar("Please fill all required fields correctly", "error");
     }
   };
 
@@ -294,9 +306,13 @@ export default function ShelfDisplay() {
   // --- Render step content ---
   const renderStepContent = (
     values: ShelfFormValues,
-    setFieldValue: (field: keyof ShelfFormValues, value: ShelfFormValues[keyof ShelfFormValues]) => void,
+    setFieldValue: (
+      field: keyof ShelfFormValues,
+      value: ShelfFormValues[keyof ShelfFormValues]
+    ) => void,
     errors: FormikErrors<ShelfFormValues>,
-    touched: FormikTouched<ShelfFormValues>
+    touched: FormikTouched<ShelfFormValues>,
+    handleBlur: (e: React.FocusEvent<any>) => void
   ) => {
     switch (currentStep) {
       case 1:
@@ -309,10 +325,16 @@ export default function ShelfDisplay() {
                     <InputFields
                       required
                       type={field === "shelf_name" ? "text" : "number"}
-                      label={field.replace("_", " ").toUpperCase()}
+                      label={`${capitalizeFirstLetter(
+                        field.replace("_", " ")
+                      )} (cm)`}
                       name={field}
-                      value={values[field]?.toString() || ""}
+                      value={(Number(values[field]) < 0
+                        ? 0
+                        : values[field]
+                      ).toString()}
                       onChange={(e) => setFieldValue(field, e.target.value)}
+                      onBlur={handleBlur}
                       error={touched[field] && errors[field]}
                     />
                     <ErrorMessage
@@ -324,24 +346,42 @@ export default function ShelfDisplay() {
                 )
               )}
 
-              <InputFields
-                required
-                type="date"
-                label="Valid From"
-                name="valid_from"
-                value={values.valid_from}
-                onChange={(e) => setFieldValue("valid_from", e.target.value)}
-                error={touched.valid_from && errors.valid_from}
-              />
-              <InputFields
-                required
-                type="date"
-                label="Valid To"
-                name="valid_to"
-                value={values.valid_to}
-                onChange={(e) => setFieldValue("valid_to", e.target.value)}
-                error={touched.valid_to && errors.valid_to}
-              />
+              <div className="flex flex-col">
+                <InputFields
+                  required
+                  type="date"
+                  label="Valid From"
+                  name="valid_from"
+                  value={values.valid_from.length == 0 ? "" : values.valid_from}
+                  onChange={(e) => setFieldValue("valid_from", e.target.value)}
+                  onBlur={handleBlur}
+                  error={touched.valid_from && errors.valid_from}
+                />
+                <ErrorMessage
+                  name="valid_from"
+                  component="span"
+                  className="text-xs text-red-500 mt-1"
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <InputFields
+                  required
+                  type="date"
+                  label="Valid To"
+                  name="valid_to"
+                  value={values.valid_to}
+                  onChange={(e) => setFieldValue("valid_to", e.target.value)}
+                  onBlur={handleBlur}
+                  disabled={!values.valid_from}
+                  error={touched.valid_to && errors.valid_to}
+                />
+                <ErrorMessage
+                  name="valid_to"
+                  component="span"
+                  className="text-xs text-red-500 mt-1"
+                />
+              </div>
             </div>
           </ContainerCard>
         );
@@ -353,9 +393,9 @@ export default function ShelfDisplay() {
               <InputFields
                 required
                 label="Merchandisers"
-                name="merchendiser_ids"
+                name="merchandiser_ids"
                 value={values.merchendiser_ids.map(String)}
-                options={merchendiserOptions}
+                options={merchandiserOptions}
                 isSingle={false}
                 onChange={(e) => {
                   const vals = Array.isArray(e.target.value)
@@ -366,6 +406,7 @@ export default function ShelfDisplay() {
                   setFieldValue("customer_ids", []);
                   fetchCustomers(selectedIds);
                 }}
+                onBlur={handleBlur}
                 error={
                   touched.merchendiser_ids && errors.merchendiser_ids
                     ? Array.isArray(errors.merchendiser_ids)
@@ -381,7 +422,7 @@ export default function ShelfDisplay() {
                 name="customer_ids"
                 value={values.customer_ids.map(String)}
                 options={customerOptions}
-                disabled={values.merchendiser_ids.length === 0 && !isEditMode}
+                disabled={values.merchendiser_ids.length == 0}
                 isSingle={false}
                 onChange={(e) => {
                   const vals = Array.isArray(e.target.value)
@@ -389,6 +430,7 @@ export default function ShelfDisplay() {
                     : [];
                   setFieldValue("customer_ids", vals.map(Number));
                 }}
+                onBlur={handleBlur}
                 error={
                   touched.customer_ids && errors.customer_ids
                     ? Array.isArray(errors.customer_ids)
@@ -434,6 +476,7 @@ export default function ShelfDisplay() {
             errors,
             touched,
             handleSubmit: formikSubmit,
+            handleBlur,
             setErrors,
             setTouched,
             isSubmitting,
@@ -450,7 +493,7 @@ export default function ShelfDisplay() {
                   handleNext(values, {
                     setErrors,
                     setTouched,
-                  } as unknown as FormikHelpers<ShelfFormValues>)
+                  } as FormikHelpers<ShelfFormValues>)
                 }
                 onSubmit={() => formikSubmit()}
                 showSubmitButton={isLastStep}
@@ -458,7 +501,13 @@ export default function ShelfDisplay() {
                 nextButtonText="Save & Next"
                 submitButtonText={isSubmitting ? "Submitting..." : "Submit"}
               >
-                {renderStepContent(values, setFieldValue, errors, touched)}
+                {renderStepContent(
+                  values,
+                  setFieldValue,
+                  errors,
+                  touched,
+                  handleBlur
+                )}
               </StepperForm>
             </Form>
           )}
