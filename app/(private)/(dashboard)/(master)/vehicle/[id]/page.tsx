@@ -337,7 +337,7 @@ export default function AddEditVehicleWithStepper() {
                   onChange={handleChange}
                   disabled={codeMode === "auto"}
                 />
-                {!isEditMode && (
+                {/* {!isEditMode && (
                   <>
                     <IconButton
                       bgClass="white"
@@ -361,7 +361,7 @@ export default function AddEditVehicleWithStepper() {
                       }}
                     />
                   </>
-                )}
+                )} */}
               </div>
               <div>
                 <InputFields

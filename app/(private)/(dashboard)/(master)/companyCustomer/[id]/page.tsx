@@ -394,7 +394,6 @@ export default function AddCompanyCustomer() {
           )
         );
       }
-      showSnackbar("Please fix validation errors before proceeding", "error");
     }
   };
 
@@ -402,18 +401,15 @@ export default function AddCompanyCustomer() {
     values: CompanyCustomerFormValues,
     { setSubmitting, setErrors, setTouched }: FormikHelpers<CompanyCustomerFormValues>
   ) => {
-    console.log("🚀 handleSubmit STARTED - Form submission triggered");
-    console.log("📝 Current form values:", values);
-
     try {
       await validationSchema.validate(values, { abortEarly: false });
       const payload: CompanyCustomerPayload = {
-  sap_code: values.sapCode,
-  customer_code: values.customerCode,
-  business_name: values.businessName,
-  customer_type: values.customerType,
-  owner_name: values.ownerName,
-  owner_no: values.ownerNumber,
+        sap_code: values.sapCode,
+        customer_code: values.customerCode,
+        business_name: values.businessName,
+        customer_type: values.customerType,
+        owner_name: values.ownerName,
+        owner_no: values.ownerNumber,
         is_whatsapp: Number(values.isWhatsapp),
         whatsapp_no: (values.whatsappNo),
         email: values.email,
@@ -449,8 +445,6 @@ export default function AddCompanyCustomer() {
         created_user: 1,
         updated_user: 2,
       };
-
-     
 
       let res;
       if (isEditMode) {
@@ -501,9 +495,8 @@ export default function AddCompanyCustomer() {
             {}
           )
         );
-        showSnackbar("Please fix validation errors before submitting", "error");
       } else {
-        showSnackbar(`Failed to ${isEditMode ? "update" : "add"} Company Customer ❌`, "error");
+        showSnackbar(`Failed to ${isEditMode ? "update" : "add"} Company Customer `, "error");
       }
     } finally {
       setSubmitting(false);
@@ -536,7 +529,7 @@ export default function AddCompanyCustomer() {
                   disabled={codeMode === "auto"}
                   error={touched.customerCode && errors.customerCode}
                 />
-                {!isEditMode && (
+                {!isEditMode && false && (
                   <>
                     <IconButton
                       bgClass="white"

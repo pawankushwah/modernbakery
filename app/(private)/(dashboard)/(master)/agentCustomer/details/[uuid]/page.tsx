@@ -54,7 +54,7 @@ export interface AgentCustomerDetails {
     status: number | string;
 }
 
-const tabs = ["Overview", "Location", "Financial", "Additional"];
+const tabs = ["Overview"];
 
 export default function CustomerDetails() {
     const router = useRouter();
@@ -142,12 +142,18 @@ export default function CustomerDetails() {
                     </div>
                     <div className="text-center sm:text-left">
                         <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                            {item?.name || "Customer Name"}
+                            {item?.name || "Customer Name"} - {item?.osa_code || ""}
                         </h2>
                         <span className="flex items-center">
                             <span className="text-[#414651] text-[16px]">
-                                <span className="font-[600]">Owner:</span>{" "}
-                                <span className="font-[400]">{item?.owner_name || "Unknown"}</span>
+                                <Icon
+                                    icon="mdi:location"
+                                    width={16}
+                                    className="text-[#EA0A2A] mr-[5px]"
+                                />
+                                <span className="mb-[10px]">
+                                    {item?.district}
+                                </span>
                                 {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                                     <StatusBtn status="active" />
                                 </span> */}
@@ -181,7 +187,12 @@ export default function CustomerDetails() {
                 ))}
             </ContainerCard>
             {activeTab === "Overview" ? (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-[10px]">
                 <Overview data={item} />
+                <Financial data={item} />
+                <Additional data={item} />
+                <Location data={item} />
+                </div>
             ) : activeTab === "Location" ? (
                 <Location data={item} />
             ) : activeTab === "Financial" ? (

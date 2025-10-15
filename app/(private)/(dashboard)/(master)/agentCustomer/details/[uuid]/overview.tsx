@@ -41,7 +41,7 @@ export default function Overview({ data }: { data: AgentCustomerDetails | null }
                     </div>
                     <div className="flex items-center gap-[8px] text-[16px]">
                         <Icon
-                            icon="lucide:phone-call"
+                            icon="ic:baseline-whatsapp"
                             width={16}
                             className="text-[#EA0A2A]"
                         />

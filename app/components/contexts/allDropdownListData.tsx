@@ -464,7 +464,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
   }));
 
   const fetchAreaOptions = async (region_id: string | number) => {
-    setLoading(true);
+    setLoading(false);
     try {
       // call subRegionList with an object matching the expected Params shape
       const res = await subRegionList({ region_id: String(region_id) });

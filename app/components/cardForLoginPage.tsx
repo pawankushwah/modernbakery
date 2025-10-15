@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function CardForLoginPage() {
     return (
-        <div className="relative h-[912px] overflow-hidden rounded-[20px] xl:w-full">
+        <div className="relative overflow-hidden rounded-[20px] xl:w-full h-[calc(100vh-48px)]">
             <Image
                 src="/loginImage.png"
                 alt="Login Illustration"

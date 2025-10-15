@@ -5,15 +5,14 @@ import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 
 import Table, { TableDataType } from "@/app/components/customTable";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
-import CustomDropdown from "@/app/components/customDropdown";
 import BorderIconButton from "@/app/components/borderIconButton";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import CustomDropdown from "@/app/components/customDropdown";
 
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { campaignInformationList } from "@/app/services/merchandiserApi";
+import { campaignInformationList,exportCompaignData } from "@/app/services/merchandiserApi";
+import { div } from "framer-motion/client";
 
 
 
@@ -25,94 +24,169 @@ const dropdownDataList = [
 export default function CampaignPage() {
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [deleteSelectedRow, setDeleteSelectedRow] = useState<string | null>(null);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const [popupImages, setPopupImages] = useState<string[]>([]);
-  const [currentPopupIndex, setCurrentPopupIndex] = useState(0);
-
-  const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const router = useRouter();
 
   // ✅ Fetch Table Data
   const fetchComplaintFeedback = useCallback(
-  async (pageNo = 1, pageSize = 10) => {
-    setLoading(true);
+    async (pageNo = 1, pageSize = 10) => {
+      setLoading(true);
+      try {
+        const res = await campaignInformationList({
+          page: String(pageNo),
+          per_page: String(pageSize),
+        });
+        setLoading(false);
+
+        const dataArray: TableDataType[] = Array.isArray(res?.data)
+          ? res.data
+          : [];
+        const pagination = res?.pagination;
+
+        return {
+          data: dataArray,
+          currentPage: pagination.current_page,
+          pageSize: pagination.per_page,
+          total: pagination.last_page,
+        };
+      } catch (err) {
+        setLoading(false);
+        showSnackbar("Failed to fetch campaign list", "error");
+        console.error(err);
+        return {
+          data: [] as TableDataType[],
+          currentPage: 1,
+          pageSize,
+          total: 0,
+        };
+      }
+    },
+    [setLoading, showSnackbar]
+  );
+
+  const handleExport = async (fileType: "csv" | "xlsx") => {
     try {
-    //   const res: CampaignApiResponse = await campaignInformationList({
-    //     page: String(pageNo),
-    //     per_page: String(pageSize),
-    //   });
-    //   setLoading(false);
-     const res = await campaignInformationList({ page: String(pageNo), per_page: String(pageSize) });
-          setLoading(false);
+      setLoading(true);
 
-      const dataArray: TableDataType[] = Array.isArray(res?.data) ? res.data : [];
-      const pagination = res?.pagination;
+      const res = await exportCompaignData({ file_type: fileType });
+      console.log("Export API Response:", res);
 
-      
+      let downloadUrl = "";
 
-      return {
-        data: dataArray,
-        currentPage: pagination.current_page ,
-        pageSize: pagination.per_page ,
-        total: pagination.last_page ,
-      };
-    } catch (err) {
+      if (res?.url && res.url.startsWith("blob:")) {
+        downloadUrl = res.url;
+      } else if (res?.url && res.url.startsWith("http")) {
+        downloadUrl = res.url;
+      } else if (typeof res === "string" && res.includes(",")) {
+        const blob = new Blob([res], {
+          type:
+            fileType === "csv"
+              ? "text/csv;charset=utf-8;"
+              : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        downloadUrl = URL.createObjectURL(blob);
+      } else {
+        showSnackbar("No valid file or URL returned from server", "error");
+        return;
+      }
+
+      // ⬇️ Trigger browser download
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `campaign_export.${fileType}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      showSnackbar(
+        `Download started for ${fileType.toUpperCase()} file`,
+        "success"
+      );
+    } catch (error) {
+      console.error("Export error:", error);
+      showSnackbar("Failed to export campaign data", "error");
+    } finally {
       setLoading(false);
-      showSnackbar("Failed to fetch complaint feedback", "error");
-      console.error(err);
-      return { data: [] as TableDataType[], currentPage: 1, pageSize, total: 0 };
+      setShowExportDropdown(false);
     }
-  },
-  [setLoading, showSnackbar]
-);
-
-
-  const openImagePopup = (images: (string | undefined)[], index: number) => {
-    const validImages = images.filter(Boolean) as string[];
-    setPopupImages(validImages);
-    setCurrentPopupIndex(index);
   };
 
-  const closePopup = () => setPopupImages([]);
-  const nextImage = () => setCurrentPopupIndex((prev) => (prev + 1) % popupImages.length);
-  const prevImage = () => setCurrentPopupIndex((prev) => (prev - 1 + popupImages.length) % popupImages.length);
-
   return (
-    <>
-      <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-5">
+        <h1 className="text-[20px] font-semibold text-[#181D27]">Campaigns Information</h1>
+
+        {/* Export & Options */}
+        <div className="flex gap-2 relative">
+          {/* Export Button */}
+          <div className="relative">
+            <BorderIconButton
+              icon="gala:file-document"
+              label="Export"
+              labelTw="text-[12px] hidden sm:block"
+              onClick={() => setShowExportDropdown(!showExportDropdown)}
+            />
+
+            {showExportDropdown && (
+              <div className="absolute top-full right-0 mt-2 z-30 bg-white border border-gray-200 rounded-md shadow-lg inline-block min-w-max">
+                <div className="py-1">
+                  <button
+                    className="text-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                    onClick={() => handleExport("csv")}
+                  >
+                    CSV
+                  </button>
+                  <hr />
+                  <button
+                    className="text-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                    onClick={() => handleExport("xlsx")}
+                  >
+                    XLSX
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Options Dropdown */}
+          <DismissibleDropdown
+            isOpen={showDropdown}
+            setIsOpen={setShowDropdown}
+            button={<BorderIconButton icon="ic:sharp-more-vert" />}
+            dropdown={
+              <div className="absolute top-full right-0 mt-2 z-30 w-[226px] bg-white border border-gray-200 rounded-md shadow-lg">
+                <div className="py-1">
+                  {dropdownDataList.map((link, idx) => (
+                    <button
+                      key={idx}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+                    >
+                      <Icon
+                        icon={link.icon}
+                        width={link.iconWidth}
+                        className="text-gray-500"
+                      />
+                      <span>{link.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            }
+          />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="h-[calc(100%-60px)]">
         <Table
           refreshKey={refreshKey}
           config={{
             api: { list: fetchComplaintFeedback },
             header: {
-              title: "Canpaign",
-              wholeTableActions: [
-                <div key={0} className="flex gap-[12px] relative">
-                  <DismissibleDropdown
-                    isOpen={showDropdown}
-                    setIsOpen={setShowDropdown}
-                    button={<BorderIconButton icon="ic:sharp-more-vert" />}
-                    dropdown={
-                      <div className="absolute top-[40px] right-0 z-30 w-[226px]">
-                        <CustomDropdown>
-                          {dropdownDataList.map((link, idx) => (
-                            <div
-                              key={idx}
-                              className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                            >
-                              <Icon icon={link.icon} width={link.iconWidth} className="text-[#717680]" />
-                              <span className="text-[#181D27] font-[500] text-[16px]">{link.label}</span>
-                            </div>
-                          ))}
-                        </CustomDropdown>
-                      </div>
-                    }
-                  />
-                </div>,
-              ],
               searchBar: false,
               columnFilter: true,
               actions: [
@@ -124,121 +198,40 @@ export default function CampaignPage() {
                 //   labelTw="hidden lg:block"
                 //   isActive
                 // />,
+
               ],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
-              { key: "code", label: "Complaint Code" },
-            //   { key: "merchandiser_id", label: "Merchandiser" },
-            //   { key: "customer_id", label: "Customer" },
-
-             { key: "merchendiser", label: "Merchendiser", render: (row) => typeof row.merchendiser === "object" &&
-            row.merchendiser !== null &&
-            "name" in row.merchendiser
-                ? (row.merchendiser as { name?: string })
-                      ?.name || "-"
-                : "-", },
-             { key: "customer", label: "Customer", render: (row) => typeof row.customer === "object" &&
-            row.customer !== null &&
-            "owner_name" in row.customer
-                ? (row.customer as { owner_name?: string })
-                      ?.owner_name || "-"
-                : "-", },
-            //   { key: "customer_id", label: "Customer" },
-              { key: "feedback", label: "FeedBack" },
-//              {
-//   key: "images",
-//   label: "Images",
-//   render: (row: FeedbackItem) => {
-//     const BASE_URL = "http://localhost:8000"; // <-- replace with your backend URL
-
-//     // Build full image URLs
-//     const images = row.images
-//       ? [
-//           row.images.image_1 ? `${BASE_URL}${row.images.image_1}` : null,
-//           row.images.image_2 ? `${BASE_URL}${row.images.image_2}` : null,
-//           row.images.image_3 ? `${BASE_URL}${row.images.image_3}` : null,
-//         ].filter(Boolean)
-//       : [];
-
-//     return images.length > 0 ? (
-//       <button
-//         className="text-blue-600 underline hover:text-blue-800"
-//         onClick={() => openImagePopup(images, 0)}
-//       >
-//         View Image
-//       </button>
-//     ) : (
-//       "-"
-//     );
-//   },
-// }
-
-
-
-            
+              { key: "code", label: "Campaign Code" },
+              {
+                key: "merchendiser",
+                label: "Merchandiser",
+                render: (row) =>
+                  typeof row.merchendiser === "object" &&
+                  row.merchendiser !== null &&
+                  "name" in row.merchendiser
+                    ? (row.merchendiser as { name?: string })?.name || "-"
+                    : "-",
+              },
+              {
+                key: "customer",
+                label: "Customer",
+                render: (row) =>
+                  typeof row.customer === "object" &&
+                  row.customer !== null &&
+                  "owner_name" in row.customer
+                    ? (row.customer as { owner_name?: string })?.owner_name ||
+                      "-"
+                    : "-",
+              },
+              { key: "feedback", label: "Feedback" },
             ],
             rowSelection: true,
-            // rowActions: [
-            //   // {
-            //   //   icon: "lucide:eye",
-            //   //   onClick: (data: TableDataType) => {
-            //   //     router.push(`/merchandiser/complaintFeedback/view/${data.uuid}`);
-            //   //   },
-            //   // },
-            //   // {
-            //   //   icon: "lucide:trash-2",
-            //   //   onClick: (data: TableDataType) => {
-            //   //     setDeleteSelectedRow(data.uuid);
-            //   //     setShowDeletePopup(true);
-            //   //   },
-            //   // },
-            // ],
             pageSize: 10,
           }}
         />
       </div>
-
-      {/* Image Popup */}
-      {popupImages.length > 0 && (
-        <div
-          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-          onClick={closePopup}
-        >
-          <div className="relative">
-            <img
-              src={popupImages[currentPopupIndex]}
-              alt="Popup"
-              className="max-h-[80vh] max-w-[80vw] object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-            {popupImages.length > 1 && (
-              <>
-                <button
-                  className="absolute left-[-40px] top-1/2 transform -translate-y-1/2 text-white text-2xl"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    prevImage();
-                  }}
-                >
-                  &#8249;
-                </button>
-                <button
-                  className="absolute right-[-40px] top-1/2 transform -translate-y-1/2 text-white text-2xl"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    nextImage();
-                  }}
-                >
-                  &#8250;
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      
-    </>
+    </div>
   );
 }

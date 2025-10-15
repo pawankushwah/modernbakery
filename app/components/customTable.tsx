@@ -189,7 +189,7 @@ function ContextProvider({ children }: { children: React.ReactNode }) {
 function TableContainer({ refreshKey, data, config }: TableProps) {
     const { setSelectedColumns } = useContext(ColumnFilterConfig);
     const { setConfig } = useContext(Config);
-    const { setTableDetails } = useContext(TableDetails);
+    const { tableDetails, setTableDetails } = useContext(TableDetails);
     const { selectedRow } = useContext(SelectedRow);
     const [showDropdown, setShowDropdown] = useState(false);
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
@@ -293,7 +293,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                                                         {option?.icon && (
                                                             <Icon
                                                                 icon={option.icon}
-                                                                width={option.iconWidth}
+                                                                width={option.iconWidth || 20}
                                                                 className="text-[#717680]"
                                                             />
                                                         )}

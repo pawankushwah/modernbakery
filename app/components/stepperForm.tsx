@@ -3,6 +3,7 @@
 import { Icon } from "@iconify-icon/react";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { ReactNode, useState } from "react";
+import { useLoading } from "../services/loadingContext";
 
 export interface StepperStep {
   id: number;
@@ -47,6 +48,8 @@ export default function StepperForm({
   className = "",
 }: StepperFormProps) {
   const isLastStep = currentStep === steps.length;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { setLoading } = useLoading();
 
 
   // Returns 'completed', 'active', or 'pending'
@@ -85,6 +88,14 @@ export default function StepperForm({
         };
     }
   };
+
+  const handleSubmit = async () => { 
+    setIsSubmitting(true); 
+    setLoading(true); 
+    if(onSubmit) await onSubmit();
+    setLoading(false); 
+    setIsSubmitting(false); 
+  }
 
   return (
 
@@ -132,6 +143,7 @@ export default function StepperForm({
       <div className="flex flex-col sm:flex-row justify-end gap-3 w-full px-2 sm:px-0">
         <button
           onClick={onBack}
+          disabled={isSubmitting}
           className="px-4 py-2 h-10 rounded-md font-semibold border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors w-full sm:w-auto"
           type="button"
         >
@@ -152,10 +164,11 @@ export default function StepperForm({
         {showSubmitButton && isLastStep && (
           <div className="w-full sm:w-auto">
             <SidebarBtn
-              label={submitButtonText}
+              label={isSubmitting ? "Submitting..." : submitButtonText}
+              disabled={isSubmitting}
               isActive={true}
               leadingIcon="mdi:check"
-              onClick={onSubmit}
+              onClick={handleSubmit}
             />
           </div>
         )}

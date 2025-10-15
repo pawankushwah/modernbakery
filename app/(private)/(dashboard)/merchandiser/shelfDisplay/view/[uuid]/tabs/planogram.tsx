@@ -1,3 +1,3 @@
 export const PlanogramTab = () => {
-    return <div className="m-2">This is planogram page</div>
+    return <div className="m-5 font-bold text-2xl">Comming soon</div>
 }

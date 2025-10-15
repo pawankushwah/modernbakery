@@ -86,7 +86,6 @@ export default function ViewPage() {
       setLoading(true);
       try {
         const res = await getCompanyCustomerById(id);
-        console.log("dsjfghsdfgsdg", res)
         if (res.error) {
           showSnackbar(
             res.data?.message || "Unable to fetch company customer details",
@@ -137,15 +136,18 @@ export default function ViewPage() {
                                          </div>
                                          <div className="text-center sm:text-left">
                                              <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                                                 {customer?.owner_name || "-"}
+                                                 {customer?.owner_name || "-"} - {customer?.customer_code || "-"}
                                              </h2>
                                              <span className="flex items-center">
                                                  <span className="text-[#414651] text-[16px]">
-                                                     <span className="font-[600]">Company Customer Code:</span>{" "}
-                                                     <span className="font-[400]">
-                                                         {customer?.customer_code || "-"}
-                                                     </span>
-                                                    
+                                                    <Icon
+                                                        icon="mdi:location"
+                                                        width={16}
+                                                        className="text-[#EA0A2A] mr-[5px]"
+                                                    />
+                                                    <span className="mb-[10px]">
+                                                        {customer?.district || "-"}
+                                                    </span>
                                                  </span>
                                              </span>
                                          </div>

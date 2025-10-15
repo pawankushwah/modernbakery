@@ -76,12 +76,12 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
             <div>
                  <CustomPasswordInput
                                   label="P12 Password"
-                                  value={values.p12_password ? String(values.p12_password) : ''}
+                                  value={values.password ? String(values.password) : ''}
                                   onChange={(e) => setFieldValue("password", e.target.value)}
                                 />
                
-                {errors?.p12_password && touched?.p12_password && (
-                    <span className="text-xs text-red-500 mt-1">{errors.p12_password}</span>
+                {errors?.password && touched?.password && (
+                    <span className="text-xs text-red-500 mt-1">{errors.password}</span>
                 )}
             </div>
             <div>

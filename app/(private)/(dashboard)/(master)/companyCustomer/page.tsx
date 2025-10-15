@@ -14,6 +14,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import {
   getCompanyCustomers,
   deleteCompanyCustomer,
+  exportCompanyCustomerData,
 } from "@/app/services/allApi";
 
 /* ---------- Types ---------- */
@@ -78,6 +79,7 @@ export default function CompanyCustomers() {
   useEffect(() => {
     const fetchCompanyCustomers = async () => {
       try {
+        setLoading(true);
         const data = await getCompanyCustomers();
 
         const customersData = data.data // Wrap single object
@@ -176,7 +178,30 @@ export default function CompanyCustomers() {
     },
   ];
 
-  console.log(customers);
+  const exportFile = async (ids: string[] | undefined) => {
+    if(!ids) return;
+    try {
+      const response = await exportCompanyCustomerData({ids}); 
+      let fileUrl = response;
+      if (response && typeof response === 'object' && response.url) {
+        fileUrl = response.url;
+      }
+      if (fileUrl) {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.download = '';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showSnackbar("File downloaded successfully ", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
+      }
+    } catch (error) {
+      showSnackbar("Failed to download warehouse data", "error");
+    } finally {
+    }
+  }
 
   /* ---------- Render ---------- */
   return (
@@ -194,12 +219,22 @@ export default function CompanyCustomers() {
                 {
                   icon: "gala:file-document",
                   label: "Export CSV",
-                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    const ids = selectedRow?.map((id) => {
+                        return data[id].id;
+                    })
+                    exportFile(ids || [])
+                  },
                 },
                 {
                   icon: "gala:file-document",
                   label: "Export Excel",
-                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    const ids = selectedRow?.map((id) => {
+                        return data[id].id;
+                    })
+                    exportFile(ids || [])
+                  },
                 },
                 {
                   icon: "lucide:radio",

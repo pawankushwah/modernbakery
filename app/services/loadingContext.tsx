@@ -17,8 +17,8 @@ export const LoadingProvider = ({ children }: { children: React.ReactNode }) => 
 
   return (
     <LoadingContext.Provider value={{ loading, setLoading }} >
-      {loading || dropdownLoading && <Loading isFullPage={false} />}
-      <div className={`${loading  || dropdownLoading ? "hidden" : ""} h-full`}>
+      {(loading || dropdownLoading) && <Loading isFullPage={false} />}
+      <div className={`${(loading  || dropdownLoading) ? "hidden" : ""} h-full`}>
         {children}
       </div>
     </LoadingContext.Provider>

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Skeleton from '@mui/material/Skeleton';
-import PhoneInput from "react-phone-input-2";
+
 import 'react-phone-input-2/lib/style.css';
 
 type Option = {
@@ -13,6 +13,11 @@ type PhoneCountry = {
   dialCode?: string;
   countryCode?: string;
   iso2?: string;
+  name?: string;
+};
+type countryList = {
+  flag?: string;
+  code?: string;
   name?: string;
 };
 
@@ -41,7 +46,11 @@ type Props = {
   leadingElement?: React.ReactNode;
   trailingElement?: React.ReactNode;
   showBorder?: boolean;
+  showSkeleton?: boolean;
+
   maxLength?: number;
+  setSelectedCountry?: ({ name: string; code?: string; flag?: string });
+  selectedCountry?: { name: string; code?: string; flag?: string };
 };
 
 export default function InputFields({
@@ -67,7 +76,10 @@ export default function InputFields({
   leadingElement,
   trailingElement,
   showBorder = true,
-  maxLength
+  maxLength,
+  showSkeleton = false,
+  setSelectedCountry,
+  selectedCountry,
 }: Props) {
 
   const [dropdownProperties, setDropdownProperties] = useState({
@@ -85,6 +97,39 @@ export default function InputFields({
   const isSingleSelect = (options && options.length > 0 && isSingle !== false) || (loading && isSingle !== false);
   const selectedValues: string[] = Array.isArray(value) ? value : [];
   const isSearchable = searchable === true || searchable === 'true' || searchable === '1';
+// const defaultCountry: { code: string; name: string; flag?: string } = { code: "+256", name: "Uganda", flag: "🇺🇬" };
+              // const [defaultCountry, setDefaultCountry] = useState<{ name: string; code: string; flag?: string }>({ code: "+256", name: "Uganda", flag: "🇺🇬" });
+              const countries: { name?: string; code?: string; flag?: string }[] = [
+  { name: "United States", code: "+1", flag: "🇺🇸" },
+  { name: "United Kingdom", code: "+44", flag: "🇬🇧" },
+  { name: "Australia", code: "+61", flag: "🇦🇺" },
+  { name: "France", code: "+33", flag: "🇫🇷" },
+  { name: "Germany", code: "+49", flag: "🇩🇪" },
+  { name: "India", code: "+91", flag: "🇮🇳" },
+  { name: "Uganda", code: "+256", flag: "🇺🇬" },
+  { name: "Canada", code: "+1", flag: "🇨🇦" },
+  { name: "China", code: "+86", flag: "🇨🇳" },
+  { name: "Japan", code: "+81", flag: "🇯🇵" },
+  // Add more countries as needed
+];
+   const [isOpen, setIsOpen] = useState(false);
+              // const [selectedCountry, setSelectedCountry] = useState<{ name: string; code: string; flag?: string }>(defaultCountry);
+              const [phone, setPhone] = useState(value);
+              useEffect(()=>{setPhone(value)},[value])
+              const toggleDropdown = () => setIsOpen((prev) => !prev);
+              const handleSelect: (country?: { name?: string; code?: string; flag?: string }) => void = (country) => {
+                const found = country?.code ? countries.find(c => c.code === country.code) : undefined;
+                if (typeof (setSelectedCountry as any) === "function") {
+                  (setSelectedCountry as any)(found ?? (country ? { name: country.name ?? "", code: country.code ?? "", flag: country.flag } : undefined));
+                }
+                
+                setIsOpen(false);
+                safeOnChange({ target: { value: ` ${phone}`, name } } as React.ChangeEvent<HTMLInputElement>);
+              };
+              const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                setPhone(e.target.value);
+                safeOnChange({ target: { value: `${e.target.value}`, name } } as React.ChangeEvent<HTMLInputElement>);
+              };
 
   const filteredOptions = (options?.filter(opt => {
     const label = opt.label.toLowerCase();
@@ -112,7 +157,9 @@ useEffect(() => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [dropdownOpen]);
 
-
+// useEffect(()=>{
+//   setDefaultCountry(selectedCountry)
+// },[selectedCountry])
   // Custom event types for select
   type MultiSelectChangeEvent = {
     target: {
@@ -181,7 +228,7 @@ useEffect(() => {
 
 
   return (
-    <div className={`flex flex-col gap-2 w-full ${width}`}>
+    <div className={`flex flex-col gap-2 w-full ${width} ${showSkeleton && "animate-pulse"}`}>
       <label
         htmlFor={id ?? name}
         className="text-sm font-medium text-gray-700"
@@ -495,36 +542,74 @@ useEffect(() => {
           )}
         </div>
         ) : type === "contact" ? (
-    <div ref={dropdownRef} className="relative mt-[6px] w-full">
-    <PhoneInput
-      country={"in"}
-      value={value as string}
-      onChange={(phone, country: PhoneCountry) => {
-        const dial = country?.dialCode ? `+${country.dialCode}` : (typeof value === 'string' && value.includes('|') ? (value as string).split('|')[0] : '+91');
-        const event = { target: { value: `${dial}|${phone}`, name } };
-        safeOnChange(event as unknown as React.ChangeEvent<HTMLInputElement | HTMLSelectElement>);
-      }}
-      disabled={disabled}
-      inputProps={{
-        name,
-        id: id ?? name,
-        required,
-        onBlur,
-      }}
-      containerClass="!w-full !rounded-md relative"
-      inputClass={`!w-full !h-[44px] !text-gray-900 !rounded-md !border ${
-        error ? "!border-red-500" : "!border-gray-300"
-      } !focus:ring-0 !focus:outline-none !shadow-none ${
-        disabled ? "!bg-gray-100 !cursor-not-allowed" : ""
-      } !pl-[60px]`}
-      buttonClass="!border-gray-300 !bg-white !rounded-l-md !h-[44px] !px-2 !flex !items-center !justify-center"
-      buttonStyle={{ boxSizing: 'border-box', borderRight: '1px solid #e5e7eb' }}
-      dropdownClass={`!z-50 !rounded-md !fixed !bg-white !border !border-gray-300`}
-      dropdownStyle={dropdownProperties}
-      searchPlaceholder="Search country"
-      placeholder={placeholder || `Enter ${label}`}
-    />
-  </div>
+          <div className="relative mt-[6px] w-full">
+            {/* Custom Phone Input with Country Dropdown */}
+            {(() => {
+              // include flag on defaultCountry so selectedCountry.flag is always available
+              
+             
+              return (
+                <div className="max-w-sm mx-auto">
+                  <div className="flex items-center relative">
+                    {/* Dropdown Button */}
+                    <button
+                      type="button"
+                      onClick={toggleDropdown}
+                      className="shrink-0 z-10 inline-flex items-center py-2.5 px-4 text-sm font-medium text-gray-900 bg-gray-100 border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100"
+                      
+                    >
+                      {selectedCountry?.flag}
+                      {selectedCountry?.code}
+                    
+                    </button>
+                    {/* Dropdown List */}
+                    {isOpen && (
+                      <div className="fixed bottom-[15%] h-[300px] overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75">
+                        <ul className="py-2 text-sm text-gray-700">
+                          {countries.map((country:{ name?: string; code?: string; flag?: string } | undefined,index) => (
+                            <li key={index}>
+                              <button
+                                type="button"
+                                onClick={() => handleSelect(country )}
+                                className="inline-flex w-full px-4 py-2 text-sm hover:bg-gray-100"
+                              >
+                                <span className="inline-flex items-center">
+                                  {country?.name} ({country?.code})
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {/* Input Field */}
+                    <label
+                      htmlFor="phone-input"
+                      className="mb-2 text-sm font-medium text-gray-900 sr-only"
+                    >
+                      Phone number:
+                    </label>
+                    <div className="relative w-full">
+                      <input
+                        type="tel"
+                        id="phone-input"
+                        placeholder={placeholder || "Enter phone number"}
+                        className="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-e-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                        value={phone}
+                        onChange={handlePhoneChange}
+                        disabled={disabled}
+                        required={required}
+                        onBlur={onBlur}
+                        
+                        minLength={9}
+                        maxLength={13}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
 ) : type === "date" ? (
         <input
           id={id ?? name}
@@ -571,3 +656,4 @@ useEffect(() => {
     </div>
   );
 }
+

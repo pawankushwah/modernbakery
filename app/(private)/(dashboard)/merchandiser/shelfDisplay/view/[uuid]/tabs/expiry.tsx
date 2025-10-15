@@ -1,3 +1,3 @@
 export const ExpiryTab = () => {
-    return <div className="m-2">This is expiry page</div>
-}
+  return <div className="m-5 font-bold text-2xl">Comming soon</div>;
+};

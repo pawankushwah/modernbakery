@@ -24,7 +24,7 @@ type FormValues = {
     owner_number: string;
     owner_email: string;
     tin_no: string;
-    p12_password:string;
+    password:string;
     agreed_stock_capital: string;
     company: string;
     agent_customer: string;
@@ -60,6 +60,8 @@ export default function AddEditWarehouse() {
         { id: 3, label: "Location Information" },
         { id: 4, label: "EFRIS Information" }
     ];
+            const [selectedCountry, setSelectedCountry] = useState<{code:string; flag:string; name:string;}>({ name: "Uganda", code: "+256", flag: "🇺🇬"  });
+
     const {
         currentStep,
         nextStep,
@@ -152,7 +154,7 @@ export default function AddEditWarehouse() {
         owner_name: "",
         company: "",
         agreed_stock_capital: "",
-        p12_password:"",
+        password:"",
         tin_no: "",
         agent_customer: "",
         warehouse_manager: "",
@@ -213,7 +215,7 @@ export default function AddEditWarehouse() {
                         latitude: String(data?.latitude || ''),
                         longitude: String(data?.longitude || ''),
                         p12_file: data?.p12_file || '',
-                        p12_password: data?.p12_password || '',
+                        password: data?.password || '',
                         is_efris: String(data?.is_efris || ''),
                         is_branch: String(data?.is_branch || ''),
                         status:"1"
@@ -307,7 +309,7 @@ export default function AddEditWarehouse() {
                 }
             } else {
                 // send JSON where backend expects 'p12' key with filename string
-                const jsonPayload = { ...base, p12: typeof p12 === 'string' ? p12 : '' };
+                const jsonPayload = { ...base,ownerContactCountry:selectedCountry,managerContactCountry:selectedCountry, p12: typeof p12 === 'string' ? p12 : '' };
                 if (isEditMode && warehouseId) {
                     res = await updateWarehouse(warehouseId, jsonPayload);
                 } else {
@@ -362,10 +364,15 @@ export default function AddEditWarehouse() {
                         <WarehouseContact
                             values={{ ...values, p12_file: typeof values.p12_file === 'string' ? values.p12_file : '' }}
                             errors={errors}
+                            selectedCountry={selectedCountry}
+                            setSelectedCountry={setSelectedCountry}
                             touched={touched}
-                            handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
+                            handleChange={(e) =>setFieldValue(e.target.name as keyof FormValues, e.target.value)
+                            
+                        }
                             setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File, true)}
                         />
+                        
                     </ContainerCard>
                 );
             case 3:

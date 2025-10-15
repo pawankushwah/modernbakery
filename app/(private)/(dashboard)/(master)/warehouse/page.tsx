@@ -136,7 +136,7 @@ const columns = [
 
 export default function Warehouse() {
   const {setLoading} = useLoading();
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [showDeletePopup, setShowDeletePopup] = useState(false);
   type TableRow = TableDataType & { id?: string };
     // typed row for warehouse table
@@ -260,11 +260,21 @@ export default function Warehouse() {
          } finally {
          }
        };
-         
-         const statusUpdate = async () => {
+
+       const statusUpdate = async (data: WarehouseRow[], selectedRow?: number[]) => {
          try {
-          if (!selectedRow?.id) throw new Error('Missing id');
-           await warehouseStatusUpdate({ warehouse_ids: String(!selectedRow.id) });
+           if (!selectedRow || selectedRow.length === 0) {
+             showSnackbar("No warehouses selected", "error");
+             return;
+           }
+           const selectedRowsData: number[] = data.filter((row:WarehouseRow,index) => selectedRow.includes(index)).map((row:WarehouseRow) => Number(row.id));
+           console.log("selectedRowsData",selectedRowsData);
+           if (selectedRowsData.length === 0) {
+             showSnackbar("No warehouses selected", "error");
+             return;
+           }
+           await warehouseStatusUpdate({ warehouse_ids: selectedRowsData, status: 0 });
+           setRefreshKey((k) => k + 1);
            showSnackbar("Warehouse status updated successfully", "success");
          } catch (error) {
            showSnackbar("Failed to update warehouse status", "error");
@@ -272,6 +282,7 @@ export default function Warehouse() {
          }
        };
          
+
         
     const handleConfirmDelete = async () => {
       if (!selectedRow) return;
@@ -299,7 +310,7 @@ export default function Warehouse() {
         
       <div className="flex flex-col h-full">
         <Table
-          // data={warehouses}
+        refreshKey={refreshKey}
           config={{
             api:{
               list: fetchWarehouse,
@@ -318,14 +329,16 @@ export default function Warehouse() {
                   icon: "gala:file-document",
                   label: "Export Excel",
                   labelTw: "text-[12px] hidden sm:block",
-                  // You can add onClick for Excel if needed
                 },
                 {
                   icon: "lucide:radio",
                   label: "Inactive",
                   labelTw: "text-[12px] hidden sm:block",
                   showOnSelect: true,
-                  onClick: statusUpdate,
+                  onClick: (data: WarehouseRow[], selectedRow?: number[]) => {
+                    statusUpdate(data, selectedRow);
+                },
+                  // onClick: statusUpdate,
                 },
               ],
               title: "Warehouse",
@@ -365,17 +378,7 @@ export default function Warehouse() {
                   router.push(`/warehouse/${row.id}`);
                 },
               },
-              // { icon: "lucide:edit-2", onClick: console.log },
-              // {
-              //   icon: "lucide:trash-2",
-              //   onClick: (data: object) => {
-              //     const row = data as TableRow;
-              //     if (row.id) {
-              //       setSelectedRow({ id: String(row.id) });
-              //     }
-              //     setShowDeletePopup(true);
-              //   },
-              // },
+            
             ],
             pageSize: 50,
           }}

@@ -1,16 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
-
-import BorderIconButton from "@/app/components/borderIconButton";
-import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { vehicleListData, deleteVehicle, vehicleGlobalSearch ,exportVehicleData} from "@/app/services/allApi";
+import { vehicleListData, deleteVehicle, vehicleGlobalSearch ,exportVehicleData,vehicleStatusUpdate} from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
-import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import StatusBtn from "@/app/components/statusBtn2";
@@ -88,8 +83,12 @@ const columns = [
         ? JSON.parse(data.warehouse)
         : data.warehouse;
       return warehouseObj?.warehouse_name || "-";
-    },
-  },
+    }, filter: {
+        isFilterable: true,
+        render: (data: TableDataType[]) => {
+            return data.map((item, index) => <div key={item.id+index} className="w-full text-left p-2">{item.warehouse_name}</div>);
+        }
+    } },
   // { key: "ownerReference", label: "Owner Reference" },
   // { key: "vehicleRoute", label: "Vehicle Route" },
   { key: "description", label: "Description", render: (row: TableDataType) => row.description || "-" },
@@ -209,6 +208,27 @@ export default function VehiclePage() {
            }
          };
 
+                const statusUpdate = async (data: Vehicle[], selectedRow?: number[]) => {
+                        try {
+                          if (!selectedRow || selectedRow.length === 0) {
+                            showSnackbar("No warehouses selected", "error");
+                            return;
+                          }
+                          const selectedRowsData: number[] = data.filter((row:Vehicle,index) => selectedRow.includes(index)).map((row:Vehicle) => Number(row.id));
+                          console.log("selectedRowsData",selectedRowsData);
+                          if (selectedRowsData.length === 0) {
+                            showSnackbar("No warehouses selected", "error");
+                            return;
+                          }
+                          await vehicleStatusUpdate({ warehouse_ids: selectedRowsData, status: 0 });
+                          setRefreshKey((k) => k + 1);
+                          showSnackbar("Warehouse status updated successfully", "success");
+                        } catch (error) {
+                          showSnackbar("Failed to update warehouse status", "error");
+                        } finally {
+                        }
+                      };
+                
   const handleConfirmDelete = async () => {
     if (!selectedRow?.id) return;
 
@@ -257,7 +277,9 @@ export default function VehiclePage() {
                   label: "Inactive",
                   labelTw: "text-[12px] hidden sm:block",
                   showOnSelect: true,
-                  // onClick: statusUpdate,
+                  onClick: (data: Vehicle[], selectedRow?: number[]) => {
+                    statusUpdate(data, selectedRow);
+                },
                 },
               ],
               title: "Vehicle",

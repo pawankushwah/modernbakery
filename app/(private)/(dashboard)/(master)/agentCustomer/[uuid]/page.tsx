@@ -72,20 +72,22 @@ export default function AddEditAgentCustomer() {
     const {
         loading,
         warehouseOptions,
-        routeOptions,
         customerTypeOptions,
-        customerCategoryOptions,
-        customerSubCategoryOptions,
         channelOptions,
         // onlyCountryOptions
     } = useAllDropdownListData();
     const [isOpen, setIsOpen] = useState(false);
     const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
     const [prefix, setPrefix] = useState("");
-    const [filteredRouteOptions, setFilteredRouteOptions] = useState(routeOptions);
-    const [filteredCustomerCategoryOptions, setFilteredCustomerCategoryOptions] = useState(customerCategoryOptions);
-    const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState(customerSubCategoryOptions);
-
+    const [skeleton, setSkeleton] = useState({
+        route: false,
+        customerCategory: false,
+        customerSubCategory: false,
+    });
+    const [filteredRouteOptions, setFilteredRouteOptions] = useState([] as { label: string; value: string }[]);
+    const [filteredCustomerCategoryOptions, setFilteredCustomerCategoryOptions] = useState([] as { label: string; value: string }[]);
+    const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState([] as  { label: string; value: string }[]);
+    const [selectedCountry, setSelectedCountry] = useState<{code:string; flag:string; name:string;}>({ name: "Uganda", code: "+256", flag: "🇺🇬"  });
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -147,6 +149,7 @@ export default function AddEditAgentCustomer() {
     }, [loading, setLoading]);
 
     const fetchRoutes = async (value: string) => {
+        setSkeleton({ ...skeleton, route: true });
         const filteredOptions = await routeList({
             warehouse_id: value,
             per_page: "10",
@@ -160,11 +163,13 @@ export default function AddEditAgentCustomer() {
             value: String(route.id),
             label: route.route_name,
         })));
+        setSkeleton({ ...skeleton, route: false });
     };
 
     const fetchCategories = async (value: string) => {
+        setSkeleton({ ...skeleton, customerCategory: true });
         const filteredOptions = await customerCategoryList({
-            customer_category_id: value,
+            outlet_channel_id: value,
             per_page: "10",
         });
         if(filteredOptions.error) {
@@ -176,9 +181,11 @@ export default function AddEditAgentCustomer() {
             value: String(category.id),
             label: category.customer_category_name + " - " + category.customer_category_code,
         })));
+        setSkeleton({ ...skeleton, customerCategory: false });
     }
 
     const fetchSubCategories = async (value: string) => {
+        setSkeleton({ ...skeleton, customerSubCategory: true });
         const filteredOptions = await customerSubCategoryList({
             customer_category_id: value,
             per_page: "10",
@@ -192,13 +199,14 @@ export default function AddEditAgentCustomer() {
             value: String(subCategory.id),
             label: subCategory.customer_sub_category_name + " - " + subCategory.customer_sub_category_code,
         })));
+        setSkeleton({ ...skeleton, customerSubCategory: false });
     }
 
     // Prevent double call of genearateCode in add mode
     const codeGeneratedRef = useRef(false);
     useEffect(() => {
+        setLoading(true);
         if (isEditMode && agentCustomerId) {
-            setLoading(true);
             (async () => {
                 const res = await agentCustomerById(String(agentCustomerId));
                 const data = res?.data ?? res;
@@ -216,8 +224,8 @@ export default function AddEditAgentCustomer() {
                                 ? String(data.customertype?.id)
                                 : "",
                         route_id:
-                            data.route?.route_id != null
-                                ? String(data.route?.route_id)
+                            data.route?.id != null
+                                ? String(data.route?.id)
                                 : "",
                         outlet_channel_id:
                             data.outlet_channel.id != null
@@ -231,20 +239,16 @@ export default function AddEditAgentCustomer() {
                             data.enable_promotion != null
                                 ? String(data.enable_promotion)
                                 : String(data.enable_promo_txn ?? "0"),
-                        // contacts
-                        contact_no: String(data.contact_no ?? ""),
-                        // country_code_contact_no: String(data.country_code_contact_no ?? ""),
-                        contact_no2: String(data.contact_no2 ?? ""),
+                        contact_no: data.contact_no ?? "",
+                        contact_no2: data.contact_no2 ?? "",
                         whatsapp_no:
                             data.whatsapp_no != null
                                 ? String(data.whatsapp_no)
                                 : "",
-                        // address
                         street: String(data.road_street ?? data.street ?? ""),
                         landmark: String(data.landmark ?? ""),
                         town: String(data.town ?? ""),
                         district: String(data.district ?? ""),
-                        // financial
                         vat_no: data.vat_no ?? data.tin_no ?? null,
                         payment_type:
                             data.payment_type != null
@@ -284,6 +288,9 @@ export default function AddEditAgentCustomer() {
                         qr_code:
                             data.qr_code != null ? String(data.qr_code) : "",
                     });
+                    fetchRoutes(data.get_warehouse != null? String(data.get_warehouse?.id): "");
+                    fetchCategories(data.outlet_channel.id != null? String(data.outlet_channel?.id): "");
+                    fetchSubCategories(data.category.id != null? String(data.category?.id): String(data.category?.id ?? ""));
                 }
                 setLoading(false);
             })();
@@ -306,6 +313,7 @@ export default function AddEditAgentCustomer() {
                     const match = res.prefix;
                     if (match) setPrefix(prefix);
                 }
+                setLoading(false);
             })();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -406,6 +414,8 @@ export default function AddEditAgentCustomer() {
             landmark: AgentCustomerSchema.fields.landmark,
             town: AgentCustomerSchema.fields.town,
             district: AgentCustomerSchema.fields.district,
+            latitude: AgentCustomerSchema.fields.latitude,
+            longitude: AgentCustomerSchema.fields.longitude,
         }),
 
         // 3. Contact
@@ -430,8 +440,6 @@ export default function AddEditAgentCustomer() {
             outlet_channel_id: AgentCustomerSchema.fields.outlet_channel_id,
             category_id: AgentCustomerSchema.fields.category_id,
             subcategory_id: AgentCustomerSchema.fields.subcategory_id,
-            latitude: AgentCustomerSchema.fields.latitude,
-            longitude: AgentCustomerSchema.fields.longitude,
             qr_code: AgentCustomerSchema.fields.qr_code,
             enable_promotion: AgentCustomerSchema.fields.enable_promotion,
         }),
@@ -473,10 +481,6 @@ export default function AddEditAgentCustomer() {
                     )
                 );
             }
-            showSnackbar(
-                "Please fix validation errors before proceeding",
-                "error"
-            );
         }
     };
 
@@ -488,7 +492,6 @@ export default function AddEditAgentCustomer() {
         >
     ) => {
         try {
-            console.log(values);
             await AgentCustomerSchema.validate(values, { abortEarly: false });
             const payload = {
                 ...values,
@@ -569,8 +572,6 @@ export default function AddEditAgentCustomer() {
                     );
                 }
 
-                // Show a summary snackbar
-                showSnackbar(err.errors.join("; "), "error");
                 return;
             }
 
@@ -617,7 +618,7 @@ export default function AddEditAgentCustomer() {
                                         }}
                                         disabled={codeMode === "auto"}
                                     />
-                                    {!isEditMode && (
+                                    {!isEditMode && false && (
                                         <>
                                             <IconButton
                                                 bgClass="white"
@@ -726,7 +727,7 @@ export default function AddEditAgentCustomer() {
                                         required
                                         label="Warehouse"
                                         name="warehouse"
-                                        value={values.warehouse}
+                                        value={values?.warehouse || warehouseOptions[0]?.value || ""}
                                         options={warehouseOptions}
                                         disabled={warehouseOptions.length === 0}
                                         onChange={(e) => {
@@ -753,12 +754,13 @@ export default function AddEditAgentCustomer() {
                                         label="Route"
                                         name="route_id"
                                         value={
-                                            values.route_id?.toString() ?? ""
+                                            values.route_id?.toString() 
                                         }
                                         onChange={(e) =>
                                             setFieldValue("route_id",e.target.value)
                                         }
                                         disabled={filteredRouteOptions.length === 0}
+                                        showSkeleton={skeleton.route}
                                         error={
                                             touched.route_id && errors.route_id
                                         }
@@ -871,6 +873,50 @@ export default function AddEditAgentCustomer() {
                                     )}
                                 </div>
 
+                                <div>
+                                    <InputFields
+                                        label="Latitude"
+                                        name="latitude"
+                                        value={values.latitude?.toString()}
+                                        onChange={(e) =>
+                                            setFieldValue(
+                                                "latitude",
+                                                e.target.value
+                                            )
+                                        }
+                                        error={
+                                            touched.latitude && errors.latitude
+                                        }
+                                    />
+                                    {touched.latitude && errors.latitude && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {errors.latitude}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <InputFields
+                                        label="Longitude"
+                                        name="longitude"
+                                        value={values.longitude?.toString()}
+                                        onChange={(e) =>
+                                            setFieldValue(
+                                                "longitude",
+                                                e.target.value
+                                            )
+                                        }
+                                        error={
+                                            touched.longitude && errors.longitude
+                                        }
+                                    />
+                                    {touched.longitude && errors.longitude && (
+                                        <div className="text-red-500 text-xs mt-1">
+                                            {errors.longitude}
+                                        </div>
+                                    )}
+                                </div>
+
                             </div>
                         </div>
                     </div>
@@ -887,22 +933,13 @@ export default function AddEditAgentCustomer() {
                                 <div>
                                     <InputFields
                                         required
+                                        type="contact"
                                         label="Contact Number"
                                         name="contact_no"
                                         value={values.contact_no}
-                                        // leadingElement={
-                                        //     <InputFields
-                                        //         name="country_code_contact_no"
-                                        //         value={values.country_code_contact_no}
-                                        //         showBorder={false}
-                                        //         onChange={(e) =>
-                                        //             setFieldValue(
-                                        //                 "country_code_contact_no",
-                                        //                 e.target.value
-                                        //             )}
-                                        //         options={onlyCountryOptions}
-                                        //     />
-                                        // }
+                                        setSelectedCountry={setSelectedCountry}
+                                        selectedCountry={selectedCountry}
+                                      
                                         onChange={(e) =>
                                             setFieldValue(
                                                 "contact_no",
@@ -925,8 +962,11 @@ export default function AddEditAgentCustomer() {
                                 <div>
                                     <InputFields
                                         required
+                                        type="contact"
                                         label="Contact Number 2"
                                         name="contact_no2"
+                                        setSelectedCountry={setSelectedCountry}
+                                        selectedCountry={selectedCountry}
                                         value={values.contact_no2}
                                         onChange={(e) =>
                                             setFieldValue(
@@ -1004,8 +1044,8 @@ export default function AddEditAgentCustomer() {
                                         errors.buyertype
                                     }
                                     options={[
-                                        { value: "0", label: "B2B" },
                                         { value: "1", label: "B2C" },
+                                        { value: "0", label: "B2B" }
                                     ]}
                                 />
                                 {touched.buyertype && errors.buyertype && (
@@ -1143,7 +1183,7 @@ export default function AddEditAgentCustomer() {
                                         label="Category"
                                         name="category_id"
                                         value={
-                                            values.category_id?.toString() ?? ""
+                                            values.category_id?.toString() || filteredCustomerCategoryOptions[0]?.value || ""
                                         }
                                         onChange={(e) => {
                                             setFieldValue("category_id", e.target.value);
@@ -1156,7 +1196,8 @@ export default function AddEditAgentCustomer() {
                                             errors.category_id
                                         }
                                         options={filteredCustomerCategoryOptions}
-                                        disabled={customerCategoryOptions.length === 0}
+                                        showSkeleton={skeleton.customerCategory}
+                                        disabled={filteredCustomerCategoryOptions.length === 0}
                                     />
                                     {touched.category_id &&
                                         errors.category_id && (
@@ -1171,8 +1212,7 @@ export default function AddEditAgentCustomer() {
                                         label="Subcategory"
                                         name="subcategory_id"
                                         value={
-                                            values.subcategory_id?.toString() ??
-                                            ""
+                                            values.subcategory_id?.toString() || filteredCustomerSubCategoryOptions[0]?.value || ""
                                         }
                                         onChange={(e) =>
                                             setFieldValue(
@@ -1180,12 +1220,13 @@ export default function AddEditAgentCustomer() {
                                                 e.target.value
                                             )
                                         }
-                                        disabled={filteredCustomerSubCategoryOptions.length === 0}
                                         error={
                                             touched.subcategory_id &&
                                             errors.subcategory_id
                                         }
                                         options={filteredCustomerSubCategoryOptions}
+                                        showSkeleton={skeleton.customerSubCategory}
+                                        disabled={filteredCustomerSubCategoryOptions.length === 0}
                                     />
                                     {touched.subcategory_id &&
                                         errors.subcategory_id && (
@@ -1229,51 +1270,8 @@ export default function AddEditAgentCustomer() {
 
                                 <div>
                                     <InputFields
-                                        label="Latitude"
-                                        name="latitude"
-                                        value={values.latitude?.toString()}
-                                        onChange={(e) =>
-                                            setFieldValue(
-                                                "latitude",
-                                                e.target.value
-                                            )
-                                        }
-                                        error={
-                                            touched.latitude && errors.latitude
-                                        }
-                                    />
-                                    {touched.latitude && errors.latitude && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.latitude}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <InputFields
-                                        label="Longitude"
-                                        name="longitude"
-                                        value={values.longitude?.toString()}
-                                        onChange={(e) =>
-                                            setFieldValue(
-                                                "longitude",
-                                                e.target.value
-                                            )
-                                        }
-                                        error={
-                                            touched.longitude && errors.longitude
-                                        }
-                                    />
-                                    {touched.longitude && errors.longitude && (
-                                        <div className="text-red-500 text-xs mt-1">
-                                            {errors.longitude}
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <InputFields
                                         label="Add QR Code"
+                                        value={values.qr_code}
                                         name="qr_code"
                                         onChange={(e) => setFieldValue("qr_code", e.target.value)}
                                     />
@@ -1344,9 +1342,7 @@ export default function AddEditAgentCustomer() {
                             showSubmitButton={isLastStep}
                             showNextButton={!isLastStep}
                             nextButtonText="Save & Next"
-                            submitButtonText={
-                                issubmitting ? "Submitting..." : "Submit"
-                            }
+                            submitButtonText={issubmitting ? "Submitting..." : "Submit"}
                         >
                             {renderStepContent(
                                 values,
