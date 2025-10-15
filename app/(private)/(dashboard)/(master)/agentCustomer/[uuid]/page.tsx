@@ -87,7 +87,7 @@ export default function AddEditAgentCustomer() {
     const [filteredRouteOptions, setFilteredRouteOptions] = useState([] as { label: string; value: string }[]);
     const [filteredCustomerCategoryOptions, setFilteredCustomerCategoryOptions] = useState([] as { label: string; value: string }[]);
     const [filteredCustomerSubCategoryOptions, setFilteredCustomerSubCategoryOptions] = useState([] as  { label: string; value: string }[]);
-
+    const [selectedCountry, setSelectedCountry] = useState<{code:string; flag:string; name:string;}>({ name: "Uganda", code: "+256", flag: "🇺🇬"  });
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
@@ -224,8 +224,8 @@ export default function AddEditAgentCustomer() {
                                 ? String(data.customertype?.id)
                                 : "",
                         route_id:
-                            data.route?.route_id != null
-                                ? String(data.route?.route_id)
+                            data.route?.id != null
+                                ? String(data.route?.id)
                                 : "",
                         outlet_channel_id:
                             data.outlet_channel.id != null
@@ -239,8 +239,8 @@ export default function AddEditAgentCustomer() {
                             data.enable_promotion != null
                                 ? String(data.enable_promotion)
                                 : String(data.enable_promo_txn ?? "0"),
-                        contact_no: String(data.contact_no ?? ""),
-                        contact_no2: String(data.contact_no2 ?? ""),
+                        contact_no: data.contact_no ?? "",
+                        contact_no2: data.contact_no2 ?? "",
                         whatsapp_no:
                             data.whatsapp_no != null
                                 ? String(data.whatsapp_no)
@@ -754,7 +754,7 @@ export default function AddEditAgentCustomer() {
                                         label="Route"
                                         name="route_id"
                                         value={
-                                            values.route_id?.toString() || filteredRouteOptions[0]?.value || ""
+                                            values.route_id?.toString() 
                                         }
                                         onChange={(e) =>
                                             setFieldValue("route_id",e.target.value)
@@ -933,22 +933,13 @@ export default function AddEditAgentCustomer() {
                                 <div>
                                     <InputFields
                                         required
+                                        type="contact"
                                         label="Contact Number"
                                         name="contact_no"
                                         value={values.contact_no}
-                                        // leadingElement={
-                                        //     <InputFields
-                                        //         name="country_code_contact_no"
-                                        //         value={values.country_code_contact_no}
-                                        //         showBorder={false}
-                                        //         onChange={(e) =>
-                                        //             setFieldValue(
-                                        //                 "country_code_contact_no",
-                                        //                 e.target.value
-                                        //             )}
-                                        //         options={onlyCountryOptions}
-                                        //     />
-                                        // }
+                                        setSelectedCountry={setSelectedCountry}
+                                        selectedCountry={selectedCountry}
+                                      
                                         onChange={(e) =>
                                             setFieldValue(
                                                 "contact_no",
@@ -971,8 +962,11 @@ export default function AddEditAgentCustomer() {
                                 <div>
                                     <InputFields
                                         required
+                                        type="contact"
                                         label="Contact Number 2"
                                         name="contact_no2"
+                                        setSelectedCountry={setSelectedCountry}
+                                        selectedCountry={selectedCountry}
                                         value={values.contact_no2}
                                         onChange={(e) =>
                                             setFieldValue(

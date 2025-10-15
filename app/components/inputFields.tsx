@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import Skeleton from '@mui/material/Skeleton';
-// Country code and flag array for contact input
 
 import 'react-phone-input-2/lib/style.css';
 
@@ -48,7 +47,10 @@ type Props = {
   trailingElement?: React.ReactNode;
   showBorder?: boolean;
   showSkeleton?: boolean;
+
   maxLength?: number;
+  setSelectedCountry?: ({ name: string; code?: string; flag?: string });
+  selectedCountry?: { name: string; code?: string; flag?: string };
 };
 
 export default function InputFields({
@@ -76,6 +78,8 @@ export default function InputFields({
   showBorder = true,
   maxLength,
   showSkeleton = false,
+  setSelectedCountry,
+  selectedCountry,
 }: Props) {
 
   const [dropdownProperties, setDropdownProperties] = useState({
@@ -93,6 +97,39 @@ export default function InputFields({
   const isSingleSelect = (options && options.length > 0 && isSingle !== false) || (loading && isSingle !== false);
   const selectedValues: string[] = Array.isArray(value) ? value : [];
   const isSearchable = searchable === true || searchable === 'true' || searchable === '1';
+// const defaultCountry: { code: string; name: string; flag?: string } = { code: "+256", name: "Uganda", flag: "🇺🇬" };
+              // const [defaultCountry, setDefaultCountry] = useState<{ name: string; code: string; flag?: string }>({ code: "+256", name: "Uganda", flag: "🇺🇬" });
+              const countries: { name?: string; code?: string; flag?: string }[] = [
+  { name: "United States", code: "+1", flag: "🇺🇸" },
+  { name: "United Kingdom", code: "+44", flag: "🇬🇧" },
+  { name: "Australia", code: "+61", flag: "🇦🇺" },
+  { name: "France", code: "+33", flag: "🇫🇷" },
+  { name: "Germany", code: "+49", flag: "🇩🇪" },
+  { name: "India", code: "+91", flag: "🇮🇳" },
+  { name: "Uganda", code: "+256", flag: "🇺🇬" },
+  { name: "Canada", code: "+1", flag: "🇨🇦" },
+  { name: "China", code: "+86", flag: "🇨🇳" },
+  { name: "Japan", code: "+81", flag: "🇯🇵" },
+  // Add more countries as needed
+];
+   const [isOpen, setIsOpen] = useState(false);
+              // const [selectedCountry, setSelectedCountry] = useState<{ name: string; code: string; flag?: string }>(defaultCountry);
+              const [phone, setPhone] = useState(value);
+              useEffect(()=>{setPhone(value)},[value])
+              const toggleDropdown = () => setIsOpen((prev) => !prev);
+              const handleSelect: (country?: { name?: string; code?: string; flag?: string }) => void = (country) => {
+                const found = country?.code ? countries.find(c => c.code === country.code) : undefined;
+                if (typeof (setSelectedCountry as any) === "function") {
+                  (setSelectedCountry as any)(found ?? (country ? { name: country.name ?? "", code: country.code ?? "", flag: country.flag } : undefined));
+                }
+                
+                setIsOpen(false);
+                safeOnChange({ target: { value: ` ${phone}`, name } } as React.ChangeEvent<HTMLInputElement>);
+              };
+              const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                setPhone(e.target.value);
+                safeOnChange({ target: { value: `${e.target.value}`, name } } as React.ChangeEvent<HTMLInputElement>);
+              };
 
   const filteredOptions = (options?.filter(opt => {
     const label = opt.label.toLowerCase();
@@ -120,7 +157,9 @@ useEffect(() => {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [dropdownOpen]);
 
-
+// useEffect(()=>{
+//   setDefaultCountry(selectedCountry)
+// },[selectedCountry])
   // Custom event types for select
   type MultiSelectChangeEvent = {
     target: {
@@ -507,37 +546,8 @@ useEffect(() => {
             {/* Custom Phone Input with Country Dropdown */}
             {(() => {
               // include flag on defaultCountry so selectedCountry.flag is always available
-              const defaultCountry: { code: string; name: string; flag?: string } = { code: "+256", name: "Uganda", flag: "🇺🇬" };
               
-              const countries: { name: string; code: string; flag?: string }[] = [
-  { name: "United States", code: "+1", flag: "🇺🇸" },
-  { name: "United Kingdom", code: "+44", flag: "🇬🇧" },
-  { name: "Australia", code: "+61", flag: "🇦🇺" },
-  { name: "France", code: "+33", flag: "🇫🇷" },
-  { name: "Germany", code: "+49", flag: "🇩🇪" },
-  { name: "India", code: "+91", flag: "🇮🇳" },
-  { name: "Uganda", code: "+256", flag: "🇺🇬" },
-  { name: "Canada", code: "+1", flag: "🇨🇦" },
-  { name: "China", code: "+86", flag: "🇨🇳" },
-  { name: "Japan", code: "+81", flag: "🇯🇵" },
-  // Add more countries as needed
-];
-              const [isOpen, setIsOpen] = useState(false);
-              const [selectedCountry, setSelectedCountry] = useState<{ name: string; code: string; flag?: string }>(defaultCountry);
-              const [phone, setPhone] = useState(typeof value === 'string' ? value : "");
-
-              const toggleDropdown = () => setIsOpen((prev) => !prev);
-              const handleSelect = (country: { name: string; code: string; flag?: string }) => {
-                setSelectedCountry(countries.find(c => c.code === country.code) || defaultCountry);
-                setIsOpen(false);
-                // Update value with new country code
-                safeOnChange({ target: { value: `${country.code} ${phone}`, name } } as React.ChangeEvent<HTMLInputElement>);
-              };
-              const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-                setPhone(e.target.value);
-                safeOnChange({ target: { value: `${e.target.value}`, name } } as React.ChangeEvent<HTMLInputElement>);
-              };
-
+             
               return (
                 <div className="max-w-sm mx-auto">
                   <div className="flex items-center relative">
@@ -548,23 +558,23 @@ useEffect(() => {
                       className="shrink-0 z-10 inline-flex items-center py-2.5 px-4 text-sm font-medium text-gray-900 bg-gray-100 border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100"
                       
                     >
-                      {selectedCountry.flag}
-                      {selectedCountry.code}
+                      {selectedCountry?.flag}
+                      {selectedCountry?.code}
                     
                     </button>
                     {/* Dropdown List */}
                     {isOpen && (
                       <div className="fixed bottom-[15%] h-[300px] overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75">
                         <ul className="py-2 text-sm text-gray-700">
-                          {countries.map((country) => (
-                            <li key={country.code}>
+                          {countries.map((country:{ name?: string; code?: string; flag?: string } | undefined,index) => (
+                            <li key={index}>
                               <button
                                 type="button"
-                                onClick={() => handleSelect(country)}
+                                onClick={() => handleSelect(country )}
                                 className="inline-flex w-full px-4 py-2 text-sm hover:bg-gray-100"
                               >
                                 <span className="inline-flex items-center">
-                                  {country.name} ({country.code})
+                                  {country?.name} ({country?.code})
                                 </span>
                               </button>
                             </li>
@@ -590,6 +600,9 @@ useEffect(() => {
                         disabled={disabled}
                         required={required}
                         onBlur={onBlur}
+                        
+                        minLength={9}
+                        maxLength={13}
                       />
                     </div>
                   </div>

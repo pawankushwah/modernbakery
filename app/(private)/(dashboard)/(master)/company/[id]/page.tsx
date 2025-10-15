@@ -101,7 +101,7 @@ Yup.object({
     district: Yup.string().required("District is required"),
     town: Yup.string().required("Town is required"),
     street: Yup.string().required("Street is required"),
-    landmark: Yup.string(),
+    landmark: Yup.string().required("Landmark is required"),
     country_id: Yup.string().required("Country is required"),
   }),
  

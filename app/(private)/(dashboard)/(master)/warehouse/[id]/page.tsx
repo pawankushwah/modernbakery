@@ -60,6 +60,8 @@ export default function AddEditWarehouse() {
         { id: 3, label: "Location Information" },
         { id: 4, label: "EFRIS Information" }
     ];
+            const [selectedCountry, setSelectedCountry] = useState<{code:string; flag:string; name:string;}>({ name: "Uganda", code: "+256", flag: "🇺🇬"  });
+
     const {
         currentStep,
         nextStep,
@@ -307,7 +309,7 @@ export default function AddEditWarehouse() {
                 }
             } else {
                 // send JSON where backend expects 'p12' key with filename string
-                const jsonPayload = { ...base, p12: typeof p12 === 'string' ? p12 : '' };
+                const jsonPayload = { ...base,ownerContactCountry:selectedCountry,managerContactCountry:selectedCountry, p12: typeof p12 === 'string' ? p12 : '' };
                 if (isEditMode && warehouseId) {
                     res = await updateWarehouse(warehouseId, jsonPayload);
                 } else {
@@ -362,10 +364,15 @@ export default function AddEditWarehouse() {
                         <WarehouseContact
                             values={{ ...values, p12_file: typeof values.p12_file === 'string' ? values.p12_file : '' }}
                             errors={errors}
+                            selectedCountry={selectedCountry}
+                            setSelectedCountry={setSelectedCountry}
                             touched={touched}
-                            handleChange={(e) => setFieldValue(e.target.name as keyof FormValues, e.target.value)}
+                            handleChange={(e) =>setFieldValue(e.target.name as keyof FormValues, e.target.value)
+                            
+                        }
                             setFieldValue={(field: string, value: unknown) => setFieldValue(field as keyof FormValues, value as string | File, true)}
                         />
+                        
                     </ContainerCard>
                 );
             case 3:

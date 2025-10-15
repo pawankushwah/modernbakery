@@ -260,12 +260,15 @@ export default function Warehouse() {
          } finally {
          }
        };
-         
-       const statusUpdate = async (data: WarehouseRow[]) => {
+
+       const statusUpdate = async (data: WarehouseRow[], selectedRow?: number[]) => {
          try {
-           const selectedRowsData: string[] = (data || [])
-             .map((item) => item.id)
-             .filter((id): id is string => !!id);
+           if (!selectedRow || selectedRow.length === 0) {
+             showSnackbar("No warehouses selected", "error");
+             return;
+           }
+           const selectedRowsData: number[] = data.filter((row:WarehouseRow,index) => selectedRow.includes(index)).map((row:WarehouseRow) => Number(row.id));
+           console.log("selectedRowsData",selectedRowsData);
            if (selectedRowsData.length === 0) {
              showSnackbar("No warehouses selected", "error");
              return;
@@ -332,7 +335,10 @@ export default function Warehouse() {
                   label: "Inactive",
                   labelTw: "text-[12px] hidden sm:block",
                   showOnSelect: true,
-                  onClick: statusUpdate,
+                  onClick: (data: WarehouseRow[], selectedRow?: number[]) => {
+                    statusUpdate(data, selectedRow);
+                },
+                  // onClick: statusUpdate,
                 },
               ],
               title: "Warehouse",

@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React,{useState} from 'react';
 import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
@@ -18,6 +18,10 @@ type Props = {
 };
 
 export default function WarehouseDetails({ values, errors, touched, handleChange, setFieldValue, isEditMode }: Props) {
+    const [skeleton, setSkeleton] = useState({
+            region_id: false,
+            area_id: false,
+        });
     const { companyOptions, agentCustomerOptions, companyCustomersOptions, fetchAreaOptions } = useAllDropdownListData();
     const [isOpen, setIsOpen] = React.useState(false);
     const [codeMode, setCodeMode] = React.useState<'auto'|'manual'>('auto');
@@ -148,10 +152,12 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                         setFieldValue('agent_customer', val);
                         const selected = companyCustomersOptions?.find((c) => c.value === String(val));
                         if (selected && selected.region_id) {
+                            setSkeleton({ ...skeleton, region_id: true });
                             const regionId = String(selected.region_id);
                             setFieldValue('region_id', regionId);
                             try { fetchAreaOptions(regionId); } catch (err) {}
                             if (selected.area_id) {
+                                setSkeleton({ ...skeleton, area_id: true });
                                 setFieldValue('area_id', String(selected.area_id));
                             }
                         }

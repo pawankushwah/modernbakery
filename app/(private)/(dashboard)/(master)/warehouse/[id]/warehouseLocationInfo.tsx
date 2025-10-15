@@ -11,8 +11,10 @@ type Props = {
   setFieldValue: (field: string, value: string) => void;
 };
 export default function WarehouseLocationInfo({ values, errors, touched, handleChange, setFieldValue }: Props) {
-
-
+   const [skeleton, setSkeleton] = useState({
+              region_id: false,
+              area_id: false,
+          });
   const { regionOptions, loading, areaOptions,fetchAreaOptions } = useAllDropdownListData();
 
   const prevRegionRef = React.useRef<string | undefined>(undefined);
@@ -79,7 +81,7 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             label="Region"
             name="region_id"
             disabled={true}
-            showSkeleton={true}
+            showSkeleton={skeleton.region_id}
             value={values.region_id}
             onChange={handleChange}
             options={regionOptions}
@@ -94,8 +96,9 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             required
             label="Area"
             disabled={true}
-            showSkeleton={true}
+            showSkeleton={skeleton.area_id}
             name="area_id"
+            
             value={values.area_id}
             onChange={handleChange}
             options={areaOptions}
