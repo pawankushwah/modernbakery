@@ -26,7 +26,7 @@ export default function CustomPasswordInput({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      <div className="relative mt-[6px]">
+      <div className="relative mt-[13.5px]">
         <input
           type={isPasswordVisible ? "text" : "password"}
           id={label}

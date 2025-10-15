@@ -49,6 +49,11 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             name="location"
             value={values.location}
             onChange={handleChange}
+            options={[
+              { value: 'Urban', label: 'Urban' },
+              { value: 'Suburban', label: 'Suburban' },
+              { value: 'Rural', label: 'Rural' },
+            ]}
             error={errors?.location && touched?.location ? errors.location : false}
           />
           {errors?.location && touched?.location && (
@@ -73,6 +78,7 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             required
             label="Region"
             name="region_id"
+            disabled={true}
             value={values.region_id}
             onChange={handleChange}
             options={loading ? [{ value: '', label: 'Loading...' }] : (regionOptions && regionOptions.length > 0 ? regionOptions : [{ value: '', label: 'No options available' }])}
@@ -86,12 +92,12 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
           <InputFields
             required
             label="Area"
+            disabled={true}
             name="area_id"
             value={values.area_id}
             onChange={handleChange}
             options={loading ? [{ value: '', label: 'Loading...' }] : (areaOptions.length ? areaOptions : [{ value: '', label: 'No options available' }])}
             error={errors?.area_id && touched?.area_id ? errors.area_id : false}
-            disabled={loading || !values.region_id}
           />
           {errors?.area_id && touched?.area_id && (
             <span className="text-xs text-red-500 mt-1">{errors.area_id}</span>
@@ -159,6 +165,32 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
             <span className="text-xs text-red-500 mt-1">{errors.landmark}</span>
           )}
         </div>
+        <div>
+                        <InputFields
+                            required
+                            label="Latitude"
+                            name="latitude"
+                            value={values.latitude}
+                            onChange={handleChange}
+                            error={errors?.latitude && touched?.latitude ? errors.latitude : false}
+                        />
+                        {errors?.latitude && touched?.latitude && (
+                            <span className="text-xs text-red-500 mt-1">{errors.latitude}</span>
+                        )}
+                    </div>
+                    <div>
+                        <InputFields
+                            required
+                            label="Longitude"
+                            name="longitude"
+                            value={values.longitude}
+                            onChange={handleChange}
+                            error={errors?.longitude && touched?.longitude ? errors.longitude : false}
+                        />
+                        {errors?.longitude && touched?.longitude && (
+                            <span className="text-xs text-red-500 mt-1">{errors.longitude}</span>
+                        )}
+                    </div>
       </div>
     </>
   );

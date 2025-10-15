@@ -192,6 +192,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     const { setTableDetails } = useContext(TableDetails);
     const { selectedRow } = useContext(SelectedRow);
     const [showDropdown, setShowDropdown] = useState(false);
+    const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
 
     async function checkForData() {
         // if data is passed, use default values
@@ -204,6 +205,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                 currentPage: 0,
                 pageSize: config.pageSize || defaultPageSize,
             });
+            setDisplayedData(data);
         }
 
         // if api is passed, use default values
@@ -221,6 +223,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                 currentPage: currentPage - 1,
                 pageSize: config.pageSize || defaultPageSize,
             });
+            setDisplayedData(data);
         }
 
         // nothing is passed
@@ -284,7 +287,8 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                                                 return (
                                                     <div
                                                         key={idx}
-                                                        className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
+                                                        className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA] cursor-pointer"
+                                                        onClick={() => option.onClick && option.onClick(displayedData, selectedRow)}
                                                     >
                                                         {option?.icon && (
                                                             <Icon

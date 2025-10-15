@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
+import Skeleton from '@mui/material/Skeleton';
 import PhoneInput from "react-phone-input-2";
 import 'react-phone-input-2/lib/style.css';
 
@@ -40,6 +41,7 @@ type Props = {
   leadingElement?: React.ReactNode;
   trailingElement?: React.ReactNode;
   showBorder?: boolean;
+  maxLength?: number;
 };
 
 export default function InputFields({
@@ -64,7 +66,8 @@ export default function InputFields({
   textareaResize = true,
   leadingElement,
   trailingElement,
-  showBorder = true
+  showBorder = true,
+  maxLength
 }: Props) {
 
   const [dropdownProperties, setDropdownProperties] = useState({
@@ -135,6 +138,22 @@ useEffect(() => {
   const safeOnChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement> | MultiSelectChangeEvent | SingleSelectChangeEvent
   ) => {
+    // Restrict number input to maxLength digits
+    if (
+      type === "number" &&
+      maxLength &&
+      event &&
+      "target" in event &&
+      typeof event.target.value === "string"
+    ) {
+      const val = event.target.value;
+      // Remove non-digit characters
+      const digits = val.replace(/\D/g, "");
+      if (digits.length > maxLength) {
+        // Only allow up to maxLength digits
+        event.target.value = digits.slice(0, maxLength);
+      }
+    }
     if (typeof onChange === 'function') {
       onChange(event as React.ChangeEvent<HTMLInputElement | HTMLSelectElement>);
     } else {
@@ -172,6 +191,9 @@ useEffect(() => {
       </label>
 
       {type === "radio" && options && options.length > 0 ? (
+        loading ? (
+          <Skeleton variant="rounded" width={210} height={60} />
+        ) : (
         <div className="flex-wrap flex gap-4 mt-3">
           {options.map((opt, idx) => (
             <label key={opt.value + idx} className="inline-flex items-center gap-3 cursor-pointer">
@@ -190,15 +212,18 @@ useEffect(() => {
           ))}
           {error && <span className="text-xs text-red-500 mt-1">{error}</span>}
         </div>
-      ) : isMulti ? (
+      )) : isMulti ? (
+        loading ? (
+          <Skeleton variant="rounded" width={210} height={60} />
+        ) : (
         <div className="relative select-none" ref={dropdownRef}>
           <div
             tabIndex={0}
             onMouseDown={() => { pointerDownRef.current = true; }}
             onMouseUp={() => { pointerDownRef.current = false; }}
-            onFocus={() => { if (!pointerDownRef.current) setDropdownOpen(true); }}
+            onFocus={() => { if (!pointerDownRef.current && !disabled) setDropdownOpen(true); }}
             className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
-            onClick={() => { if (!loading && !isSearchable && !disabled) setDropdownOpen(v => !v); }}
+            onClick={() => { if (!loading && !isSearchable) setDropdownOpen(v => !v); }}
           >
             {isSearchable ? (
               (() => {
@@ -236,19 +261,17 @@ useEffect(() => {
               })()
             ) : (
               <span className={`truncate flex-1 ${selectedValues.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
-                {loading
-                  ? <span className="flex items-center gap-2 text-gray-400"><svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>Loading...</span>
-                  : (() => {
-                      const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
-                      if (selectedValues.length === 0) {
-                        return `Select ${label}`;
-                      }
-                      if (selectedLabels.length <= 2) {
-                        return selectedLabels.join(", ");
-                      } else {
-                        return selectedLabels.slice(0, 2).join(", ");
-                      }
-                    })()
+                {(() => {
+                    const selectedLabels = options?.filter(opt => selectedValues.includes(opt.value)).map(opt => opt.label) || [];
+                    if (selectedValues.length === 0) {
+                      return `Select ${label}`;
+                    }
+                    if (selectedLabels.length <= 2) {
+                      return selectedLabels.join(", ");
+                    } else {
+                      return selectedLabels.slice(0, 2).join(", ");
+                    }
+                  })()
                 }
               </span>
             )}
@@ -260,7 +283,8 @@ useEffect(() => {
               }
               return null;
             })()}
-            {!isSearchable && (
+            {/* Show down arrow only if not disabled and not searchable */}
+            {!isSearchable && !disabled && (
               <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             )}
           </div>
@@ -276,23 +300,25 @@ useEffect(() => {
                       value={search}
                       onChange={e => setSearch(e.target.value)}
                       className="w-full border-none outline-none text-sm"
+                      disabled={disabled}
                     />
                   </div>
                 )}
                 <div
                   className="flex items-center px-3 py-2 border-b cursor-pointer"
                   style={{ borderBottomColor: '#9ca3af' }}
-                  onClick={handleSelectAll}
+                  onClick={() => { if (!disabled) handleSelectAll(); }}
                 >
                   <input
                     type="checkbox"
                     checked={selectedValues.length === filteredOptions.length && filteredOptions.length > 0}
                     onChange={e => {
                       e.stopPropagation();
-                      handleSelectAll();
+                      if (!disabled) handleSelectAll();
                     }}
                     className="mr-2 cursor-pointer"
                     style={selectedValues.length === filteredOptions.length && filteredOptions.length > 0 ? { accentColor: '#EA0A2A' } : {}}
+                    disabled={disabled}
                   />
                   <span className="text-sm select-none">Select All</span>
                 </div>
@@ -302,10 +328,10 @@ useEffect(() => {
                   ) : filteredOptions.map((opt, idx) => (
                     <div
                       key={opt.value + idx}
-                      className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
                       onClick={e => {
                         e.preventDefault();
-                        handleCheckbox(opt.value);
+                        if (!disabled) handleCheckbox(opt.value);
                       }}
                     >
                       <input
@@ -313,10 +339,11 @@ useEffect(() => {
                         checked={selectedValues.includes(opt.value)}
                         onChange={e => {
                           e.stopPropagation();
-                          handleCheckbox(opt.value);
+                          if (!disabled) handleCheckbox(opt.value);
                         }}
                         className="mr-2 cursor-pointer"
                         style={selectedValues.includes(opt.value) ? { accentColor: '#EA0A2A' } : {}}
+                        disabled={disabled}
                       />
                       <label
                         className="text-sm select-none cursor-pointer text-gray-800"
@@ -330,13 +357,17 @@ useEffect(() => {
             </>
           )}
         </div>
+        )
       ) : isSingleSelect ? (
+        loading ? (
+          <Skeleton variant="rounded" width={210} height={60} />
+        ) : (
         <div className={`relative select-none`} ref={dropdownRef}>
           <div
             tabIndex={0}
             onMouseDown={() => { pointerDownRef.current = true; }}
             onMouseUp={() => { pointerDownRef.current = false; }}
-            onFocus={() => { if (!pointerDownRef.current) setDropdownOpen(true); }}
+            onFocus={() => { if (!pointerDownRef.current && !disabled) setDropdownOpen(true); }}
             className={`${showBorder === true && "border"} h-[44px] w-full rounded-md px-3 mt-[6px] flex items-center cursor-pointer ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-200" : "bg-white"}`}
             onClick={() => { if (!loading && !isSearchable && !disabled) setDropdownOpen(v => !v); }}
           >
@@ -378,13 +409,12 @@ useEffect(() => {
               })()
             ) : (
               <span className={`truncate flex-1 ${!value ? "text-gray-400" : "text-gray-900"}`}>
-                {loading
-                  ? <span className="flex items-center gap-2 text-gray-400"><svg className="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>Loading...</span>
-                  : (!value ? `Select ${label}` : options?.find(opt => opt.value === value)?.label)
+                {(!value ? `Select ${label}` : options?.find(opt => opt.value === value)?.label)
                 }
               </span>
             )}
-            {!isSearchable && (
+            {/* Show down arrow only if not disabled and not searchable */}
+            {!isSearchable && !disabled && (
               <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             )}
           </div>
@@ -423,6 +453,7 @@ useEffect(() => {
             </div>
           )}
         </div>
+        )
       ) : type === "file" ? (
         <input
           id={id ?? name}
@@ -507,17 +538,22 @@ useEffect(() => {
           placeholder={`Enter ${label}`}
         />
       ): type === "number" ? (
-        <input
-          id={id ?? name}
-          name={name}
-          type="number"
-          value={value ?? ""}
-          onChange={safeOnChange}
-          disabled={disabled}
-          onBlur={onBlur}
-          className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
-          placeholder={`Enter ${label}`}
-        />
+        loading ? (
+          <Skeleton variant="rounded" width={210} height={60} />
+        ) : (
+          <input
+            id={id ?? name}
+            name={name}
+            type="number"
+            value={value ?? ""}
+            onChange={safeOnChange}
+            disabled={disabled}
+            onBlur={onBlur}
+            className={`border h-[44px] w-full rounded-md px-3 mt-[6px] text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
+            placeholder={`Enter ${label}`}
+            maxLength={maxLength}
+          />
+        )
       ): type === "textarea" ? (
         <textarea
           id={id ?? name}

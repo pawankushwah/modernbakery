@@ -1,31 +1,26 @@
 "use client";
 import React from 'react';
 import InputFields from "@/app/components/inputFields";
+import CustomPasswordInput from '@/app/components/customPasswordInput';
 
-// explicit, narrow value type for this form step
 type WarehouseValues = {
     latitude?: string;
     longitude?: string;
-    // p12_file can be an existing filename (string) or a File when user uploads a new file
     p12_file?: File | string | null;
     is_efris?: string | number | boolean | null;
     is_branch?: string | number | boolean | null;
-    // allow other keys but keep them typed as unknown to avoid `any`
     [key: string]: unknown;
 };
 
 type Props = {
-    // p12_file may be string (existing filename) or File (new upload)
     values: WarehouseValues;
     errors?: Record<string, string>;
     touched?: Record<string, boolean>;
     handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    // setFieldValue can accept any new field value, but we type it as unknown instead of any
     setFieldValue: (field: string, value: unknown) => void;
 };
 
 export default function WarehouseAdditionalInformation({ values, errors, touched, handleChange, setFieldValue }: Props) {
-    // interpret backend value: explicit false-like values => '0' (No), everything else => '1' (Yes)
     const normalizeIsBranch = (val: string | number | boolean | null | undefined): string => {
         if (val === false || val === 0) return '0';
         if (val === null || typeof val === 'undefined') return '1';
@@ -36,32 +31,26 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div>
+             <div>
                 <InputFields
                     required
-                    label="Latitude"
-                    name="latitude"
-                    value={values.latitude}
+                    type='radio'
+                    label="Is EFRIS?"
+                    name="is_efris"
+                    value={normalizeIsBranch(values.is_efris)}
                     onChange={handleChange}
-                    error={errors?.latitude && touched?.latitude ? errors.latitude : false}
+                    options={[
+                        { value: "1", label: "Enable" },
+                        { value: "0", label: "Disable" },
+                    ]}
+                    error={errors?.is_efris && touched?.is_efris ? errors.is_efris : false}
                 />
-                {errors?.latitude && touched?.latitude && (
-                    <span className="text-xs text-red-500 mt-1">{errors.latitude}</span>
+                {errors?.is_efris && touched?.is_efris && (
+                    <span className="text-xs text-red-500 mt-1">{errors.is_efris}</span>
                 )}
             </div>
-            <div>
-                <InputFields
-                    required
-                    label="Longitude"
-                    name="longitude"
-                    value={values.longitude}
-                    onChange={handleChange}
-                    error={errors?.longitude && touched?.longitude ? errors.longitude : false}
-                />
-                {errors?.longitude && touched?.longitude && (
-                    <span className="text-xs text-red-500 mt-1">{errors.longitude}</span>
-                )}
-            </div>
+            {values.is_efris && (values.is_efris === '1' || values.is_efris === 1 || values.is_efris === true) &&
+            <>
             <div>
                 <InputFields
                     label="P12 File"
@@ -83,22 +72,16 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                     <p className="text-sm text-gray-600 mt-1">Current file: {typeof values.p12_file === 'string' ? values.p12_file : values.p12_file.name}</p>
                 )}
             </div>
+           
             <div>
-                <InputFields
-                    required
-                    type='radio'
-                    label="Is EFRIS?"
-                    name="is_efris"
-                    value={normalizeIsBranch(values.is_efris)}
-                    onChange={handleChange}
-                    options={[
-                        { value: "1", label: "Enable" },
-                        { value: "0", label: "Disable" },
-                    ]}
-                    error={errors?.is_efris && touched?.is_efris ? errors.is_efris : false}
-                />
-                {errors?.is_efris && touched?.is_efris && (
-                    <span className="text-xs text-red-500 mt-1">{errors.is_efris}</span>
+                 <CustomPasswordInput
+                                  label="P12 Password"
+                                  value={values.p12_password ? String(values.p12_password) : ''}
+                                  onChange={(e) => setFieldValue("password", e.target.value)}
+                                />
+               
+                {errors?.p12_password && touched?.p12_password && (
+                    <span className="text-xs text-red-500 mt-1">{errors.p12_password}</span>
                 )}
             </div>
             <div>
@@ -118,6 +101,9 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                     <span className="text-xs text-red-500 mt-1">{errors.is_branch}</span>
                 )}
             </div>
+            </>
+            }
+           
         </div>
     );
 }

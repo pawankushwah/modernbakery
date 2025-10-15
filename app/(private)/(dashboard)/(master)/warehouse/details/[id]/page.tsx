@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StatusBtn from "@/app/components/statusBtn2";
+import TabBtn from "@/app/components/tabBtn";
 import Map from "@/app/components/map";
 
 interface Item {
@@ -73,6 +74,17 @@ export default function ViewPage() {
     const { setLoading } = useLoading();
     const [item, setItem] = useState<Item | null>(null);
 
+      const [activeTab, setActiveTab] = useState("overview");
+  const tabList = [
+    { key: "overview", label: "Overview" },
+    { key: "warehouseCustomer", label: "Warehouse Customer" },
+    { key: "warehouseStock", label: "Warehouse Stock" },
+    { key: "rout&vehicle", label: "Route & Vechile" },
+    { key: "salesman", label: "Salesman" },
+    { key: "sales", label: "Sales" },
+    { key: "return", label: "Return" },
+  ];
+
     useEffect(() => {
         const fetchPlanogramImageDetails = async () => {
             setLoading(true);
@@ -90,6 +102,13 @@ export default function ViewPage() {
         };
         fetchPlanogramImageDetails();
     }, []);
+
+      const onTabClick = (idx: number) => {
+    if (typeof idx !== "number") return;
+    if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
+    setActiveTab(tabList[idx].key);
+  };
+
 
     return (
         <>
@@ -114,22 +133,26 @@ export default function ViewPage() {
                             </div>
                             <div className="text-center sm:text-left">
                                 <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                                    {item?.warehouse_name}
+                                    {item?.warehouse_code || "-"} - {item?.warehouse_name} 
                                 </h2>
-                                <span className="flex items-center">
-                                    <span className="text-[#414651] text-[16px]">
-                                        <span className="font-[600]">Warehouse Code:</span>{" "}
-                                        <span className="font-[400]">
-                                            {item?.warehouse_code || "-"}
-                                        </span>
-                                    </span>
-                                </span>
+                               
                             </div>
                         </div>
                         <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                             <StatusBtn isActive={item?.status === 1 || item?.status === '1'} />
                         </span>
                     </ContainerCard>
+                     <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
+                                            {tabList.map((tab, index) => (
+                                              <div key={index}>
+                                                <TabBtn
+                                                  label={tab.label}
+                                                  isActive={activeTab === tab.key}
+                                                  onClick={() => onTabClick(index)}
+                                                />
+                                              </div>
+                                            ))}
+                                          </ContainerCard>
                      <div className="mb-4">
                 {/* <WarehouseTabs /> */}
             </div>
@@ -139,8 +162,22 @@ export default function ViewPage() {
                                 <KeyValueData
                                     title="Warehouse Info"
                                     data={[
+                                        {
+                                                                                        key: "Warehouse Type",
+                                                                                        value: (() => {
+                                                                                                const value = item?.warehouse_type;
+                                                                                                const strValue = value != null ? String(value).toLowerCase() : "";
+                                                                                                // prefer semantic values if present
+                                                                                                if (strValue === "agent_customer") return "Hariss";
+                                                                                                if (strValue === "company_outlet") return "Outlet";
+                                                                                                // fallback to numeric codes for backward compatibility
+                                                                                                if (strValue === "0") return "Hariss";
+                                                                                                if (strValue === "1") return "Outlet";
+                                                                                                return strValue || "-";
+                                                                                        })(),
+                                                                                },
                                         // { key: <span className="font-bold">Registration No.</span>, value: item?.tin_no || '-'},
-                                        // { key: <span className="font-bold">TIN No.</span>, value: item?.registation_no || '-'},
+                                        { key: <span className="font-bold">TIN No.</span>, value: item?.registation_no || '-'},
                                         // { key: <span className="font-bold">Device No.</span>, value: item?.device_no || '-'},
                                         {
                                             key: "Owner Name",
@@ -155,20 +192,7 @@ export default function ViewPage() {
                                             value: item?.get_company?.company_name || "-",
                                         },
                                         { key: "Warehouse Manager Name", value:item?.warehouse_manager || '-' },
-                                                                                {
-                                                                                        key: "Warehouse Type",
-                                                                                        value: (() => {
-                                                                                                const value = item?.warehouse_type;
-                                                                                                const strValue = value != null ? String(value).toLowerCase() : "";
-                                                                                                // prefer semantic values if present
-                                                                                                if (strValue === "agent_customer") return "Hariss";
-                                                                                                if (strValue === "company_outlet") return "Outlet";
-                                                                                                // fallback to numeric codes for backward compatibility
-                                                                                                if (strValue === "0") return "Hariss";
-                                                                                                if (strValue === "1") return "Outlet";
-                                                                                                return strValue || "-";
-                                                                                        })(),
-                                                                                },
+                                                                                
                                     ]}
                                 />
                                 <hr className="text-[#D5D7DA] my-[25px]" />
@@ -193,14 +217,7 @@ export default function ViewPage() {
                                             />
                                             <span>{item?.owner_email}</span>
                                         </div>
-                                        <div className="flex items-center gap-[8px] text-[16px]">
-                                            <Icon
-                                                icon="lucide:map-pin"
-                                                width={16}
-                                                className="text-[#EA0A2A]"
-                                            />
-                                            <span>{item?.location}</span>
-                                        </div>
+                                       
                                     </div>
                                 </div>
                             </ContainerCard>
@@ -210,14 +227,12 @@ export default function ViewPage() {
                                 <KeyValueData
                                     title="Location Information"
                                     data={[
-                                        { key: "Region Code", value: item?.region?.region_code || "-" },
                                         {
                                             key: "Region Name",
                                             value: item?.region?.region_name || "-",
                                         },
-                                        { key: "Sub Region Code", value: item?.area?.area_code || "-" },
                                         {
-                                            key: "Sub Region Name",
+                                            key: "Area Name",
                                             value: item?.area?.area_name || "-" },
                                         { key: "Location", value: item?.location || "-" },
                                         { key: "City", value: item?.city || "-" },

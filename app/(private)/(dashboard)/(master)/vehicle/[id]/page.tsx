@@ -56,8 +56,9 @@ const VehicleSchema = Yup.object().shape({
   warehouseId: Yup.string().required("Warehouse is required"),
   odoMeter: Yup.number().required("Odometer is required"),
   capacity: Yup.string().required("Capacity is required"),
-  fuel_reading: Yup.number().required("Fuel Reading is required"),
-   description: Yup.string().required("Description is required"),
+  fuel_reading: Yup.number()
+    .required("Fuel Reading is required")
+    .max(999, "Fuel Reading must be at most 3 digits"),
   status: Yup.string()
     .oneOf(["active", "inactive"])
     .required("Status is required"),
@@ -447,8 +448,8 @@ export default function AddEditVehicleWithStepper() {
                   name="ownerType"
                   error={touched.ownerType && errors.ownerType}
                   options={[
-                    { value: "0", label: "Company Owned" },
-                    { value: "1", label: "Contractor" },
+                    { value: "company", label: "Company" },
+                    { value: "agent", label: "Agent" },
                   ]}
                 />
                 {touched.ownerType && errors.ownerType && (
@@ -458,8 +459,18 @@ export default function AddEditVehicleWithStepper() {
                 )}
               </div>
               <div>
-                <InputFields required label="Warehouse" value={form.warehouseId} onChange={handleChange} name="warehouseId" error={touched.warehouseId && errors.warehouseId} options={warehouseOptions } />
-                {touched.warehouseId && errors.warehouseId && <div className="text-red-500 text-xs mt-1">{errors.warehouseId}</div>}
+                <InputFields
+                  label="Warehouse"
+                  value={form.warehouseId}
+                  onChange={handleChange}
+                  name="warehouseId"
+                  error={touched.warehouseId && errors.warehouseId}
+                  options={warehouseOptions}
+                  disabled={form.ownerType === "company"}
+                />
+                {touched.warehouseId && errors.warehouseId && (
+                  <div className="text-red-500 text-xs mt-1">{errors.warehouseId}</div>
+                )}
               </div>
             </div>
           </ContainerCard>
@@ -474,7 +485,7 @@ export default function AddEditVehicleWithStepper() {
               <div>
                 <InputFields
                   required
-                  label="Odo Meter"
+                  label="Odometer"
                   value={form.odoMeter}
                   onChange={handleChange}
                   name="odoMeter"
@@ -506,9 +517,11 @@ export default function AddEditVehicleWithStepper() {
                 <InputFields
                   required
                   label="Fuel Reading"
+                  type="number"
                   value={form.fuel_reading}
                   onChange={handleChange}
                   name="fuel_reading"
+                  maxLength={3}
                   error={touched.fuel_reading && errors.fuel_reading}
                 />
                 {touched.fuel_reading && errors.fuel_reading && (

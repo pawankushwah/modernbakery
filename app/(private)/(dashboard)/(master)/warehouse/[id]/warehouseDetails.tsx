@@ -68,7 +68,6 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
-                    type='radio'
                     label="Warehouse Type"
                     name="warehouse_type"
                     value={values.warehouse_type}
@@ -126,14 +125,14 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 <InputFields
                     required
                     name="owner_number"
-                    label="VAT NO."
-                    value={values.vat_no}
-                    onChange={(e) => setFieldValue('vat_no', e.target.value)}
-                    placeholder="Enter Vat No."
-                    error={errors?.vat_no && touched?.vat_no ? errors.vat_no : false}
+                    label="TIN NO."
+                    value={values.tin_no}
+                    onChange={(e) => setFieldValue('tin_no', e.target.value)}
+                    placeholder="Enter TIN No."
+                    error={errors?.tin_no && touched?.tin_no ? errors.tin_no : false}
                 />
-                {errors?.vat_no && touched?.vat_no && (
-                    <div className="text-xs text-red-500 mt-1">{errors.vat_no}</div>
+                {errors?.tin_no && touched?.tin_no && (
+                    <div className="text-xs text-red-500 mt-1">{errors.tin_no}</div>
                 )}
             </div>
             

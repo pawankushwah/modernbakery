@@ -7,17 +7,14 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import CustomDropdown from "@/app/components/customDropdown";
 import Table, { TableDataType, listReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getWarehouse, deleteWarehouse, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { getWarehouse, deleteWarehouse, warehouseListGlobalSearch,exportWarehouseData,warehouseStatusUpdate } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
 
 const dropdownDataList = [
-  // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-  // { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-  // { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
+  { icon: "gala:file-document", label: "Export CSV", iconWidth: 20 },
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-  { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
 ];
 
 // Move WarehouseRow type above columns so it is in scope
@@ -240,7 +237,42 @@ export default function Warehouse() {
          );
  
 
-
+         const exportFile = async () => {
+         try {
+           const response = await exportWarehouseData({}); 
+           let fileUrl = response;
+           if (response && typeof response === 'object' && response.url) {
+             fileUrl = response.url;
+           }
+           if (fileUrl) {
+             const link = document.createElement('a');
+             link.href = fileUrl;
+             link.download = '';
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+             showSnackbar("File downloaded successfully ", "success");
+           } else {
+             showSnackbar("Failed to get download URL", "error");
+           }
+         } catch (error) {
+           showSnackbar("Failed to download warehouse data", "error");
+         } finally {
+         }
+       };
+         
+         const statusUpdate = async () => {
+         try {
+          if (!selectedRow?.id) throw new Error('Missing id');
+           await warehouseStatusUpdate({ warehouse_ids: String(!selectedRow.id) });
+           showSnackbar("Warehouse status updated successfully", "success");
+         } catch (error) {
+           showSnackbar("Failed to update warehouse status", "error");
+         } finally {
+         }
+       };
+         
+        
     const handleConfirmDelete = async () => {
       if (!selectedRow) return;
   
@@ -250,8 +282,6 @@ export default function Warehouse() {
         
         showSnackbar("Warehouse deleted successfully ", "success"); 
         setLoading(false);
-        // await fetchWarehouses();
-        //  setWarehouses((prev) => prev.filter((c) => String(c.id) !== String(selectedRow.id)));
       } catch (error) {
         console.error("Delete failed :", error);
         showSnackbar("Failed to delete Warehouse", "error"); 
@@ -265,7 +295,8 @@ export default function Warehouse() {
     }, []);
   return (
     <>
-      
+
+        
       <div className="flex flex-col h-full">
         <Table
           // data={warehouses}
@@ -274,49 +305,32 @@ export default function Warehouse() {
               list: fetchWarehouse,
               search: searchWarehouse
             },
+            
             header: {
+               threeDot: [
+                {
+                  icon: "gala:file-document",
+                  label: "Export CSV",
+                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: exportFile,
+                },
+                {
+                  icon: "gala:file-document",
+                  label: "Export Excel",
+                  labelTw: "text-[12px] hidden sm:block",
+                  // You can add onClick for Excel if needed
+                },
+                {
+                  icon: "lucide:radio",
+                  label: "Inactive",
+                  labelTw: "text-[12px] hidden sm:block",
+                  showOnSelect: true,
+                  onClick: statusUpdate,
+                },
+              ],
               title: "Warehouse",
-               wholeTableActions: [
-                              <div key={0} className="flex gap-[12px] relative">
-                                <BorderIconButton
-                                  icon="ic:sharp-more-vert"
-                                  onClick={() =>
-                                    setShowDropdown(!showDropdown)
-                                  }
-                                />
-              
-                                {showDropdown && (
-                                  <div className="w-[226px] absolute top-[40px] right-0 z-30">
-                                    <CustomDropdown>
-                                      {dropdownDataList.map(
-                                        (
-                                          link,
-                                          index: number
-                                        ) => (
-                                          <div
-                                            key={index}
-                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                          >
-                                            <Icon
-                                              icon={
-                                                link.icon
-                                              }
-                                              width={
-                                                link.iconWidth
-                                              }
-                                              className="text-[#717680]"
-                                            />
-                                            <span className="text-[#181D27] font-[500] text-[16px]">
-                                              {link.label}
-                                            </span>
-                                          </div>
-                                        )
-                                      )}
-                                    </CustomDropdown>
-                                  </div>
-                                )}
-                              </div>
-                            ],
+               
+                            
               searchBar: true,
               columnFilter: true,
               actions: [
@@ -334,6 +348,7 @@ export default function Warehouse() {
             footer: { nextPrevBtn: true, pagination: true },
             columns,
             rowSelection: true,
+          
             rowActions: [
                 {
                 icon: "lucide:eye",
