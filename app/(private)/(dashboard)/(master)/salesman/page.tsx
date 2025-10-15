@@ -135,16 +135,11 @@ const SalesmanPage = () => {
   const failedUpdates: string[] = [];
 
   const selectedRowsData: string[] = data.filter((value, index)=> selectedRow?.includes(index)).map((item) => item.id);
-
   try {
     setLoading(true);
-    // await Promise.all(
-    //   selectedSalesmen.map(async (salesman) => {
+   
         const res = await updateSalesmanStatus({salesman_ids: selectedRowsData, status});
-       
-    //   })
-    // );
-
+    
     if (failedUpdates.length > 0) {
       showSnackbar(
         `Failed to update status for: ${failedUpdates.join(", ")}`,
@@ -154,9 +149,6 @@ const SalesmanPage = () => {
       showSnackbar("Status updated successfully", "success");
       fetchSalesman();
     }
-
-    // Refresh your table or list data here to reflect status changes, e.g. call fetchSalesman again or trigger re-fetch
-    // Example: refetchSalesman(); or update state to trigger reload
 
   } catch (error) {
     console.error("Status update error:", error);

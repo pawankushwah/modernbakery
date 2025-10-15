@@ -30,6 +30,7 @@ import {
   saveFinalCode,
   updateSalesman,
   getSalesmanById,
+  routeList,
 } from "@/app/services/allApi";
 import CustomCheckbox from "@/app/components/customCheckbox";
 
@@ -122,6 +123,8 @@ export default function AddEditSalesman() {
 
   const { salesmanTypeOptions, warehouseOptions, routeOptions } =
     useAllDropdownListData();
+  const [filteredRouteOptions, setFilteredRouteOptions] =
+    useState(routeOptions);
 
   const [initialValues, setInitialValues] = useState<SalesmanFormValues>({
     osa_code: "",
@@ -157,6 +160,27 @@ export default function AddEditSalesman() {
     isStepCompleted,
     isLastStep,
   } = useStepperForm(steps.length);
+
+  const fetchRoutes = async (value: string) => {
+    const filteredOptions = await routeList({
+      warehouse_id: value,
+      per_page: "10",
+    });
+    if (filteredOptions.error) {
+      showSnackbar(
+        filteredOptions.data?.message || "Failed to fetch routes",
+        "error"
+      );
+      return;
+    }
+    const options = filteredOptions?.data || [];
+    setFilteredRouteOptions(
+      options.map((route: { id: number; route_name: string }) => ({
+        value: String(route.id),
+        label: route.route_name,
+      }))
+    );
+  };
 
   // ✅ Fetch data
   useEffect(() => {
@@ -369,10 +393,14 @@ export default function AddEditSalesman() {
                   type="select"
                   name="warehouse_id"
                   value={values.warehouse_id}
-                  onChange={(e) =>
-                    setFieldValue("warehouse_id", e.target.value)
-                  }
-                  options={warehouseOptions}
+                                        options={warehouseOptions}
+                                        disabled={warehouseOptions.length === 0}
+                                        onChange={(e) => {
+                                            setFieldValue("warehouse_id", e.target.value);
+                                            if (values.warehouse_id !== e.target.value) {
+                                                fetchRoutes(e.target.value);
+                                            }
+                                        }}
                 />
                 <ErrorMessage
                   name="warehouse_id"
@@ -385,9 +413,10 @@ export default function AddEditSalesman() {
                   required
                   label="Route"
                   name="route_id"
-                  value={values.route_id}
+                  value={values.route_id?.toString() ?? ""}
                   onChange={(e) => setFieldValue("route_id", e.target.value)}
-                  options={routeOptions}
+                  error={touched.route_id && errors.route_id}
+                  options={filteredRouteOptions}
                 />
                 <ErrorMessage
                   name="route_id"

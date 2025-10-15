@@ -493,17 +493,19 @@ formData.append("uoms", JSON.stringify(mappedUoms));
 const res = isEditMode
   ? await editItem(itemId, formData)
   : await addItem(formData);
-    if (res?.status === 200 || res?.success) {
+    if (res?.status === "success" || res?.success) {
       showSnackbar(
         isEditMode ? "Item updated successfully!" : "Item created successfully!",
         "success"
       );
-      router.push("/dashboard/items");
+      router.push("/items");
     } else {
-      throw new Error(res?.message || "Something went wrong");
+      //  console.error("Error:", res);
+      throw new Error(res?.data?.message || "Something went wrong");
     }
+
   } catch (error: unknown) {
-  console.error("Error:", error);
+ 
 
   if (error instanceof Error) {
     showSnackbar(error.message || "Failed to submit form", "error");
@@ -889,7 +891,7 @@ const res = isEditMode
                     />
                   </div>
                 )}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
                   
                   <CustomCheckbox
                     id="enable_for_sales"
