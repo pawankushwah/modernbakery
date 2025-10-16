@@ -461,7 +461,6 @@ export default function AgentCustomer() {
                                     showWhen: (data: TableDataType[], selectedRow?: number[]) => {
                                         if(!selectedRow || selectedRow.length === 0) return false;
                                         const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        console.log(status, "status");
                                         return status?.includes("0") || false;
                                     },
                                     onClick: (data: TableDataType[], selectedRow?: number[]) => {

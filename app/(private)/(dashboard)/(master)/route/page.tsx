@@ -1,10 +1,7 @@
 "use client";
 
-import BorderIconButton from "@/app/components/borderIconButton";
-import { Icon } from "@iconify-icon/react";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import CustomDropdown from "@/app/components/customDropdown";
 import Table, {
     listReturnType,
     TableDataType,
@@ -16,6 +13,7 @@ import {
     deleteRoute,
     routeGlobalSearch,
     exportRoutesCSV,
+    routeStatusUpdate,
 } from "@/app/services/allApi";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -138,15 +136,10 @@ const columns = [
     },
 ];
 
-const dropdownDataList = [
-    { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-    { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
-
 export default function Route() {
     const [selectedRowId, setSelectedRowId] = useState<number | undefined>();
     const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [showDropdown, setShowDropdown] = useState(false);
+    const [refreshKey, setRefreshKey] = useState(0);
     const { setLoading } = useLoading();
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
@@ -206,6 +199,24 @@ export default function Route() {
         []
     );
 
+    const handleStatusChange = async (ids: (string | number)[] | undefined, status: number) => {
+        if (!ids || ids.length === 0) return;
+        setLoading(true);
+        const res = await routeStatusUpdate({
+            ids: ids,
+            status: Number(status)
+        });
+        setLoading(true);
+
+        if (res.error) {
+            showSnackbar(res.data.message || "Failed to update status", "error");
+            throw new Error(res.data.message);
+        }
+        setRefreshKey(refreshKey + 1);
+        showSnackbar("Status updated successfully", "success");
+        return res;
+    }
+
     useEffect(() => {
         setLoading(true);
     }, []);
@@ -256,6 +267,7 @@ export default function Route() {
         <>
             <div className="flex flex-col h-full">
                 <Table
+                    refreshKey={refreshKey}
                     config={{
                         api: {
                             list: fetchRoutes,
@@ -267,59 +279,52 @@ export default function Route() {
                                 {
                                     icon: "gala:file-document",
                                     label: "Export CSV",
-                                    labelTw: "text-[12px] hidden sm:block",
-                                    onClick: handleDownloadCSV, // ✅ Add this
+                                    onClick: handleDownloadCSV,
                                 },
                                 {
                                     icon: "gala:file-document",
                                     label: "Export Excel",
-                                    labelTw: "text-[12px] hidden sm:block",
                                 },
                                 {
                                     icon: "lucide:radio",
                                     label: "Inactive",
-                                    labelTw: "text-[12px] hidden sm:block",
-                                    //   showOnSelect: true
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("1") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if(!status.includes(currentStatus)){
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].id;
+                                        })
+                                        handleStatusChange(ids, Number(0));
+                                    },
                                 },
-                            ],
-                            wholeTableActions: [
-                                <div
-                                    key={0}
-                                    className="flex gap-[12px] relative"
-                                >
-                                    <BorderIconButton
-                                        icon="ic:sharp-more-vert"
-                                        onClick={() =>
-                                            setShowDropdown(!showDropdown)
-                                        }
-                                    />
-
-                                    {showDropdown && (
-                                        <div className="w-[226px] absolute top-[40px] right-0 z-30">
-                                            <CustomDropdown>
-                                                {dropdownDataList.map(
-                                                    (link, index) => (
-                                                        <div
-                                                            key={index}
-                                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                                        >
-                                                            <Icon
-                                                                icon={link.icon}
-                                                                width={
-                                                                    link.iconWidth
-                                                                }
-                                                                className="text-[#717680]"
-                                                            />
-                                                            <span className="text-[#181D27] font-[500] text-[16px]">
-                                                                {link.label}
-                                                            </span>
-                                                        </div>
-                                                    )
-                                                )}
-                                            </CustomDropdown>
-                                        </div>
-                                    )}
-                                </div>,
+                                {
+                                    icon: "lucide:radio",
+                                    label: "Active",
+                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
+                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        const status = selectedRow?.map((id) => data[id].status).map(String);
+                                        return status?.includes("0") || false;
+                                    },
+                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                                        const status: string[] = [];
+                                        const ids = selectedRow?.map((id) => {
+                                            const currentStatus = data[id].status;
+                                            if(!status.includes(currentStatus)){
+                                                status.push(currentStatus);
+                                            }
+                                            return data[id].id;
+                                        })
+                                        handleStatusChange(ids, Number(0));
+                                    },
+                                }
                             ],
                             searchBar: true,
                             columnFilter: true,
@@ -356,7 +361,7 @@ export default function Route() {
                                 },
                             },
                         ],
-                        pageSize: 10,
+                        pageSize: 50,
                     }}
                 />
             </div>
