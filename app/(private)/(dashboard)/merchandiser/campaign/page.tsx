@@ -146,17 +146,6 @@ export default function CampaignPage() {
               ],
               searchBar: false,
               columnFilter: true,
-              actions: [
-                // <SidebarBtn
-                //   key="add"
-                //   href="/merchandiser/complaintFeedback/add"
-                //   leadingIcon="lucide:plus"
-                //   label="Add Feedback"
-                //   labelTw="hidden lg:block"
-                //   isActive
-                // />,
-
-              ],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [

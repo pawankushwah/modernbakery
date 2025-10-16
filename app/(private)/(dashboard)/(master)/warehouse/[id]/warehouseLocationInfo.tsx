@@ -149,6 +149,7 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
                         <InputFields
                             required
                             label="Latitude"
+                            type="number"
                             name="latitude"
                             value={values.latitude}
                             onChange={handleChange}
@@ -163,6 +164,7 @@ export default function WarehouseLocationInfo({ values, errors, touched, handleC
                             required
                             label="Longitude"
                             name="longitude"
+                            type="number"
                             value={values.longitude}
                             onChange={handleChange}
                             error={errors?.longitude && touched?.longitude ? errors.longitude : false}

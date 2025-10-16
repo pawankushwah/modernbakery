@@ -889,6 +889,7 @@ export default function AddEditAgentCustomer() {
                                 <div>
                                     <InputFields
                                         label="Latitude"
+                                        type="number"
                                         name="latitude"
                                         value={values.latitude?.toString()}
                                         onChange={(e) =>
@@ -911,6 +912,7 @@ export default function AddEditAgentCustomer() {
                                 <div>
                                     <InputFields
                                         label="Longitude"
+                                        type="number"
                                         name="longitude"
                                         value={values.longitude?.toString()}
                                         onChange={(e) =>

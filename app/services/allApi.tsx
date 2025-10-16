@@ -2634,4 +2634,13 @@ export const vehicleStatusUpdate = async (body:object) => {
   }
 };
 
+export const routeStatusUpdate = async (body:object) => {
+  try {
+    const res = await API.post(`/api/master/route/bulk-update-status`,body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 

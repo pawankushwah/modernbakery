@@ -68,34 +68,34 @@ const columns: configType["columns"] = [
                 ? (row.subcategory as { customer_sub_category_name?: string })
                       .customer_sub_category_name || "-"
                 : "-",
-        filter: {
-            isFilterable: true,
-            width: 320,
-            render: (data: TableDataType[]) => {
-                if (!data) return null;
-                return <div className="flex flex-col">  
-                    {data.map((item, index) => (
-                        <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
-                            <span className="font-medium">
-                                {typeof item.subcategory === "object" &&
-                                item.subcategory !== null &&
-                                "customer_sub_category_code" in item.subcategory
-                                ? (item.subcategory as { customer_sub_category_code?: string })
-                                .customer_sub_category_code || "-"
-                                : "-"}
-                            </span>{" "}
-                            <span className="text-[#535862]">
-                                {typeof item.subcategory === "object" &&
-                                item.subcategory !== null &&
-                                "customer_sub_category_name" in item.subcategory
-                                ? (item.subcategory as { customer_sub_category_name?: string })
-                                .customer_sub_category_name || "-"
-                                : "-"}
-                            </span>
-                        </div>
-                    ))}
-                </div>},
-        },
+        // filter: {
+        //     isFilterable: true,
+        //     width: 320,
+        //     render: (data: TableDataType[]) => {
+        //         if (!data) return null;
+        //         return <div className="flex flex-col">  
+        //             {data.map((item, index) => (
+        //                 <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
+        //                     <span className="font-medium">
+        //                         {typeof item.subcategory === "object" &&
+        //                         item.subcategory !== null &&
+        //                         "customer_sub_category_code" in item.subcategory
+        //                         ? (item.subcategory as { customer_sub_category_code?: string })
+        //                         .customer_sub_category_code || "-"
+        //                         : "-"}
+        //                     </span>{" "}
+        //                     <span className="text-[#535862]">
+        //                         {typeof item.subcategory === "object" &&
+        //                         item.subcategory !== null &&
+        //                         "customer_sub_category_name" in item.subcategory
+        //                         ? (item.subcategory as { customer_sub_category_name?: string })
+        //                         .customer_sub_category_name || "-"
+        //                         : "-"}
+        //                     </span>
+        //                 </div>
+        //             ))}
+        //         </div>},
+        // },
         showByDefault: true,
     },
     {
@@ -108,34 +108,34 @@ const columns: configType["columns"] = [
                 ? (row.outlet_channel as { outlet_channel?: string })
                       .outlet_channel || "-"
                 : "-",
-        filter: {
-            isFilterable: true,
-            width: 320,
-            render: (data: TableDataType[]) => {
-                if (!data) return null;
-                return <div className="flex flex-col">  
-                    {data.map((item, index) => (
-                        <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
-                            <span className="font-medium">
-                                {typeof item.outlet_channel === "object" &&
-                                item.outlet_channel !== null &&
-                                "outlet_channel_code" in item.outlet_channel
-                                ? (item.outlet_channel as { outlet_channel_code?: string })
-                                .outlet_channel_code || "-"
-                                : "-"}
-                            </span>{" "}
-                            <span className="text-[#535862]">
-                                {typeof item.outlet_channel === "object" &&
-                                item.outlet_channel !== null &&
-                                "outlet_channel" in item.outlet_channel
-                                ? (item.outlet_channel as { outlet_channel?: string })
-                                .outlet_channel || "-"
-                                : "-"}
-                            </span>
-                        </div>
-                    ))}
-                </div>},
-        },
+        // filter: {
+        //     isFilterable: true,
+        //     width: 320,
+        //     render: (data: TableDataType[]) => {
+        //         if (!data) return null;
+        //         return <div className="flex flex-col">  
+        //             {data.map((item, index) => (
+        //                 <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
+        //                     <span className="font-medium">
+        //                         {typeof item.outlet_channel === "object" &&
+        //                         item.outlet_channel !== null &&
+        //                         "outlet_channel_code" in item.outlet_channel
+        //                         ? (item.outlet_channel as { outlet_channel_code?: string })
+        //                         .outlet_channel_code || "-"
+        //                         : "-"}
+        //                     </span>{" "}
+        //                     <span className="text-[#535862]">
+        //                         {typeof item.outlet_channel === "object" &&
+        //                         item.outlet_channel !== null &&
+        //                         "outlet_channel" in item.outlet_channel
+        //                         ? (item.outlet_channel as { outlet_channel?: string })
+        //                         .outlet_channel || "-"
+        //                         : "-"}
+        //                     </span>
+        //                 </div>
+        //             ))}
+        //         </div>},
+        // },
         showByDefault: true,
     },
     { key: "landmark", label: "Landmark" },
@@ -152,34 +152,34 @@ const columns: configType["columns"] = [
                 ? (row.getWarehouse as { warehouse_name?: string })
                       .warehouse_name || "-"
                 : "-",
-        filter: {
-            isFilterable: true,
-            width: 320,
-            render: (data: TableDataType[]) => {
-                if (!data) return null;
-                return <div className="flex flex-col">  
-                    {data.map((item, index) => (
-                        <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
-                            <span className="font-medium">
-                                {typeof item.getWarehouse === "object" &&
-                                item.getWarehouse !== null &&
-                                "warehouse_code" in item.getWarehouse
-                                ? (item.getWarehouse as { warehouse_code?: string })
-                                .warehouse_code || "-"
-                                : "-"}
-                            </span>{" "}
-                            <span className="text-[#535862]">
-                                {typeof item.getWarehouse === "object" &&
-                                item.getWarehouse !== null &&
-                                "warehouse_name" in item.getWarehouse
-                                ? (item.getWarehouse as { warehouse_name?: string })
-                                .warehouse_name || "-"
-                                : "-"}
-                            </span>
-                        </div>
-                    ))}
-                </div>},
-        },
+        // filter: {
+        //     isFilterable: true,
+        //     width: 320,
+        //     render: (data: TableDataType[]) => {
+        //         if (!data) return null;
+        //         return <div className="flex flex-col">  
+        //             {data.map((item, index) => (
+        //                 <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
+        //                     <span className="font-medium">
+        //                         {typeof item.getWarehouse === "object" &&
+        //                         item.getWarehouse !== null &&
+        //                         "warehouse_code" in item.getWarehouse
+        //                         ? (item.getWarehouse as { warehouse_code?: string })
+        //                         .warehouse_code || "-"
+        //                         : "-"}
+        //                     </span>{" "}
+        //                     <span className="text-[#535862]">
+        //                         {typeof item.getWarehouse === "object" &&
+        //                         item.getWarehouse !== null &&
+        //                         "warehouse_name" in item.getWarehouse
+        //                         ? (item.getWarehouse as { warehouse_name?: string })
+        //                         .warehouse_name || "-"
+        //                         : "-"}
+        //                     </span>
+        //                 </div>
+        //             ))}
+        //         </div>},
+        // },
         showByDefault: true,
     },
     {
@@ -195,34 +195,34 @@ const columns: configType["columns"] = [
             }
             return typeof row.route === 'string' ? row.route : "-";
         },
-        filter: {
-            isFilterable: true,
-            width: 320,
-            render: (data: TableDataType[]) => {
-                if (!data) return null;
-                return <div className="flex flex-col">  
-                    {data.map((item, index) => (
-                        <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
-                            <span className="font-medium">
-                                {typeof item.route === "object" &&
-                                item.route !== null &&
-                                "route_code" in item.route
-                                ? (item.route as { route_code?: string })
-                                .route_code || "-"
-                                : "-"}
-                            </span>{" "}
-                            <span className="text-[#535862]">
-                                {typeof item.route === "object" &&
-                                item.route !== null &&
-                                "route_name" in item.route
-                                ? (item.route as { route_name?: string })
-                                .route_name || "-"
-                                : "-"}
-                            </span>
-                        </div>
-                    ))}
-                </div>},
-        },
+        // filter: {
+        //     isFilterable: true,
+        //     width: 320,
+        //     render: (data: TableDataType[]) => {
+        //         if (!data) return null;
+        //         return <div className="flex flex-col">  
+        //             {data.map((item, index) => (
+        //                 <div key={index} className="font-normal text-[14px] text-[#181D27] flex gap-x-[8px] py-[10px] px-[14px] hover:bg-[#FAFAFA]">
+        //                     <span className="font-medium">
+        //                         {typeof item.route === "object" &&
+        //                         item.route !== null &&
+        //                         "route_code" in item.route
+        //                         ? (item.route as { route_code?: string })
+        //                         .route_code || "-"
+        //                         : "-"}
+        //                     </span>{" "}
+        //                     <span className="text-[#535862]">
+        //                         {typeof item.route === "object" &&
+        //                         item.route !== null &&
+        //                         "route_name" in item.route
+        //                         ? (item.route as { route_name?: string })
+        //                         .route_name || "-"
+        //                         : "-"}
+        //                     </span>
+        //                 </div>
+        //             ))}
+        //         </div>},
+        // },
         showByDefault: true,
     },
     { key: "contact_no", label: "Contact No." },
@@ -461,7 +461,6 @@ export default function AgentCustomer() {
                                     showWhen: (data: TableDataType[], selectedRow?: number[]) => {
                                         if(!selectedRow || selectedRow.length === 0) return false;
                                         const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        console.log(status, "status");
                                         return status?.includes("0") || false;
                                     },
                                     onClick: (data: TableDataType[], selectedRow?: number[]) => {

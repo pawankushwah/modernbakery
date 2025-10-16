@@ -862,6 +862,7 @@ export default function AddCompanyCustomer() {
                 <InputFields
                   required
                   label="Longitude"
+                  type="number"
                   name="longitude"
                   value={values.longitude}
                   onChange={(e) => setFieldValue("longitude", e.target.value)}
@@ -876,6 +877,7 @@ export default function AddCompanyCustomer() {
                 <InputFields
                   required
                   label="Latitude"
+                  type="number"
                   name="latitude"
                   value={values.latitude}
                   onChange={(e) => setFieldValue("latitude", e.target.value)}
