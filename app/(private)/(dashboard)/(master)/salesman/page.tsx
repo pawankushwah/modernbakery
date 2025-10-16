@@ -190,7 +190,7 @@ const SalesmanPage = () => {
       // ⬇ Trigger browser download
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `campaign_export.${fileType}`;
+      link.download = `salesman_export.${fileType}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -201,7 +201,7 @@ const SalesmanPage = () => {
       );
     } catch (error) {
       console.error("Export error:", error);
-      showSnackbar("Failed to export campaign data", "error");
+      showSnackbar("Failed to export salesman data", "error");
     } finally {
       setLoading(false);
       setShowExportDropdown(false);
@@ -267,6 +267,7 @@ const SalesmanPage = () => {
                 },
               }
               ],
+              
               // wholeTableActions: [
               //   <div key={0} className="flex gap-[12px] relative">
               //     <DismissibleDropdown
