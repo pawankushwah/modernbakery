@@ -8,10 +8,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { itemById } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
-import Overview from "./overview/page";
-import Uom from "./uom/page";
-import Sales from "./sales/page";
-import Return from "./retuen/page";
+import KeyValueData from "@/app/components/keyValueData";
 import Image from "next/image";
 import StatusBtn from "@/app/components/statusBtn2";
 
@@ -41,25 +38,51 @@ interface Item {
     name?: string;
     code?: string;
   };
+  uom: {
+    id: number;
+    name: string;
+    price: string;
+    uom_type: string;
+    upc: string | null;
+    is_stock_keeping_unit: boolean;
+    enable_for: string;
+  }
 }
 
-export const tabs = [
-  { name: "Overview", url: "overview", component: <Overview /> },
-  { name: "UOM", url: "uom", component: <Uom /> },
-  { name: "Sales", url: "sales", component: <Sales /> },
-  { name: "Return", url: "return", component: <Return /> },
+interface UOM {
+  id: number;
+  name: string;
+  price: string;
+  uom_type: string;
+  upc: string | null;
+  is_stock_keeping_unit: boolean;
+  enable_for: string;
+}
+
+export const tabList = [
+  { name: "Overview", key: "overview" },
+  { name: "UOM", key: "uom" },
+  { name: "Sales", key: "sales" },
+  { name: "Return", key: "return" },
 ];
 
 export default function Page() {
+  const params = useParams();
+
+
+  const [uomList, setUomList] = useState<Item[]>([]);
+  const [activeTab, setActiveTab] = useState("overview");
   const { id, tabName } = useParams();
-  const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [item, setItem] = useState<Item | null>(null);
 
   const { showSnackbar } = useSnackbar();
 
-  const onTabClick = (index: number) => {
-    setActiveTab(index);
+  const onTabClick = (idx: number) => {
+    // ensure index is within range and set the corresponding tab key
+    if (typeof idx !== "number") return;
+    if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
+    setActiveTab(tabList[idx].key);
   };
 
   const title = "Product Details";
@@ -88,14 +111,7 @@ export default function Page() {
     fetchItemDetails();
   }, [id, showSnackbar]);
 
-  useEffect(() => {
-    if (!tabName) {
-      setActiveTab(0);
-    } else {
-      const foundIndex = tabs.findIndex((tab) => tab.url === tabName);
-      setActiveTab(foundIndex !== -1 ? foundIndex : 0);
-    }
-  }, [tabName]);
+
 
   return (
     <>
@@ -141,11 +157,11 @@ export default function Page() {
 
           {/* Tabs */}
           <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
-            {tabs.map((tab, index) => (
+            {tabList.map((tab, index) => (
               <div key={index}>
                 <TabBtn
                   label={tab.name}
-                  isActive={activeTab === index}
+                  isActive={activeTab === tab.key}
                   onClick={() => onTabClick(index)}
                 />
               </div>
@@ -153,7 +169,100 @@ export default function Page() {
           </ContainerCard>
 
           {/* Tab Content */}
-          <div className="w-full">{tabs[activeTab]?.component}</div>
+          {activeTab === "overview" && (
+            <div className="flex gap-x-[20px] flex-wrap md:flex-nowrap">
+
+
+              {/* Right Section */}
+              <div className="w-full flex flex-col gap-y-[15px]">
+
+                <ContainerCard className="w-full h-fit">
+                  <KeyValueData
+                    title="Item Information"
+                    data={[
+                      { key: "ERP Code", value: item?.erp_code || "-" },
+                      { key: "Brand", value: item?.brand || "-" },
+                      {
+                        key: "Category",
+                        value: item?.category?.name
+                          ? `${item.category.code} - ${item.category.name}`
+                          : "-",
+                      },
+                      {
+                        key: "Sub Category",
+                        value: item?.itemSubCategory?.name
+                          ? `${item.itemSubCategory.code} - ${item.itemSubCategory.name}`
+                          : "-",
+                      },
+                      { key: "Shelf Life", value: item?.shelf_life || "-" },
+                      { key: "Commodity Goods Code", value: item?.commodity_goods_code || "-" },
+                      { key: "Excise Duty Code", value: item?.excise_duty_code || "-" },
+                      { key: "Item Weight", value: item?.item_weight || "-" },
+                      { key: "Volume", value: item?.volume?.toString() || "-" },
+                      {
+                        key: "Taxable",
+                        value: item?.is_taxable ? "Yes" : "No",
+                      },
+                      {
+                        key: "Has Excise",
+                        value: item?.has_excies ? "Yes" : "No",
+                      },
+                    ]}
+                  />
+                </ContainerCard>
+              </div>
+            </div>
+          )}
+          {activeTab === "uom" && (
+            <ContainerCard className="w-full p-5">
+              <h2 className="text-lg font-semibold mb-4">Unit of Measurement (UOM)</h2>
+
+
+
+              <h3 className="text-md font-semibold text-gray-800 mb-2">
+                {item?.uom.uom_type || "UOM"}
+              </h3>
+
+              <div className="space-y-1 text-gray-700 text-sm">
+                <p>
+                  <strong>Name:</strong> {item?.uom.name || "-"}
+                </p>
+                <p>
+                  <strong>Price:</strong> ₹{item?.uom.price || "0.00"}
+                </p>
+                <p>
+                  <strong>UPC:</strong> {item?.uom.upc || "N/A"}
+                </p>
+                <p>
+                  <strong>Enable For:</strong> {item?.uom.enable_for || "-"}
+                </p>
+                <p>
+                  <strong>Is Stock Keeping Unit:</strong>{" "}
+                  {item?.uom.is_stock_keeping_unit ? "Yes" : "No"}
+                </p>
+              </div>
+            </ContainerCard>
+
+
+
+          )}
+          {activeTab === "sales" && (
+            <ContainerCard >
+
+              <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
+                No Data Found
+              </div>
+            </ContainerCard>
+          )}
+          {activeTab === "return" && (
+            <ContainerCard >
+
+              <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
+                No Data Found
+              </div>
+            </ContainerCard>
+          )}
+
         </div>
       </div>
     </>

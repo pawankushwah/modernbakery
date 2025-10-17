@@ -485,7 +485,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
   };
 
   const fetchRouteOptions = async (warehouse_id: string | number) => {
-    setLoading(true);
+    setLoading(false);
     try {
       // call routeList with warehouse_id
       const res = await routeList({ warehouse_id: String(warehouse_id) });
@@ -506,7 +506,7 @@ const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCateg
   };
 
   const fetchItemSubCategoryOptions = async (category_id: string | number) => {
-    setLoading(true);
+    setLoading(false);
     try {
       // call itemSubCategory with category_id
       const res = await itemSubCategory({ category_id: String(category_id) });

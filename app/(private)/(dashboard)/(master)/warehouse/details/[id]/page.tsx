@@ -73,7 +73,12 @@ export default function ViewPage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const [item, setItem] = useState<Item | null>(null);
-
+  const onTabClick = (idx: number) => {
+    // ensure index is within range and set the corresponding tab key
+    if (typeof idx !== "number") return;
+    if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
+    setActiveTab(tabList[idx].key);
+  };
       const [activeTab, setActiveTab] = useState("overview");
   const tabList = [
     { key: "overview", label: "Overview" },
@@ -103,11 +108,7 @@ export default function ViewPage() {
         fetchPlanogramImageDetails();
     }, []);
 
-      const onTabClick = (idx: number) => {
-    if (typeof idx !== "number") return;
-    if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
-    setActiveTab(tabList[idx].key);
-  };
+   
 
 
     return (
@@ -118,11 +119,7 @@ export default function ViewPage() {
                 </Link>
                 <h1 className="text-xl font-semibold mb-1">{title}</h1>
             </div>
-           
-           
-            <div className="m-auto">
-                <div className="flex flex-wrap gap-x-[20px]">
-                    <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
+            <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
                         <div className="flex flex-col sm:flex-row items-center gap-[20px]">
                             <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
                                 <Icon
@@ -153,8 +150,42 @@ export default function ViewPage() {
                                               </div>
                                             ))}
                                           </ContainerCard>
+           
+            {activeTab === "overview" && (
+            <div className="m-auto">
+                <div className="flex flex-wrap gap-x-[20px]">
+                    {/* <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
+                        <div className="flex flex-col sm:flex-row items-center gap-[20px]">
+                            <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
+                                <Icon
+                                    icon="tabler:building-warehouse"
+                                    width={40}
+                                    className="text-[#535862] scale-[1.5]"
+                                />
+                            </div>
+                            <div className="text-center sm:text-left">
+                                <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
+                                    {item?.warehouse_code || "-"} - {item?.warehouse_name} 
+                                </h2>
+                               
+                            </div>
+                        </div>
+                        <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
+                            <StatusBtn isActive={item?.status === 1 || item?.status === '1'} />
+                        </span>
+                    </ContainerCard>
+                     <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
+                                            {tabList.map((tab, index) => (
+                                              <div key={index}>
+                                                <TabBtn
+                                                  label={tab.label}
+                                                  isActive={activeTab === tab.key}
+                                                  onClick={() => onTabClick(index)}
+                                                />
+                                              </div>
+                                            ))}
+                                          </ContainerCard> */}
                      <div className="mb-4">
-                {/* <WarehouseTabs /> */}
             </div>
                     <div className="flex flex-col gap-6 w-full md:flex-row md:gap-6">
                         <div className="flex-1 w-full">
@@ -280,6 +311,55 @@ export default function ViewPage() {
                     </div>
                 </div>
             </div>
+            )}
+               {activeTab === "warehouseCustomer" && (
+             <ContainerCard >
+                 
+                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
+                        No Data Found
+                        </div>
+                </ContainerCard>
+          )}
+          {activeTab === "warehouseStock" && (
+           <ContainerCard >
+                 
+                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
+                        No Data Found
+                        </div>
+                </ContainerCard>
+          )}
+          {activeTab === "route&vehicle" && (
+             <ContainerCard >
+                 
+                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
+                        No Data Found
+                        </div>
+                </ContainerCard>
+          )}
+          {activeTab === "salesman" && (
+            <ContainerCard >
+                 
+                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
+                        No Data Found
+                        </div>
+                </ContainerCard>
+          )}
+          {activeTab === "sales" && (
+            <ContainerCard >
+                 
+                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
+                        No Data Found
+                        </div>
+                </ContainerCard>
+          )}
+          {activeTab === "return" && (
+            <ContainerCard >
+                 
+                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
+                        No Data Found
+                        </div>
+                </ContainerCard>
+          )}
         </>
     );
 }

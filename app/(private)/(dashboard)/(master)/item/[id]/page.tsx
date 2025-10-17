@@ -25,6 +25,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import Table from "@/app/components/customTable";
 import ContainerCard from '../../../../../components/containerCard';
+import { useLoading } from "@/app/services/loadingContext";
 import Item from '../page';
 
 interface ItemFormValues {
@@ -56,6 +57,8 @@ interface ItemFormValues {
 const ItemSchema = Yup.object().shape({
   itemName: Yup.string().required("Item Name is required"),
   itemCategory: Yup.string().required("Category is required"),
+  itemDesc: Yup.string().required("Category is required"),
+  brand: Yup.string().required("Brand is required"),
   itemSubCategory: Yup.string().required("Sub Category is required"),
   itemWeight: Yup.number().typeError("Item Weight must be a number").nullable(),
   shelfLife: Yup.number().typeError("Shelf Life must be a number").nullable(),
@@ -92,6 +95,8 @@ const StepSchemas = [
     itemName: Yup.string().required("Item Name is required"),
     itemCategory: Yup.string().required("Category is required"),
     itemSubCategory: Yup.string().required("Sub Category is required"),
+    itemDesc: Yup.string().required("Description is required"),
+    brand: Yup.string().required("Brand is required"),
   }),
   // Step 2: Additional Info
   Yup.object().shape({
@@ -137,15 +142,18 @@ export default function AddEditItem() {
   } = useAllDropdownListData();
   const [isOpen, setIsOpen] = useState(false);
   const [prefix, setPrefix] = useState("");
-  const [loading, setLoading] = useState(false);
+  const {loading, setLoading} = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
+
   const itemId = params?.id as string | undefined;
   const isEditMode = !!(itemId && itemId !== "add");
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [imageFile, setImageFile] = useState<File | null>(null);
-
+  const [skeleton, setSkeleton] = useState({
+          itemSubCategory: false,
+      });
 
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Details" },
@@ -185,7 +193,7 @@ export default function AddEditItem() {
     enable_for: "",
     commodity_goods_code: "",
     excise_duty_code: "",
-    status: "",
+    status: "active", // Default to 'active'
   });
 
   const [errors, setErrors] = useState<
@@ -198,27 +206,29 @@ export default function AddEditItem() {
   const [subCategoryLoading, setSubCategoryLoading] = useState(false);
 
   useEffect(() => {
-    // When region changes, clear area dropdown and reset value instantly
-
     if (form.itemCategory) {
       setSubCategoryLoading(true);
+      setSkeleton({ ...skeleton, itemSubCategory: true });
       fetchItemSubCategoryOptions(form.itemCategory)
-        .then(() => {
-          setSubCategoryLoading(false);
+      .then(() => {
+        setSubCategoryLoading(false);
+        setSkeleton({ ...skeleton, itemSubCategory: false });
         })
         .catch(() => {
           setSubCategoryLoading(false);
         });
     }
+    
   }, [form.itemCategory]);
 
-  // ---------- Fetch/Edit or Generate Code ----------
   useEffect(() => {
     if (isEditMode && itemId) {
       setLoading(true);
       (async () => {
+        setLoading(true);
         const res = await itemById(itemId);
         const data = res?.data ?? res;
+        setLoading(false);
         if (!res?.error && data) {
           const primaryUom = Array.isArray(data.uom) ? data.uom[0] : null;
 
@@ -230,14 +240,13 @@ export default function AddEditItem() {
             itemImage: data.image || "",
             brand: data.brand || "",
             itemWeight: data.item_weight?.toString() || "",
-            // ✅ FIXED — use nested object IDs
             itemCategory: data.category?.id?.toString() || "",
             itemSubCategory: data.itemSubCategory?.id?.toString() || "",
             shelfLife: data.shelf_life?.toString() || "",
             volume: data.volume?.toString() || "",
             is_Promotional: data.is_promotional ? "yes" : "no",
             is_tax_applicable: data.is_taxable ? "yes" : "no",
-            excise: data.has_excies ? "yes" : "no", // ✅ derive from boolean
+            excise: data.has_excies ? "yes" : "no", 
             uom: data.uom?.[0]?.name || "",
             uomType: data.uom?.[0]?.uom_type || "primary",
             upc: data.uom?.[0]?.upc || "",
@@ -253,7 +262,7 @@ export default function AddEditItem() {
                 : "",
             commodity_goods_code: data.commodity_goods_code || "",
             excise_duty_code: data.excise_duty_code || "",
-            status: data.status === 1 ? "active" : "inactive", // ✅ 0/1 mapped correctly
+            status: data.status === 1 ? "active" : "inactive", 
           });
 
           interface UomItem {
@@ -288,8 +297,10 @@ export default function AddEditItem() {
       })();
     } else {
       (async () => {
+        setLoading(true);
         const res = await genearateCode({ model_name: "items" });
         if (res?.code) setForm((prev) => ({ ...prev, itemCode: res.code }));
+        setLoading(false);
         if (res?.prefix) setPrefix(res.prefix);
       })();
     }
@@ -325,10 +336,7 @@ export default function AddEditItem() {
   };
 
   const handleAddUom = () => {
-    if (!uomData.uom || !uomData.upc || !uomData.price) {
-      showSnackbar("Please fill all required UOM fields", "error");
-      return;
-    }
+    
 
     if (editingIndex !== null) {
       // Update existing UOM
@@ -380,23 +388,14 @@ export default function AddEditItem() {
   setTouched((prev) => ({ ...prev, [name]: true }));
 };
 
-
-
-  // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const file = e.target.files?.[0] || null;
-  //   setForm((prev) => ({ ...prev, [e.target.name]: file }));
-  // };
-
   const validateCurrentStep = async (step: number) => {
     try {
-      await StepSchemas[step - 1].validate(form, { abortEarly: false }); // ✅ step-1 index fix
+      await StepSchemas[step - 1].validate(form, { abortEarly: false }); 
       setErrors({});
       return true;
     } catch (err) {
       if (err instanceof Yup.ValidationError) {
         const stepErrors: Partial<Record<keyof ItemFormValues, string>> = {};
-
-        // Mark all paths as touched
         const newTouched: Partial<Record<keyof ItemFormValues, boolean>> = {};
         err.inner.forEach((e) => {
           if (e.path) {
@@ -430,9 +429,7 @@ export default function AddEditItem() {
     if (valid) {
       markStepCompleted(currentStep);
       nextStep();
-    } else {
-      showSnackbar("Please fill all required fields.", "error");
-    }
+    } 
   };
 
   const handleFileChange = (
@@ -441,64 +438,55 @@ export default function AddEditItem() {
   const target = e.target as HTMLInputElement;
   const file = target.files?.[0] || null;
 
- 
-
-  // setImageFile(file);
-  // setForm((prev) => ({
-  //   ...prev,
-  //   itemImage: file ? file.name : "",
-  // }));
 };
 
 
   const handleSubmit = async () => {
   setLoading(true);
 
- const mappedUoms = uomList.map((u) => ({ uom: u.uom, uom_type: u.uomType || "primary", price: parseFloat(u.price), upc: u.upc || null, is_stock_keeping: u.isStockKeepingUnit === "yes" ? 1 : 0, keeping_quantity: u.isStockKeepingUnit === "yes" ? parseFloat(u.quantity || "0") : undefined, enable_for: u.enableFor || "sales", }));
+ const mappedUoms = uomList.map((u) => ({
+  "uom": u.uom,
+  "uom_type": u.uomType || "primary",
+  "price": parseFloat(u.price),
+  "upc": u.upc || null,
+  "is_stock_keeping": u.isStockKeepingUnit === "yes" ? 1 : 0,
+  "keeping_quantity": u.isStockKeepingUnit === "yes" ? parseFloat(u.quantity || "0") : undefined,
+  "enable_for": u.enableFor || "sales",
+}));
 
 
   try {
-const formData = new FormData();
-formData.append("code", form.itemCode);
-formData.append("erp_code", form.ErpCode);
-formData.append("name", form.itemName);
-formData.append("description", form.itemDesc);
-// if (imageFile) formData.append("image", imageFile);
-formData.append("brand", form.brand);
-formData.append("category_id", form.itemCategory);
-formData.append("sub_category_id", form.itemSubCategory);
-formData.append("item_weight", form.itemWeight || "0");
-formData.append("shelf_life", form.shelfLife || "0");
-formData.append("volume", form.volume || "0");
-formData.append("is_promotional", form.is_Promotional === "yes" ? "1" : "0");
-formData.append("is_taxable", form.is_tax_applicable === "yes" ? "1" : "0");
-formData.append("has_excies", form.excise === "yes" ? "1" : "0");
-formData.append("status", form.status === "active" ? "1" : "0");
-formData.append("commodity_goods_code", form.commodity_goods_code);
-formData.append("excise_duty_code", form.excise_duty_code);
-formData.append("uoms", JSON.stringify(mappedUoms));
-
-
-    // 🖼 Append image file (actual file, not just name)
-    // if (imageFile) {
-    //   formData.append("image", imageFile);
-    // }
-
-    // 🧩 Append UOM array as JSON string
-    formData.append("uoms", JSON.stringify(form.uom));
+const payload = {
+  code: form.itemCode,
+  erp_code: form.ErpCode,
+  name: form.itemName,
+  description: form.itemDesc,
+  brand: form.brand,
+  category_id: form.itemCategory,
+  sub_category_id: form.itemSubCategory,
+  item_weight: form.itemWeight || "0",
+  shelf_life: form.shelfLife || "0",
+  volume: form.volume || "0",
+  is_promotional: form.is_Promotional === "yes" ? "1" : "0",
+  is_taxable: form.is_tax_applicable === "yes" ? "1" : "0",
+  has_excies: form.excise === "yes" ? "1" : "0",
+  status: form.status === "active" ? "1" : "0",
+  commodity_goods_code: form.commodity_goods_code,
+  excise_duty_code: form.excise_duty_code,
+  uoms: mappedUoms 
+};
 
     const itemId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
 
-// 🔥 Use your service functions here
 const res = isEditMode
-  ? await editItem(itemId, formData)
-  : await addItem(formData);
+  ? await editItem(itemId, payload)
+  : await addItem(payload);
     if (res?.status === "success" || res?.success) {
       showSnackbar(
         isEditMode ? "Item updated successfully!" : "Item created successfully!",
         "success"
       );
-      router.push("/items");
+      router.push("/item");
     } else {
       //  console.error("Error:", res);
       throw new Error(res?.data?.message || "Something went wrong");
@@ -519,8 +507,6 @@ const res = isEditMode
   }
 };
 
-
-  // ------------------ Render Steps ------------------
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -583,39 +569,39 @@ const res = isEditMode
                   onChange={handleChange}
                   error={touched.itemName && errors.itemName}
                 />
-                {errors.itemName && (
+                {touched.itemName && errors.itemName && (
                   <p className="text-red-500 text-sm mt-1">{errors.itemName}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                  required
+                required
                   label="Item Description"
                   name="itemDesc"
                   value={form.itemDesc}
                   onChange={handleChange}
                   error={touched.itemDesc && errors.itemDesc}
                 />
-                {errors.itemDesc && (
+                {touched.itemDesc && errors.itemDesc && (
                   <p className="text-red-500 text-sm mt-1">{errors.itemDesc}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                  required
+                required
                   label="Brand"
                   name="brand"
                   value={form.brand}
                   onChange={handleChange}
                   error={touched.brand && errors.brand}
                 />
-                {errors.brand && (
+                {touched.brand && errors.brand && (
                   <p className="text-red-500 text-sm mt-1">{errors.brand}</p>
                 )}
               </div>
               <div>
                 <InputFields
-                  required
+                  
                   label="Item Image"
                   value={form.itemImage}
                   type="file"
@@ -633,7 +619,7 @@ const res = isEditMode
                   options={itemCategoryOptions}
                   error={touched.itemCategory && errors.itemCategory}
                 />
-                {errors.itemCategory && (
+                {touched.itemCategory && errors.itemCategory && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.itemCategory}
                   </p>
@@ -643,6 +629,7 @@ const res = isEditMode
                 <InputFields
                   required
                   label="Sub Category"
+                  showSkeleton={skeleton.itemSubCategory}
                   name="itemSubCategory"
                   value={form.itemSubCategory}
                   onChange={handleChange}
@@ -656,7 +643,7 @@ const res = isEditMode
                   }
                   error={touched.itemSubCategory && errors.itemSubCategory}
                 />
-                {errors.itemSubCategory && (
+                {touched.itemSubCategory && errors.itemSubCategory && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.itemSubCategory}
                   </p>
@@ -675,12 +662,13 @@ const res = isEditMode
                 <InputFields
                   required
                   label="Item Weight"
+                  type="number"
                   name="itemWeight"
                   value={form.itemWeight}
                   onChange={handleChange}
                   error={touched.itemWeight && errors.itemWeight}
                 />
-                {errors.itemWeight && (
+                {touched.itemWeight && errors.itemWeight && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.itemWeight}
                   </p>
@@ -689,13 +677,14 @@ const res = isEditMode
               <div>
                 <InputFields
                   required
-                  label="Shelf Life"
+                  label="Shelf Life (Months)"
+                  type="number"
                   name="shelfLife"
                   value={form.shelfLife}
                   onChange={handleChange}
                   error={touched.shelfLife && errors.shelfLife}
                 />
-                {errors.shelfLife && (
+                {touched.shelfLife && errors.shelfLife && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.shelfLife}
                   </p>
@@ -704,19 +693,22 @@ const res = isEditMode
               <div>
                 <InputFields
                   required
+                  type="number"
                   label="Volume"
                   name="volume"
                   value={form.volume}
                   onChange={handleChange}
                   error={touched.volume && errors.volume}
                 />
-                {errors.volume && (
+                {touched.volume && errors.volume && (
                   <p className="text-red-500 text-sm mt-1">{errors.volume}</p>
                 )}
               </div>
               <div>
                 <InputFields
+                
                   required
+                  type="number"
                   label="Excise"
                   name="excise"
                   value={form.excise}
@@ -728,6 +720,7 @@ const res = isEditMode
               </div>
               <div>
                 <InputFields
+                required
                   label="Commodity Goods Code"
                   name="commodity_goods_code"
                   value={form.commodity_goods_code}
@@ -736,7 +729,7 @@ const res = isEditMode
                     touched.commodity_goods_code && errors.commodity_goods_code
                   }
                 />
-                {errors.commodity_goods_code && (
+                {touched.commodity_goods_code && errors.commodity_goods_code && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.commodity_goods_code}
                   </p>
@@ -744,13 +737,14 @@ const res = isEditMode
               </div>
               <div>
                 <InputFields
+                required
                   label="Excise Duty Code"
                   name="excise_duty_code"
                   value={form.excise_duty_code}
                   onChange={handleChange}
                   error={touched.excise_duty_code && errors.excise_duty_code}
                 />
-                {errors.excise_duty_code && (
+                {touched.excise_duty_code && errors.excise_duty_code && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.excise_duty_code}
                   </p>
@@ -852,6 +846,7 @@ const res = isEditMode
                 <InputFields
                   required
                   label="UPC"
+                  type="number"
                   name="upc"
                   value={uomData.upc}
                   onChange={handleUomChange}
@@ -861,6 +856,7 @@ const res = isEditMode
                 <InputFields
                   required
                   label="Price"
+                  type="number"
                   name="price"
                   value={uomData.price}
                   onChange={handleUomChange}
@@ -884,6 +880,7 @@ const res = isEditMode
                 {uomData.isStockKeepingUnit === "yes" && (
                   <div>
                     <InputFields
+                    type="number"
                       label="Quantity"
                       name="quantity"
                       value={uomData.quantity || ""}

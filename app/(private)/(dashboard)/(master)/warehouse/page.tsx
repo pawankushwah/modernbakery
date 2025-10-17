@@ -57,13 +57,13 @@ type WarehouseRow = TableDataType & {
 };
 
 const columns = [
-  { key: "warehouse_code", label: "Warehouse Code", render: (row: WarehouseRow) =>(<span className="font-semibold text-[#181D27] text-[14px]">{ row.warehouse_code || "-"}</span>) },
+  { key: "warehouse_code", label: "Warehouse Code", showByDefault: true, render: (row: WarehouseRow) =>(<span className="font-semibold text-[#181D27] text-[14px]">{ row.warehouse_code || "-"}</span>) },
   // { key: "registation_no", label: "Registration No.", render: (row: WarehouseRow) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.registation_no || "-" }</span>)},
-  { key: "warehouse_name", label: "Warehouse Name", render: (row: WarehouseRow) => row.warehouse_name || "-" },
+  { key: "warehouse_name", label: "Warehouse Name", showByDefault: true, render: (row: WarehouseRow) => row.warehouse_name || "-" },
   { key: "owner_name", label: "Owner Name", render: (row: WarehouseRow) => row.owner_name || "-" },
   { key: "owner_number", label: "Owner Contact No.", render: (row: WarehouseRow) => row.owner_number || "-" },
   { key: "owner_email", label: "Owner Email", render: (row: WarehouseRow) => row.owner_email || "-" },
-  { key: "location", label: "Warehouse Location", render: (row: WarehouseRow) => row.location || "-" },
+  // { key: "location", label: "Warehouse Location", render: (row: WarehouseRow) => row.location || "-" },
   { key: "company", label: "Company Code", render: (row: WarehouseRow) => row.company?.company_code || "-" },
   { key: "company", label: "Company Name", render: (row: WarehouseRow) => row.company?.company_name || "-" },
   { key: "warehouse_manager", label: "Warehouse Manager", render: (row: WarehouseRow) => row.warehouse_manager || "-" },
@@ -71,6 +71,7 @@ const columns = [
   {
     key: "warehouse_type",
     label: "Warehouse Type",
+    showByDefault: true,
     render: (row: WarehouseRow) => {
       const value = row.warehouse_type;
       const strValue = value != null ? String(value) : "";
@@ -88,22 +89,25 @@ const columns = [
   // { key: "region_id", label: "Region"},
   {
     label: 'Region',
+    showByDefault: true,
     key: 'region',
     render: (row: WarehouseRow) => row.region?.name || '-',
   },
   {
-    label: 'Sub Region',
+    label: 'Area',
+    showByDefault: true,
     key: 'area',
     render: (row: WarehouseRow) => row.area?.name || '-',
   },
   // { key: "sub_region_id", label: "Sub Region"},
   { key: "city", label: "City", render: (row: WarehouseRow) => row.city || "-" },
-  { key: "location", label: "Location", render: (row: WarehouseRow) => row.location || "-" },
+  { key: "location", label: "Location", showByDefault: true, render: (row: WarehouseRow) => row.location || "-" },
   { key: "town_village", label: "Town", render: (row: WarehouseRow) => row.town_village || "-" },
   { key: "street", label: "Street", render: (row: WarehouseRow) => row.street || "-" },
   { key: "landmark", label: "Landmark", render: (row: WarehouseRow) => row.landmark || "-" },
   { key: "agreed_stock_capital", label: "Stock Capital", render: (row: WarehouseRow) => row.agreed_stock_capital || "-" },
   { key: "is_efris", label: "EFRIS",
+    showByDefault: true,
      render: (row: WarehouseRow) => {
       const value = row.is_efris;
       const strValue = value != null ? String(value) : "";
@@ -115,6 +119,7 @@ const columns = [
   {
     key: "status",
     label: "Status",
+    showByDefault: true,
     render: (row: WarehouseRow) => {
       const value = row.status;
       const strValue = value != null ? String(value) : "";

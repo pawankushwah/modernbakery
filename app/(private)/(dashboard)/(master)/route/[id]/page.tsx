@@ -43,20 +43,24 @@ export default function AddEditRoute() {
     routeType: "",
     vehicleType: "",
     warehouse: "",
-    status: "",
+    status: "1",
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [skeleton, setSkeleton] = useState(false);
   const codeGeneratedRef = useRef(false);
 
   // Fetch vehicles based on warehouse
   const fetchRoutes = async (warehouseId: string) => {
     setFilteredRouteOptions([]); // clear old list first
     if (!warehouseId) return;
+    setSkeleton(true);
     const filteredOptions = await vehicleListData({
       warehouse_id: warehouseId,
       per_page: "10",
     });
+    setSkeleton(false);
+    
     if (filteredOptions.error) {
       showSnackbar(
         filteredOptions.data?.message || "Failed to fetch vehicles",
@@ -108,7 +112,7 @@ export default function AddEditRoute() {
             status:
               data?.status !== undefined && data?.status !== null
                 ? String(data.status)
-                : "",
+                : "1",
           });
 
           // Fetch vehicles for the warehouse in edit mode
@@ -239,7 +243,7 @@ export default function AddEditRoute() {
                 onChange={(e) => handleChange("routeCode", e.target.value)}
                 disabled={codeMode === "auto"}
               />
-              {!isEditMode && (
+              {!isEditMode && false && (
                 <>
                   <IconButton
                     bgClass="white"
@@ -330,7 +334,8 @@ export default function AddEditRoute() {
                 value={form.vehicleType}
                 onChange={(e) => handleChange("vehicleType", e.target.value)}
                 options={filteredOptions}
-                disabled={!form.warehouse} // disabled until warehouse selected
+                showSkeleton={skeleton}
+                disabled={filteredOptions.length === 0}
                 placeholder={form.warehouse ? "Select Vehicle" : "Select warehouse first"}
               />
               {errors.vehicleType && (
