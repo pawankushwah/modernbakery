@@ -9,12 +9,13 @@ import Table, {
   listReturnType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { deleteUser, deleteUserType, userList } from "@/app/services/allApi";
+import { deleteUserType, userList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
 import StatusBtn from "@/app/components/statusBtn2";
 import { userTypeGlobalSearch } from "@/app/services/allApi";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import Popup from "@/app/components/popUp";
 
 interface DropdownItem {
   icon: string;
@@ -206,11 +207,18 @@ export default function UserType() {
           }}
         />
       </div>
-      {showDeletePopup && <DeleteConfirmPopup
-          title="Delete User Type"
-          onConfirm={() => handleDelete()}
+      {showDeletePopup && (
+        <Popup
+          isOpen={showDeletePopup}
           onClose={() => setShowDeletePopup(false)}
-      />}
+        >
+          <DeleteConfirmPopup
+              title="Delete User Type"
+              onConfirm={() => handleDelete()}
+              onClose={() => setShowDeletePopup(false)}
+          />
+        </Popup>
+      )}
     </>
   );
 }

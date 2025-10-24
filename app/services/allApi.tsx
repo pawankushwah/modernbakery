@@ -2160,7 +2160,7 @@ export const getRoleById = async (id: string, params?: Params) => {
 
 type roletype = {
   name: string;
-  permissions: number[];
+  menus: TableDataType[];
 };
 
 export const addRoles = async (payload: roletype) => {
