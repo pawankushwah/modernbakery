@@ -2679,3 +2679,111 @@ export const routeStatusUpdate = async (body:object) => {
 };
 
 
+
+
+
+export const promotionHeaderList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/promotion-headers/list", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addPromotionHeader = async (payload: object) => {
+  try {
+    const res = await API.post("/api/master/promotion-headers/create", payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const promotionHeaderById = async (id: string) => {
+  try {
+    const res = await API.get(`/api/master/promotion-headers/show/${id}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editPromotionHeader = async (id: string, payload: object) => {
+  try {
+    const res = await API.put(
+      `/api/master/promotion-headers/update/${id}`,
+      payload
+    );
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deletePromotionHeader = async (id: string) => {
+  try {
+    const res = await API.delete(`/api/master/promotion-headers/delete/${id}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+export const promotionDetailList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/promotion-details/list", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addPromotionDetail = async (payload: object) => {
+  try {
+    const res = await API.post("/api/master/promotion-details/create", payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const promotionDetailById = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/master/promotion-details/show/${uuid}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editPromotionDetail = async (uuid: string, payload: object) => {
+  try {
+    const res = await API.put(`/api/master/promotion-details/update/${uuid}`, payload);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const deletePromotionDetail = async (uuid: string) => {
+  try {
+    const res = await API.delete(`/api/master/promotion-details/delete/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
