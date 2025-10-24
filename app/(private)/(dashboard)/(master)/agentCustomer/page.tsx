@@ -170,7 +170,8 @@ export default function AgentCustomer() {
         },
         showByDefault: true,
     },
-];
+    ];
+
     const { setLoading } = useLoading();
     const [refreshKey, setRefreshKey] = useState(0);
     const router = useRouter();
@@ -217,7 +218,7 @@ export default function AgentCustomer() {
                 };
             }
         },
-        [selectedSubCategoryId,channelId,warehouseId,routeId]
+        [selectedSubCategoryId, warehouseId, channelId, routeId, setLoading]
     );
 
     const exportfile = async (ids: string[] | undefined) => {
@@ -285,48 +286,6 @@ export default function AgentCustomer() {
         },
         []
     );
-    // const searchCountries = useCallback(
-    //     async (
-    //         searchQuery: string,
-    //         pageSize: number
-    //     ): Promise<searchReturnType> => {
-    //         setLoading(true);
-    //         const result = await countryListGlobalSearch({
-    //             query: searchQuery,
-    //             per_page: pageSize.toString(),
-    //         });
-    //         setLoading(false);
-    //         if (result.error) throw new Error(result.data.message);
-    //         else {
-    //             return {
-    //                 data: result.data || [],
-    //                 total: result.pagination.pagination.totalPages || 0,
-    //                 currentPage: result.pagination.pagination.current_page || 0,
-    //                 pageSize: result.pagination.pagination.limit || pageSize,
-    //             };
-    //         }
-    //     },
-    //     []
-    // );
-
-    // const handleConfirmDelete = async () => {
-    //     if (!selectedRow) return;
-
-    //     if (!selectedRow?.uuid) throw new Error("Missing id");
-    //     const res = await deleteAgentCustomer(String(selectedRow.uuid));
-    //     if (res.error)
-    //         return showSnackbar(
-    //             res.data.message || "Failed to delete Agent Customer",
-    //             "error"
-    //         );
-    //     else {
-    //         showSnackbar("Agent Customer deleted successfully ", "success");
-    //         setRefreshKey(refreshKey + 1);
-    //     }
-    //     setLoading(false);
-    //     setShowDeletePopup(false);
-    //     setSelectedRow(null);
-    // };
 
     useEffect(() => {
         setLoading(true);
@@ -335,7 +294,7 @@ export default function AgentCustomer() {
     // Refresh table when subcategory filter changes
     useEffect(() => {
         setRefreshKey((k) => k + 1);
-    }, [selectedSubCategoryId,channelId,warehouseId,routeId,customerSubCategoryOptions,channelOptions,warehouseOptions,routeOptions]);
+    }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions, selectedSubCategoryId, warehouseId, channelId, routeId]);
 
     return (
         <>

@@ -813,7 +813,6 @@ export const getCustomerType = async (params?: Params) => {
     const res = await API.get(`/api/settings/customer-type/list`, {
       params: params,
     });
-    console.log(res);
     return res.data;
   } catch (error) {
     console.error("Get Customer Type by ID failed ❌", error);

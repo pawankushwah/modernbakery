@@ -93,7 +93,6 @@ export const shelvesDropdown = async (params?: Params) => {
 
 export const shelfList = async (body: object) => {
   try {
-    console.log(body);
     const res = await API.post("/api/merchendisher/planogram/getshelf", body);
     return res.data;
   } catch (error: unknown) {
@@ -113,7 +112,6 @@ export const deletePlanogram = async (uuid: string) => {
 export const shelvesList = async (params?: Params) => {
   try {
     const res = await API.get("/api/merchendisher/shelves/list", { params });
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -201,7 +199,6 @@ export const complaintFeedbackByUUID = async (uuid: string) => {
       `/api/merchendisher/complaint-feedback/show/${uuid}`
     );
 
-    console.log(res.data)
     return { data: res.data, error: false };
   } catch (error: unknown) {
     const handledError = handleError(error);
@@ -223,12 +220,10 @@ export const updateShelfById = async (
   }
 ) => {
   try {
-    console.log(data);
     const res = await API.put(
       `/api/merchendisher/shelves/update/${uuid}`,
       data
     );
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -268,11 +263,9 @@ export const complaintFeedbackList = async (params?: Params) => {
 
 export const exportShelveData = async (params?: Params) => {
   try {
-    console.log(params);
     const res = await API.get("/api/merchendisher/shelves/export", {
       params,
     });
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -281,11 +274,9 @@ export const exportShelveData = async (params?: Params) => {
 
 export const exportCompaignData = async (params?: Params) => {
   try {
-    console.log(params);
     const res = await API.get("/api/merchendisher/campagin-info/exportfile", {
       params,
     });
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -297,9 +288,7 @@ export const campaignInformationList = async (params?: Params) => {
     const res = await API.get("/api/merchendisher/campagin-info/list", {
       params,
     });
-    console.log(res);
-    // console.log("Complaint Feedback API Response:", res.data); // <-- log here
-    return res.data; // res.data should have: { data: [...], pagination: {...} }
+    return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
@@ -309,8 +298,7 @@ export const competitorList = async (params?: Params) => {
     const res = await API.get("/api/merchendisher/competitor-info/list", {
       params,
     });
-    // console.log("Complaint Feedback API Response:", res.data); // <-- log here
-    return res.data; // res.data should have: { data: [...], pagination: {...} }
+    return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
@@ -327,12 +315,10 @@ export const updatePlanogramById = async (
   }
 ) => {
   try {
-    console.log(data);
     const res = await API.put(
       `/api/merchendisher/planogram/update/${uuid}`,
       data
     );
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -384,11 +370,9 @@ export const exportCmplaintFeedback = async (params: { format: string }) => {
 
 export const exportPlanogram = async (params?: Params) => {
   try {
-    console.log(params);
     const res = await API.get("/api/merchendisher/planogram/export-file", {
       params,
     });
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -396,11 +380,9 @@ export const exportPlanogram = async (params?: Params) => {
 };
 export const exportCompetitor = async (params?: Params) => {
   try {
-    console.log(params);
     const res = await API.get("/api/merchendisher/competitor-info/exportfile", {
       params,
     });
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
