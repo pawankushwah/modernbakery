@@ -13,6 +13,7 @@ import { addRoles, getRoleById, editRoles } from "@/app/services/allApi";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { useLoading } from "@/app/services/loadingContext";
 import RolesPermissionTable from "./table2";
+import ContainerCard from "@/app/components/containerCard";
 
 const RoleSchema = Yup.object().shape({
   name: Yup.string().required("Role Name is required."),
@@ -43,6 +44,7 @@ export default function AddEditRole() {
 
   useEffect(() => {
     if (params?.uuid && params.uuid !== "add") {
+      console.log("Edit mode for role ID:", params.uuid);
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -57,8 +59,8 @@ export default function AddEditRole() {
             const menusFromRes =
               Array.isArray(res.data.menus) ? res.data.menus
                 : Array.isArray(res.data.data) ? res.data.data
-                : Array.isArray(res.data) ? res.data
-                : [];
+                  : Array.isArray(res.data) ? res.data
+                    : [];
             if (menusFromRes && menusFromRes.length) {
               setRoleTableRows(menusFromRes);
             }
@@ -120,11 +122,11 @@ export default function AddEditRole() {
       >
         {({ handleSubmit, values, setFieldValue, errors, touched }) => (
           <Form onSubmit={handleSubmit}>
-            <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
-              <div className="p-6">
-                <h2 className="text-lg font-medium text-gray-800 mb-4">
-                  Role Details
-                </h2>
+            <div className="bg-white rounded-2xl mb-6">
+              {/* <h2 className="text-lg font-medium text-gray-800 mb-4">
+                Role Details
+              </h2> */}
+              <ContainerCard>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <InputFields
@@ -153,30 +155,30 @@ export default function AddEditRole() {
                     />
                   </div>
                 </div>
-              </div>
 
-              {/* Permissions table replaces select input — parent only updates local state.
+                {/* Permissions table replaces select input — parent only updates local state.
                   onRowsChange is scheduled async to avoid setState during child render */}
-              <div className="p-6">
-                <RolesPermissionTable
-                  data={roleTableRows.length ? roleTableRows : undefined}
-                  onRowsChange={(rows, permissionIds) => {
-                    // avoid infinite loop: only update parent state if incoming rows actually changed
-                    try {
-                      const incomingJson = JSON.stringify(rows || []);
-                      const currentJson = JSON.stringify(roleTableRows || []);
-                      if (incomingJson === currentJson) return;
-                    } catch (e) {
-                      // fallback: if stringify fails, still proceed to update once
-                    }
-                    // update asynchronously to be safe (avoid setState during child render)
-                    setTimeout(() => {
-                      setRoleTableRows(rows || []);
-                      setTablePermissionIds(permissionIds || []);
-                    }, 0);
-                  }}
-                />
-              </div>
+                {isEditMode && <div className="p-6">
+                  {roleTableRows && roleTableRows.length > 0 && <RolesPermissionTable
+                    data={roleTableRows.length ? roleTableRows : undefined}
+                    onRowsChange={(rows, permissionIds) => {
+                      // avoid infinite loop: only update parent state if incoming rows actually changed
+                      try {
+                        const incomingJson = JSON.stringify(rows || []);
+                        const currentJson = JSON.stringify(roleTableRows || []);
+                        if (incomingJson === currentJson) return;
+                      } catch (e) {
+                        // fallback: if stringify fails, still proceed to update once
+                      }
+                      // update asynchronously to be safe (avoid setState during child render)
+                      setTimeout(() => {
+                        setRoleTableRows(rows || []);
+                        setTablePermissionIds(permissionIds || []);
+                      }, 0);
+                    }}
+                  />}
+                </div>}
+              </ContainerCard>
             </div>
 
             <div className="flex justify-end gap-4 mt-6 pr-0">

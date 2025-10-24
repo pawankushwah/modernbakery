@@ -475,6 +475,7 @@ function ColumnFilter() {
                 button={
                     <BorderIconButton
                         icon="lucide:filter"
+                        className="h-[40px]"
                         onClick={() => setShowDropdown(!showDropdown)}
                     />
                 }

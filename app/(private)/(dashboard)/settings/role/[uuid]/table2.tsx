@@ -317,20 +317,28 @@ export default function RolesPermissionTable({
 	};
 
 	// Toggle handler
-	const handleToggle = (rowId: number | string, field: "all" | "view" | "create" | "edit" | "delete") => {
+	const handleToggle = (rowId: number | string, field: "all" | string) => {
 		setRows((prev) => {
+			// build the list of permission keys to toggle (fall back to DEFAULT_PERMS)
+			const permList = Array.isArray(permissions)
+				? permissions.map((p: any) => String(p.name ?? "").toLowerCase()).filter(Boolean)
+				: DEFAULT_PERMS;
+
 			const newRows = deepClone(prev).map((r) => {
 				if (String(r.id) !== String(rowId)) return r;
+
 				if (field === "all") {
-					const allCurrently = ["view", "create", "edit", "delete"].every((p) => rowHas(r, p));
+					// check current state across all permission columns dynamically
+					const allCurrently = permList.every((p) => rowHas(r, p));
 					let updated = r;
-					for (const p of ["view", "create", "edit", "delete"]) updated = updateRowPermissionsNested(updated, p, !allCurrently);
+					for (const p of permList) updated = updateRowPermissionsNested(updated, p, !allCurrently);
 					return updated;
 				} else {
 					const willAdd = !rowHas(r, field);
 					return updateRowPermissionsNested(r, field, willAdd);
 				}
 			});
+
 			setRefreshKey((k) => k + 1);
 			return newRows;
 		});
