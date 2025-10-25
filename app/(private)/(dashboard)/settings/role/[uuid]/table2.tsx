@@ -193,7 +193,7 @@ export default function RolesPermissionTable({
         const subrows = active ? getSubmenus(active) : [];
         return {
             columns: [
-                { key: "name", label: "Submenu", width: 300, sticky: "left", align: "left", render: (row: TableDataType) => (row as any).name || (row as any).title || "-" },
+                { key: "name", label: "Submenu", width: 200, sticky: "left", align: "left", render: (row: TableDataType) => (row as any).name || (row as any).title || "-" },
                 {
                     key: "search",
                     label: <Icon icon="lucide:search" />,

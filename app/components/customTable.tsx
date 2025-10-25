@@ -627,17 +627,13 @@ function TableBody() {
                                             <th
                                                 className={`w-[${
                                                     col.width
-                                                }px] ${col.sticky ? "z-10" : ""} ${
+                                                }px] ${col.sticky ? "z-10 md:sticky" : ""} ${
                                                     col.sticky === "left"
-                                                        ? "sticky left-0"
+                                                        ? "left-0"
                                                         : ""
                                                 } ${
                                                     col.sticky === "right"
-                                                        ? "sticky right-0"
-                                                        : ""
-                                                } ${
-                                                    col.sticky === "center"
-                                                        ? "sticky"
+                                                        ? "right-0"
                                                         : ""
                                                 } px-[24px] py-[12px] bg-[#FAFAFA] font-[500] whitespace-nowrap`}
                                                 key={index}
@@ -739,15 +735,13 @@ function TableBody() {
                                                     <td
                                                         key={index}
                                                         width={col.width}
-                                                        className={`px-[24px] py-[12px] ${col.sticky ? "z-10" : ""} ${
-                                                            col.sticky ===
-                                                            "left"
-                                                                ? "sticky left-0 bg-white"
+                                                        className={`px-[24px] py-[12px] bg-white ${col.sticky ? "z-10 md:sticky" : ""} ${
+                                                            col.sticky === "left"
+                                                                ? "left-0"
                                                                 : ""
                                                         } ${
-                                                            col.sticky ===
-                                                            "right"
-                                                                ? "sticky right-0 bg-white"
+                                                            col.sticky === "right"
+                                                                ? "right-0"
                                                                 : ""
                                                         }`}
                                                     >

@@ -9,11 +9,12 @@ import * as Yup from "yup";
 import InputFields from "@/app/components/inputFields";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { addRoles, getRoleById, editRoles, menuList, submenuList } from "@/app/services/allApi";
+import { addRoles, getRoleById, editRoles, menuList, submenuList, assignPermissionsToRole } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import RolesPermissionTable, { MenuItem } from "./table2";
 import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 interface Permission {
   permission_id: number;
@@ -33,36 +34,36 @@ interface Submenu {
 
 interface RoleFormValues {
   name: string;
+  labels: string[];
+  status: string;
 }
 
 const RoleSchema = Yup.object().shape({
   name: Yup.string().required("Role Name is required."),
-  // removed permissions validation — we use the permissions table (menus JSON) instead
+  labels: Yup.array().of(Yup.string()).required("At least one label is required."),
+  status: Yup.string().optional(),
 });
 
 export default function AddEditRole() {
-  // const { permissions } = useAllDropdownListData();
+  const { labelOptions, permissions } = useAllDropdownListData();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
   const [initialValues, setInitialValues] = useState<RoleFormValues>({
     name: "",
+    labels: [],
+    status: "1"
   });
   const [isEditMode, setIsEditMode] = useState(false);
   const { setLoading } = useLoading();
   useEffect(() => setLoading(true), []);
-  const [guardName, setGuardName] = useState<"api" | "web">("api");
   const [activeTab, onTabClick] = useState(0);
 
-  // hold full nested menus -> menu -> submenu -> permissions JSON from table
   const [roleTableData, setRoleTableData] = useState<MenuItem[]>([]);
-  // optional: keep last permission ids computed by table (if needed)
   const [tablePermissionIds, setTablePermissionIds] = useState<number[]>([]);
 
-  // console.log(roleTableRows)
   useEffect(() => {
     if (params?.uuid && params.uuid !== "add") {
-      // console.log("Edit mode for role ID:", params.uuid);
       setIsEditMode(true);
       setLoading(true);
       (async () => {
@@ -122,18 +123,19 @@ export default function AddEditRole() {
             };
           });
 
-          // if the role API returned menus/permissions, merge them into baseRows
+          // Start with full baseRows (all menus)
+          const cloneDeep = <T,>(v: T) => JSON.parse(JSON.stringify(v)) as T;
+          let merged: any[] = cloneDeep(baseRows);
+
+          // 1) merge any role.menus shape (if backend returned menus/submenus)
           if (menusFromRes && menusFromRes.length) {
-            // helper to match menus/submenus by id/uuid/osa_code
             const findMatch = (arr: any[], item: any) =>
               arr.find((a: any) =>
-                // support both wrapped { menu: { ... } } and flat objects
                 (a.menu && (a.menu.id === item.id || a.menu.uuid === item.uuid || a.menu.osa_code === item.osa_code))
                 || a.id === item.id || a.uuid === item.uuid || a.osa_code === item.osa_code || a.osa_code === item.code
               );
 
-            const merged = baseRows.map((base: any) => {
-              // incoming item could be either menu object or wrapper { menu: {...} }
+            merged = merged.map((base: any) => {
               const incomingItem = findMatch(menusFromRes, base)
                 || menusFromRes.find((r: any) => {
                   const inner = r.menu ?? r;
@@ -142,52 +144,110 @@ export default function AddEditRole() {
               if (!incomingItem) return base;
 
               const incomingInner = incomingItem.menu ?? incomingItem;
+              const incomingSubs = (Array.isArray(incomingInner.submenu) && incomingInner.submenu) || (Array.isArray(incomingInner.sub_menus) && incomingInner.sub_menus) || [];
 
-              // collect incoming submenus from supported shapes
-              const incomingSubs =
-                (Array.isArray(incomingInner.submenu) && incomingInner.submenu) || [];
-
-              // merge submenu entries
               const baseSubs = base.submenu || [];
-              const mergedSubs = baseSubs.map((bsub: any) => {
-                const incSub =
-                  incomingSubs.find((isub: any) =>
-                    isub.id === bsub.id || isub.uuid === bsub.uuid || isub.osa_code === bsub.osa_code
-                  )
-                  || incomingSubs.find((isub: any) =>
-                    (isub.menu?.id === base.id || isub.menu === base.id) && isub.name === bsub.name
-                  );
+              const baseIndex: Record<string, any> = {};
+              const keyOf = (s: any) => String(s.id ?? s.uuid ?? s.osa_code ?? "");
+              baseSubs.forEach((s: any) => (baseIndex[keyOf(s)] = cloneDeep(s)));
 
-                if (!incSub) return bsub;
-                return {
-                  ...bsub,
-                  ...incSub,
-                  permissions: Array.isArray(incSub.permissions) ? incSub.permissions : bsub.permissions || [],
-                };
+              const incomingOnly: any[] = [];
+              incomingSubs.forEach((isub: any) => {
+                const k = keyOf(isub);
+                if (k && baseIndex[k]) {
+                  const mergedSub = { ...baseIndex[k], ...isub };
+                  mergedSub.permissions = Array.isArray(isub.permissions) ? isub.permissions : baseIndex[k].permissions || [];
+                  baseIndex[k] = mergedSub;
+                } else {
+                  const match = Object.values(baseIndex).find((bs: any) => bs.name === isub.name || (isub.menu && isub.menu.id === base.id));
+                  if (match) {
+                    const k2 = keyOf(match);
+                    const mergedSub = { ...match, ...isub };
+                    mergedSub.permissions = Array.isArray(isub.permissions) ? isub.permissions : match.permissions || [];
+                    baseIndex[k2] = mergedSub;
+                  } else {
+                    incomingOnly.push({ ...isub, permissions: Array.isArray(isub.permissions) ? isub.permissions : [] });
+                  }
+                }
               });
 
-              // build merged menu object in simplified shape
+              const mergedSubs = baseSubs.map((s: any) => baseIndex[keyOf(s)]).concat(incomingOnly);
+
+              // exclude incomingInner.name to preserve base.name (or control which wins)
+              const { id: _skipId, name: _skipName, ...incomingRest } = incomingInner || {};
               return {
                 ...base,
-                ...Object.fromEntries(Object.entries(incomingInner).filter(([key]) => key !== 'name')),
+                ...incomingRest,
                 submenu: mergedSubs,
               };
             });
-
-            setRoleTableData(merged);
-            console.log("Merged role menus/submenus/permissions:", merged);
-            console.log("Merged role menus/submenus/permissions:", tablePermissionIds);
-          } else {
-            // no role-specific menus - use baseRows
-            setRoleTableData(baseRows);
           }
 
-          // seed form fields if role data present
-          if (roleRes?.data) {
-            setInitialValues({
-              name: roleRes.data.name || "",
+          // 2) apply role.permissions payload shape:
+          //    permissions: [{ permission_id, menus: [{ menu_id, submenu_id }] }, ...]
+          const permsFromRole = Array.isArray(roleData?.permissions) ? roleData.permissions : [];
+          if (permsFromRole.length) {
+            // get permission_name lookup from dropdowns if available
+            // const dropdown = useAllDropdownListData ? undefined : undefined; // no-op placeholder to avoid lint - we use local permissions below
+            // const allPerms = (typeof window !== "undefined" ? (window as any).__allPermissions : undefined) || []; // fallback - we'll try to derive names from available dropdown later
+            // prefer using local permission list from page scope if available
+            // try to get permission names from menu service dropdown available earlier via hook
+            // (we'll attempt to map using labelOptions.permissions if present)
+            // Build quick lookup for merged menus/submenus
+            const menuIndex = new Map<string, any>();
+            merged.forEach((m: any) => {
+              const mid = String(m.id ?? m.uuid ?? m.osa_code ?? "");
+              menuIndex.set(mid, m);
+            });
+
+            const permNameForId = (pid: number) => {
+              const found = permissions.find((p: any) => Number(p.id) === Number(pid) || Number(p.permission_id) === Number(pid));
+              if (found) return found.name ?? String(pid);
+              return String(pid);
+            };
+
+            // apply mappings
+            permsFromRole.forEach((pEntry: any) => {
+              const pid = pEntry.permission_id;
+              const pname = pEntry.permission_name ?? permNameForId(pid);
+              const menus = Array.isArray(pEntry.menus) ? pEntry.menus : [];
+              menus.forEach((mmap: any) => {
+                const menuKey = String(mmap.menu_id ?? mmap.menuId ?? mmap.menu);
+                const submenuId = mmap.submenu_id ?? mmap.submenuId ?? mmap.submenu;
+                const menuObj = merged.find((mm: any) => String(mm.id) === menuKey || String(mm.osa_code) === menuKey || String(mm.uuid) === menuKey);
+                if (!menuObj) return;
+                const sub = (menuObj.submenu || []).find((s: any) => String(s.id) === String(submenuId) || String(s.uuid) === String(submenuId));
+                if (!sub) return;
+                sub.permissions = Array.isArray(sub.permissions) ? sub.permissions : [];
+                const exists = sub.permissions.some((pp: any) => Number(pp.permission_id) === Number(pid));
+                if (!exists) sub.permissions.push({ permission_id: pid, permission_name: pname });
+              });
             });
           }
+
+          // finally set merged menus
+          setRoleTableData(merged);
+          // populate Formik initial values from roleData so form fields autofill
+          setInitialValues({
+            name: String(roleData?.name ?? ""),
+            labels: Array.isArray(roleData?.labels) ? roleData.labels.map((obj: {id: number}) => String(obj.id)) : [],
+            status: String(roleData?.status ?? "1"),
+          });
+          // compute permission ids from merged structure and store
+          const permIdSet = new Set<number>();
+          merged.forEach((m: any) => {
+            (m.submenu || []).forEach((s: any) => {
+              (s.permissions || []).forEach((p: any) => {
+                const id = Number(p.permission_id ?? p.id);
+                if (!Number.isNaN(id)) permIdSet.add(id);
+              });
+            });
+          });
+          setTablePermissionIds(Array.from(permIdSet));
+          // ensure first tab is active
+          onTabClick(0);
+          console.log("Merged role menus/submenus/permissions:", merged);
+          console.log("Computed permission IDs:", Array.from(permIdSet));
         } catch (error) {
           console.error("Failed to fetch roles/menus/submenus", error);
         } finally {
@@ -201,19 +261,80 @@ export default function AddEditRole() {
     values: RoleFormValues,
     { setSubmitting }: FormikHelpers<RoleFormValues>
   ) => {
-    // payload must include menus key with the roleTableData structure
     const payload = {
       ...values,
-      guard_name: guardName,
-      menus: roleTableData || [],
+      labels: values.labels.map(Number) || [],
     };
+
+    // Build permissions payload in shape:
+    // { permissions: [ { permission_id, menus: [{ menu_id, submenu_id }, ...] }, ... ] }
+    const permsMap = new Map<number, Set<string>>();
+    const resolveMenuId = (m: any): number | null => {
+      const raw = m?.id ?? m?.menu?.id ?? m?.menus?.[0]?.menu?.id ?? m?.menus?.[0]?.id ?? null;
+      const num = Number(raw);
+      return Number.isFinite(num) ? num : null;
+    };
+
+    roleTableData.forEach((menu) => {
+      const menuId = resolveMenuId(menu);
+      if (menuId === null) {
+        // debug: missing/incorrect menu id shape
+        console.warn("Skipping menu with missing id:", menu);
+        return;
+      }
+      const subs = Array.isArray(menu.submenu) ? menu.submenu : (Array.isArray(menu.menus?.[0]?.menu?.submenu) ? menu.menus[0].menu.submenu : []);
+      subs.forEach((sub: any) => {
+        const submenuId = Number(sub?.id ?? sub?.submenu_id ?? sub?.uuid);
+        if (!Number.isFinite(submenuId)) {
+          console.warn("Skipping submenu with missing id under menu", menuId, sub);
+          return;
+        }
+        const perms = Array.isArray(sub.permissions) ? sub.permissions : [];
+        perms.forEach((p: any) => {
+          const pid = Number(p.permission_id ?? p.id);
+          if (!Number.isFinite(pid)) return;
+          if (!permsMap.has(pid)) permsMap.set(pid, new Set());
+          permsMap.get(pid)!.add(`${menuId}:${submenuId}`);
+        });
+      });
+    });
+
+    const permissionsPayload = Array.from(permsMap.entries()).map(([permission_id, set]) => ({
+      permission_id,
+      menus: Array.from(set).map((k) => {
+        console.log(k);
+        const [mId, sId] = k.split(":");
+        return { menu_id: Number(mId), submenu_id: Number(sId) };
+      }),
+    }));
 
     setLoading(true);
     let res;
     if (isEditMode && params?.uuid !== "add") {
+      // update role first
       res = await editRoles(String(params.uuid), payload);
+      if (res?.error) {
+        setLoading(false);
+        showSnackbar(res.data?.message || "Failed to update role", "error");
+        setSubmitting(false);
+        return;
+      }
+
+      // then assign permissions in required shape
+      const permissionRes = await assignPermissionsToRole(String(params.uuid), { permissions: permissionsPayload });
+      if (permissionRes?.error) {
+        setLoading(false);
+        showSnackbar(permissionRes.data?.message || "Failed to assign permissions", "error");
+        setSubmitting(false);
+        return;
+      }
     } else {
+      // create new role (if API requires permissions on create, send them accordingly)
       res = await addRoles(payload);
+      // optionally call assignPermissionsToRole for new role if needed:
+      // if (!res?.error && res?.data?.id) {
+      //   await assignPermissionsToRole(String(res.data.id), { permissions: permissionsPayload });
+      // }
     }
     setLoading(false);
     if (res?.error) {
@@ -227,8 +348,6 @@ export default function AddEditRole() {
     }
     setSubmitting(false);
   };
-
-  console.log("Role Table Data:", roleTableData);
 
   return (
     <div className="w-full h-full overflow-x-hidden p-4">
@@ -255,7 +374,7 @@ export default function AddEditRole() {
                 Role Details
               </h2> */}
               <ContainerCard>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
                   <div>
                     <InputFields
                       required
@@ -264,23 +383,42 @@ export default function AddEditRole() {
                       onChange={(e) => setFieldValue("name", e.target.value)}
                       error={touched.name && errors.name}
                     />
-                    <ErrorMessage
-                      name="name"
-                      component="span"
-                      className="text-xs text-red-500"
-                    />
+                    {errors.name && (
+                        <p className="text-red-500 text-sm mt-1">{errors.name}</p>
+                    )}
                   </div>
                   <div>
                     <InputFields
                       required
-                      label="Guard Name"
-                      value={guardName}
-                      options={[
-                        { label: "API", value: "api" },
-                        { label: "Web", value: "web" }
-                      ]}
-                      onChange={(e) => setGuardName(e.target.value as "api" | "web")}
+                      label="Labels"
+                      name="labels"
+                      value={values.labels}
+                      isSingle={false}
+                      options={labelOptions}
+                      onChange={(e) => setFieldValue("labels", e.target.value)}
+                      error={touched.labels && (Array.isArray(errors.labels) ? errors.labels.join(", ") : errors.labels)}
                     />
+                    {errors.labels && (
+                        <p className="text-red-500 text-sm mt-1">{Array.isArray(errors.labels) ? errors.labels.join(", ") : errors.labels}</p>
+                      )}
+                  </div>
+                  <div>
+                    <InputFields
+                        required
+                        label="Status"
+                        name="status"
+                        type="radio"
+                        value={values.status}
+                        onChange={(e) => setFieldValue("status", e.target.value)}
+                        options={[
+                          { value: "1", label: "Active" },
+                          { value: "0", label: "Inactive" },
+                        ]}
+                        error={touched.status && errors.status}
+                      />
+                      {errors.status && (
+                        <p className="text-red-500 text-sm mt-1">{errors.status}</p>
+                      )}
                   </div>
                 </div>
 
