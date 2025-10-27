@@ -7,48 +7,20 @@ import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
 import { useRouter } from "next/navigation";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import Image from "next/image";
-import SummaryCard from "@/app/components/summaryCard";
 import { getCompititorById } from "@/app/services/merchandiserApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
 import { OverviewTab } from "./tabs/overview";
-// import { PlanogramTab } from "./tabs/planogram";
-// import { ExpiryTab } from "./tabs/expiry";
-// import { DamageTab } from "./tabs/damage";
-// import { CustomerTab } from "./tabs/customer";
-
-// --- Shelf Interface ---
-interface Customer {
-  uuid: number;
-  customer_code: string;
-  customer_type: string;
-  owner_name: string;
-}
-
-interface Merchandiser {
-  uuid: number;
-  osa_code: string;
-  type: string;
-  name: string;
-}
-
 interface compititor {
   uuid: string;
   company_name: string;
-  logo?: string | null;
-
-  customers?: Customer[];
   code: string;
-  merchandisers?: Merchandiser[];
+
 }
 
 export const tabs = [
   { name: "Overview", url: "overview", component: <OverviewTab /> },
-//   { name: "Customer", url: "customer", component: <CustomerTab /> },
-//   { name: "Planogram", url: "planogram", component: <PlanogramTab /> },
-//   { name: "Damage", url: "damage", component: <DamageTab /> },
-//   { name: "Expiry", url: "expiry", component: <ExpiryTab /> },
+
 ];
 
 export default function Page() {
@@ -56,12 +28,12 @@ export default function Page() {
   const { uuid: uuid } = useParams();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [compititor, setShelfData] = useState<compititor | null>(null);
+  const [compititor, setCompititorData] = useState<compititor | null>(null);
 
   const { showSnackbar } = useSnackbar();
   const onTabClick = (index: number) => setActiveTab(index);
 
-  const title = "Compititor Details";
+  const title = "Compititor Information";
   const backBtnUrl = "/merchandiser/competitor/";
 
   useEffect(() => {
@@ -71,8 +43,6 @@ export default function Page() {
       setLoading(true);
       try {
         const res = await getCompititorById(uuid.toString());
-        console.log("API Response:", res); // ✅ Now you will see the console
-
         // Handle response correctly
         const data = res?.data?.data || res?.data;
         if (!data) {
@@ -80,9 +50,8 @@ export default function Page() {
           return;
         }
 
-        setShelfData(data);
+        setCompititorData(data);
       } catch (error) {
-        console.error("Error fetching shelf data:", error);
         showSnackbar("Unable to fetch Compititor details", "error");
       } finally {
         setLoading(false);
@@ -110,13 +79,8 @@ export default function Page() {
               <h1 className="font-semibold text-xl text-gray-900">
                 {compititor.company_name || "-"}
               </h1>
-
             
             </div>
-
-           
-            
-       
           </div>
 
           <div className="p-4 rounded-lg flex flex-col items-start justify-center ">

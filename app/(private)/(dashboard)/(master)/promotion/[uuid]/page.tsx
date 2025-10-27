@@ -182,9 +182,9 @@ export default function AddPricing() {
         if (headerRes && typeof headerRes === "object") {
           setPromotion(s => ({
             ...s,
-            itemName: headerRes.name || "",
-            startDate: headerRes.start_date || "",
-            endDate: headerRes.end_date || "",
+            itemName: headerRes.promotion_name || "",
+            from_date: headerRes.from_date || "",
+            to_date: headerRes.to_date || "",
             order_type: headerRes.order_type || "",
             offer_type: headerRes.offer_type || "",
             type: headerRes.type || "",
@@ -256,135 +256,192 @@ export default function AddPricing() {
   };
 
   const router = useRouter();
-  const pricingValidationSchema = yup.object().shape({
-    name: yup.string().required("Name is required"),
-    start_date: yup.string().required("Start date is required"),
-    end_date: yup.string().required("End date is required"),
-    item: yup.array().of(yup.string()).min(1, "At least one item is required"),
-    key: yup.object({
-      Location: yup.array().of(yup.string()).min(1, "Location key required"),
-      Customer: yup.array().of(yup.string()).min(1, "Customer key required"),
-      Item: yup.array().of(yup.string()).min(1, "Item key required"),
-    })
-  });
-
+ const pricingValidationSchema = yup.object().shape({
+  promotion_name: yup.string().required("Promotion name is required"),
+  from_date: yup.string().required("Start date is required"),
+  to_date: yup.string().required("End date is required"),
+  item: yup.array().of(yup.string()).min(1, "At least one item is required"),
+  key: yup.object({
+    Location: yup.array().of(yup.string()).min(1, "Location key required"),
+    Customer: yup.array().of(yup.string()).min(1, "Customer key required"),
+    Item: yup.array().of(yup.string()).min(1, "Item key required"),
+  }).required("Key combination is required"),
+  order_type: yup.string().required("Order type is required"),
+  offer_type: yup.string().required("Offer type is required"),
+  type: yup.string().required("Type is required"),
+  discount_type: yup.string().required("Discount type is required"),
+  discount_apply_on: yup.string().required("Discount apply on is required"),
+});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const clearErrors = () => setErrors({});
 
-  const handleSubmit = async () => {
-    clearErrors();
-        const initialKeys = [
-          {
-            type: "Location",
-            options: [
-              { id: "1", label: "Company", isSelected: false },
-              { id: "2", label: "Region", isSelected: false },
-              { id: "3", label: "Warehouse", isSelected: false },
-              { id: "4", label: "Area", isSelected: false },
-              { id: "5", label: "Route", isSelected: false },
-            ],
-          },
-          {
-            type: "Customer",
-            options: [
-              { id: "6", label: "Customer Type", isSelected: false },
-              { id: "7", label: "Channel", isSelected: false },
-              { id: "8", label: "Customer Category", isSelected: false },
-              { id: "9", label: "Customer", isSelected: false },
-            ],
-          },
-          {
-            type: "Item",
-            options: [
-              { id: "10", label: "Item Category", isSelected: false },
-              { id: "11", label: "Item", isSelected: false },
-            ],
-          },
-        ];
-        function getKeyIds(type: string, selectedLabels: string[]): string[] {
-          const group = initialKeys.find(g => g.type === type);
-          if (!group) return [];
-          return selectedLabels.map((label: string) => {
-            const found = group.options.find(opt => opt.label === label);
-            return found ? found.id : label;
-          });
-        }
+ const handleSubmit = async () => {
+  clearErrors();
+  
+  const initialKeys = [
+    {
+      type: "Location",
+      options: [
+        { id: "1", label: "Company", isSelected: false },
+        { id: "2", label: "Region", isSelected: false },
+        { id: "3", label: "Warehouse", isSelected: false },
+        { id: "4", label: "Area", isSelected: false },
+        { id: "5", label: "Route", isSelected: false },
+      ],
+    },
+    {
+      type: "Customer",
+      options: [
+        { id: "6", label: "Customer Type", isSelected: false },
+        { id: "7", label: "Channel", isSelected: false },
+        { id: "8", label: "Customer Category", isSelected: false },
+        { id: "9", label: "Customer", isSelected: false },
+      ],
+    },
+    {
+      type: "Item",
+      options: [
+        { id: "10", label: "Item Category", isSelected: false },
+        { id: "11", label: "Item", isSelected: false },
+      ],
+    },
+  ];
 
-        const description = [
-          ...getKeyIds("Location", keyCombo.Location),
-          ...getKeyIds("Customer", keyCombo.Customer),
-          ...getKeyIds("Item", keyCombo.Item)
-        ];
+  function getKeyIds(type: string, selectedLabels: string[]): string[] {
+    const group = initialKeys.find(g => g.type === type);
+    if (!group) return [];
+    return selectedLabels.map((label: string) => {
+      const found = group.options.find(opt => opt.label === label);
+      return found ? found.id : label;
+    });
+  }
 
-        const selectedItemIds = keyValue["Item"] || [];
-        let promotionDetails: any[] = [];
-        if (Array.isArray(offerItems) && Array.isArray(offerItems[0])) {
-          promotionDetails = offerItems.flat();
-        } else {
-          promotionDetails = offerItems;
-        }
+  // ✅ Fix: Join description IDs properly as comma-separated string
+  const descriptionIds = [
+    ...getKeyIds("Location", keyCombo.Location),
+    ...getKeyIds("Customer", keyCombo.Customer),
+    ...getKeyIds("Item", keyCombo.Item)
+  ];
+  const description = descriptionIds.join(",");
 
-        const payload = {
-          ...promotion,
-          name: promotion.itemName,
-          start_date: promotion.startDate,
-          end_date: promotion.endDate,
-          status: promotion.status,
-          order_type: promotion.order_type,
-          offer_type: promotion.offer_type,
-          type: promotion.type,
-          discount_type: promotion.discount_type,
-          discount_apply_on: promotion.discount_apply_on,
-          bundle_combination: promotion.bundle_combination,
-          item: selectedItemIds,
-          description,
-          pricing: selectedItemIds.map(itemId => {
-            let itemData = selectedItemDetails.find(item => String(item.code || item.itemCode) === String(itemId));
-            if (!itemData) {
-              itemData = itemOptions.find(opt => String(opt.value) === String(itemId));
-            }
-            let itemCode = itemId;
-            if (itemData) {
-              if (itemData.code) itemCode = itemData.code;
-              else if (itemData.itemCode) itemCode = itemData.itemCode;
-              else if (itemData.label) {
-                const labelParts = String(itemData.label).split(" - ");
-                itemCode = labelParts.length > 1 ? labelParts[0] : String(itemData.label);
-              }
-            }
-            const orderItem = orderTables.flat().find((oi: any) => String(oi.itemCode) === String(itemCode));
-            return {
-              item_id: itemId,
-              price: orderItem ? orderItem.price : ""
-            };
-          }),
-          promotion_details: promotionDetails,
-        };
-    try {
-      await pricingValidationSchema.validate(payload, { abortEarly: false });
-      setLoading(true);
-      const res = await addPromotionHeader(payload);
-      if (res?.error) {
-        showSnackbar(res.data?.message || "Failed to submit Promotion", "error");
-      } else {
-        showSnackbar(isEditMode ? "Promotion updated successfully" : "Promotion added successfully", "success");
-        router.push("/promotion");
+  const selectedItemIds = keyValue["Item"] || [];
+  
+  // ✅ Fix: Flatten promotion details properly
+  let promotionDetails: any[] = [];
+  if (Array.isArray(offerItems) && offerItems.length > 0 && Array.isArray(offerItems[0])) {
+    promotionDetails = offerItems.flat();
+  } else {
+    promotionDetails = offerItems;
+  }
+
+  const payload = {
+    promotion_name: promotion.itemName || "",
+    from_date: promotion.startDate || "",
+    to_date: promotion.endDate || "",
+    status: promotion.status || "1",
+    order_type: promotion.order_type || "",
+    offer_type: promotion.offer_type || "",
+    type: promotion.type || "",
+    discount_type: promotion.discount_type || "",
+    discount_apply_on: promotion.discount_apply_on || "",
+    bundle_combination: promotion.bundle_combination || "",
+    item: selectedItemIds,
+    description: description,
+    
+    // ✅ Fix: Ensure pricing array structure
+    pricing: selectedItemIds.map(itemId => {
+      let itemData = selectedItemDetails.find(item => 
+        String(item.code || item.itemCode) === String(itemId)
+      );
+      if (!itemData) {
+        itemData = itemOptions.find(opt => String(opt.value) === String(itemId));
       }
-      setLoading(false);
-    } catch (err) {
-      setLoading(false);
-      if (err && typeof err === "object" && "name" in err && err.name === "ValidationError" && Array.isArray((err as yup.ValidationError).inner)) {
-        const formErrors: Record<string, string> = {};
-        (err as yup.ValidationError).inner.forEach((e: yup.ValidationError) => {
-          if (e.path) formErrors[e.path] = e.message;
-        });
-        setErrors(formErrors);
-        showSnackbar("Please fix validation errors before proceeding", "error");
-      } else {
-        showSnackbar(isEditMode ? "Failed to update promotion" : "Failed to add promotion", "error");
+
+      let itemCode = itemId;
+      if (itemData) {
+        if (itemData.code) itemCode = itemData.code;
+        else if (itemData.itemCode) itemCode = itemData.itemCode;
+        else if (itemData.label) {
+          const labelParts = String(itemData.label).split(" - ");
+          itemCode = labelParts.length > 1 ? labelParts[0] : String(itemData.label);
+        }
       }
+
+      const orderItem = orderTables.flat().find(
+        (oi: any) => String(oi.itemCode) === String(itemCode)
+      );
+
+      return {
+        item_id: String(itemId),
+        price: orderItem ? Number(orderItem.price) || 0 : 0,
+      };
+    }),
+
+    // ✅ Fix: Map promotion_details with correct field names
+    promotion_details: (promotionDetails || []).map(detail => ({
+      lower_qty: Number(detail.quantity || detail.lower_qty) || 0,
+      upper_qty: Number(detail.toQuantity || detail.upper_qty) || 0,
+      free_qty: Number(detail.free_qty || detail.toQuantity) || 0,
+      uom: detail.uom || "CTN",
+      promotion_group_name: detail.promotionGroupName || "",
+    })),
+
+    // ✅ Add key object for validation
+    key: {
+      Location: keyCombo.Location,
+      Customer: keyCombo.Customer,
+      Item: keyCombo.Item,
     }
   };
+
+  try {
+    // ✅ Validate before submitting
+    await pricingValidationSchema.validate(payload, { abortEarly: false });
+    
+    setLoading(true);
+    const res = await addPromotionHeader(payload);
+    
+    if (res?.error) {
+      showSnackbar(res.data?.message || "Failed to submit Promotion", "error");
+    } else {
+      showSnackbar(
+        isEditMode ? "Promotion updated successfully" : "Promotion added successfully", 
+        "success"
+      );
+      router.push("/promotion");
+    }
+    setLoading(false);
+  } catch (err) {
+    setLoading(false);
+    
+    if (err && typeof err === "object" && "name" in err && err.name === "ValidationError") {
+      const formErrors: Record<string, string> = {};
+      const validationError = err as yup.ValidationError;
+      
+      if (Array.isArray(validationError.inner)) {
+        validationError.inner.forEach((e: yup.ValidationError) => {
+          if (e.path) {
+            formErrors[e.path] = e.message;
+            console.error(`Validation error at ${e.path}:`, e.message);
+          }
+        });
+      }
+      
+      setErrors(formErrors);
+      showSnackbar("Please fix validation errors before proceeding", "error");
+      
+      // Log which fields failed for debugging
+      console.log("Validation errors:", formErrors);
+    } else {
+      console.error("Submit error:", err);
+      showSnackbar(
+        isEditMode ? "Failed to update promotion" : "Failed to add promotion", 
+        "error"
+      );
+    }
+  }
+};
+
 
   type KeyComboType = {
     Location: string[];
@@ -682,6 +739,7 @@ export default function AddPricing() {
                             <InputFields
                               label=""
                               type="text"
+                                options={itemOptions}
                               value={row.promotionGroupName || ""}
                               onChange={e => updateOrderItem(tableIdx, row.itemCode, "promotionGroupName", e.target.value)}
                               width="w-full"
@@ -1198,10 +1256,12 @@ export default function AddPricing() {
                                 render: (row) => (
                                   <InputFields
                                     label=""
+                                    options={itemOptions}
                                     type="text"
                                     value={row.promotionGroupName || ""}
                                     onChange={e => updateOfferItemTable(tableIdx, row.idx, "promotionGroupName", e.target.value)}
                                     width="w-full"
+                                    
                                   />
                                 ),
                               },
