@@ -249,7 +249,7 @@ interface AgentCustomerList {
   id: number,
   uuid: string,
   osa_code: string,
-  name: string,
+  outlet_name: string,
   status: number
 }
 
@@ -450,8 +450,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const agentCustomerOptions = (Array.isArray(agentCustomer) ? agentCustomer : []).map((c: AgentCustomerList) => ({
     value: String(c.id ?? ''),
-    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+    label: c.osa_code && c.outlet_name ? `${c.osa_code} - ${c.outlet_name}` : (c.outlet_name ?? '')
   }));
+  console.log("agent", agentCustomerOptions)
 
   const shelvesOptions = (Array.isArray(shelves) ? shelves : []).map((c: ShelvesList) => ({
     value: String(c.id ?? ''),

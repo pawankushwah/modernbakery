@@ -1447,6 +1447,15 @@ export const updateDiscountType = async (id: string, body: object) => {
   }
 };
 
+export const updateDiscountStatus = async (body: object) => {
+  try {
+    const res = await API.post(`api/master/discount/status-update`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const deleteDiscountType = async (id: string) => {
   try {
     const res = await API.delete(`/api/settings/discount_type/${id}/delete`);
