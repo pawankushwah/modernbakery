@@ -74,13 +74,17 @@ const CompanySchema = Yup.object().shape({
   vat: Yup.string()
     .required("VAT Number is a required field")
     .max(15, "VAT Number cannot be more than 15 characters"),
+<<<<<<< HEAD
 
+=======
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
   service_type: Yup.string().required("Service type is required"),
   status: Yup.string().required("Status is required"),
   district: Yup.string().required("District is required"),
   town: Yup.string().required("Town is required"),
   street: Yup.string().required("Street is required"),
   landmark: Yup.string().required("Landmark is required"),
+<<<<<<< HEAD
   sub_region: Yup.string().required("Sub Region is required"),
 <<<<<<< HEAD
   primary_contact: Yup.string().required("Primary contact is required").min(9).max(10),
@@ -104,6 +108,20 @@ const CompanySchema = Yup.object().shape({
     .max(13, "Must be at most 13 digits"),
 
   module_access: Yup.string().required("Module is required field "),
+=======
+  sub_region: Yup.string().required("Area is required"),
+  primary_contact: Yup.string()
+    .required("Primary contact is required")
+    .matches(/^[0-9]+$/, "Primary contact must contain only numbers")
+    .min(10, "Primary contact must be at least 10 digits")
+    .max(13, "Primary contact must not exceed 13 digits"),
+  toll_free_no: Yup.string()
+    .required("Toll free number is required")
+    .matches(/^[0-9]+$/, "Toll free number must contain only numbers")
+    .min(10, "Toll free number must be at least 10 digits")
+    .max(13, "Toll free number must not exceed 13 digits"),
+  module_access: Yup.string().required("Module is required field"),
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
 });
 
 // 🔹 Step-wise schemas
@@ -119,6 +137,7 @@ const stepSchemas = [
   }),
 
   Yup.object({
+<<<<<<< HEAD
 <<<<<<< HEAD
     primary_contact: Yup.string().required("Primary contact is required").min(9).max(10),
     primary_code: Yup.string(),
@@ -137,12 +156,26 @@ const stepSchemas = [
       .min(10, "Must be at least 9 digits")
       .max(13, "Must be at most 10 digits"),
 >>>>>>> 7104e2c2c2ffa9cfebc2ea0be806cd887334f187
+=======
+    primary_contact: Yup.string()
+      .required("Primary contact is required")
+      .matches(/^[0-9]+$/, "Primary contact must contain only numbers")
+      .min(10, "Primary contact must be at least 10 digits")
+      .max(13, "Primary contact must not exceed 13 digits"),
+    primary_code: Yup.string(),
+    toll_free_no: Yup.string()
+      .required("Toll free number is required")
+      .matches(/^[0-9]+$/, "Toll free number must contain only numbers")
+      .min(10, "Toll free number must be at least 10 digits")
+      .max(13, "Toll free number must not exceed 13 digits"),
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
     toll_free_code: Yup.string(),
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
+
   Yup.object({
     region: Yup.string().required("Region is required"),
-    sub_region: Yup.string().required("Sub Region is required"),
+    sub_region: Yup.string().required("Area is required"),
     district: Yup.string().required("District is required"),
     town: Yup.string().required("Town is required"),
     street: Yup.string().required("Street is required"),
@@ -250,7 +283,6 @@ export default function AddEditCompany() {
           if (res?.prefix) {
             setPrefix(res.prefix);
           } else if (res?.code) {
-            // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
             const match = res.prefix;
             if (match) setPrefix(prefix);
           }
@@ -327,6 +359,12 @@ export default function AddEditCompany() {
     }
   };
 
+  // 🔹 Helper function to allow only numeric input
+  const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string, setFieldValue: any) => {
+    const value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+    setFieldValue(fieldName, value);
+  };
+
   const renderStepContent = (
     values: CompanyFormValues,
     setFieldValue: (
@@ -356,7 +394,11 @@ export default function AddEditCompany() {
                   <>
                     <IconButton
                       bgClass="white"
+<<<<<<< HEAD
                       className="  cursor-pointer text-[#252B37] pt-12"
+=======
+                      className="cursor-pointer text-[#252B37] pt-12"
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                       icon="mi:settings"
                       onClick={() => setIsOpen(true)}
                     />
@@ -406,13 +448,18 @@ export default function AddEditCompany() {
                   label="Company Type"
                   name="company_type"
                   value={values.company_type}
+<<<<<<< HEAD
                   onChange={(e) =>
                     setFieldValue("company_type", e.target.value)
                   }
+=======
+                  onChange={(e) => setFieldValue("company_type", e.target.value)}
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   options={[
                     { value: "manufacturing", label: "Manufacturing" },
                     { value: "trading", label: "Trading" },
                   ]}
+<<<<<<< HEAD
                   error={
                     errors?.company_type && touched.company_type
                       ? errors.company_type
@@ -423,6 +470,12 @@ export default function AddEditCompany() {
                   <p className="text-red-500 text-sm mt-1">
                     {errors.company_type}
                   </p>
+=======
+                  error={touched.company_type && errors.company_type}
+                />
+                {errors.company_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.company_type}</p>
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                 )}
               </div>
 
@@ -433,11 +486,17 @@ export default function AddEditCompany() {
                   name="website"
                   value={values.website}
                   onChange={(e) => setFieldValue("website", e.target.value)}
+<<<<<<< HEAD
                   error={
                     errors?.website && touched.website ? errors.website : false
                   }
                 />
                 {errors?.website && touched?.website && (
+=======
+                  error={touched.website && errors.website}
+                />
+                {errors.website && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.website}</p>
                 )}
               </div>
@@ -447,6 +506,7 @@ export default function AddEditCompany() {
                   name="company_logo"
                   type="file"
                   value={values.company_logo}
+<<<<<<< HEAD
                   onChange={(e) =>
                     setFieldValue("company_logo", e.target.value)
                   }
@@ -458,6 +518,13 @@ export default function AddEditCompany() {
                   <p className="text-red-500 text-sm mt-1">
                     {errors.company_logo}
                   </p>
+=======
+                  onChange={(e) => setFieldValue("company_logo", e.target.value)}
+                  error={touched.company_logo && errors.company_logo}
+                />
+                {errors.company_logo && (
+                  <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                 )}
               </div>
             </div>
@@ -475,6 +542,7 @@ export default function AddEditCompany() {
                   label="Primary Contact"
                   contact={values.primary_contact}
                   code={values.primary_code}
+<<<<<<< HEAD
                   onContactChange={(e) =>
                     setFieldValue("primary_contact", e.target.value)
                   }
@@ -488,6 +556,16 @@ export default function AddEditCompany() {
                       : false
                   }
                 />
+=======
+                  onContactChange={(e) => handleNumericInput(e, "primary_contact", setFieldValue)}
+                  onCodeChange={(e) => setFieldValue("primary_code", e.target.value)}
+                  options={onlyCountryOptions}
+                  error={touched.primary_contact && errors.primary_contact}
+                />
+                {errors.primary_contact && (
+                  <p className="text-red-500 text-sm mt-1">{errors.primary_contact}</p>
+                )}
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
               </div>
 
               <div>
@@ -497,6 +575,7 @@ export default function AddEditCompany() {
                   label="Toll Free Number"
                   contact={values.toll_free_no}
                   code={values.toll_free_code}
+<<<<<<< HEAD
                   onContactChange={(e) =>
                     setFieldValue("toll_free_no", e.target.value)
                   }
@@ -510,6 +589,16 @@ export default function AddEditCompany() {
                       : false
                   }
                 />
+=======
+                  onContactChange={(e) => handleNumericInput(e, "toll_free_no", setFieldValue)}
+                  onCodeChange={(e) => setFieldValue("toll_free_code", e.target.value)}
+                  options={onlyCountryOptions}
+                  error={touched.toll_free_no && errors.toll_free_no}
+                />
+                {errors.toll_free_no && (
+                  <p className="text-red-500 text-sm mt-1">{errors.toll_free_no}</p>
+                )}
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
               </div>
 
               <div>
@@ -519,9 +608,15 @@ export default function AddEditCompany() {
                   name="email"
                   value={values.email}
                   onChange={(e) => setFieldValue("email", e.target.value)}
+<<<<<<< HEAD
                   error={errors?.email && touched?.email ? errors.email : false}
                 />
                 {errors?.email && touched?.email && (
+=======
+                  error={touched.email && errors.email}
+                />
+                {errors.email && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.email}</p>
                 )}
               </div>
@@ -541,11 +636,17 @@ export default function AddEditCompany() {
                   value={String(values.region)}
                   options={regionOptions}
                   onChange={(e) => setFieldValue("region", e.target.value)}
+<<<<<<< HEAD
                   error={
                     errors?.region && touched.region ? errors.region : false
                   }
                 />
                 {errors?.region && touched?.region && (
+=======
+                  error={touched.region && errors.region}
+                />
+                {errors.region && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.region}</p>
                 )}
               </div>
@@ -553,11 +654,16 @@ export default function AddEditCompany() {
               <div>
                 <InputFields
                   required
+<<<<<<< HEAD
                   label="Sub Region"
+=======
+                  label="Area"
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   name="sub_region"
                   value={String(values.sub_region)}
                   options={areaOptions}
                   onChange={(e) => setFieldValue("sub_region", e.target.value)}
+<<<<<<< HEAD
                   error={
                     errors?.sub_region && touched.sub_region
                       ? errors.sub_region
@@ -566,6 +672,12 @@ export default function AddEditCompany() {
                 />
                 {errors?.sub_region && touched?.sub_region && (
                   <p className="text-red-500 text-sm mt-1">{errors.region}</p>
+=======
+                  error={touched.sub_region && errors.sub_region}
+                />
+                {errors.sub_region && (
+                  <p className="text-red-500 text-sm mt-1">{errors.sub_region}</p>
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                 )}
               </div>
 
@@ -576,6 +688,7 @@ export default function AddEditCompany() {
                   name="district"
                   value={values.district}
                   onChange={(e) => setFieldValue("district", e.target.value)}
+<<<<<<< HEAD
                   error={
                     errors?.district && touched.district
                       ? errors.district
@@ -583,6 +696,11 @@ export default function AddEditCompany() {
                   }
                 />
                 {errors?.district && touched?.district && (
+=======
+                  error={touched.district && errors.district}
+                />
+                {errors.district && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.district}</p>
                 )}
               </div>
@@ -594,9 +712,15 @@ export default function AddEditCompany() {
                   name="town"
                   value={values.town}
                   onChange={(e) => setFieldValue("town", e.target.value)}
+<<<<<<< HEAD
                   error={errors?.town && touched.town ? errors.town : false}
                 />
                 {errors?.town && touched?.town && (
+=======
+                  error={touched.town && errors.town}
+                />
+                {errors.town && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.town}</p>
                 )}
               </div>
@@ -608,11 +732,17 @@ export default function AddEditCompany() {
                   name="street"
                   value={values.street}
                   onChange={(e) => setFieldValue("street", e.target.value)}
+<<<<<<< HEAD
                   error={
                     errors?.street && touched.street ? errors.street : false
                   }
                 />
                 {errors?.street && touched?.street && (
+=======
+                  error={touched.street && errors.street}
+                />
+                {errors.street && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.street}</p>
                 )}
               </div>
@@ -623,6 +753,7 @@ export default function AddEditCompany() {
                   name="landmark"
                   value={values.landmark}
                   onChange={(e) => setFieldValue("landmark", e.target.value)}
+<<<<<<< HEAD
                   error={
                     errors?.landmark && touched.landmark
                       ? errors.landmark
@@ -630,6 +761,11 @@ export default function AddEditCompany() {
                   }
                 />
                 {errors?.landmark && touched?.landmark && (
+=======
+                  error={touched.landmark && errors.landmark}
+                />
+                {errors.landmark && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.landmark}</p>
                 )}
               </div>
@@ -642,6 +778,7 @@ export default function AddEditCompany() {
                   value={values.country_id ? values.country_id.toString() : ""}
                   options={onlyCountryOptions}
                   onChange={(e) => setFieldValue("country_id", e.target.value)}
+<<<<<<< HEAD
                   error={
                     errors?.country_id && touched.country_id
                       ? errors.country_id
@@ -652,6 +789,12 @@ export default function AddEditCompany() {
                   <p className="text-red-500 text-sm mt-1">
                     {errors.country_id}
                   </p>
+=======
+                  error={touched.country_id && errors.country_id}
+                />
+                {errors.country_id && (
+                  <p className="text-red-500 text-sm mt-1">{errors.country_id}</p>
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                 )}
               </div>
             </div>
@@ -669,6 +812,7 @@ export default function AddEditCompany() {
                   name="selling_currency"
                   value={values.selling_currency}
                   options={countryCurrency}
+<<<<<<< HEAD
                   onChange={(e) =>
                     setFieldValue("selling_currency", e.target.value)
                   }
@@ -682,6 +826,13 @@ export default function AddEditCompany() {
                   <p className="text-red-500 text-sm mt-1">
                     {errors.selling_currency}
                   </p>
+=======
+                  onChange={(e) => setFieldValue("selling_currency", e.target.value)}
+                  error={touched.selling_currency && errors.selling_currency}
+                />
+                {errors.selling_currency && (
+                  <p className="text-red-500 text-sm mt-1">{errors.selling_currency}</p>
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                 )}
               </div>
 
@@ -692,6 +843,7 @@ export default function AddEditCompany() {
                   name="purchase_currency"
                   value={values.purchase_currency}
                   options={countryCurrency}
+<<<<<<< HEAD
                   onChange={(e) =>
                     setFieldValue("purchase_currency", e.target.value)
                   }
@@ -705,6 +857,13 @@ export default function AddEditCompany() {
                   <p className="text-red-500 text-sm mt-1">
                     {errors.purchase_currency}
                   </p>
+=======
+                  onChange={(e) => setFieldValue("purchase_currency", e.target.value)}
+                  error={touched.purchase_currency && errors.purchase_currency}
+                />
+                {errors.purchase_currency && (
+                  <p className="text-red-500 text-sm mt-1">{errors.purchase_currency}</p>
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                 )}
               </div>
 
@@ -714,9 +873,15 @@ export default function AddEditCompany() {
                   name="vat"
                   value={values.vat}
                   onChange={(e) => setFieldValue("vat", e.target.value)}
+<<<<<<< HEAD
                   error={errors?.vat && touched.vat ? errors.vat : false}
                 />
                 {errors?.vat && touched?.vat && (
+=======
+                  error={touched.vat && errors.vat}
+                />
+                {errors.vat && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.vat}</p>
                 )}
               </div>
@@ -733,6 +898,7 @@ export default function AddEditCompany() {
                   label="Module"
                   name="module_access"
                   value={values.module_access}
+<<<<<<< HEAD
                   onChange={(e) =>
                     setFieldValue("module_access", e.target.value)
                   }
@@ -746,6 +912,13 @@ export default function AddEditCompany() {
                   <p className="text-red-500 text-sm mt-1">
                     {errors.module_access}
                   </p>
+=======
+                  onChange={(e) => setFieldValue("module_access", e.target.value)}
+                  error={touched.module_access && errors.module_access}
+                />
+                {errors.module_access && (
+                  <p className="text-red-500 text-sm mt-1">{errors.module_access}</p>
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                 )}
               </div>
 
@@ -755,13 +928,18 @@ export default function AddEditCompany() {
                   label="Service Type"
                   name="service_type"
                   value={values.service_type}
+<<<<<<< HEAD
                   onChange={(e) =>
                     setFieldValue("service_type", e.target.value)
                   }
+=======
+                  onChange={(e) => setFieldValue("service_type", e.target.value)}
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   options={[
                     { value: "branch", label: "Branch" },
                     { value: "warehouse", label: "Warehouse" },
                   ]}
+<<<<<<< HEAD
                   error={
                     errors?.service_type && touched?.service_type
                       ? errors.service_type
@@ -772,6 +950,12 @@ export default function AddEditCompany() {
                   <p className="text-red-500 text-sm mt-1">
                     {errors.service_type}
                   </p>
+=======
+                  error={touched.service_type && errors.service_type}
+                />
+                {errors.service_type && (
+                  <p className="text-red-500 text-sm mt-1">{errors.service_type}</p>
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                 )}
               </div>
 
@@ -787,11 +971,17 @@ export default function AddEditCompany() {
                     { value: "1", label: "Active" },
                     { value: "0", label: "Inactive" },
                   ]}
+<<<<<<< HEAD
                   error={
                     errors?.status && touched?.status ? errors.status : false
                   }
                 />
                 {errors?.status && touched?.status && (
+=======
+                  error={touched.status && errors.status}
+                />
+                {errors.status && (
+>>>>>>> b21acb461ba21f78ab9b004528441d74e702d409
                   <p className="text-red-500 text-sm mt-1">{errors.status}</p>
                 )}
               </div>
@@ -836,7 +1026,6 @@ export default function AddEditCompany() {
 
               await schema.validate(values, { abortEarly: false });
 
-              // ✅ Mark current step as completed
               markStepCompleted(currentStep);
               nextStep();
             } catch (err: unknown) {
@@ -862,7 +1051,7 @@ export default function AddEditCompany() {
                 currentStep={currentStep}
                 onStepClick={() => {}}
                 onBack={prevStep}
-                onNext={handleNextStep} // ✅ step-wise validation
+                onNext={handleNextStep}
                 onSubmit={() => formikSubmit()}
                 showSubmitButton={isLastStep}
                 showNextButton={!isLastStep}
