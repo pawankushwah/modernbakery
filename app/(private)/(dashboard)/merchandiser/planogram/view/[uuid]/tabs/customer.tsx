@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import ContainerCard from "@/app/components/containerCard";
-import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
 import { getPlanogramById } from "@/app/services/merchandiserApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
@@ -13,22 +12,14 @@ import Loading from "@/app/components/Loading";
 type Customer = {
   uuid?: string;
   customer_code?: string;
-  customer_type?: string;
   owner_name?: string;
-  // Include all possible fields from both API responses
-  customers?: number;
-  id?: number;
   business_name?: string;
 };
 
 type Merchandiser = {
   uuid?: string;
-  osa_code?: string;
-  type?: string | number;
+  code?: string;
   name?: string;
-  // Include all possible fields from both API responses
-  merchandisers?: number;
-  id?: number;
 };
 
 type ShelfData = {
@@ -36,17 +27,8 @@ type ShelfData = {
   id?: number;
   code?: string;
   shelf_name?: string;
-  height?: string | number;
-  width?: string | number;
-  depth?: string | number;
-  valid_from?: string;
-  valid_to?: string;
-  customer_ids?: number[];
   customers?: Customer[];
-  merchendiser_ids?: number[];
   merchandisers?: Merchandiser[];
-  created_by?: number;
-  created_at?: string;
 };
 
 export const CustomerData = () => {
@@ -57,122 +39,116 @@ export const CustomerData = () => {
   const [shelfData, setShelfData] = useState<ShelfData | null>(null);
   const [loading, setLocalLoading] = useState(true);
 
-useEffect(() => {
-  const fetchShelfData = async () => {
-    if (!uuid) return;
-    setLocalLoading(true);
-    setLoading(true);
+  useEffect(() => {
+    const fetchShelfData = async () => {
+      if (!uuid) return;
+      setLocalLoading(true);
+      setLoading(true);
 
-    try {
-      const res = await getPlanogramById(String(uuid));
-      const data = res?.data?.data || res?.data;
+      try {
+        const res = await getPlanogramById(String(uuid));
+        const data = res?.data?.data || res?.data;
+        console.log("Planogram Data:", data);
 
-      if (!data) {
+        if (!data) {
+          showSnackbar("Unable to fetch Planogram details", "error");
+          return;
+        }
+
+        const transformedData: ShelfData = {
+          customers: data.customers || [],
+          merchandisers: data.merchendishers || [],
+        };
+
+        setShelfData(transformedData);
+      } catch (error) {
+        console.error("Error fetching Planogram data:", error);
         showSnackbar("Unable to fetch Planogram details", "error");
-        return;
+      } finally {
+        setLocalLoading(false);
+        setLoading(false);
       }
+    };
 
-      // Transform single objects to arrays
-      const transformedData = {
-        ...data,
-        customers: data.customer ? [{
-          uuid: data.customer.id,
-          owner_name: data.customer.name,
-          customer_code: data.customer.id,
-          customer_type: "",
-        }] : [],
-        merchandisers: data.merchendisher ? [{
-          uuid: data.merchendisher.id,
-          name: data.merchendisher.name,
-          osa_code: data.merchendisher.id,
-          type: "",
-        }] : [],
-      };
-
-      setShelfData(transformedData);
-    } catch (error) {
-      console.error("Error fetching Planogram data:", error);
-      showSnackbar("Unable to fetch Planogram details", "error");
-    } finally {
-      setLocalLoading(false);
-      setLoading(false);
-    }
-  };
-
-  fetchShelfData();
-}, [uuid, showSnackbar, setLoading]);
-
+    fetchShelfData();
+  }, [uuid, showSnackbar, setLoading]);
 
   if (loading || !shelfData) return <Loading />;
 
   return (
-    <div className="">
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* --- Customers Section --- */}
-        <div className="flex-1">
-          <ContainerCard className="w-full h-fit">
-            <h3 className="text-[18px] font-semibold mb-[20px]">
-              Customer Information
-            </h3>
-
-            {shelfData.customers && shelfData.customers.length > 0 ? (
-              shelfData.customers.map((item: Customer, index: number) => (
-                <div
-                  key={index}
-                  className="border-b last:border-b-0 pb-4 mb-4 last:pb-0"
-                >
-                  <KeyValueData
-                    title={`Customer #${index + 1}`}
-                    data={[
-                      { key: "ID", value: item?.uuid || "-" },
-                    
-                    
-                      { key: "Owner Name", value: item?.owner_name || "-" },
-                    ]}
-                  />
-                </div>
-              ))
-            ) : (
-              <p className="text-gray-500 text-sm">
-                No customer data available.
-              </p>
-            )}
-          </ContainerCard>
-        </div>
-
-        {/* --- Merchandisers Section --- */}
-        <div className="flex-1">
-          <ContainerCard className="w-full h-fit">
-            <h3 className="text-[18px] font-semibold mb-[20px]">
-              Merchandiser Information
-            </h3>
-
-            {shelfData.merchandisers && shelfData.merchandisers.length > 0 ? (
-              shelfData.merchandisers.map(
-                (item: Merchandiser, index: number) => (
-                  <div
+    <div className="flex flex-col md:flex-row gap-6">
+      {/* --- Merchandisers Section --- */}
+      <div className="flex-1">
+        <ContainerCard>
+          <h1 className="text-lg font-semibold text-gray-800 mb-3">
+            Merchandiser Information
+          </h1>
+          {shelfData.merchandisers && shelfData.merchandisers.length > 0 ? (
+            <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+              <thead className="bg-gray-50 text-gray-700 font-semibold">
+                <tr>
+                  <th className="text-left px-4 py-2 border-b">Code</th>
+                  <th className="text-right px-4 py-2 border-b">Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shelfData.merchandisers.map((item, index) => (
+                  <tr
                     key={index}
-                    className="border-b last:border-b-0 pb-4 mb-4 last:pb-0"
+                    className="border-b-gray-300 border-b last:border-b-0 hover:bg-gray-50 transition"
                   >
-                    <KeyValueData
-                      title={`Merchandiser #${index + 1}`}
-                      data={[
-                        { key: "ID", value: item?.uuid || "-" },
-                       
-                       
-                        { key: "Name", value: item?.name || "-" },
-                      ]}
-                    />
-                  </div>
-                )
-              )
-            ) : (
-              <p className="text-gray-500 text-sm">
-                No merchandiser data available.
-              </p>
-            )}
-          </ContainerCard>
-        </div>
+                    <td className="px-4 text-left py-3">{item?.code || "-"}</td>
+                    <td className="px-4 text-right py-3">
+                      {item?.name || "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-gray-500 text-sm">
+              No merchandiser data available.
+            </p>
+          )}
+        </ContainerCard>
+      </div>
+
+      {/* --- Customers Section --- */}
+      <div className="flex-1">
+        <ContainerCard>
+          <h1 className="text-lg font-semibold text-gray-800 mb-3">
+            Customer Information
+          </h1>
+          {shelfData.customers && shelfData.customers.length > 0 ? (
+            <table className="w-full text-sm border border-gray-200 rounded-lg overflow-hidden">
+              <thead className="bg-gray-50 text-gray-700 font-semibold">
+                <tr>
+                  <th className="text-left px-4 py-2 border-b">
+                    Customer Code
+                  </th>
+                  <th className="text-right px-4 py-2 border-b">Owner Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shelfData.customers.map((item, index) => (
+                  <tr
+                    key={index}
+                    className="border-b-gray-300 border-b last:border-b-0 hover:bg-gray-50 transition"
+                  >
+                    <td className="px-4 text-left py-3">
+                      {item?.customer_code || "-"}
+                    </td>
+                    <td className="px-4 text-right py-3">
+                      {item?.owner_name || "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-gray-500 text-sm">No customer data available.</p>
+          )}
+        </ContainerCard>
       </div>
     </div>
   );

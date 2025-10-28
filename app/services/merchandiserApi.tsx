@@ -304,18 +304,10 @@ export const competitorList = async (params?: Params) => {
   }
 };
 
-export const updatePlanogramById = async (
-  uuid: string,
-  data: {
-    name: string;
-    valid_from?: string;
-    valid_to?: string;
-    merchendisher_id: number[]; // backend expects single integer
-    customer_id: number[];
-  }
-) => {
+export const updatePlanogramById = async (uuid: string, data: FormData) => {
   try {
-    const res = await API.put(
+    console.log(uuid)
+    const res = await APIFormData.put(
       `/api/merchendisher/planogram/update/${uuid}`,
       data
     );
@@ -341,9 +333,31 @@ export type PlanogramType = {
   customer_id: number[]; // backend expects single integer
 };
 
-export const addPlanogram = async (body: PlanogramType) => {
+// Define the type for the planogram payload
+export type PlanogramPayload = {
+  name: string;
+  valid_from: string;
+  valid_to: string;
+  merchendisher_id: string[];
+  customer_id: string[];
+  shelf_id: string[];
+  images: {
+    [merchId: string]: {
+      [custId: string]: Array<{
+        shelf_id: string;
+        image: string;
+      }>;
+    };
+  };
+};
+
+// Update your addPlanogram function with proper typing
+export const addPlanogram = async (body: FormData | PlanogramPayload) => {
   try {
-    const res = await API.post("/api/merchendisher/planogram/create", body);
+    const res = await APIFormData.post(
+      "/api/merchendisher/planogram/create",
+      body
+    );
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -364,9 +378,6 @@ export const exportCmplaintFeedback = async (params: { format: string }) => {
     return handleError(error);
   }
 };
-
-
-
 
 export const exportPlanogram = async (params?: Params) => {
   try {

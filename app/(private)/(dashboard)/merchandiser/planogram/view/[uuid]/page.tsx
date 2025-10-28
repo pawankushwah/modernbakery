@@ -14,9 +14,9 @@ import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
 import { OverviewTab } from "./tabs/overview";
 import { CustomerData } from "./tabs/customer";
+import { differenceInDays, parseISO } from "date-fns";
+
 // import { PlanogramTab } from "./tabs/planogram";
-
-
 
 // --- Shelf Interface ---
 interface Customer {
@@ -36,7 +36,7 @@ interface Merchandiser {
 interface Planogram {
   uuid: string;
   name: string;
-//   logo?: string | null;
+  //   logo?: string | null;
   valid_from?: string;
   valid_to?: string;
   customers?: Customer[];
@@ -47,7 +47,6 @@ interface Planogram {
 export const tabs = [
   { name: "Overview", url: "overview", component: <OverviewTab /> },
   { name: "Customer", url: "customer", component: <CustomerData /> },
-
 ];
 
 export default function Page() {
@@ -55,7 +54,7 @@ export default function Page() {
   const { uuid: uuid } = useParams();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [shelfData, setShelfData] = useState<Planogram | null>(null);
+  const [planogramData, setPlanogramData] = useState<Planogram | null>(null);
 
   const { showSnackbar } = useSnackbar();
   const onTabClick = (index: number) => setActiveTab(index);
@@ -79,7 +78,7 @@ export default function Page() {
           return;
         }
 
-        setShelfData(data);
+        setPlanogramData(data);
       } catch (error) {
         console.error("Error fetching Planogram data:", error);
         showSnackbar("Unable to fetch shelf details", "error");
@@ -91,6 +90,24 @@ export default function Page() {
     fetchShelfData();
   }, [uuid, showSnackbar]);
 
+  const renderRemainingDays = (planogramData: Planogram | null) => {
+    if (!planogramData?.valid_to) return "No expiry date";
+
+    const today = new Date();
+    const validTo = parseISO(planogramData.valid_to);
+
+    const diff = differenceInDays(validTo, today);
+
+    if (diff <= 0) {
+      return "Expired";
+    } else {
+      return `${diff} day${diff !== 1 ? "s" : ""} remaining`;
+    }
+  };
+
+  // ✅ Usage
+  const statusText = renderRemainingDays(planogramData);
+
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
@@ -100,37 +117,41 @@ export default function Page() {
         <h1 className="text-xl font-semibold mb-1">{title}</h1>
       </div>
 
-      {shelfData && (
+      {planogramData && (
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 border border-gray-200 my-5 rounded-lg bg-white gap-6">
           {/* Shelf Info */}
           <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 flex-wrap">
             <div className="p-4 rounded-lg flex flex-col items-start justify-center shadow-sm">
               <h1 className="font-semibold text-xl text-gray-900">
-                {shelfData.name || "-"}
+                {planogramData.name || "-"}
               </h1>
 
-              {shelfData.customers && shelfData.customers.length > 0 && (
-                <span className="text-sm text-gray-700 font-medium">
-                  Owner: {shelfData.customers[0].owner_name}
-                </span>
-              )}
+              {planogramData.customers &&
+                planogramData.customers.length > 0 && (
+                  <span className="text-sm text-gray-700 font-medium">
+                    Owner: {planogramData.customers[0].owner_name}
+                  </span>
+                )}
             </div>
-
-           
           </div>
 
           {/* Shelf Code Card */}
           <div className="p-4 rounded-lg flex flex-col items-start justify-center shadow-sm">
-            <h1 className="text-xs text-gray-500 uppercase mb-1">Planogram Code</h1>
+            <h1 className="text-xs text-gray-500 uppercase mb-1">
+              Planogram Code
+            </h1>
             <h2 className="text-lg font-semibold text-gray-900">
-              {shelfData.code || "SHELF-001"}
+              {planogramData.code || "SHELF-001"}
+            </h2>
+            <h2 className={`text-sm ${statusText.includes("remaining") ? "text-green-500" : "text-red-500"} font-medium`}>
+              {statusText || ""}
             </h2>
           </div>
         </div>
       )}
 
       {/* Tabs */}
-      {shelfData && (
+      {planogramData && (
         <ContainerCard
           className="w-full flex gap-[4px] overflow-x-auto"
           padding="5px"

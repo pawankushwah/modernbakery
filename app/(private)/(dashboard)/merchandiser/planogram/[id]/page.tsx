@@ -33,55 +33,45 @@ import {
 import Loading from "@/app/components/Loading";
 
 // ---------------- TYPES ----------------
+type ShelfImage = {
+  shelf_id: number;
+  image: File | null;
+};
 
-// Form values for Formik
-type PlanogramfFormValues = {
+type PlanogramFormValues = {
   name: string;
   valid_from: string;
   valid_to: string;
   merchendiser_ids: number[];
   customer_ids: number[];
   shelf_id: number[];
+  images: Record<string, Record<string, ShelfImage[]>>;
 };
 
-// Backend responses
 type MerchandiserResponse = { id: number; name: string };
-
 type CustomerFromBackend = {
   id: number;
   customer_code: string;
   business_name: string;
+  merchendiser_ids?: string;
 };
-
-type ShelfFromBackend = {
-  id: number;
-  code: string;
-  shelf_name: string;
+type CustomerOption = {
+  value: string;
+  label: string;
+  merchendiser_ids: string;
+  id: string;
 };
-
-type CustomerFromEdit = {
-  customers: number;
-  customer_code: string;
-  customer_type: string;
-  owner_name: string;
-};
-
-type CustomerOption = { value: string; label: string };
-
-// --- Planogram payload type for backend ---
-export type PlanogramType = {
-  name: string;
-  valid_from?: string;
-  valid_to?: string;
-  merchendisher_id: number[]; // backend expects single merchandiser
-  customer_id: number[]; // backend expects single customer
-  shelf_id: number[];
+type ShelfOption = {
+  value: string;
+  label: string;
+  shelf_id: number;
+  merch_id?: string;
+  cust_id?: string;
 };
 
 // ---------------- VALIDATION ----------------
-
 const validationSchema = Yup.object({
-  name: Yup.string().trim().required(" Name is required").max(100),
+  name: Yup.string().trim().required("Name is required").max(100),
   valid_from: Yup.date()
     .required("Valid From is required")
     .typeError("Please enter a valid date"),
@@ -101,6 +91,7 @@ const validationSchema = Yup.object({
   shelf_id: Yup.array().of(Yup.number()).min(1, "Select at least one Shelf"),
 });
 
+// Only validate specific fields for each step
 const stepSchemas = [
   Yup.object().shape({
     name: validationSchema.fields.name,
@@ -110,11 +101,11 @@ const stepSchemas = [
   Yup.object().shape({
     merchendiser_ids: validationSchema.fields.merchendiser_ids,
     customer_ids: validationSchema.fields.customer_ids,
+    shelf_id: validationSchema.fields.shelf_id,
   }),
 ];
 
 // ---------------- COMPONENT ----------------
-
 export default function Planogram() {
   const steps: StepperStep[] = [
     { id: 1, label: "Planogram Details" },
@@ -125,22 +116,30 @@ export default function Planogram() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
-  const [imageUrl, setImageUrl] = useState<string[] | null>([]);
-  const [shelfSelected, setShelfSelected] = useState<number[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [shelfPayload, setShelfPayload] = useState<{
+    customer_groups: { [key: string]: string[] };
+  }>();
   const [merchendiserOptions, setMerchendiserOptions] = useState<
     CustomerOption[]
   >([]);
-  const [shelfOptions, setShelfOptions] = useState([]);
+  const [shelfOptions, setShelfOptions] = useState<ShelfOption[]>([]);
   const [customerOptions, setCustomerOptions] = useState<CustomerOption[]>([]);
-  const [initialValues, setInitialValues] = useState<PlanogramfFormValues>({
+  const [existingImages, setExistingImages] = useState<Record<number, string>>(
+    {}
+  );
+
+  console.log(shelfPayload);
+
+  const [initialValues, setInitialValues] = useState<PlanogramFormValues>({
     name: "",
     valid_from: "",
     valid_to: "",
     merchendiser_ids: [],
     customer_ids: [],
     shelf_id: [],
+    images: {},
   });
 
   const {
@@ -153,25 +152,21 @@ export default function Planogram() {
   } = useStepperForm(steps.length);
 
   // ---------------- HELPERS ----------------
-  const formatCustomerLabel = (
-    customer: CustomerFromBackend | CustomerFromEdit
-  ): string => {
-    if ("business_name" in customer) {
-      return `${customer.customer_code || ""} - ${
-        customer.business_name || ""
-      }`;
-    } else {
-      return `${customer.customer_code || ""} - ${customer.owner_name || ""}`;
-    }
+  const formatCustomerLabel = (customer: CustomerFromBackend): string => {
+    return `${customer.customer_code || ""} - ${customer.business_name || ""}`;
   };
 
-  const formatShelfLabel = (shelf: {
-    id: number;
-    code: string;
-    shelf_name: string;
-  }): string => {
-    return `${shelf.code || ""} - ${shelf.shelf_name || ""}`;
+  // Each image object
+  type ImageObject = {
+    shelf_id: number;
+    image: string;
   };
+
+  // Each custGroup is an array of ImageObjects
+  type CustGroup = ImageObject[];
+
+  // Each merchGroup is an array of CustGroups
+  type MerchGroup = CustGroup[];
 
   // ---------------- FETCH DATA ----------------
   useEffect(() => {
@@ -193,17 +188,36 @@ export default function Planogram() {
           if (res?.data) {
             const planogramData = res.data;
 
-            const merchIds = planogramData.merchendisher_id || [];
+            const merchIds =
+              planogramData.merchendishers?.map((m: { id: number }) => m.id) ||
+              [];
+            const custIds =
+              planogramData.customers?.map((c: { id: number }) => c.id) || [];
+            const shelfIds =
+              planogramData.shelves?.map((s: { id: number }) => s.id) || [];
+
+            // Store existing images for display
+            const imagesMap: Record<number, string> = {};
+            if (planogramData.images && Array.isArray(planogramData.images)) {
+              planogramData.images.forEach((merchGroup: MerchGroup) => {
+                console.log(merchGroup);
+
+                merchGroup.forEach((custGroup: CustGroup) => {
+                  console.log(custGroup);
+
+                  custGroup.forEach((imgObj: ImageObject) => {
+                    imagesMap[imgObj.shelf_id] = imgObj.image;
+                  });
+                });
+              });
+            }
+
+            setExistingImages(imagesMap);
+
             if (merchIds.length > 0) {
               await fetchCustomers(merchIds);
             }
 
-            const custIds = planogramData.customer_id || [];
-            if (custIds.length > 0) {
-              await fetchShelves(custIds);
-            }
-
-            // 4️⃣ NOW set initial form values
             setInitialValues({
               name: planogramData.name || "",
               valid_from: planogramData.valid_from
@@ -214,7 +228,8 @@ export default function Planogram() {
                 : "",
               merchendiser_ids: merchIds,
               customer_ids: custIds,
-              shelf_id: planogramData.shelf_id || [],
+              shelf_id: shelfIds,
+              images: {},
             });
           }
         } else {
@@ -230,35 +245,7 @@ export default function Planogram() {
     fetchData();
   }, [id, showSnackbar]);
 
-  const fetchShelves = async (cust_ids: number[]) => {
-    console.log("------------------------========", cust_ids);
-    if (!cust_ids.length) {
-      setShelfOptions([]);
-      return;
-    }
-    try {
-      const response = await shelfList({
-        customer_ids: cust_ids.map(Number),
-      });
-
-      console.log(response);
-      if (response?.status && Array.isArray(response.data)) {
-        const formatted = response.data.map((shelf: ShelfFromBackend) => ({
-          value: String(shelf.id),
-          label: formatShelfLabel(shelf),
-        }));
-        console.log(formatted);
-        setShelfOptions(formatted);
-      } else {
-        setShelfOptions([]);
-      }
-    } catch (err) {
-      console.error(err);
-      setShelfOptions([]);
-    }
-  };
-
-  // ---------------- FETCH CUSTOMERS DYNAMICALLY ----------------
+  // ---------------- FETCH CUSTOMERS ----------------
   const fetchCustomers = async (merchIds: number[]) => {
     if (!merchIds.length) {
       setCustomerOptions([]);
@@ -268,6 +255,24 @@ export default function Planogram() {
       const response = await shelvesDropdown({
         merchandiser_ids: merchIds.map(String),
       });
+
+      const payloadMap = new Map<string, string[]>();
+      response.data.forEach((customer: CustomerFromBackend) => {
+        if (!customer?.merchendiser_ids) return;
+        const merchIds = customer.merchendiser_ids
+          .split(",")
+          .map((id) => id.trim())
+          .filter(Boolean);
+        merchIds.forEach((merchId: string) => {
+          const existing = payloadMap.get(merchId) || [];
+          existing.push(customer.id.toString());
+          payloadMap.set(merchId, existing);
+        });
+      });
+
+      const payload = Object.fromEntries(payloadMap);
+      setShelfPayload({ customer_groups: payload });
+
       if (response?.status && Array.isArray(response.data)) {
         const formatted = response.data.map(
           (customer: CustomerFromBackend) => ({
@@ -285,10 +290,55 @@ export default function Planogram() {
     }
   };
 
+  // ---------------- FETCH SHELVES ----------------
+  const fetchShelves = async (payload: {
+    customer_groups: {
+      [key: string]: string[];
+    };
+  }) => {
+    if (!payload) {
+      setShelfOptions([]);
+      return;
+    }
+    try {
+      const response = await shelfList(payload);
+      const shelves: ShelfOption[] = [];
+
+      // Flatten the nested structure
+      for (const merchId in response.data) {
+        for (const custId in response.data[merchId]) {
+          response.data[merchId][custId].forEach(
+            (shelf: { shelf_id: number; shelf_name: string; code: string }) => {
+              console.log(shelf);
+              shelves.push({
+                value: String(shelf.shelf_id),
+                label: `${shelf.code || ""} - ${shelf.shelf_name || ""}`,
+                shelf_id: shelf.shelf_id,
+                merch_id: merchId,
+                cust_id: custId,
+              });
+            }
+          );
+        }
+      }
+
+      setShelfOptions(shelves);
+    } catch (err) {
+      console.error(err);
+      setShelfOptions([]);
+    }
+  };
+
+  useEffect(() => {
+    if (shelfPayload) {
+      fetchShelves(shelfPayload);
+    }
+  }, [shelfPayload]);
+
   // ---------------- STEP NAVIGATION ----------------
   const handleNext = async (
-    values: PlanogramfFormValues,
-    actions: FormikHelpers<PlanogramfFormValues>
+    values: PlanogramFormValues,
+    actions: FormikHelpers<PlanogramFormValues>
   ) => {
     try {
       const schema = stepSchemas[currentStep - 1];
@@ -297,54 +347,127 @@ export default function Planogram() {
       nextStep();
     } catch (err) {
       if (err instanceof Yup.ValidationError) {
-        const fields = err.inner.map((e) => e.path);
-        actions.setTouched(
-          fields.reduce(
-            (acc, key) => ({ ...acc, [key!]: true }),
-            {} as Record<string, boolean>
-          )
-        );
-        actions.setErrors(
-          err.inner.reduce(
-            (
-              acc: Partial<Record<keyof PlanogramfFormValues, string>>,
-              curr
-            ) => ({
-              ...acc,
-              [curr.path as keyof PlanogramfFormValues]: curr.message,
-            }),
-            {}
-          )
-        );
+        // Create a simpler error object that matches FormikErrors type
+        const errorMap: FormikErrors<PlanogramFormValues> = {};
+
+        err.inner.forEach((error) => {
+          if (error.path) {
+            // Only set errors for fields that exist in our form values
+            const fieldName = error.path as keyof PlanogramFormValues;
+            const errorMap: Record<string, string> = {};
+
+            if (fieldName in values) {
+              errorMap[fieldName] = error.message;
+            }
+          }
+        });
+
+        actions.setErrors(errorMap);
+
+        // Set touched for the fields that have errors
+        const touchedMap: FormikTouched<PlanogramFormValues> = {};
+        err.inner.forEach((error) => {
+          if (error.path) {
+            const fieldName = error.path as keyof PlanogramFormValues;
+            if (fieldName in values) {
+              (touchedMap[fieldName] as boolean) = true;
+            }
+          }
+        });
+        actions.setTouched(touchedMap);
       }
     }
   };
 
+  // ---------------- IMAGE HANDLING ----------------
+  const handleImageUpload = (
+    shelfId: number,
+    file: File | null,
+    setFieldValue: (field: keyof PlanogramFormValues, value: unknown) => void,
+    values: PlanogramFormValues
+  ) => {
+    const shelfOption = shelfOptions.find((s) => s.shelf_id === shelfId);
+    if (!shelfOption?.merch_id || !shelfOption?.cust_id) return;
+
+    const updatedImages = { ...values.images };
+
+    if (!updatedImages[shelfOption.merch_id]) {
+      updatedImages[shelfOption.merch_id] = {};
+    }
+    if (!updatedImages[shelfOption.merch_id][shelfOption.cust_id]) {
+      updatedImages[shelfOption.merch_id][shelfOption.cust_id] = [];
+    }
+
+    const existingIndex = updatedImages[shelfOption.merch_id][
+      shelfOption.cust_id
+    ].findIndex((item: ShelfImage) => item.shelf_id === shelfId);
+
+    if (existingIndex >= 0) {
+      updatedImages[shelfOption.merch_id][shelfOption.cust_id][existingIndex] =
+        {
+          shelf_id: shelfId,
+          image: file,
+        };
+    } else {
+      updatedImages[shelfOption.merch_id][shelfOption.cust_id].push({
+        shelf_id: shelfId,
+        image: file,
+      });
+    }
+
+    setFieldValue("images", updatedImages);
+  };
+
   // ---------------- SUBMIT ----------------
-  const handleSubmit = async (values: PlanogramfFormValues) => {
+  const handleSubmit = async (values: PlanogramFormValues) => {
     try {
       if (!values.customer_ids.length) {
         showSnackbar("Please select at least one customer", "error");
         return;
       }
 
-      const payload: PlanogramType = {
-        name: values.name,
-        valid_from: values.valid_from,
-        valid_to: values.valid_to,
-        merchendisher_id: values.merchendiser_ids,
-        customer_id: values.customer_ids,
-        shelf_id: values.shelf_id,
-      };
+      const formData = new FormData();
+      formData.append("name", values.name);
+      formData.append("valid_from", values.valid_from);
+      formData.append("valid_to", values.valid_to);
+      formData.append("code", `PLN-${Date.now()}`);
 
-      console.log(payload);
+      values.merchendiser_ids.forEach((id) =>
+        formData.append("merchendisher_id[]", String(id))
+      );
+      values.customer_ids.forEach((id) =>
+        formData.append("customer_id[]", String(id))
+      );
+      values.shelf_id.forEach((id) =>
+        formData.append("shelf_id[]", String(id))
+      );
+
+      // Append images in the correct format
+      for (const merchId in values.images) {
+        for (const custId in values.images[merchId]) {
+          values.images[merchId][custId].forEach(
+            (imgObj: ShelfImage, index: number) => {
+              if (imgObj.image instanceof File) {
+                formData.append(
+                  `images[${merchId}][${custId}][${index}][shelf_id]`,
+                  String(imgObj.shelf_id)
+                );
+                formData.append(
+                  `images[${merchId}][${custId}][${index}][image]`,
+                  imgObj.image
+                );
+              }
+            }
+          );
+        }
+      }
 
       const res = isEditMode
-        ? await updatePlanogramById(String(id), payload)
-        : await addPlanogram(payload);
+        ? await updatePlanogramById(String(id), formData)
+        : await addPlanogram(formData);
 
       if (res.error) {
-        showSnackbar(res.data?.message || "Failed to save shelf", "error");
+        showSnackbar(res.data?.message || "Failed to save planogram", "error");
       } else {
         showSnackbar(
           isEditMode
@@ -362,13 +485,10 @@ export default function Planogram() {
 
   // ---------------- RENDER ----------------
   const renderStepContent = (
-    values: PlanogramfFormValues,
-    setFieldValue: (
-      field: keyof PlanogramfFormValues,
-      value: string | number | number[]
-    ) => void,
-    errors: FormikErrors<PlanogramfFormValues>,
-    touched: FormikTouched<PlanogramfFormValues>
+    values: PlanogramFormValues,
+    setFieldValue: (field: keyof PlanogramFormValues, value: unknown) => void,
+    errors: FormikErrors<PlanogramFormValues>,
+    touched: FormikTouched<PlanogramFormValues>
   ) => {
     switch (currentStep) {
       case 1:
@@ -379,7 +499,7 @@ export default function Planogram() {
                 <InputFields
                   required
                   type="text"
-                  label=" Name"
+                  label="Name"
                   name="name"
                   value={values.name}
                   onChange={(e) => setFieldValue("name", e.target.value)}
@@ -407,15 +527,14 @@ export default function Planogram() {
                   className="text-xs text-red-500"
                 />
               </div>
-              <>{console.log(values.valid_from)}</>
               <div>
                 <InputFields
-                  disabled={values.valid_from == "" ? true : false}
+                  disabled={!values.valid_from}
                   required
                   type="date"
                   label="Valid To"
                   name="valid_to"
-                  value={values.valid_from == "" ? "" : values.valid_to}
+                  value={values.valid_to}
                   onChange={(e) => setFieldValue("valid_to", e.target.value)}
                   error={touched.valid_to && errors.valid_to}
                 />
@@ -434,6 +553,7 @@ export default function Planogram() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <InputFields
+                  width="max-w-[500px]"
                   required
                   label="Merchandisers"
                   name="merchendiser_ids"
@@ -441,21 +561,20 @@ export default function Planogram() {
                   options={merchendiserOptions}
                   isSingle={false}
                   onChange={(e) => {
-                    const vals = Array.isArray(e.target.value)
-                      ? e.target.value
-                      : [];
-                    const selectedIds = vals.map(Number);
+                    const selectedIds = (
+                      Array.isArray(e.target.value) ? e.target.value : []
+                    ).map(Number);
                     setFieldValue("merchendiser_ids", selectedIds);
                     setFieldValue("customer_ids", []);
                     setFieldValue("shelf_id", []);
+                    setFieldValue("images", {});
                     fetchCustomers(selectedIds);
                   }}
                   error={
-                    touched.merchendiser_ids && errors.merchendiser_ids
-                      ? Array.isArray(errors.merchendiser_ids)
-                        ? errors.merchendiser_ids.join(", ")
-                        : errors.merchendiser_ids
-                      : undefined
+                    touched.merchendiser_ids &&
+                    (Array.isArray(errors.merchendiser_ids)
+                      ? errors.merchendiser_ids[0]
+                      : errors.merchendiser_ids)
                   }
                 />
                 <ErrorMessage
@@ -466,10 +585,11 @@ export default function Planogram() {
               </div>
               <div>
                 <InputFields
+                  width="max-w-[500px]"
                   placeholder={
-                    values.merchendiser_ids.length == 0
+                    values.merchendiser_ids.length === 0
                       ? "A merchandiser must be selected"
-                      : customerOptions.length == 0
+                      : customerOptions.length === 0
                       ? "No customer found"
                       : ""
                   }
@@ -480,25 +600,23 @@ export default function Planogram() {
                   options={customerOptions}
                   isSingle={false}
                   disabled={
-                    (values.merchendiser_ids.length === 0 && !isEditMode) ||
-                    customerOptions.length == 0
+                    values.merchendiser_ids.length === 0 ||
+                    customerOptions.length === 0
                   }
                   onChange={(e) => {
-                    const vals = Array.isArray(e.target.value)
-                      ? e.target.value
-                      : [];
-                    const selectedIds = vals.map(Number);
+                    const selectedIds = (
+                      Array.isArray(e.target.value) ? e.target.value : []
+                    ).map(Number);
                     setFieldValue("customer_ids", selectedIds);
                     setFieldValue("shelf_id", []);
-                    setShelfSelected(selectedIds);
-                    fetchShelves(selectedIds);
+                    setFieldValue("images", {});
+                    shelfPayload && fetchShelves(shelfPayload);
                   }}
                   error={
-                    touched.merchendiser_ids && errors.merchendiser_ids
-                      ? Array.isArray(errors.merchendiser_ids)
-                        ? errors.merchendiser_ids.join(", ")
-                        : errors.merchendiser_ids
-                      : undefined
+                    touched.customer_ids &&
+                    (Array.isArray(errors.customer_ids)
+                      ? errors.customer_ids[0]
+                      : errors.customer_ids)
                   }
                 />
                 <ErrorMessage
@@ -509,35 +627,35 @@ export default function Planogram() {
               </div>
               <div>
                 <InputFields
+                  width="max-w-[500px]"
                   placeholder={
                     values.customer_ids.length === 0
                       ? "A customer must be selected"
-                      : shelfOptions.length == 0
+                      : shelfOptions.length === 0
                       ? "No shelf found"
                       : ""
                   }
                   required
-                  label="shelf"
+                  label="Shelf"
                   name="shelf_id"
                   value={values.shelf_id.map(String)}
                   options={shelfOptions}
                   disabled={
-                    (values.customer_ids.length === 0 && !isEditMode) ||
-                    shelfOptions.length == 0
+                    values.customer_ids.length === 0 ||
+                    shelfOptions.length === 0
                   }
                   isSingle={false}
                   onChange={(e) => {
-                    const vals = Array.isArray(e.target.value)
-                      ? e.target.value
-                      : [];
-                    setFieldValue("shelf_id", vals.map(Number));
+                    const selectedIds = (
+                      Array.isArray(e.target.value) ? e.target.value : []
+                    ).map(Number);
+                    setFieldValue("shelf_id", selectedIds);
                   }}
                   error={
-                    touched.shelf_id && errors.shelf_id
-                      ? Array.isArray(errors.shelf_id)
-                        ? errors.shelf_id.join(", ")
-                        : errors.shelf_id
-                      : undefined
+                    touched.shelf_id &&
+                    (Array.isArray(errors.shelf_id)
+                      ? errors.shelf_id[0]
+                      : errors.shelf_id)
                   }
                 />
                 <ErrorMessage
@@ -545,58 +663,88 @@ export default function Planogram() {
                   component="span"
                   className="text-xs text-red-500"
                 />
-              </div>
-              {/* {shelfOptions &&
-                shelfOptions.map((index, shelf) => {
-                  return (
-                    <div>
-                      <InputFields
-                        key={index}
-                        label="Add Image"
-                        name="image"
-                        type="file"
-                        onChange={(e) => {
-                          const file = (e.target as HTMLInputElement)
-                            .files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onload = () => {
-                              setImageUrl(reader.result as string);
-                              setFieldValue(
-                                "image",
-                                (e.target as HTMLInputElement).files?.[0]
-                              );
-                            };
-                            reader.readAsDataURL(file);
-                          } else {
-                            setImageUrl(null);
-                            setFieldValue("image", null);
-                          }
-                        }}
-                      />
-                      <ErrorMessage
-                        name="image"
-                        component="span"
-                        className="text-xs text-red-500"
-                      />
-                      {imageUrl ? (
-                        <div className="flex flex-col gap-[10px]">
-                          <Image
-                            width={128}
-                            height={128}
-                            src={imageUrl}
-                            alt="Planogram"
-                            className="mt-2 h-32 w-32 object-cover rounded-xl bg-blue-100"
-                          />
-                        </div>
-                      ) : (
-                        <div className="mt-2 h-32 w-32 flex items-center justify-center rounded-xl bg-gray-200 text-gray-500">
-                          No Image
-                        </div>
-                      )}
+
+                {/* Selected shelves with image upload */}
+                {values.shelf_id.length > 0 && (
+                  <div className="col-span-full w-full mt-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                    <h3 className="font-medium mb-4">
+                      Selected Shelves ({values.shelf_id.length}):
+                    </h3>
+
+                    {/* Flex wrap grid style */}
+                    <div className="flex flex-wrap gap-4">
+                      {values.shelf_id.map((shelfId) => {
+                        const shelf = shelfOptions.find(
+                          (s) => s.shelf_id === shelfId
+                        );
+                        const currentImage = values.images[
+                          shelf?.merch_id || ""
+                        ]?.[shelf?.cust_id || ""]?.find(
+                          (img: ShelfImage) => img.shelf_id === shelfId
+                        )?.image;
+                        const existingImage = existingImages[shelfId];
+
+                        return (
+                          <div
+                            key={shelfId}
+                            className="flex-1 min-w-[250px] max-w-[320px] p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all"
+                          >
+                            <div className="mb-3">
+                              <h4 className="font-medium text-gray-800 text-base truncate">
+                                {shelf?.label}
+                              </h4>
+                              <p className="text-xs text-gray-500">
+                                Shelf ID: {shelfId}
+                              </p>
+                            </div>
+
+                            <div className="mt-2">
+                              <InputFields
+                                label="Add Image"
+                                name={`image_${shelfId}`}
+                                type="file"
+                                onChange={(e) => {
+                                  const file =
+                                    (e.target as HTMLInputElement).files?.[0] ||
+                                    null;
+                                  handleImageUpload(
+                                    shelfId,
+                                    file,
+                                    setFieldValue,
+                                    values
+                                  );
+                                }}
+                              />
+
+                              {(currentImage || existingImage) && (
+                                <div className="flex flex-col items-start gap-2 mt-3">
+                                  <Image
+                                    width={128}
+                                    height={128}
+                                    src={
+                                      currentImage
+                                        ? URL.createObjectURL(currentImage)
+                                        : process.env.NEXT_PUBLIC_API_URL +
+                                            existingImage || ""
+                                    }
+                                    alt={`Shelf ${shelfId}`}
+                                    className="h-32 w-32 object-cover rounded-lg border bg-gray-100"
+                                  />
+                                  {currentImage && (
+                                    <span className="text-xs text-green-600">
+                                      {currentImage.name}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  );
-                })} */}
+                  </div>
+                )}
+              </div>
             </div>
           </ContainerCard>
         );
@@ -649,7 +797,7 @@ export default function Planogram() {
                   handleNext(values, {
                     setErrors,
                     setTouched,
-                  } as unknown as FormikHelpers<PlanogramfFormValues>)
+                  } as FormikHelpers<PlanogramFormValues>)
                 }
                 onSubmit={() => formikSubmit()}
                 showSubmitButton={isLastStep}

@@ -67,8 +67,8 @@ const CompanySchema = Yup.object().shape({
   street: Yup.string().required("Street is required"),
   landmark: Yup.string().required("Landmark is required"),
   sub_region: Yup.string().required("Sub Region is required"),
-  primary_contact: Yup.string().required("Primary contact is required").min(10).max(13),
-  toll_free_no: Yup.string().required("Toll free number is required"),
+  primary_contact: Yup.string().required("Primary contact is required").min(9).max(10),
+  toll_free_no: Yup.string().required("Toll free number is required").min(11).max(11),
     module_access: Yup.string().required("Module is required field "),
     
     
@@ -89,9 +89,9 @@ Yup.object({
 }),
 
   Yup.object({
-    primary_contact: Yup.string().required("Primary contact is required").min(10).max(13),
+    primary_contact: Yup.string().required("Primary contact is required").min(9).max(10),
     primary_code: Yup.string(),
-    toll_free_no: Yup.string().required("Toll free number is required"),
+    toll_free_no: Yup.string().required("Toll free number is required").min(11).max(11),
     toll_free_code: Yup.string(),
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
@@ -246,7 +246,7 @@ export default function AddEditCompany() {
         showSnackbar(isEditMode ? "Company Updated Successfully" : "Company Created Successfully", "success");
         router.push("/company");
         try {
-          await saveFinalCode({ reserved_code: values.company_code, model_name: "companies" });
+          await saveFinalCode({ reserved_code: values.company_code, model_name: "company" });
         } catch (e) {
           // Optionally handle error, but don't block success
         }

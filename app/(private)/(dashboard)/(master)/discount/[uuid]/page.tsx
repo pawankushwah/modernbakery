@@ -20,6 +20,7 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 import { useEffect, useRef, useState } from "react";
 import SettingPopUp from "@/app/components/settingPopUp";
 import IconButton from "@/app/components/iconButton";
+import Loading from "@/app/components/Loading";
 
 // ---------------- Types -----------------
 interface DiscountFormValues {
@@ -336,7 +337,7 @@ export default function AddDiscountWithStepper() {
                   onChange={(e) => setFieldValue("discount_code", e.target.value)}
                   disabled={codeMode === "auto"}
                 />
-                {!isEditMode && (
+                {/* {!isEditMode && (
                   <>
                     <IconButton
                       bgClass="white"
@@ -357,23 +358,22 @@ export default function AddDiscountWithStepper() {
                       }}
                     />
                   </>
-                )}
+                )} */}
               </div>
 
               {/* Item */}
               <div>
                 <InputFields
+                required
                   label="Item"
                   name="item_id"
                   value={values.item_id}
                   onChange={(e) => setFieldValue("item_id", e.target.value)}
                   options={itemOptions}
-                  error={
-                    touched.item_id && errors.item_id
-                  }
+                  error={touched.item_id && errors.item_id}
 
                 />
-                {touched?.item_id && errors?.item_id &&  (
+                {errors?.item_id && touched?.item_id && (
                   <p className="text-red-500 text-sm mt-1">{errors.item_id}</p>
                 )}
               </div>
@@ -381,11 +381,14 @@ export default function AddDiscountWithStepper() {
               {/* Item Category */}
               <div>
                 <InputFields
+                required
                   label="Item Category"
                   name="category_id"
                   value={values.category_id}
                   onChange={(e) => setFieldValue("category_id", e.target.value)}
                   options={itemCategoryOptions}
+                  error={touched.category_id && errors.category_id}
+
                 />
                 {errors?.category_id && touched?.category_id && (
                   <p className="text-red-500 text-sm mt-1">{errors.category_id}</p>
@@ -395,11 +398,14 @@ export default function AddDiscountWithStepper() {
               {/* Customer */}
               <div>
                 <InputFields
+                required
                   label="Customer"
                   name="customer_id"
                   value={values.customer_id}
                   onChange={(e) => setFieldValue("customer_id", e.target.value)}
                   options={agentCustomerOptions}
+                  error={touched.customer_id && errors.customer_id}
+
                 />
                 {errors?.customer_id && touched?.customer_id && (
                   <p className="text-red-500 text-sm mt-1">{errors.customer_id}</p>
@@ -409,11 +415,14 @@ export default function AddDiscountWithStepper() {
               {/* Customer Channel */}
               <div>
                 <InputFields
+                required
                   label="Customer Channel"
                   name="customer_channel_id"
                   value={values.customer_channel_id}
                   onChange={(e) => setFieldValue("customer_channel_id", e.target.value)}
                   options={channelOptions}
+                  error={touched.customer_channel_id && errors.customer_channel_id}
+
                 />
                 {errors?.customer_channel_id && touched?.customer_channel_id && (
                   <p className="text-red-500 text-sm mt-1">{errors.customer_channel_id}</p>
@@ -430,11 +439,14 @@ export default function AddDiscountWithStepper() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <InputFields
+                required
                   label="Discount Type"
                   name="discount_type"
                   value={values.discount_type}
                   onChange={(e) => setFieldValue("discount_type", e.target.value)}
                   options={discountTypeOptions}
+                  error={touched.discount_type && errors.discount_type}
+
                 />
                 {errors?.discount_type && touched?.discount_type && (
                   <p className="text-red-500 text-sm mt-1">{errors.discount_type}</p>
@@ -443,10 +455,13 @@ export default function AddDiscountWithStepper() {
 
               <div>
                 <InputFields
+                required
                   label="Discount Value"
                   name="discount_value"
                   value={values.discount_value}
                   onChange={(e) => setFieldValue("discount_value", e.target.value)}
+                  error={touched.discount_value && errors.discount_value}
+
                 />
                 {errors?.discount_value && touched?.discount_value && (
                   <p className="text-red-500 text-sm mt-1">{errors.discount_value}</p>
@@ -455,10 +470,13 @@ export default function AddDiscountWithStepper() {
 
               <div>
                 <InputFields
+                required
                   label="Minimum Quantity"
                   name="min_quantity"
                   value={values.min_quantity}
                   onChange={(e) => setFieldValue("min_quantity", e.target.value)}
+                  error={touched.min_quantity && errors.min_quantity}
+
                 />
                 {errors?.min_quantity && touched?.min_quantity && (
                   <p className="text-red-500 text-sm mt-1">{errors.min_quantity}</p>
@@ -467,10 +485,13 @@ export default function AddDiscountWithStepper() {
 
               <div>
                 <InputFields
+                required
                   label="Minimum Order Value"
                   name="min_order_value"
                   value={values.min_order_value}
                   onChange={(e) => setFieldValue("min_order_value", e.target.value)}
+                  error={touched.min_order_value && errors.min_order_value}
+
                 />
                 {errors?.min_order_value && touched?.min_order_value && (
                   <p className="text-red-500 text-sm mt-1">{errors.min_order_value}</p>
@@ -487,11 +508,14 @@ export default function AddDiscountWithStepper() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <InputFields
+                required
                   label="Start Date"
                   name="start_date"
                   type="date"
                   value={values.start_date}
                   onChange={(e) => setFieldValue("start_date", e.target.value)}
+                  error={touched.start_date && errors.start_date}
+
                 />
                 {errors?.start_date && touched?.start_date && (
                   <p className="text-red-500 text-sm mt-1">{errors.start_date}</p>
@@ -500,11 +524,14 @@ export default function AddDiscountWithStepper() {
 
               <div>
                 <InputFields
+                required
                   label="End Date"
                   name="end_date"
                   type="date"
                   value={values.end_date}
                   onChange={(e) => setFieldValue("end_date", e.target.value)}
+                  error={touched.end_date && errors.end_date}
+
                 />
                 {errors?.end_date && touched?.end_date && (
                   <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>
@@ -537,7 +564,7 @@ export default function AddDiscountWithStepper() {
   };
 
   // -------- Render ----------
-  if (loading) return <div className="p-6 text-gray-500">Loading discount data...</div>;
+  if (loading) return <Loading />;
 
   return (
     <div>
@@ -552,7 +579,7 @@ export default function AddDiscountWithStepper() {
         </div>
       </div>
 
-      <Formik initialValues={initialValues} enableReinitialize validationSchema={DiscountSchema} onSubmit={handleSubmit}>
+      <Formik initialValues={initialValues} validationSchema={DiscountSchema} enableReinitialize onSubmit={handleSubmit}>
         {({ values, setFieldValue, errors, touched, handleSubmit: formikSubmit, setErrors, setTouched }) => (
           <Form>
             <StepperForm
