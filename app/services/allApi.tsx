@@ -2233,6 +2233,17 @@ export const permissionListById = async (id: string, params?: Params) => {
   }
 };
 
+
+
+export const rolepermissionListById = async (id: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/settings/roles/permissions/${id}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 type permissionType = {
   name: string;
 };
@@ -2861,6 +2872,34 @@ export const addLabel = async (payload: labelType) => {
 export const editLabel = async (id: string, payload: labelType) => {
   try {
     const res = await API.put(`/api/settings/labels/${id}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+// Authentication User APIs
+export const authUserList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/master/auth/getUserList`, params);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const registerAuthUser = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/auth/register`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateAuthUser = async (uuid: string, body: object) => {
+  try {
+    const res = await API.put(`/api/master/auth/updateUser/${uuid}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

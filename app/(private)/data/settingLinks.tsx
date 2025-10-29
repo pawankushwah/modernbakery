@@ -26,13 +26,13 @@ export const initialLinkData: SidebarDataType[] = [
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [
-                    // {
-            //     isActive: false,
-            //     href: "/settings/user",
-            //     label: "Users",
-            //     leadingIcon: "mdi:account",
-            //     iconColor: "text-green-500",
-            // },
+                    {
+                isActive: false,
+                href: "/settings/user",
+                label: "Users",
+                leadingIcon: "mdi:account",
+                iconColor: "text-green-500",
+            },
                     {
                 isActive: false,
                 href: "/settings/user-types",

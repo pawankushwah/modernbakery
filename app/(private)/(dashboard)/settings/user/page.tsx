@@ -1,160 +1,135 @@
 "use client";
 
-import BorderIconButton from "@/app/components/borderIconButton";
-import { Icon } from "@iconify-icon/react";
-import { useState } from "react";
-import CustomDropdown from "@/app/components/customDropdown";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import StatusBtn from "@/app/components/statusBtn2";
+import Table, {
+    configType,
+    listReturnType,
+    TableDataType,
+} from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import Table, { TableDataType } from "@/app/components/customTable";
+import { authUserList} from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useLoading } from "@/app/services/loadingContext";
 
-const data = new Array(100).fill(null).map((_, i) => ({
-    id: (i + 1).toString(),
-    name: `Abdul Retail Shop`,
-    email: `test@gmail.com`,
-    contactNo: '1234567890',
-    userName: `abdul`,
-    password: `********`,
-    roleType: `Admin`,
-    status: "Active",
-}));
-
-const columns = [
-    {
-        key: "name",
-        label: "User Name", isSortable: true,
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.name}
-            </span>
-        ),
-    },
-    { key: "email", label: "Email" },
-    { key: "contactNo", label: "Contact No" },
-    { key: "userName", label: "User Name" },
-    { key: "password", label: "Password" },
+export default function User() {
+    const [selectedUser, setSelectedUser] = useState<string>("");
+    const columns: configType["columns"] = [
+    { key: "outlet_name", label: "Outlet Name", showByDefault: true },
+    { key: "owner_name", label: "Owner Name" },
+    { key: "landmark", label: "Landmark" },
+    { key: "district", label: "District" },
+    { key: "street", label: "Street" },
+    { key: "town", label: "Town" },
+    { key: "contact_no", label: "Contact No." },
+    { key: "whatsapp_no", label: "Whatsapp No." },
+    { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
+    { key: "payment_type", label: "Payment Type" },
     {
         key: "status",
         label: "Status",
-        render: (row: TableDataType) => (
-            <div className="flex items-center">
-                {row.status ? (
-                    <span className="text-sm text-[#027A48] bg-[#ECFDF3] font-[500] p-1 px-4 rounded-xl text-[12px]">
-                        Active
-                    </span>
-                ) : (
-                    <span className="text-sm text-red-700 bg-red-200 p-1 px-4 rounded-xl text-[12px]">
-                        Inactive
-                    </span>
-                )}
-            </div>
-        ),
+        render: (row: TableDataType) => {
+            // Treat status 1 or 'active' (case-insensitive) as active
+            const isActive =
+                String(row.status) === "1" ||
+                (typeof row.status === "string" &&
+                    row.status.toLowerCase() === "active");
+            return <StatusBtn isActive={isActive} />;
+        },
+        showByDefault: true,
     },
-];
+    ];
 
-const dropdownDataList = [
-    { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
-    { icon: "lucide:download", label: "Download QR Code", iconWidth: 20 },
-    { icon: "lucide:printer", label: "Print QR Code", iconWidth: 20 },
-    { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
-    { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
+    const { setLoading } = useLoading();
+    const [refreshKey, setRefreshKey] = useState(0);
+    const router = useRouter();
+    const { showSnackbar } = useSnackbar();
+    type TableRow = TableDataType & { id?: string };
 
-export default function User() {
-    const [showDropdown, setShowDropdown] = useState(false);
+    const fetchUser = useCallback(
+        async (
+            page: number = 1,
+            pageSize: number = 50
+        ): Promise<listReturnType> => {
+            try {
+                setLoading(true);
+                // const params: any = {
+                //     page: page.toString(),
+                // };
+                const listRes = await authUserList({});
+                setLoading(false);
+                return {
+                    data: Array.isArray(listRes.data) ? listRes.data : [],
+                    total: listRes?.pagination?.totalPages || 1,
+                    currentPage: listRes?.pagination?.page || 1,
+                    pageSize: listRes?.pagination?.limit || pageSize,
+                };
+            } catch (error: unknown) {
+                setLoading(false);
+                showSnackbar("Error fetching user data", "error");
+                return {
+                    data: [],
+                    total: 1,
+                    currentPage: 1,
+                    pageSize: 50,
+                };
+            }
+        },
+        [selectedUser, setLoading]
+    );
+
+    useEffect(() => {
+        setLoading(true);
+    }, []);
+
     return (
         <>
-            {/* header */}
-            <div className="w-full">
-                <div className="flex justify-between items-center p-5">
-                    <h1 className="text-[20px] font-semibold text-[#181D27] h-[30px] flex items-center leading-[30px] mb-[1px]">
-                        User
-                    </h1>
-
-                    {/* top bar action buttons */}
-                    <div className="flex gap-[12px] items-center text-center">
-                        <BorderIconButton
-                            icon="gala:file-document"
-                            label="Export CSV"
-                            labelTw="text-[12px] hidden sm:block items-center"
-                        />
-                        <BorderIconButton icon="mage:upload" />
-                        <BorderIconButton
-                            icon="ic:sharp-more-vert"
-                            onClick={() => setShowDropdown(!showDropdown)}
-                        />
-
-                        {showDropdown && (
-                            <div className="w-[226px] absolute top-[40px] right-0 z-30">
-                                <CustomDropdown>
-                                    {dropdownDataList.map((link, index: number) => (
-                                        <div
-                                            key={index}
-                                            className="px-[14px] py-[10px] flex items-center gap-[8px] hover:bg-[#FAFAFA]"
-                                        >
-                                            <Icon
-                                                icon={link.icon}
-                                                width={link.iconWidth}
-                                                className="text-[#717680]"
-                                            />
-                                            <span className="text-[#181D27] font-[500] text-[16px]">
-                                                {link.label}
-                                            </span>
-                                        </div>
-                                    ))}
-                                </CustomDropdown>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Table */}
-                <div className="h-[calc(100%-70px)]">
-                    <Table
-                        data={data}
-                        config={{
-                            header: {
-                                searchBar: true,
-                                columnFilter: true,
-                                actions: [
-                                    <SidebarBtn
-                                        key={0}
-                                        isActive={true}
-                                        href="/settings/user/add"
-                                        leadingIcon="lucide:plus"
-                                        label="Add User"
-                                    />,
-                                ],
-                            },
-                            localStorageKey: "userTable",
-                            footer: {
-                                nextPrevBtn: true,
-                                pagination: true,
-                            },
-                            columns: columns,
-                            rowSelection: true,
-                            rowActions: [
-                                {
-                                    icon: "lucide:eye",
-                                },
-                                {
-                                    icon: "lucide:edit-2",
-                                    onClick: (data) => {
-                                        console.log(data);
-                                    },
-                                },
-                                {
-                                    icon: "lucide:more-vertical",
-                                    onClick: () => {
-                                        confirm(
-                                            "Are you sure you want to delete this User?"
-                                        );
-                                    },
-                                },
+            <div className="flex flex-col h-full">
+                <Table
+                    refreshKey={refreshKey}
+                    config={{
+                        api: { list: fetchUser },
+                        header: {
+                            title: "Users",
+                            searchBar: false,
+                            columnFilter: true,
+                            actions: [
+                                <SidebarBtn
+                                    key={0}
+                                    href="/settings/user/add"
+                                    isActive
+                                    leadingIcon="lucide:plus"
+                                    label="Add"
+                                    labelTw="hidden sm:block"
+                                />,
                             ],
-                            pageSize: 10,
-                        }}
-                    />
-                </div>
+                        },
+                        localStorageKey: "user-table",
+                        footer: { nextPrevBtn: true, pagination: true },
+                        columns,
+                        rowSelection: true,
+                        rowActions: [
+                            // {
+                            //     icon: "lucide:eye",
+                            //     onClick: (data: object) => {
+                            //         const row = data as TableRow;
+                            //         router.push(`/agentCustomer/details/${row.uuid}`);
+                            //     },
+                            // },
+                            {
+                                icon: "lucide:edit-2",
+                                onClick: (data: object) => {
+                                    const row = data as TableRow;
+                                    router.push(
+                                        `/agentCustomer/${row.uuid}`
+                                    );
+                                },
+                            },
+                        ],
+                        pageSize: 50,
+                    }}
+                />
             </div>
         </>
     );

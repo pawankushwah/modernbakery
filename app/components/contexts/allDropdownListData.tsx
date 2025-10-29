@@ -29,7 +29,8 @@ import {
   SurveyList,
   getWarehouse,
   subRegionList,
-  labelList
+  labelList,
+  roleList
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
@@ -58,6 +59,7 @@ interface DropdownDataContextType {
   discountType: DiscountType[];
   menuList: MenuList[];
   labels: LabelItem[];
+  roles: Role[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -95,6 +97,7 @@ interface DropdownDataContextType {
   fetchRouteOptions: (warehouse_id: string | number) => Promise<void>;
   fetchRegionOptions: (company_id: string | number) => Promise<void>;
   labelOptions: { value: string; label: string }[];
+  roleOptions: { value: string; label: string }[];
   loading: boolean;
 }
 
@@ -277,6 +280,12 @@ interface LabelItem {
   status: number;
 }
 
+interface Role {
+  id: number;
+  name: string;
+  status: number;
+}
+
 const AllDropdownListDataContext = createContext<DropdownDataContextType | undefined>(undefined);
 
 export const useAllDropdownListData = () => {
@@ -318,6 +327,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [submenu, setSubmenu] = useState<submenuList[]>([]);
   const [permissions, setPermissions] = useState<permissionsList[]>([]);
   const [labels, setLabels] = useState<LabelItem[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -476,6 +486,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
   }));
 
+  const roleOptions = (Array.isArray(roles) ? roles : []).map((r: Role) => ({
+    value: String(r.id ?? ''),
+    label: r.name ?? ''
+  }));
+
   const fetchAreaOptions = async (region_id: string | number) => {
     setLoading(false);
     try {
@@ -593,6 +608,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         submenuList(),
         permissionList(),
         labelList(),
+        roleList(),
       ]);
 
 
@@ -635,6 +651,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setSubmenu(normalize(res[26]) as submenuList[]);
       setPermissions(normalize(res[27]) as permissionsList[]);
       setLabels(normalize(res[28]) as LabelItem[]);
+      setRoles(normalize(res[29]) as Role[]);
 
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -668,6 +685,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setSubmenu([]);
       setPermissions([]);
       setLabels([]);
+      setRoles([]);
     } finally {
       setLoading(false);
     }
@@ -705,8 +723,9 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         discountType: discountType,
         menuList: menuList,
         labels: labels,
+        roles: roles,
         fetchItemSubCategoryOptions,
-  fetchRegionOptions,
+        fetchRegionOptions,
         companyOptions,
         countryOptions,
         onlyCountryOptions,
@@ -741,6 +760,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         refreshDropdowns,
         fetchAreaOptions,
         fetchRouteOptions,
+        roleOptions,
         loading
       }}
     >

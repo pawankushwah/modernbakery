@@ -268,6 +268,7 @@ export default function AddEditRole() {
         "success"
       );
       router.push("/settings/role");
+      router.refresh();
     }
     setSubmitting(false);
   };

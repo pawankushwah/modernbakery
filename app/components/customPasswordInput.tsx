@@ -8,10 +8,12 @@ export default function CustomPasswordInput({
   value,
   onChange,
   required = false,
+  width = "w-full",
 }: {
   label: string;
   value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  width?: string;
   required?: boolean;
 }) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -21,7 +23,7 @@ export default function CustomPasswordInput({
   }
 
   return (
-    <div className="w-full">
+    <div className={`${width}`}>
       <label htmlFor={label} className="text-sm text-gray-700">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}

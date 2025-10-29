@@ -124,7 +124,7 @@ export default function InputFields({
                 }
                 
                 setIsOpen(false);
-                safeOnChange({ target: { value: ` ${phone}`, name } } as React.ChangeEvent<HTMLInputElement>);
+                safeOnChange({ target: { value: `${phone}`, name } } as React.ChangeEvent<HTMLInputElement>);
               };
               const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 setPhone(e.target.value);
@@ -551,7 +551,7 @@ useEffect(() => {
               
              
               return (
-                <div className="max-w-sm mx-auto">
+                <div className="mx-auto">
                   <div className="flex items-center relative">
                     {/* Dropdown Button */}
                     <button
