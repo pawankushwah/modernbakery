@@ -97,7 +97,13 @@ export const initialLinkData: SidebarDataType[] = [
                 trailingIcon: "mdi-light:chevron-right",
                 iconColor: "text-yellow-400",
                 children: [
-                   
+                   {
+                        isActive: false,
+                        href: "/settings/company",
+                        label: "Company",
+                        leadingIcon: "lucide:user",
+                        iconColor: "text-green-500",
+                    },
                     {
                         isActive: false,
                         href: "/settings/company/serviceType",

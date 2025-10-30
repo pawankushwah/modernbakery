@@ -6,7 +6,6 @@ import StepperForm, {
 } from "@/app/components/stepperForm";
 import ContainerCard from "@/app/components/containerCard";
 import InputFields from "@/app/components/inputFields";
-import FormInputField from "@/app/components/formInputField";
 import {
   addCompany,
   getCompanyById,
@@ -30,6 +29,7 @@ import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useEffect, useState, useRef } from "react";
+import Loading from "@/app/components/Loading";
 import { address } from "framer-motion/client";
 
 interface CompanyFormValues {
@@ -54,14 +54,22 @@ interface CompanyFormValues {
   status: string;
 }
 
-// 🔹 Full form schema (used on submit)
 const CompanySchema = Yup.object().shape({
   company_name: Yup.string().required("Company name is required"),
   company_code: Yup.string().required("Company code is required"),
   company_type: Yup.string().required("Company type is required"),
   website: Yup.string()
-    .url("Invalid website URL")
-    .required("Company website is required"),
+    .required("Company website is required")
+    .test("is-valid-website", "Invalid website URL", (value) => {
+      if (!value) return false;
+      try {
+        const v = value.startsWith("http://") || value.startsWith("https://") ? value : `http://${value}`;
+        const parsed = new URL(v);
+        return !!parsed.hostname && parsed.hostname.indexOf(".") > -1;
+      } catch (e) {
+        return false;
+      }
+    }),
   company_logo: Yup.string().required("Company Logo is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   country_id: Yup.string().required("Country is required"),
@@ -97,9 +105,25 @@ const stepSchemas = [
     company_code: Yup.string().required("Company code is required"),
     company_type: Yup.string().required("Company type is required"),
     website: Yup.string()
-      .url("Invalid website URL")
-      .required("Company website is required"),
+      .required("Company website is required")
+      .test("is-valid-website", "Invalid website URL", (value) => {
+        if (!value) return false;
+        try {
+          const v = value.startsWith("http://") || value.startsWith("https://") ? value : `http://${value}`;
+          const parsed = new URL(v);
+          return !!parsed.hostname && parsed.hostname.indexOf(".") > -1;
+        } catch (e) {
+          return false;
+        }
+      }),
     company_logo: Yup.string().required("Company Logo is required"),
+    address: Yup.string().required("address is required"),
+    city: Yup.string().required("city is required"),
+    
+    country_id: Yup.string().required("Country is required"),
+     module_access: Yup.string().required("Module is required"),
+    service_type: Yup.string().required("Service type is required"),
+    status: Yup.string().required("Status is required"),
   }),
 
   Yup.object({
@@ -119,12 +143,7 @@ const stepSchemas = [
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
 
-  Yup.object({
-   address: Yup.string().required("address is required"),
-    city: Yup.string().required("city is required"),
-    
-    country_id: Yup.string().required("Country is required"),
-  }),
+ 
 
   Yup.object({
     selling_currency: Yup.string()
@@ -138,15 +157,11 @@ const stepSchemas = [
       .max(15, "VAT Number cannot be more than 15 characters"),
   }),
 
-  Yup.object({
-    module_access: Yup.string(),
-    service_type: Yup.string().required("Service type is required"),
-    status: Yup.string().required("Status is required"),
-  }),
 ];
 
 export default function AddEditCompany() {
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
   const [prefix, setPrefix] = useState("");
   const { regionOptions, areaOptions, onlyCountryOptions, countryCurrency } =
@@ -177,31 +192,51 @@ export default function AddEditCompany() {
     status: "1",
   });
 
+  // Local country selector state for contact fields (used by InputFields contact type)
+  const [primaryCountry, setPrimaryCountry] = useState<{ name: string; code?: string; flag?: string }>({
+    name: "Uganda",
+    code: "+256",
+    flag: "🇺🇬",
+  });
+
+  const [tollFreeCountry, setTollFreeCountry] = useState<{ name: string; code?: string; flag?: string }>({
+    name: "Uganda",
+    code: "+256",
+    flag: "🇺🇬",
+  });
+
   // Load company for edit mode or generate code for add mode
   const codeGeneratedRef = useRef(false);
   useEffect(() => {
     if (params?.id && params.id !== "add") {
       setIsEditMode(true);
       (async () => {
-        const res = await getCompanyById(params.id as string);
-        if (res && !res.error) {
-          setInitialValues({
-            ...res.data,
-            country_id: res.data.country?.id?.toString() || "",
-            selling_currency: res.data.selling_currency || "",
-            purchase_currency: res.data.purchase_currency || "",
-            primary_contact: res.data.primary_contact || "",
-            toll_free_no: res.data.toll_free_no || "",
-            company_code: res.data.company_code || "",
-            company_name: res.data.company_name || "",
-            email: res.data.email || "",
-            vat: res.data.vat || "",
-            city: res.data.city || "",
-            address: res.data.address || "",
-            module_access: res.data.module_access || "",
-            service_type: res.data.service_type || "",
-            status: res.data.status || "1",
-          });
+        setLoading(true);
+        try {
+          const res = await getCompanyById(params.id as string);
+          if (res && !res.error) {
+            setInitialValues({
+              ...res.data,
+              country_id: res.data.country?.id?.toString() || "",
+              selling_currency: res.data.selling_currency || "",
+              purchase_currency: res.data.purchase_currency || "",
+              primary_contact: res.data.primary_contact || "",
+              toll_free_no: res.data.toll_free_no || "",
+              company_code: res.data.company_code || "",
+              company_name: res.data.company_name || "",
+              email: res.data.email || "",
+              vat: res.data.vat || "",
+              city: res.data.city || "",
+              address: res.data.address || "",
+              module_access: res.data.module_access || "",
+              service_type: res.data.service_type || "",
+              status: res.data.status || "1",
+            });
+          }
+        } catch (err) {
+          showSnackbar("Failed to fetch company details", "error");
+        } finally {
+          setLoading(false);
         }
       })();
     } else if (
@@ -231,9 +266,7 @@ export default function AddEditCompany() {
   const steps: StepperStep[] = [
     { id: 1, label: "Company" },
     { id: 2, label: "Contact" },
-    { id: 3, label: "Location" },
-    { id: 4, label: "Financial" },
-    { id: 5, label: "Additional" },
+    { id: 3, label: "Financial" },
   ];
 
   const {
@@ -251,7 +284,7 @@ export default function AddEditCompany() {
   ) => {
     try {
       await CompanySchema.validate(values, { abortEarly: false });
-
+      setLoading(true);
       const formData = new FormData();
       (Object.keys(values) as (keyof CompanyFormValues)[]).forEach((key) => {
         formData.append(key, values[key] ?? "");
@@ -273,7 +306,7 @@ export default function AddEditCompany() {
             : "Company Created Successfully",
           "success"
         );
-        router.push("/company");
+        router.push("/settings/company");
         try {
           await saveFinalCode({
             reserved_code: values.company_code,
@@ -287,6 +320,7 @@ export default function AddEditCompany() {
       showSnackbar("Validation failed, please check your inputs", "error");
     } finally {
       setSubmitting(false);
+      setLoading(false);
     }
   };
 
@@ -321,7 +355,7 @@ export default function AddEditCompany() {
                   }
                   disabled={codeMode === "auto"}
                 />
-                {!isEditMode && (
+                {/* {!isEditMode && (
                   <>
                     <IconButton
                       bgClass="white"
@@ -345,7 +379,7 @@ export default function AddEditCompany() {
                       }}
                     />
                   </>
-                )}
+                )} */}
               </div>
               <div>
                 <InputFields
@@ -362,11 +396,7 @@ export default function AddEditCompany() {
                       : false
                   }
                 />
-                {errors?.company_name && touched?.company_name && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.company_name}
-                  </p>
-                )}
+                
               </div>
 
               <div>
@@ -382,9 +412,7 @@ export default function AddEditCompany() {
                   ]}
                   error={touched.company_type && errors.company_type}
                 />
-                {errors.company_type && (
-                  <p className="text-red-500 text-sm mt-1">{errors.company_type}</p>
-                )}
+                
               </div>
 
               <div>
@@ -396,12 +424,11 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("website", e.target.value)}
                   error={touched.website && errors.website}
                 />
-                {errors.website && (
-                  <p className="text-red-500 text-sm mt-1">{errors.website}</p>
-                )}
+                
               </div>
               <div>
                 <InputFields
+                required
                   label="Logo"
                   name="company_logo"
                   type="file"
@@ -409,187 +436,18 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("company_logo", e.target.value)}
                   error={touched.company_logo && errors.company_logo}
                 />
-                {errors.company_logo && (
-                  <p className="text-red-500 text-sm mt-1">{errors.company_logo}</p>
-                )}
+                
               </div>
-            </div>
-          </ContainerCard>
-        );
-
-      case 2:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              <div>
-                <FormInputField
-                  required
-                  type="contact"
-                  label="Primary Contact"
-                  contact={values.primary_contact}
-                  code={values.primary_code}
-                  onContactChange={(e) => handleNumericInput(e, "primary_contact", setFieldValue)}
-                  onCodeChange={(e) => setFieldValue("primary_code", e.target.value)}
-                  options={onlyCountryOptions}
-                  error={touched.primary_contact && errors.primary_contact}
-                />
-                {errors.primary_contact && (
-                  <p className="text-red-500 text-sm mt-1">{errors.primary_contact}</p>
-                )}
-              </div>
-
-              <div>
-                <FormInputField
-                  required
-                  type="contact"
-                  label="Toll Free Number"
-                  contact={values.toll_free_no}
-                  code={values.toll_free_code}
-                  onContactChange={(e) => handleNumericInput(e, "toll_free_no", setFieldValue)}
-                  onCodeChange={(e) => setFieldValue("toll_free_code", e.target.value)}
-                  options={onlyCountryOptions}
-                  error={touched.toll_free_no && errors.toll_free_no}
-                />
-                {errors.toll_free_no && (
-                  <p className="text-red-500 text-sm mt-1">{errors.toll_free_no}</p>
-                )}
-              </div>
-
               <div>
                 <InputFields
-                  required
-                  label="Email"
-                  name="email"
-                  value={values.email}
-                  onChange={(e) => setFieldValue("email", e.target.value)}
-                  error={touched.email && errors.email}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                )}
-              </div>
-            </div>
-          </ContainerCard>
-        );
-
-      case 3:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
-
-              <div>
-                <InputFields
-                  required
-                  label="Address"
-                  name="address"
-                  value={values.address}
-                  onChange={(e) => setFieldValue("address", e.target.value)}
-                  error={touched.address && errors.address}
-                />
-                {errors.address && (
-                  <p className="text-red-500 text-sm mt-1">{errors.address}</p>
-                )}
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="City"
-                  name="city"
-                  value={values.city}
-                  onChange={(e) => setFieldValue("city", e.target.value)}
-                  error={touched.city && errors.city}
-                />
-                {errors.city && (
-                  <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                )}
-              </div>
-
-             
-              <div>
-                <InputFields
-                  required
-                  label="Country"
-                  name="country_id"
-                  value={values.country_id ? values.country_id.toString() : ""}
-                  options={onlyCountryOptions}
-                  onChange={(e) => setFieldValue("country_id", e.target.value)}
-                  error={touched.country_id && errors.country_id}
-                />
-                {errors.country_id && (
-                  <p className="text-red-500 text-sm mt-1">{errors.country_id}</p>
-                )}
-              </div>
-            </div>
-          </ContainerCard>
-        );
-
-      case 4:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <InputFields
-                  required
-                  label="Selling Currency"
-                  name="selling_currency"
-                  value={values.selling_currency}
-                  options={countryCurrency}
-                  onChange={(e) => setFieldValue("selling_currency", e.target.value)}
-                  error={touched.selling_currency && errors.selling_currency}
-                />
-                {errors.selling_currency && (
-                  <p className="text-red-500 text-sm mt-1">{errors.selling_currency}</p>
-                )}
-              </div>
-
-              <div>
-                <InputFields
-                  required
-                  label="Purchase Currency"
-                  name="purchase_currency"
-                  value={values.purchase_currency}
-                  options={countryCurrency}
-                  onChange={(e) => setFieldValue("purchase_currency", e.target.value)}
-                  error={touched.purchase_currency && errors.purchase_currency}
-                />
-                {errors.purchase_currency && (
-                  <p className="text-red-500 text-sm mt-1">{errors.purchase_currency}</p>
-                )}
-              </div>
-
-              <div>
-                <InputFields
-                  label="VAT Number"
-                  name="vat"
-                  value={values.vat}
-                  onChange={(e) => setFieldValue("vat", e.target.value)}
-                  error={touched.vat && errors.vat}
-                />
-                {errors.vat && (
-                  <p className="text-red-500 text-sm mt-1">{errors.vat}</p>
-                )}
-              </div>
-            </div>
-          </ContainerCard>
-        );
-
-      case 5:
-        return (
-          <ContainerCard>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <InputFields
+                required
                   label="Module"
                   name="module_access"
                   value={values.module_access}
                   onChange={(e) => setFieldValue("module_access", e.target.value)}
                   error={touched.module_access && errors.module_access}
                 />
-                {errors.module_access && (
-                  <p className="text-red-500 text-sm mt-1">{errors.module_access}</p>
-                )}
+                
               </div>
 
               <div>
@@ -605,11 +463,46 @@ export default function AddEditCompany() {
                   ]}
                   error={touched.service_type && errors.service_type}
                 />
-                {errors.service_type && (
-                  <p className="text-red-500 text-sm mt-1">{errors.service_type}</p>
-                )}
+                
               </div>
 
+              <div>
+                <InputFields
+                  required
+                  label="Address"
+                  name="address"
+                  value={values.address}
+                  onChange={(e) => setFieldValue("address", e.target.value)}
+                  error={touched.address && errors.address}
+                />
+                
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="City"
+                  name="city"
+                  value={values.city}
+                  onChange={(e) => setFieldValue("city", e.target.value)}
+                  error={touched.city && errors.city}
+                />
+                
+              </div>
+
+             
+              <div>
+                <InputFields
+                  required
+                  label="Country"
+                  name="country_id"
+                  value={values.country_id ? values.country_id.toString() : ""}
+                  options={onlyCountryOptions}
+                  onChange={(e) => setFieldValue("country_id", e.target.value)}
+                  error={touched.country_id && errors.country_id}
+                />
+                
+              </div>
               <div>
                 <InputFields
                   required
@@ -624,23 +517,129 @@ export default function AddEditCompany() {
                   ]}
                   error={touched.status && errors.status}
                 />
-                {errors.status && (
-                  <p className="text-red-500 text-sm mt-1">{errors.status}</p>
-                )}
+                
               </div>
             </div>
           </ContainerCard>
         );
+
+      case 2:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  required
+                  type="contact"
+                  label="Primary Contact"
+                  name="primary_contact"
+                  selectedCountry={primaryCountry}
+                  setSelectedCountry={(c: { name: string; code?: string; flag?: string } | undefined) => {
+                    setPrimaryCountry(c ?? { name: "", code: "", flag: "" });
+                    setFieldValue("primary_code", c?.code ?? "");
+                  }}
+                  value={values.primary_contact}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => handleNumericInput(e as React.ChangeEvent<HTMLInputElement>, "primary_contact", setFieldValue)}
+                  error={touched.primary_contact && errors.primary_contact}
+                />
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  type="contact"
+                  label="Toll Free Number"
+                  name="toll_free_no"
+                  selectedCountry={tollFreeCountry}
+                  setSelectedCountry={(c: { name: string; code?: string; flag?: string } | undefined) => {
+                    setTollFreeCountry(c ?? { name: "", code: "", flag: "" });
+                    setFieldValue("toll_free_code", c?.code ?? "");
+                  }}
+                  value={values.toll_free_no}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => handleNumericInput(e as React.ChangeEvent<HTMLInputElement>, "toll_free_no", setFieldValue)}
+                  error={touched.toll_free_no && errors.toll_free_no}
+                />
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Email"
+                  name="email"
+                  value={values.email}
+                  onChange={(e) => setFieldValue("email", e.target.value)}
+                  error={touched.email && errors.email}
+                />
+                
+              </div>
+            </div>
+          </ContainerCard>
+        );
+
+
+      case 3:
+        return (
+          <ContainerCard>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <InputFields
+                  required
+                  label="Selling Currency"
+                  name="selling_currency"
+                  value={values.selling_currency}
+                  options={countryCurrency}
+                  onChange={(e) => setFieldValue("selling_currency", e.target.value)}
+                  error={touched.selling_currency && errors.selling_currency}
+                />
+                
+              </div>
+
+              <div>
+                <InputFields
+                  required
+                  label="Purchase Currency"
+                  name="purchase_currency"
+                  value={values.purchase_currency}
+                  options={countryCurrency}
+                  onChange={(e) => setFieldValue("purchase_currency", e.target.value)}
+                  error={touched.purchase_currency && errors.purchase_currency}
+                />
+                
+              </div>
+
+              <div>
+                <InputFields
+                required
+                  label="VAT Number"
+                  name="vat"
+                  value={values.vat}
+                  onChange={(e) => setFieldValue("vat", e.target.value)}
+                  error={touched.vat && errors.vat}
+                />
+                
+              </div>
+            </div>
+          </ContainerCard>
+        );
+
+     
       default:
         return null;
     }
   };
 
+  if ((isEditMode && loading) || !onlyCountryOptions || !countryCurrency) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Loading />
+      </div>
+    );
+  }
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/company">
+          <Link href="/settings/company">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
