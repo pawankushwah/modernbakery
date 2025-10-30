@@ -62,8 +62,21 @@ const CompanySchema = Yup.object().shape({
   company_code: Yup.string().required("Company code is required"),
   company_type: Yup.string().required("Company type is required"),
   website: Yup.string()
-    .url("Invalid website URL")
-    .required("Company website is required"),
+    .required("Company website is required")
+    .test("is-url",
+      "Invalid website URL",
+      value => {
+        if (!value) return false;
+        const v = String(value).trim();
+        try {
+          const maybe = /^https?:\/\//i.test(v) ? v : `http://${v}`;
+          new URL(maybe);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+    ),
   company_logo: Yup.string().required("Company Logo is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   country_id: Yup.string().required("Country is required"),
@@ -99,8 +112,19 @@ const stepSchemas = [
     company_code: Yup.string().required("Company code is required"),
     company_type: Yup.string().required("Company type is required"),
     website: Yup.string()
-      .url("Invalid website URL")
-      .required("Company website is required"),
+      .required("Company website is required")
+      .test("is-url", "Invalid website URL", value => {
+        if (!value) return false;
+        const v = String(value).trim();
+        try {
+          const maybe = /^https?:\/\//i.test(v) ? v : `http://${v}`;
+          // eslint-disable-next-line no-new
+          new URL(maybe);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }),
     company_logo: Yup.string().required("Company Logo is required"),
   }),
 

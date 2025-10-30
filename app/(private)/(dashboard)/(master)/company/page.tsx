@@ -240,7 +240,7 @@ const CompanyPage = () => {
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
-                        rowSelection: false,
+                        rowSelection: true,
                         rowActions: [
                             {
                                 icon: "lucide:eye",
