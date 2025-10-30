@@ -551,7 +551,7 @@ useEffect(() => {
               
              
               return (
-                <div className="mx-auto">
+                <div className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"} rounded-lg`}>
                   <div className="flex items-center relative">
                     {/* Dropdown Button */}
                     <button
