@@ -823,7 +823,7 @@ export const getCustomerType = async (params?: Params) => {
 
 type Payload = {
   region_name: string;
-  country_id: number;
+  company_id: number;
   status: number;
 };
 
@@ -839,7 +839,7 @@ export const addRegion = async (payload: Payload) => {
 
 type ipdatePayload = {
   region_name: string;
-  country_id: number;
+  company_id: number;
   status: number;
 };
 
@@ -851,7 +851,7 @@ export const updateRegion = async (id: string, payload: ipdatePayload) => {
       payload
     );
     return res.data;
-  } catch (error: unknown) {
+  } catch (error: unknown) {  
     return handleError(error);
   }
 };
@@ -1197,7 +1197,10 @@ export const updateCustomerCategory = async (
     throw error;
   }
 };
-
+export const getCustomerCategoryByUUID = async (id: string) => {
+  const res = await API.get(`/api/settings/customer-category/${id}`);
+  return res.data;
+};
 export const userList = async (params?: Params) => {
   try {
     const res = await API.get("/api/settings/user-type/list", {
