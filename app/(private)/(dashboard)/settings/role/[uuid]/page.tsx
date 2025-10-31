@@ -15,6 +15,7 @@ import RolesPermissionTable, { MenuItem } from "./table2";
 import ContainerCard from "@/app/components/containerCard";
 import TabBtn from "@/app/components/tabBtn";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import usePermissionManager from "@/app/components/contexts/usePermission";
 
 interface Permission {
   permission_id: number;
@@ -49,6 +50,7 @@ export default function AddEditRole() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();
+  const { preload, refresh } = usePermissionManager();
   const [initialValues, setInitialValues] = useState<RoleFormValues>({
     name: "",
     labels: [],
@@ -267,8 +269,18 @@ export default function AddEditRole() {
         res.message || (isEditMode ? "Role Updated Successfully" : "Role Created Successfully"),
         "success"
       );
+      // refresh permission menu in the app (preload uses initialLinkData internally)
+      try {
+        // force refresh permissions so cache is bypassed after role update
+        if (refresh) {
+          await refresh({ force: true });
+        } else {
+          await preload();
+        }
+      } catch (e) {
+        console.error("Failed to refresh permissions after role change", e);
+      }
       router.push("/settings/role");
-      router.refresh();
     }
     setSubmitting(false);
   };

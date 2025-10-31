@@ -6,18 +6,32 @@ import Logo from "../../components/logo";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { LinkDataType, SidebarDataType } from "../data/dashboardLinks";
 import { useRouter } from "next/navigation";
+import { usePermissionManager } from "@/app/components/contexts/usePermission";
 
 export default function Sidebar({
-  data,
   onClickHandler,
   isOpen,
   setIsOpen
 }: {
-  data: SidebarDataType[];
   onClickHandler: (href: string) => void;
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
 }) {
+  const { filteredMenu } = usePermissionManager();
+  const data: SidebarDataType[] = (() => {
+    if (!filteredMenu) return [];
+    // If filteredMenu items are grouped (have 'data') treat as SidebarDataType[]
+    if (Array.isArray(filteredMenu) && filteredMenu.length > 0 && 'data' in filteredMenu[0]) {
+      return filteredMenu as unknown as SidebarDataType[];
+    }
+    // Otherwise assume it's a flat LinkDataType[] and wrap into a single group
+    return [
+      {
+        name: undefined,
+        data: filteredMenu as unknown as LinkDataType[],
+      },
+    ];
+  })();
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
   const [activeHref, setActiveHref] = useState<string>("");
   const pathname = usePathname();
