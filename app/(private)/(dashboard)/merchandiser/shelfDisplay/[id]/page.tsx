@@ -335,7 +335,7 @@ export default function ShelfDisplay() {
                       ).toString()}
                       onChange={(e) => setFieldValue(field, e.target.value)}
                       onBlur={handleBlur}
-                      error={touched[field] && errors[field]}
+                      // error={touched[field] && errors[field]}
                     />
                     <ErrorMessage
                       name={field}
@@ -355,7 +355,7 @@ export default function ShelfDisplay() {
                   value={values.valid_from.length == 0 ? "" : values.valid_from}
                   onChange={(e) => setFieldValue("valid_from", e.target.value)}
                   onBlur={handleBlur}
-                  error={touched.valid_from && errors.valid_from}
+                  // error={touched.valid_from && errors.valid_from}
                 />
                 <ErrorMessage
                   name="valid_from"
@@ -374,7 +374,7 @@ export default function ShelfDisplay() {
                   onChange={(e) => setFieldValue("valid_to", e.target.value)}
                   onBlur={handleBlur}
                   disabled={!values.valid_from}
-                  error={touched.valid_to && errors.valid_to}
+                  // error={touched.valid_to && errors.valid_to}
                 />
                 <ErrorMessage
                   name="valid_to"

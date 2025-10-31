@@ -105,9 +105,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={handleChange}
                     error={errors?.warehouse_name && touched?.warehouse_name ? errors.warehouse_name : false}
                 />
-                {errors?.warehouse_name && touched?.warehouse_name && (
-                    <div className="text-xs text-red-500 mt-1">{errors.warehouse_name}</div>
-                )}
+              
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
@@ -118,9 +116,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={handleChange}
                     error={errors?.owner_name && touched?.owner_name ? errors.owner_name : false}
                 />
-                {errors?.owner_name && touched?.owner_name && (
-                    <div className="text-xs text-red-500 mt-1">{errors.owner_name}</div>
-                )}
+                
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
@@ -132,9 +128,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={handleChange}
                     error={errors?.company && touched?.company ? errors.company : false}
                 />
-                {errors?.company && touched?.company && (
-                    <div className="text-xs text-red-500 mt-1">{errors.company}</div>
-                )}
+               
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
@@ -146,9 +140,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     placeholder="Enter TIN No."
                     error={errors?.tin_no && touched?.tin_no ? errors.tin_no : false}
                 />
-                {errors?.tin_no && touched?.tin_no && (
-                    <div className="text-xs text-red-500 mt-1">{errors.tin_no}</div>
-                )}
+                
             </div>
             
             {values.warehouse_type === 'agent_customer' && (
@@ -189,9 +181,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     onChange={handleChange}
                     error={errors?.warehouse_manager && touched?.warehouse_manager ? errors.warehouse_manager : false}
                 />
-                {errors?.warehouse_manager && touched?.warehouse_manager && (
-                    <div className="text-xs text-red-500 mt-1">{errors.warehouse_manager}</div>
-                )}
+               
             </div>
             <div className="flex flex-col gap-2">
                 <CustomSecurityCode
@@ -199,6 +189,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     value={values.agreed_stock_capital}
                     onChange={(e) => setFieldValue('agreed_stock_capital', e.target.value)}
                     placeholder="Enter Stock Capital"
+                    // error={errors?.warehouse_manager && touched?.warehouse_manager ? errors.warehouse_manager : false}
+
                 />
             </div>
         </div>

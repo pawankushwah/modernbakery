@@ -503,7 +503,7 @@ export default function Planogram() {
                   name="name"
                   value={values.name}
                   onChange={(e) => setFieldValue("name", e.target.value)}
-                  error={touched.name && errors.name}
+                  // error={touched.name && errors.name}
                 />
                 <ErrorMessage
                   name="name"
@@ -519,7 +519,7 @@ export default function Planogram() {
                   name="valid_from"
                   value={values.valid_from}
                   onChange={(e) => setFieldValue("valid_from", e.target.value)}
-                  error={touched.valid_from && errors.valid_from}
+                  // error={touched.valid_from && errors.valid_from}
                 />
                 <ErrorMessage
                   name="valid_from"
@@ -536,7 +536,7 @@ export default function Planogram() {
                   name="valid_to"
                   value={values.valid_to}
                   onChange={(e) => setFieldValue("valid_to", e.target.value)}
-                  error={touched.valid_to && errors.valid_to}
+                  // error={touched.valid_to && errors.valid_to}
                 />
                 <ErrorMessage
                   name="valid_to"
@@ -651,12 +651,12 @@ export default function Planogram() {
                     ).map(Number);
                     setFieldValue("shelf_id", selectedIds);
                   }}
-                  error={
-                    touched.shelf_id &&
-                    (Array.isArray(errors.shelf_id)
-                      ? errors.shelf_id[0]
-                      : errors.shelf_id)
-                  }
+                  // error={
+                  //   touched.shelf_id &&
+                  //   (Array.isArray(errors.shelf_id)
+                  //     ? errors.shelf_id[0]
+                  //     : errors.shelf_id)
+                  // }
                 />
                 <ErrorMessage
                   name="shelf_id"

@@ -351,6 +351,8 @@ export default function Warehouse() {
                   icon: "gala:file-document",
                   label: "Export Excel",
                   labelTw: "text-[12px] hidden sm:block",
+                  onClick: exportFile,
+
                 },
                 // {
                 //   icon: "lucide:radio",

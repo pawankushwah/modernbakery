@@ -64,9 +64,7 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                     }}
                     error={errors?.p12_file && touched?.p12_file ? errors.p12_file : false}
                 />
-                {errors?.p12_file && touched?.p12_file && (
-                    <span className="text-xs text-red-500 mt-1">{errors.p12_file}</span>
-                )}
+               
                 {values.p12_file && (
                     <p className="text-sm text-gray-600 mt-1">Current file: {typeof values.p12_file === 'string' ? values.p12_file : values.p12_file.name}</p>
                 )}
@@ -96,9 +94,7 @@ export default function WarehouseAdditionalInformation({ values, errors, touched
                     ]}
                     error={errors?.is_branch && touched?.is_branch ? errors.is_branch : false}
                 />
-                {errors?.is_branch && touched?.is_branch && (
-                    <span className="text-xs text-red-500 mt-1">{errors.is_branch}</span>
-                )}
+                
             </div>
             </>
             }

@@ -376,7 +376,7 @@ export default function AddEditSalesman({
                   name="name"
                   value={values.name}
                   onChange={(e) => setFieldValue("name", e.target.value)}
-                  error={touched.name && errors.name}
+                  // error={touched.name && errors.name}
                 />
                 <ErrorMessage
                   name="name"
@@ -443,7 +443,7 @@ export default function AddEditSalesman({
                   name="route_id"
                   value={values.route_id?.toString() ?? ""}
                   onChange={(e) => setFieldValue("route_id", e.target.value)}
-                  error={touched.route_id && errors.route_id}
+                  // error={touched.route_id && errors.route_id}
                   options={filteredRouteOptions}
                 />
                 <ErrorMessage
@@ -469,11 +469,11 @@ export default function AddEditSalesman({
                   selectedCountry={country.contact_no}
                   value={`${values.contact_no ?? ""}`}
                   onChange={(e) => setFieldValue("contact_no", e.target.value)}
-                  error={
-                    errors?.contact_no && touched?.contact_no
-                      ? errors.contact_no
-                      : false
-                  }
+                  // error={
+                  //   errors?.contact_no && touched?.contact_no
+                  //     ? errors.contact_no
+                  //     : false
+                  // }
                 />
                 {errors?.contact_no && touched?.contact_no && (
                   <span className="text-xs text-red-500 mt-1">

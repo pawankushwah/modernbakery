@@ -373,9 +373,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.item_id && errors.item_id}
 
                 />
-                {errors?.item_id && touched?.item_id && (
-                  <p className="text-red-500 text-sm mt-1">{errors.item_id}</p>
-                )}
+               
               </div>
 
               {/* Item Category */}
@@ -390,9 +388,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.category_id && errors.category_id}
 
                 />
-                {errors?.category_id && touched?.category_id && (
-                  <p className="text-red-500 text-sm mt-1">{errors.category_id}</p>
-                )}
+              
               </div>
 
               {/* Customer */}
@@ -407,9 +403,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.customer_id && errors.customer_id}
 
                 />
-                {errors?.customer_id && touched?.customer_id && (
-                  <p className="text-red-500 text-sm mt-1">{errors.customer_id}</p>
-                )}
+               
               </div>
 
               {/* Customer Channel */}
@@ -424,9 +418,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.customer_channel_id && errors.customer_channel_id}
 
                 />
-                {errors?.customer_channel_id && touched?.customer_channel_id && (
-                  <p className="text-red-500 text-sm mt-1">{errors.customer_channel_id}</p>
-                )}
+               
               </div>
             </div>
           </ContainerCard>
@@ -448,9 +440,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.discount_type && errors.discount_type}
 
                 />
-                {errors?.discount_type && touched?.discount_type && (
-                  <p className="text-red-500 text-sm mt-1">{errors.discount_type}</p>
-                )}
+               
               </div>
 
               <div>
@@ -463,9 +453,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.discount_value && errors.discount_value}
 
                 />
-                {errors?.discount_value && touched?.discount_value && (
-                  <p className="text-red-500 text-sm mt-1">{errors.discount_value}</p>
-                )}
+              
               </div>
 
               <div>
@@ -478,9 +466,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.min_quantity && errors.min_quantity}
 
                 />
-                {errors?.min_quantity && touched?.min_quantity && (
-                  <p className="text-red-500 text-sm mt-1">{errors.min_quantity}</p>
-                )}
+               
               </div>
 
               <div>
@@ -493,9 +479,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.min_order_value && errors.min_order_value}
 
                 />
-                {errors?.min_order_value && touched?.min_order_value && (
-                  <p className="text-red-500 text-sm mt-1">{errors.min_order_value}</p>
-                )}
+               
               </div>
             </div>
           </ContainerCard>
@@ -533,9 +517,7 @@ export default function AddDiscountWithStepper() {
                   error={touched.end_date && errors.end_date}
 
                 />
-                {errors?.end_date && touched?.end_date && (
-                  <p className="text-red-500 text-sm mt-1">{errors.end_date}</p>
-                )}
+               
               </div>
 
               <div>
@@ -550,9 +532,7 @@ export default function AddDiscountWithStepper() {
                     { value: "0", label: "Inactive" },
                   ]}
                 />
-                {errors?.status && touched?.status && (
-                  <p className="text-red-500 text-sm mt-1">{errors.status}</p>
-                )}
+               
               </div>
             </div>
           </ContainerCard>
