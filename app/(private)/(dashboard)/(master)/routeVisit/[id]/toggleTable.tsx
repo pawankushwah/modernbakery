@@ -42,10 +42,10 @@ export default function Table({
   const [internalLoading, setInternalLoading] = useState(false);
   const hasFetchedData = useRef(false);
 
-  // ✅ Track pre-filled customer IDs from API
-  const [prefilledCustomerIds, setPrefilledCustomerIds] = useState<Set<number>>(
-    new Set()
-  );
+  // ✅ Track pre-filled customer IDs and their days from API
+  const [prefilledCustomerData, setPrefilledCustomerData] = useState<
+    Record<number, string[]>
+  >({});
 
   const [rowStates, setRowStates] = useState<
     Record<
@@ -72,10 +72,8 @@ export default function Table({
     Sunday: false,
   });
 
-  // ✅ Filtered data - only show customers that are in both current customer_type AND pre-filled data
-  const filteredData = data.filter(
-    (customer) => !editMode || prefilledCustomerIds.has(customer.id)
-  );
+  // ✅ Show ALL customers, not filtered
+  const displayData = data;
 
   // ✅ Load visit data for editing
   const loadVisitData = useCallback(async (uuid: string) => {
@@ -109,12 +107,15 @@ export default function Table({
           const initialRowStates: typeof rowStates = {};
           initialRowStates[existing.customer.id] = daysMap;
 
+          // ✅ Store pre-filled customer data with days
+          const prefilledData: Record<number, string[]> = {};
+          prefilledData[existing.customer.id] = existing.days || [];
+
           setRowStates(initialRowStates);
-          // ✅ Store the pre-filled customer ID
-          setPrefilledCustomerIds(new Set([existing.customer.id]));
+          setPrefilledCustomerData(prefilledData);
           hasFetchedData.current = true;
           console.log("Table initialized with schedule:", initialRowStates);
-          console.log("Prefilled customer IDs:", [existing.customer.id]);
+          console.log("Prefilled customer data:", prefilledData);
         } else {
           console.log("No customer data found in API response");
         }
@@ -149,7 +150,7 @@ export default function Table({
     ) {
       console.log("Using initialSchedules:", initialSchedules);
       const initialRowStates: typeof rowStates = {};
-      const prefilledIds = new Set<number>();
+      const prefilledData: Record<number, string[]> = {};
 
       initialSchedules.forEach((schedule) => {
         const daysMap = {
@@ -163,19 +164,19 @@ export default function Table({
         };
 
         initialRowStates[schedule.customer_id] = daysMap;
-        prefilledIds.add(schedule.customer_id);
+        prefilledData[schedule.customer_id] = schedule.days;
       });
 
       setRowStates(initialRowStates);
-      setPrefilledCustomerIds(prefilledIds);
+      setPrefilledCustomerData(prefilledData);
       console.log("Initialized with initialSchedules:", initialRowStates);
-      console.log("Prefilled customer IDs:", Array.from(prefilledIds));
+      console.log("Prefilled customer data:", prefilledData);
     }
 
     isInitialMount.current = false;
   }, [initialSchedules, editMode, visitUuid, loadVisitData]);
 
-  // Update parent when rowStates change - DEBOUNCED VERSION
+  // Update parent when rowStates change - SUPPORT MULTIPLE CUSTOMERS
   useEffect(() => {
     if (Object.keys(rowStates).length > 0) {
       console.log("Row states updated, notifying parent:", rowStates);
@@ -193,7 +194,7 @@ export default function Table({
       if (customersChanged) {
         console.log("Customers changed in create mode, resetting table states");
         setRowStates({});
-        setPrefilledCustomerIds(new Set()); // Reset pre-filled IDs in create mode
+        setPrefilledCustomerData({}); // Reset pre-filled data in create mode
         setColumnSelection({
           Monday: false,
           Tuesday: false,
@@ -237,7 +238,7 @@ export default function Table({
     });
   };
 
-  // Handle column selection - UPDATED to use filteredData
+  // Handle column selection - UPDATED to use displayData (all customers)
   const handleColumnSelect = (day: keyof typeof columnSelection) => {
     const newColumnState = !columnSelection[day];
 
@@ -251,8 +252,8 @@ export default function Table({
     setRowStates((prev) => {
       const updatedStates = { ...prev };
 
-      // ✅ Use filteredData instead of data
-      filteredData.forEach((customer) => {
+      // ✅ Use displayData (ALL customers) instead of filteredData
+      displayData.forEach((customer) => {
         const currentState = updatedStates[customer.id] || {
           Monday: false,
           Tuesday: false,
@@ -307,26 +308,26 @@ export default function Table({
     });
   };
 
-  // Check if all toggles in a column are selected - UPDATED to use filteredData
+  // Check if all toggles in a column are selected - UPDATED to use displayData
   const isColumnFullySelected = (day: keyof typeof columnSelection) => {
-    if (filteredData.length === 0) return false;
+    if (displayData.length === 0) return false;
 
-    return filteredData.every((customer) => {
+    return displayData.every((customer) => {
       const customerState = rowStates[customer.id];
       return customerState?.[day] === true;
     });
   };
 
-  // Check if some toggles in a column are selected - UPDATED to use filteredData
+  // Check if some toggles in a column are selected - UPDATED to use displayData
   const isColumnPartiallySelected = (day: keyof typeof columnSelection) => {
-    if (filteredData.length === 0) return false;
+    if (displayData.length === 0) return false;
 
-    const hasTrue = filteredData.some((customer) => {
+    const hasTrue = displayData.some((customer) => {
       const customerState = rowStates[customer.id];
       return customerState?.[day] === true;
     });
 
-    const hasFalse = filteredData.some((customer) => {
+    const hasFalse = displayData.some((customer) => {
       const customerState = rowStates[customer.id];
       return customerState?.[day] === false;
     });
@@ -351,6 +352,14 @@ export default function Table({
     const hasFalse = Object.values(customerState).some((value) => !value);
 
     return hasTrue && hasFalse;
+  };
+
+  // Check if a customer has pre-filled data (for visual indication)
+  const hasPrefilledData = (customerId: number) => {
+    return (
+      prefilledCustomerData[customerId] &&
+      prefilledCustomerData[customerId].length > 0
+    );
   };
 
   // Show loading when customers are being fetched or internal loading
@@ -392,14 +401,10 @@ export default function Table({
                       <div className="flex flex-col items-center justify-center gap-2">
                         <span className="text-xs">{day}</span>
                         <div className="flex items-center">
-                          {!editMode && (
-                            <Toggle
-                              isChecked={isFullySelected}
-                              onChange={() => handleColumnSelect(dayKey)}
-                              // ✅ Disable column toggle if no filtered customers
-                              // disabled={filteredData.length === 0}
-                            />
-                          )}
+                          <Toggle
+                            isChecked={isFullySelected}
+                            onChange={() => handleColumnSelect(dayKey)}
+                          />
                         </div>
                       </div>
                     </th>
@@ -409,7 +414,7 @@ export default function Table({
             </thead>
 
             <tbody className="text-[14px] bg-white text-[#535862]">
-              {filteredData.map((row) => {
+              {displayData.map((row) => {
                 const state = rowStates[row.id] || {
                   Monday: false,
                   Tuesday: false,
@@ -422,10 +427,13 @@ export default function Table({
 
                 const isRowSelected = isRowFullySelected(row.id);
                 const isRowPartial = isRowPartiallySelected(row.id);
+                const isPrefilled = hasPrefilledData(row.id);
 
                 return (
                   <tr
-                    className="border-b-[1px] border-[#E9EAEB] hover:bg-gray-50"
+                    className={`border-b-[1px] border-[#E9EAEB] hover:bg-gray-50 ${
+                      isPrefilled ? "bg-blue-50" : ""
+                    }`}
                     key={row.id}
                   >
                     <td className="px-4 py-3 text-left font-[500] sticky left-0 bg-white z-10 border-r border-[#E9EAEB] min-w-[220px]">
@@ -435,10 +443,17 @@ export default function Table({
                           onChange={() => handleRowSelect(row.id)}
                         />
                         <span
-                          className="truncate max-w-[160px]"
+                          className={`truncate max-w-[160px] ${
+                            isPrefilled ? "font-semibold text-blue-700" : ""
+                          }`}
                           title={row.name}
                         >
                           {row.name}
+                          {isPrefilled && (
+                            <span className="text-xs text-blue-500 ml-1">
+                              (pre-filled)
+                            </span>
+                          )}
                         </span>
                       </div>
                     </td>
@@ -446,7 +461,9 @@ export default function Table({
                     {Object.entries(state).map(([day, isChecked]) => (
                       <td
                         key={day}
-                        className="px-4 py-3 text-center border-l border-[#E9EAEB] min-w-[120px]"
+                        className={`px-4 py-3 text-center border-l border-[#E9EAEB] min-w-[120px] ${
+                          isPrefilled && isChecked ? "bg-green-50" : ""
+                        }`}
                       >
                         <div className="flex justify-center">
                           <Toggle
@@ -468,19 +485,9 @@ export default function Table({
           </table>
         </div>
 
-        {filteredData.length === 0 && (
+        {displayData.length === 0 && (
           <div className="text-center py-8 text-gray-500">
-            {editMode ? (
-              <div>
-                <p>No matching customers found for edit</p>
-                <p className="text-sm text-gray-400 mt-2">
-                  The pre-filled customer is not available in the current
-                  customer type selection.
-                </p>
-              </div>
-            ) : (
-              "No customers found"
-            )}
+            No customers found
           </div>
         )}
       </div>
