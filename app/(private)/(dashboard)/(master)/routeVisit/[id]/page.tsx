@@ -239,7 +239,7 @@ export default function AddEditRouteVisit() {
       console.error("Error loading visit data:", error);
       showSnackbar("Failed to fetch route visit details", "error");
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 
@@ -361,7 +361,7 @@ export default function AddEditRouteVisit() {
 
   // 3️⃣ When Warehouse changes → Fetch Routes
   useEffect(() => {
-    isEditMode && setLoading(true);
+    // isEditMode && setLoading(true);
     if (!form.warehouse.length) {
       setRouteOptions([]);
       setForm((prev) => ({ ...prev, route: [] }));
@@ -711,27 +711,29 @@ export default function AddEditRouteVisit() {
         return (
           <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* Salesman Type */}
-                <div>
-                  <InputFields
-                    required
-                    label="Salesman Type"
-                    value={form.salesman_type}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        salesman_type: e.target.value,
-                      }))
-                    }
-                    options={[
-                      { value: "1", label: "Agent Customer" },
-                      { value: "2", label: "Merchandiser" },
-                    ]}
-                    error={errors.salesman_type}
-                  />
+              {!isEditMode && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Salesman Type */}
+                  <div>
+                    <InputFields
+                      required
+                      label="Salesman Type"
+                      value={form.salesman_type}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          salesman_type: e.target.value,
+                        }))
+                      }
+                      options={[
+                        { value: "1", label: "Agent Customer" },
+                        { value: "2", label: "Merchandiser" },
+                      ]}
+                      error={errors.salesman_type}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Customer Schedule

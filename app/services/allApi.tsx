@@ -463,7 +463,7 @@ export const getRouteVisitList = async (params: {
 }) => {
   try {
     console.log(params);
-    const res = await API.get("/api/master/route-visits/list", { params });
+    const res = await API.get("/api/master/route-visits/list");
     return res.data;
   } catch (error) {
     return handleError(error);

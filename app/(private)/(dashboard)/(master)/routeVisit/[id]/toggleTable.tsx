@@ -392,12 +392,14 @@ export default function Table({
                       <div className="flex flex-col items-center justify-center gap-2">
                         <span className="text-xs">{day}</span>
                         <div className="flex items-center">
-                          <Toggle
-                            isChecked={isFullySelected}
-                            onChange={() => handleColumnSelect(dayKey)}
-                            // ✅ Disable column toggle if no filtered customers
-                            // disabled={filteredData.length === 0}
-                          />
+                          {!editMode && (
+                            <Toggle
+                              isChecked={isFullySelected}
+                              onChange={() => handleColumnSelect(dayKey)}
+                              // ✅ Disable column toggle if no filtered customers
+                              // disabled={filteredData.length === 0}
+                            />
+                          )}
                         </div>
                       </div>
                     </th>

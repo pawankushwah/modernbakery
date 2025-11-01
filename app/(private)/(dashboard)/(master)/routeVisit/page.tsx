@@ -9,7 +9,7 @@ import Table, {
   TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getRouteVisitList } from "@/app/services/allApi";
+import { getRouteVisitList } from "@/app/services/allApi"; // Adjust import path
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 
@@ -50,6 +50,7 @@ export default function RouteVisits() {
       try {
         setLoading(true);
 
+        // Prepare params for the API call
         const params = {
           from_date: filters.from_date,
           to_date: filters.to_date,
@@ -62,34 +63,18 @@ export default function RouteVisits() {
 
         setLoading(false);
 
-        const transformedData = (listRes.data || []).map(
-          (item: {
-            customer_type: number;
-            status: number;
-            from_date: string;
-            to_date: string;
-          }) => ({
-            ...item,
-            // Transform customer_type for display
-            customer_type:
-              item.customer_type == 1
-                ? "Agent Customer"
-                : item.customer_type == 2
-                ? "Merchandiser"
-                : item.customer_type?.toString(),
-            // Transform status for display
-            status:
-              item.status == 1
-                ? "Active"
-                : item.status == 0
-                ? "Inactive"
-                : item.status?.toString(),
-            // Format dates from "2025-11-29T00:00:00.000000Z" to "2025-11-29"
-            from_date: item.from_date ? item.from_date.split("T")[0] : "",
-            to_date: item.to_date ? item.to_date.split("T")[0] : "",
-          })
-        );
+        // ✅ Added: transform customer_type names only
+        const transformedData = (listRes.data || []).map((item: any) => ({
+          ...item,
+          customer_type:
+            item.customer_type == 1 ? "Agent Customer" : "Merchandiser",
+          status: item.status == 1 ? "Active" : "Inactive",
+          // Add date formatting:
+          from_date: item.from_date ? item.from_date.split("T")[0] : "",
+          to_date: item.to_date ? item.to_date.split("T")[0] : "",
+        }));
 
+        // Adjust this based on your actual API response structure
         return {
           data: transformedData,
           total: listRes.pagination?.totalPages || 1,
@@ -114,44 +99,30 @@ export default function RouteVisits() {
       try {
         setLoading(true);
 
+        // For search, you might want to adjust the params
+        // or use a different search endpoint if available
         const params = {
           from_date: filters.from_date,
           to_date: filters.to_date,
           customer_type: filters.customer_type,
           status: filters.status,
+          // Add search query if your API supports it
           search: searchQuery || null,
         };
 
         const result = await getRouteVisitList(params);
         setLoading(false);
 
-        const transformedData = (result.data || []).map(
-          (item: {
-            customer_type: number;
-            status: number;
-            from_date: string;
-            to_date: string;
-          }) => ({
-            ...item,
-            // Transform customer_type for display
-            customer_type:
-              item.customer_type == 1
-                ? "Agent Customer"
-                : item.customer_type == 2
-                ? "Merchandiser"
-                : item.customer_type?.toString(),
-            // Transform status for display
-            status:
-              item.status == 1
-                ? "Active"
-                : item.status == 0
-                ? "Inactive"
-                : item.status?.toString(),
-            // Format dates from "2025-11-29T00:00:00.000000Z" to "2025-11-29"
-            from_date: item.from_date ? item.from_date.split("T")[0] : "",
-            to_date: item.to_date ? item.to_date.split("T")[0] : "",
-          })
-        );
+        // ✅ Added: transform customer_type names only
+        const transformedData = (result.data || []).map((item: any) => ({
+          ...item,
+          customer_type:
+            item.customer_type == 1 ? "Agent Customer" : "Merchandiser",
+          status: item.status == 1 ? "Active" : "Inactive",
+          // Add date formatting:
+          from_date: item.from_date ? item.from_date.split("T")[0] : "",
+          to_date: item.to_date ? item.to_date.split("T")[0] : "",
+        }));
 
         return {
           data: transformedData,
@@ -177,6 +148,9 @@ export default function RouteVisits() {
   return (
     <>
       <div className="h-[calc(100%-60px)]">
+        {/* Filter Section */}
+        {/* <FilterSection /> */}
+
         <Table
           refreshKey={refreshKey}
           config={{
@@ -194,12 +168,12 @@ export default function RouteVisits() {
                   href="/routeVisit/add"
                   isActive
                   leadingIcon="lucide:plus"
-                  label="Add"
+                  label="Add Route Visit"
                   labelTw="hidden sm:block"
                 />,
               ],
             },
-            localStorageKey: "routeVisit-table",
+            localStorageKey: "route-visits-table",
             table: {
               height: 500,
             },
@@ -208,7 +182,7 @@ export default function RouteVisits() {
               pagination: true,
             },
             columns,
-            rowSelection: false,
+            rowSelection: false, // Set to true if you need row selection
             rowActions: [
               {
                 icon: "lucide:edit-2",
