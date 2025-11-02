@@ -99,7 +99,7 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                                                         <SidebarBtn
                                                             isActive={isActive}
                                                             href={ hasChildren ? "#" : link.href }
-                                                        buttonTw="px-3 py-2 h-10 w-full"
+                                                            buttonTw="px-3 py-2 h-10 w-full"
                                                             label={link.label}
                                                             labelTw={`${isOpen ? "block" : "hidden"}`}
                                                             leadingIcon={ link.leadingIcon }
@@ -129,7 +129,7 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                                                                                             setActiveHref(child.href)
                                                                                         }} 
                                                                                     >
-                                                                                        <span className={`w-0.5 h-8 ml-4 flex-shrink-0 rounded ${isChildActive ? "bg-blue-500" : "bg-gray-300"}`}></span>
+                                                                                        <span className={`w-0.5 h-8 ml-4 flex-shrink-0 rounded ${isChildActive ? "bg-[var(--primary-btn-color)]" : "bg-gray-300"}`}></span>
                                                                                         <div className="flex-1">
                                                                                             <SidebarBtn
                                                                                                 isActive={false}
