@@ -5,12 +5,14 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { initialLinkData } from "../../data/settingLinks";
 import { LinkDataType, SidebarDataType } from "../../data/settingLinks";
-import { Icon } from "@iconify-icon/react";
+import usePermissionManager from "@/app/components/contexts/usePermission";
 
 export default function Settings({ children }: { children: React.ReactNode }) {
+    const { settingsMenu, filteredMenu } = usePermissionManager();
+    console.log(settingsMenu,"settingsMenu");
+    console.log(filteredMenu,"filteredMenu");
     const [openMenus, setOpenMenus] = useState<Record<string, boolean>>({});
     const [activeHref, setActiveHref] = useState<string>("");
-    const [mainScreenLabel, setMainScreenLabel] = useState<string>("");
     const [isOpen, setIsOpen] = useState<boolean>(false);
 
     const toggleMenu = (label: string) => {
@@ -25,7 +27,6 @@ export default function Settings({ children }: { children: React.ReactNode }) {
             toggleMenu(label);
         } else {
             setActiveHref(href);
-            setMainScreenLabel(label);
         }
     };
 
@@ -71,14 +72,9 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                     className={`${isOpen ? "w-[250px]" : "w-[80px]"} md:${isOpen ? "w-[250px]" : "w-[80px]"} border-b md:border-b-0 md:border-r border-[#E9EAEB] p-3 flex-shrink-0 overflow-auto scrollbar-none transition-all duration-200`}
                 >
                     <div className="flex flex-col gap-[6px]">
-                        {initialLinkData.map(
-                            (group: SidebarDataType, groupIdx) => (
-                                <div
-                                    key={group.name || groupIdx}
-                                    className={`${isOpen ? "mb-[20px]" : "m-0"}`}
-                                >
+                                <div className={`${isOpen ? "mb-[20px]" : "m-0"}`}>   
                                     <ul className="w-full flex flex-col gap-[6px]">
-                                        {group.data.map(
+                                        {settingsMenu?.map(
                                             (link: LinkDataType, linkIdx) => {
                                                 const hasChildren = Boolean(
                                                     link.children &&
@@ -103,6 +99,7 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                                                         <SidebarBtn
                                                             isActive={isActive}
                                                             href={ hasChildren ? "#" : link.href }
+                                                        buttonTw="px-3 py-2 h-10 w-full"
                                                             label={link.label}
                                                             labelTw={`${isOpen ? "block" : "hidden"}`}
                                                             leadingIcon={ link.leadingIcon }
@@ -155,8 +152,6 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                                         )}
                                     </ul>
                                 </div>
-                            )
-                        )}
                     </div>
                 </div>
 
