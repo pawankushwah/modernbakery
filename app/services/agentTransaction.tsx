@@ -75,3 +75,30 @@ export const salesmanUnloadList = async (params: SalesmanUnloadParams) => {
     return handleError(error);
   }
 };
+
+export const salesmanUnloadHeaderAdd = async (body: object) => {
+  try {
+    const res = await API.post(`/api/agent_transaction/unload/add`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const salesmanUnloadHeaderById = async (uuid: string, params: object) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/unload/${uuid}`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const salesmanUnloadHeaderUpdate = async (uuid: string, body: object) => {
+  try {
+    const res = await API.put(`/api/agent_transaction/unload/update/${uuid}`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

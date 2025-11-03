@@ -10,10 +10,11 @@ import Table, {
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import {
-    salesmanLoadHeaderAdd,
-    salesmanLoadHeaderUpdate,
+    salesmanUnloadHeaderAdd,
+    salesmanUnloadHeaderById,
+    salesmanUnloadHeaderUpdate,
 } from "@/app/services/agentTransaction";
-import { getRouteById, itemList } from "@/app/services/allApi";
+import { itemList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -49,13 +50,13 @@ export default function AddEditSalesmanLoad() {
             setLoading(true);
             (async () => {
                 try {
-                    const res = await getRouteById(String(loadUUID));
+                    const res = await salesmanUnloadHeaderById(String(loadUUID),{});
                     const data = res?.data ?? res;
                     setForm({
                         salesmanType: data?.salesmanType || "",
                         unload_date: data?.unload_date || "",
-                        route_id: data?.route_id || "",
-                        salesman_id: data?.salesman_id || "",
+                        route_id: data?.route?.id?.toString() || "",
+                        salesman_id: data?.salesman?.id?.toString() || "",
                     });
                 } catch (err) {
                     showSnackbar("Failed to fetch details", "error");
@@ -178,48 +179,73 @@ export default function AddEditSalesmanLoad() {
 
     // ✅ Submit Handler
     const handleSubmit = async () => {
-        try {
-            await validationSchema.validate(form, { abortEarly: false });
-            setErrors({});
-            setSubmitting(true);
+  try {
+    await validationSchema.validate(form, { abortEarly: false });
+    setErrors({});
+    setSubmitting(true);
 
-            const payload = {
-                ...form,
-                items: itemData.filter((i) => i.qty && Number(i.qty) > 0), // include qty items only
-            };
+    // 🔹 Build correct payload
+    const payload = {
+      route_id: Number(form.route_id),
+      salesmanType: form.salesmanType,
+      salesman_id: Number(form.salesman_id),
+      unload_date: form.unload_date,
+      details: itemData
+  .filter((i) => i.qty && Number(i.qty) > 0)
+  .map((i) => {
+    // Parse uom if it’s a string
+    const uomArray =
+      typeof i.uom === "string" ? JSON.parse(i.uom) : i.uom;
 
-            let res;
-            if (isEditMode && loadUUID) {
-                res = await salesmanLoadHeaderUpdate(loadUUID, payload);
-            } else {
-                res = await salesmanLoadHeaderAdd(payload);
-            }
+    // Ensure it's an array before using find
+    const secondaryUom =
+      Array.isArray(uomArray) &&
+      uomArray.find((u: { uom_type: string }) => u.uom_type === "secondary");
 
-            if (res?.error) {
-                showSnackbar(res.data?.message || "Failed to submit form", "error");
-            } else {
-                showSnackbar(
-                    isEditMode
-                        ? "Salesman Unload updated successfully"
-                        : "Salesman Unload added successfully",
-                    "success"
-                );
-                router.push("/salesmanUnload");
-            }
-        } catch (err) {
-            if (err instanceof yup.ValidationError) {
-                const formErrors: Record<string, string> = {};
-                err.inner.forEach((e) => {
-                    if (e.path) formErrors[e.path] = e.message;
-                });
-                setErrors(formErrors);
-            } else {
-                showSnackbar("Failed to submit form", "error");
-            }
-        } finally {
-            setSubmitting(false);
-        }
+    return {
+      item_id: i.id,
+      uom: secondaryUom?.id || uomArray?.[0]?.id || null,
+      qty: Number(i.qty),
     };
+  }),
+    };
+
+    console.log("Final Payload 👉", payload);
+
+    let res;
+    if (isEditMode && loadUUID) {
+      res = await salesmanUnloadHeaderUpdate(loadUUID, payload);
+    } else {
+      res = await salesmanUnloadHeaderAdd(payload);
+    }
+
+    if (res?.error) {
+      showSnackbar(res.data?.message || "Failed to submit form", "error");
+    } else {
+      showSnackbar(
+        isEditMode
+          ? "Salesman Unload updated successfully"
+          : "Salesman Unload added successfully",
+        "success"
+      );
+      router.push("/salesmanUnload");
+    }
+  } catch (err) {
+    if (err instanceof yup.ValidationError) {
+      const formErrors: Record<string, string> = {};
+      err.inner.forEach((e) => {
+        if (e.path) formErrors[e.path] = e.message;
+      });
+      setErrors(formErrors);
+    } else {
+      console.error(err);
+      showSnackbar("Failed to submit form", "error");
+    }
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
     return (
         <>
@@ -304,6 +330,9 @@ export default function AddEditSalesmanLoad() {
                             title: "Items",
                             searchBar: false,
                             columnFilter: false,
+                        },
+                        table: {
+                            height: 500,
                         },
                         footer: { nextPrevBtn: true, pagination: true },
                         columns,
