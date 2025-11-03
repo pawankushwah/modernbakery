@@ -37,6 +37,15 @@ export const salesmanLoadHeaderUpdate = async (uuid: string, body: object) => {
   }
 };
 
+export const salesmanLoadByUuid= async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/load/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 // Salesman Load Details
 
 export const salesmanLoadDetailsList = async (params: Params) => {
@@ -131,6 +140,33 @@ type SalesmanUnloadParams = {
 export const salesmanUnloadList = async (params: SalesmanUnloadParams) => {
   try {
     const res = await API.get(`/api/agent_transaction/unload/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const salesmanUnloadHeaderAdd = async (body: object) => {
+  try {
+    const res = await API.post(`/api/agent_transaction/unload/add`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const salesmanUnloadHeaderById = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/unload/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const salesmanUnloadHeaderUpdate = async (uuid: string, body: object) => {
+  try {
+    const res = await API.put(`/api/agent_transaction/unload/update/${uuid}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

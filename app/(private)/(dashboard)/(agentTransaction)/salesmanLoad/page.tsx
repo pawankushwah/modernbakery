@@ -15,19 +15,102 @@ import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snac
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
+interface SalesmanLoadRow {
+    osa_code?: string;
+    warehouse?: {
+        code?: string;
+        name?: string;
+    };
+    route?: {
+        code?: string;
+        name?: string;
+    };
+    salesman?: {
+        code?: string;
+        name?: string;
+    };
+    projecttype?: {
+        code?: string;
+        name?: string;
+    };
+    is_confirmed?: boolean;
+    status?: boolean;
+    uuid?: string;
+}
+
 export default function SalemanLoad() {
     const columns: configType["columns"] = [
-        { key: "date", label: "Date" },
-        { key: "time", label: "Time" },
-        { key: "accepted_date", label: "Accepted Date" },
-        { key: "accepted_time", label: "Accepted Time" },
-        { key: "load_period_no", label: "Load Period Number" },
-        { key: "routename", label: "Route Name" },
+        { key: "osa_code", label: "Code" },
+        { 
+            key: "warehouse", 
+            label: "Warehouse Code", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.warehouse?.code || "";
+            }
+        },
+        { 
+            key: "warehouse", 
+            label: "Warehouse Name", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.warehouse?.name || "";
+            }
+        },
+        { 
+            key: "route", 
+            label: "Route Code", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.route?.code || "";
+            }
+        },
+        { 
+            key: "route", 
+            label: "Route Name", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.route?.name || "";
+            }
+        },
+        { 
+            key: "salesman", 
+            label: "Salesman Code", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.salesman?.code || "";
+            }
+        },
+        { 
+            key: "salesman", 
+            label: "Salesman Name", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.salesman?.name || "";
+            }
+        },
+        { 
+            key: "projecttype", 
+            label: "Project Code", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.projecttype?.code || "";
+            }
+        },
+        { 
+            key: "projecttype", 
+            label: "Project Name", 
+            render: (row: TableDataType) => {
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.projecttype?.name || "";
+            }
+        },
         {
-            key: "status",
+            key: "is_confirmed",
             label: "Status",
             render: (row: TableDataType) => {
-                return row.status ? "Confirmed" : "Waiting";
+                const salesmanRow = row as SalesmanLoadRow;
+                return salesmanRow.status ? "Confirmed" : "Waiting";
             },
         }
     ];
