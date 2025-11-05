@@ -190,6 +190,7 @@ export default function AddBankPage() {
               <InputFields
                 label="OSA Code"
                 name="osa_code"
+                disabled={true}
                 value={formik.values.osa_code}
                 onChange={formik.handleChange}
                 error={formik.touched.osa_code && formik.errors.osa_code}

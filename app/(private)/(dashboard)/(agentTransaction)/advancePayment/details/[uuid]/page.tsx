@@ -4,9 +4,10 @@ import { getPaymentById } from "@/app/services/allApi";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Loading from "@/app/components/Loading";
-import ContainerCard from "@/app/components/containerCard";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
+import Logo from "@/app/components/logo";
+import ContainerCard from "@/app/components/containerCard";
 
 interface PaymentData {
   osa_code: string;
@@ -24,55 +25,55 @@ interface PaymentData {
 
 const PaymentDetails = () => {
   const params = useParams();
-  const id = params.uuid; // Changed from params.id to params.uuid since your folder is [uuid]
+  const id = params.uuid;
   const [data, setData] = useState<PaymentData | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  const API_BASE_URL = "https://api.coreexl.com/osa_productionV2/public";
 
   useEffect(() => {
     if (id && id !== "add") {
-      setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
           const res = await getPaymentById(String(id));
-          if (res?.data) {
-            const responseData = res.data;
+          const responseData = res?.data;
 
-            console.log("Edit mode data:", responseData);
+          if (!responseData) return;
 
-            // Map numeric payment type back to string
-            const paymentTypeMap: { [key: number]: string } = {
-              1: "cash",
-              2: "cheque",
-              3: "transfer",
-            };
+          const paymentTypeMap: { [key: number]: string } = {
+            1: "cash",
+            2: "cheque",
+            3: "transfer",
+          };
 
-            // Convert agent_id to string for Formik
-            const agentIdValue = responseData.agent_id?.toString() || "";
-
-            const paymentData: PaymentData = {
-              osa_code: responseData.osa_code || "",
-              payment_type: paymentTypeMap[responseData.payment_type] || "",
-              companybank_id: responseData.companybank_id?.toString() || "",
-              cheque_no: responseData.cheque_no || "",
-              cheque_date: responseData.cheque_date || "",
-              agent_id: agentIdValue,
-              amount: responseData.amount?.toString() || "",
-              recipt_no: responseData.recipt_no || "",
-              recipt_date: responseData.recipt_date || "",
-              recipt_image: responseData.recipt_image || null,
-              status: responseData.status === 1 ? "active" : "inactive",
-            };
-
-            setData(paymentData);
-
-            console.log("Form values set:", paymentData);
-          } else {
-            console.error("Failed to load payment data");
+          let receiptImageUrl = null;
+          if (responseData.recipt_image) {
+            receiptImageUrl = responseData.recipt_image.startsWith("http")
+              ? responseData.recipt_image
+              : `${API_BASE_URL}/${responseData.recipt_image.replace(
+                  /^\//,
+                  ""
+                )}`;
           }
+
+          const paymentData: PaymentData = {
+            osa_code: responseData.osa_code || "",
+            payment_type: paymentTypeMap[responseData.payment_type] || "",
+            companybank_id: responseData.companybank_id?.toString() || "",
+            cheque_no: responseData.cheque_no || "",
+            cheque_date: responseData.cheque_date || "",
+            agent_id: responseData.agent_id?.toString() || "",
+            amount: responseData.amount?.toString() || "",
+            recipt_no: responseData.recipt_no || "",
+            recipt_date: responseData.recipt_date || "",
+            recipt_image: receiptImageUrl,
+            status: responseData.status === 1 ? "active" : "inactive",
+          };
+
+          setData(paymentData);
         } catch (error) {
-          console.error("Failed to fetch Payment details", error);
+          console.error("Failed to fetch payment details:", error);
         } finally {
           setLoading(false);
         }
@@ -80,27 +81,14 @@ const PaymentDetails = () => {
     }
   }, [id]);
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    if (!dateString) return "N/A";
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch {
-      return dateString;
-    }
-  };
+  const formatDate = (date: string) =>
+    date ? new Date(date).toLocaleDateString() : "N/A";
+  const formatCurrency = (amount: string) =>
+    amount ? `$${parseFloat(amount).toFixed(2)}` : "N/A";
 
-  // Format currency
-  const formatCurrency = (amount: string) => {
-    if (!amount) return "N/A";
-    return `$${parseFloat(amount).toFixed(2)}`;
-  };
+  if (loading) return <Loading />;
 
-  if (loading) {
-    return <Loading />;
-  }
-
-  if (!data && !loading) {
+  if (!data) {
     return (
       <div className="flex justify-center items-center p-8">
         <div className="text-lg text-red-500">Payment data not found</div>
@@ -110,163 +98,134 @@ const PaymentDetails = () => {
 
   return (
     <>
-      <div className="flex items-center gap-4 mb-6">
-        <Link href="/advancePayment">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-8">
+        <Link
+          href="/advancePayment"
+          className="text-gray-600 hover:text-gray-900"
+        >
           <Icon icon="lucide:arrow-left" width={24} />
         </Link>
-        <h1 className="text-xl font-semibold mb-1">Payment Details</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">
+          Payment Details
+        </h1>
       </div>
-      <ContainerCard>
-        <div className="bg-white rounded-lg">
-          {/* Basic Information */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">
-              Basic Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  OSA Code
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {data?.osa_code || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Status
-                </label>
-                <p className="mt-1 text-sm">
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      data?.status === "active"
-                        ? "bg-green-100 text-green-800"
-                        : "bg-red-100 text-red-800"
-                    }`}
-                  >
-                    {data?.status || "N/A"}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Amount
-                </label>
-                <p className="mt-1 text-sm text-gray-900 font-semibold">
-                  {data?.amount ? formatCurrency(data.amount) : "N/A"}
-                </p>
-              </div>
+
+      {/* Main Card */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        {/* Header Bar */}
+        <div className="flex justify-between items-start mb-10 px-5 pb-5 pt-10 flex-wrap gap-[20px] border-b border-gray-300">
+          <div className="flex flex-col gap-[10px]">
+            <Logo type="full" />
+            {/* Status moved below logo */}
+            <div className="mt-2">
+              <span
+                className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                  data.status === "active"
+                    ? "bg-green-100 text-green-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {data.status}
+              </span>
             </div>
           </div>
-
-          {/* Payment Information */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">
-              Payment Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Payment Type
-                </label>
-                <p className="mt-1 text-sm text-gray-900 capitalize">
-                  {data?.payment_type || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Bank ID
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {data?.companybank_id || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Agent ID
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {data?.agent_id || "N/A"}
-                </p>
-              </div>
-            </div>
+          <div className="flex flex-col">
+            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
+              PAYMENT
+            </span>
+            <span className="text-primary text-end text-[14px] tracking-[10px]">
+              {"#" + data.osa_code}
+            </span>
           </div>
+        </div>
 
-          {/* Cheque Information (Conditional) */}
-          {(data?.payment_type === "cheque" || data?.cheque_no) && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">
-                Cheque Information
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Cheque Number
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {data?.cheque_no || "N/A"}
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Cheque Date
-                  </label>
-                  <p className="mt-1 text-sm text-gray-900">
-                    {data?.cheque_date ? formatDate(data.cheque_date) : "N/A"}
-                  </p>
-                </div>
-              </div>
-            </div>
+        <div className="px-5">
+          <Section title="Basic Information">
+            <Grid>
+              <Field
+                label="OSA Code"
+                value={data.osa_code ? `#${data.osa_code}` : "N/A"}
+              />
+              {/* Status removed from here since it's now above */}
+              <Field label="Amount" value={formatCurrency(data.amount)} />
+            </Grid>
+          </Section>
+
+          <Section title="Payment Information">
+            <Grid>
+              <Field label="Payment Type" value={data.payment_type || "N/A"} />
+              <Field label="Bank ID" value={data.companybank_id || "N/A"} />
+              <Field label="Agent ID" value={data.agent_id || "N/A"} />
+            </Grid>
+          </Section>
+
+          {(data.payment_type === "cheque" || data.cheque_no) && (
+            <Section title="Cheque Information">
+              <Grid>
+                <Field label="Cheque Number" value={data.cheque_no || "N/A"} />
+                <Field
+                  label="Cheque Date"
+                  value={formatDate(data.cheque_date)}
+                />
+              </Grid>
+            </Section>
           )}
 
-          {/* Receipt Information */}
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">
-              Receipt Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Receipt Number
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {data?.recipt_no || "N/A"}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Receipt Date
-                </label>
-                <p className="mt-1 text-sm text-gray-900">
-                  {data?.recipt_date ? formatDate(data.recipt_date) : "N/A"}
-                </p>
-              </div>
-            </div>
-          </div>
+          <Section title="Receipt Information">
+            <Grid>
+              <Field label="Receipt Number" value={data.recipt_no || "N/A"} />
+              <Field
+                label="Receipt Date"
+                value={formatDate(data.recipt_date)}
+              />
+            </Grid>
+          </Section>
 
-          {/* Receipt Image */}
-          {data?.recipt_image && (
-            <div className="mb-6">
-              <h2 className="text-xl font-semibold mb-4 border-b border-gray-300 pb-2">
-                Receipt Image
-              </h2>
-              <div className="flex justify-center">
+          {data.recipt_image && !imageError && (
+            <Section title="Receipt Image">
+              <div className="flex items-center justify-start">
                 <img
                   src={data.recipt_image}
                   alt="Receipt"
-                  className="max-w-full h-auto max-h-64 rounded-lg"
-                  onError={(e) => {
-                    // Handle broken images
-                    (e.target as HTMLImageElement).style.display = "none";
-                  }}
+                  onError={() => setImageError(true)}
+                  className="w-64 h-64 object-cover rounded-xl border border-gray-200 shadow-sm"
                 />
               </div>
-            </div>
+            </Section>
           )}
         </div>
-      </ContainerCard>
+      </div>
     </>
   );
 };
 
 export default PaymentDetails;
+
+const Section = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <ContainerCard>
+    <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-300 pb-2 mb-4">
+      {title}
+    </h2>
+    {children}
+  </ContainerCard>
+);
+
+const Grid = ({ children }: { children: React.ReactNode }) => (
+  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {children}
+  </div>
+);
+
+const Field = ({ label, value }: { label: string; value: React.ReactNode }) => (
+  <div>
+    <label className="block text-sm text-gray-500">{label}</label>
+    <p className="mt-1 text-base font-medium text-gray-900">{value}</p>
+  </div>
+);

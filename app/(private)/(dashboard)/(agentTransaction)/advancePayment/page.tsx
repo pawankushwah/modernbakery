@@ -84,8 +84,7 @@ export default function PaymentListPage() {
       showByDefault: true,
       render: (row: TableDataType) => {
         // ✅ ADDED: Render status properly
-        const isActive =
-          row.status == "1" || row.status === "active";
+        const isActive = row.status == "1" || row.status === "active";
         return <StatusBtn isActive={isActive} />;
       },
     },
@@ -187,13 +186,13 @@ export default function PaymentListPage() {
             columns,
             rowSelection: true,
             rowActions: [
-              {
-                icon: "lucide:edit-2",
-                onClick: (data: object) => {
-                  const row = data as TableRow;
-                  router.push(`/advancePayment/${row.uuid}`);
-                },
-              },
+              // {
+              //   icon: "lucide:edit-2",
+              //   onClick: (data: object) => {
+              //     const row = data as TableRow;
+              //     router.push(`/advancePayment/${row.uuid}`);
+              //   },
+              // },
               {
                 icon: "lucide:eye",
                 onClick: (data: object) => {

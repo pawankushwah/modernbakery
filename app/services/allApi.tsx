@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Params } from "next/dist/server/request/params";
+import { APIFormData } from "./merchandiserApi";
 
 export const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -2973,9 +2974,9 @@ export const updateAuthUser = async (uuid: string, body: object) => {
   }
 };
 
-export const addPayment = async (body?: any) => {
+export const addPayment = async (body?: FormData) => {
   try {
-    const res = await API.post(
+    const res = await APIFormData.post(
       "api/agent_transaction/advancepayments/create",
       body
     );
