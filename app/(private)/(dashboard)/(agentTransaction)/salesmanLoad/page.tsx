@@ -1,19 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
-import StatusBtn from "@/app/components/statusBtn2";
 import Table, {
     configType,
     listReturnType,
-    searchReturnType,
-    TableDataType,
+    TableDataType
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { salesmanLoadHeaderList} from "@/app/services/agentTransaction";
-import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import StatusBtn from "@/app/components/statusBtn2";
+import { salesmanLoadHeaderList } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 interface SalesmanLoadRow {
     osa_code?: string;
@@ -34,85 +32,68 @@ interface SalesmanLoadRow {
         name?: string;
     };
     is_confirmed?: boolean;
+    salesman_type?: string;
     status?: boolean;
     uuid?: string;
 }
 
+
 export default function SalemanLoad() {
     const columns: configType["columns"] = [
-        { key: "osa_code", label: "Code" },
-        { 
-            key: "warehouse", 
-            label: "Warehouse Code", 
+        // { key: "osa_code", label: "Code" },
+        {
+            key: "warehouse",
+            label: "Warehouse",
             render: (row: TableDataType) => {
                 const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.warehouse?.code || "";
+                return `${salesmanRow.warehouse?.code} - ${salesmanRow.warehouse?.name?.split("-")[0]} - (${salesmanRow.warehouse?.name?.split("-")[1]})` || "";
             }
         },
-        { 
-            key: "warehouse", 
-            label: "Warehouse Name", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.warehouse?.name || "";
-            }
-        },
-        { 
-            key: "route", 
-            label: "Route Code", 
+        {
+            key: "route",
+            label: "Route",
             render: (row: TableDataType) => {
                 const salesmanRow = row as SalesmanLoadRow;
                 return salesmanRow.route?.code || "";
             }
         },
-        { 
-            key: "route", 
-            label: "Route Name", 
+        {
+            key: "salesman",
+            label: "Salesman",
             render: (row: TableDataType) => {
                 const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.route?.name || "";
+                return `${salesmanRow.salesman?.code} - ${salesmanRow.salesman?.name}` || "";
             }
         },
-        { 
-            key: "salesman", 
-            label: "Salesman Code", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.salesman?.code || "";
-            }
-        },
-        { 
-            key: "salesman", 
-            label: "Salesman Name", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.salesman?.name || "";
-            }
-        },
-        { 
-            key: "projecttype", 
-            label: "Project Code", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.projecttype?.code || "";
-            }
-        },
-        { 
-            key: "projecttype", 
-            label: "Project Name", 
-            render: (row: TableDataType) => {
-                const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.projecttype?.name || "";
-            }
-        },
+        {
+  key: "projecttype",
+  label: "Salesman Role",
+  render: (row: TableDataType) => {
+    const s = row as SalesmanLoadRow;
+    if (s.projecttype && typeof s.projecttype === "object") {
+      const { code, name } = s.projecttype;
+      if (code || name) {
+        return `${code ?? ""}${code && name ? " - " : ""}${name ?? ""}`;
+      }
+    }
+    return s.salesman_type || "-";
+  },
+},
         {
             key: "is_confirmed",
             label: "Status",
             render: (row: TableDataType) => {
                 const salesmanRow = row as SalesmanLoadRow;
-                return salesmanRow.status ? "Confirmed" : "Waiting";
+
+                return (
+                    <StatusBtn
+                        isActive={salesmanRow?.status ? true : false}
+                    // label={salesmanRow.status?.toString() === "Pending" ? true : false }
+                    />
+                );
             },
         }
+
     ];
 
     const { setLoading } = useLoading();
@@ -148,7 +129,7 @@ export default function SalemanLoad() {
                     pageSize: 5,
                 };
             }
-    }, [setLoading]);
+        }, [setLoading]);
 
     // const search = useCallback(
     //     async (
@@ -218,15 +199,15 @@ export default function SalemanLoad() {
                                     router.push(`/salesmanLoad/details/${row.uuid}`);
                                 },
                             },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (data: object) => {
-                                    const row = data as TableRow;
-                                    router.push(
-                                        `/salesmanLoad/${row.uuid}`
-                                    );
-                                },
-                            },
+                            // {
+                            //     icon: "lucide:edit-2",
+                            //     onClick: (data: object) => {
+                            //         const row = data as TableRow;
+                            //         router.push(
+                            //             `/salesmanLoad/${row.uuid}`
+                            //         );
+                            //     },
+                            // },
                         ],
                         pageSize: 50,
                     }}

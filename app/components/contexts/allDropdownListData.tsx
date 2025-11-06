@@ -95,6 +95,7 @@ interface DropdownDataContextType {
   fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
   fetchAgentCustomerOptions: (warehouse_id: string | number) => Promise<void>;
   fetchSalesmanOptions: (warehouse_id: string | number) => Promise<void>;
+  fetchSalesmanByRouteOptions: (warehouse_id: string | number) => Promise<void>;
   fetchAreaOptions: (region_id: string | number) => Promise<void>;
   fetchRouteOptions: (warehouse_id: string | number) => Promise<void>;
   fetchRoutebySalesmanOptions: (salesman_id: string | number) => Promise<void>;
@@ -792,6 +793,28 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   }, []);
 
+  const fetchSalesmanByRouteOptions = useCallback(async (route_id: string | number) => {
+    // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
+    setLoading(false);
+    try {
+      // call salesmanList with warehouse_id
+      const res = await salesmanList({ route_id: String(route_id) });
+      const normalize = (r: unknown): SalesmanList[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as SalesmanList[];
+        }
+        if (Array.isArray(r)) return r as SalesmanList[];
+        return [];
+      };
+      setSalesman(normalize(res));
+    } catch (error) {
+      setSalesman([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const refreshDropdowns = async () => {
     setLoading(true);
     try {
@@ -944,6 +967,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
+        fetchSalesmanByRouteOptions,
         fetchRegionOptions,
         companyOptions,
         countryOptions,

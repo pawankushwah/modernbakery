@@ -237,10 +237,16 @@ export default function SalesmanUnloadPage() {
             columnFilter: true,
             filterByFields: [
               {
-                key: "start_date, end_date",
+                key: "start_date",
                 label: "From Date",
-                type: "dateChange",
+                type: "date",
               },
+              {
+                key: "end_date",
+                label: "To Date",
+                type: "date",
+              },
+              
               {
                 key: "region_id",
                 label: "Region",
@@ -272,13 +278,13 @@ export default function SalesmanUnloadPage() {
                 router.push(`/salesmanUnload/details/${String(row.uuid)}`);
               },
             },
-            {
-              icon: "lucide:edit-2",
-              onClick: (data: object) => {
-                const row = data as TableDataType;
-                router.push(`/salesmanUnload/${String(row.uuid)}`);
-              },
-            },
+            // {
+            //   icon: "lucide:edit-2",
+            //   onClick: (data: object) => {
+            //     const row = data as TableDataType;
+            //     router.push(`/salesmanUnload/${String(row.uuid)}`);
+            //   },
+            // },
           ],
           pageSize: 50,
         }}

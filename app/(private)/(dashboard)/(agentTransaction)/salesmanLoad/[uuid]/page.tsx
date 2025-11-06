@@ -1,35 +1,36 @@
 "use client";
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import * as yup from "yup";
-import InputFields from "@/app/components/inputFields";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import CustomTable, { TableDataType } from "@/app/components/customTable";
-import {
-  getRouteById,
-} from "@/app/services/allApi";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { useLoading } from "@/app/services/loadingContext";
+
 import ContainerCard from "@/app/components/containerCard";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import Table, {
+  configType,
+  TableDataType
+} from "@/app/components/customTable";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import InputFields from "@/app/components/inputFields";
+import Logo from "@/app/components/logo";
 import {
   salesmanLoadHeaderAdd,
+  salesmanLoadHeaderById,
   salesmanLoadHeaderUpdate,
 } from "@/app/services/agentTransaction";
+import { itemList } from "@/app/services/allApi";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { Icon } from "@iconify-icon/react";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import * as yup from "yup";
 
 export default function AddEditSalesmanLoad() {
   const {
     salesmanTypeOptions,
-    warehouseOptions,
-    salesmanOptions,
-    fetchRoutebySalesmanOptions,
-    fetchSalesmanOptions,
     routeOptions,
-    itemOptions,
+    salesmanOptions,
+    warehouseOptions,
+    fetchRouteOptions,
+    fetchSalesmanByRouteOptions,
   } = useAllDropdownListData();
-
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
@@ -37,362 +38,540 @@ export default function AddEditSalesmanLoad() {
   const loadUUID = params?.uuid as string | undefined;
   const isEditMode = loadUUID !== undefined && loadUUID !== "add";
 
+  interface FormData {
+    id: number,
+    erp_code: string,
+    item_code: string,
+    name: string,
+    description: string,
+    uom: {
+        id: number,
+        item_id: number,
+        uom_type: string,
+        name: string,
+        price: string,
+        is_stock_keeping: boolean,
+        upc: string,
+        enable_for: string
+    }[],
+    brand: string,
+    image: string,
+    category: {
+        id: number,
+        name: string,
+        code: string
+    },
+    itemSubCategory: {
+        id: number,
+        name: string,
+        code: string
+    },
+    shelf_life: string,
+    commodity_goods_code: string,
+    excise_duty_code: string,
+    status: number,
+    is_taxable: boolean,
+    has_excies: boolean,
+    item_weight: string,
+    volume: number
+}
+
+
   const [submitting, setSubmitting] = useState(false);
-  const [filteredOptions, setFilteredRouteOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
   const [form, setForm] = useState({
-    salesmanType: "",
-    project_type: "",
-    route: "",
+    salesman_type: "",
     warehouse: "",
+    route: "",
     salesman: "",
+    project_type: "",
   });
-
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [skeleton, setSkeleton] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [itemData, setItemData] = useState<TableDataType[]>([]);
+  const [isItemsLoaded, setIsItemsLoaded] = useState(false);
+  const [itemOptions, setItemsOptions] = useState();
+  const [orderData, setOrderData] = useState<FormData[]>([]);
 
-  const [tableData, setTableData] = useState<TableDataType[]>([]);
-
+  // ✅ Load items on mount
   useEffect(() => {
-    if (itemOptions && itemOptions.length > 0) {
-      setTableData(
-        itemOptions.map((item) => ({
-          id: item.value,
-          item: item.label,
-          availableStock: "100", // Replace with actual stock data
-          // uom: item.uom || [],
-          cse: "",
-        }))
-      );
-    }
-  }, [itemOptions]);
-
-  const handleCseChange = (id: string, value: string) => {
-    setTableData((prev) =>
-      prev.map((row) =>
-        row.id === id ? { ...row, cse: value } : row
-      )
-    );
-  };
-
-  useEffect(() => {
-    if (isEditMode && loadUUID) {
-      setLoading(true);
+    if (!isItemsLoaded) {
       (async () => {
         try {
-          const res = await getRouteById(String(loadUUID));
-          const data = res?.data ?? res;
-          setForm({
-            salesmanType: data?.salesmanType || "",
-            project_type: data?.project_type || "",
-            route: data?.route || "",
-            warehouse: data?.warehouse || "",
-            salesman: data?.salesman || "",
-          });
-          if (data?.warehouse) {
-            await fetchSalesmanOptions(String(data.warehouse));
-          }
-        } catch {
-          showSnackbar("Failed to fetch route details", "error");
+          setLoading(true);
+          const res = await itemList({ page: "1" });
+          const data = res.data.map((item: any) => ({
+            ...item,
+            qty: "",
+            available_stock: item.volume || 0, // Map volume to available_stock
+          }));
+          setItemData(data);
+          setIsItemsLoaded(true);
+        } catch (error) {
+          console.error(error);
         } finally {
           setLoading(false);
         }
       })();
     }
-  }, [isEditMode, loadUUID]);
+  }, [isItemsLoaded, setLoading]);
 
-  const validationSchema = yup.object().shape({
-    salesmanType: yup.string().required("Salesman Type is required"),
-    warehouse: yup.string().required("Warehouse is required"),
-    salesman: yup.string().required("Salesman is required"),
-    route: yup.string().required("Route is required"),
-  });
+  const recalculateItem = (index: number, field: string, value: string) => {
+    const newData = [...itemData];
+    const item = newData[index];
+    item[field as keyof typeof item] = value;
+    const uomOptions = orderData?.find((order: FormData) => order.id.toString() === item.itemName)?.uom?.map(uom => ({ label: uom.name, value: uom.id.toString() })) || [];
+    item.UOM = JSON.stringify(uomOptions);
+    setItemData(newData)
+  }
 
-  const handleChange = (field: string, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
-  };
 
-  const fetchRoutesBySalesman = async (salesman: string) => {
-    if (!salesman) {
-      setFilteredRouteOptions([]);
+  const fetchItem = async (searchTerm: string) => {
+    const res = await itemList({ per_page: "10", name: searchTerm });
+    if (res.error) {
+      showSnackbar(res.data?.message || "Failed to fetch items", "error");
+      
       return;
     }
-    setSkeleton(true);
-    try {
-      const res = await fetchRoutebySalesmanOptions(String(salesman));
-      const normalize = (
-        r: unknown
-      ): { id?: string | number; route_code?: string; route_name?: string }[] => {
-        if (r && typeof r === "object") {
-          const obj = r as Record<string, unknown>;
-          if (Array.isArray(obj.data)) return obj.data as any[];
-        }
-        if (Array.isArray(r)) return r as any[];
-        return [];
-      };
-      const routes = normalize(res);
-      const options = routes.map((r) => ({
-        value: String(r.id ?? ""),
-        label:
-          r.route_code && r.route_name
-            ? `${r.route_code} - ${r.route_name}`
-            : r.route_name ?? "",
-      }));
-      setFilteredRouteOptions(options);
-    } catch {
-      setFilteredRouteOptions([]);
-    } finally {
-      setSkeleton(false);
-    }
+    const data = res?.data || [];
+    setOrderData(data);
+    const options = data.map((item: { id: number; name: string; item_code: string; }) => ({
+      value: String(item.id),
+      label: `${item.item_code} - ${item.name}`
+    }));
+    setItemsOptions(options);
+   
   };
 
-  const handleSubmit = async () => {
-    try {
-      await validationSchema.validate(form, { abortEarly: false });
-      setErrors({});
+  useEffect(() => {
+    fetchItem("");
+  }, []);
 
-      // Validate qty (CSE)
-      const invalidItems = tableData.filter((row) => {
-        const cse = parseFloat(row.cse) || 0;
-        const availableStock = parseFloat(row.availableStock) || 0;
-        return cse > availableStock;
-      });
+    // ✅ Fetch existing data in edit mode
+    useEffect(() => {
+      if (isEditMode && loadUUID && isItemsLoaded) {
+        setLoading(true);
+        (async () => {
+          try {
+            const res = await salesmanLoadHeaderById(String(loadUUID), {});
+            const data = res?.data ?? res;
+            setForm({
+              salesman_type: data?.salesman_type || "",
+              warehouse: data?.warehouse?.id?.toString() || "",
+              route: data?.route?.id?.toString() || "",
+              salesman: data?.salesman?.id?.toString(),
+              project_type:
+                data?.projecttype?.id?.toString() || data?.project_type || "",
+            });
 
-      if (invalidItems.length > 0) {
-        showSnackbar("Check the CSE values. CSE cannot exceed available stock.", "error");
+            // Populate CSE values from details array using item IDs
+            if (data?.details && Array.isArray(data.details)) {
+              setItemData((prevItems) =>
+                prevItems.map((item) => {
+                  const existingDetail = data.details.find(
+                    (detail: any) => detail.item?.id === item.id
+                  );
+                  return existingDetail
+                    ? { ...item, qty: existingDetail.qty?.toString() || "" }
+                    : item;
+                })
+              );
+            }
+          } catch (err) {
+            showSnackbar("Failed to fetch details", "error");
+          } finally {
+            setLoading(false);
+          }
+        })();
+      }
+    }, [isEditMode, loadUUID, isItemsLoaded, setLoading, showSnackbar]);
+
+    // ✅ Validation Schema
+    const validationSchema = yup.object().shape({
+      salesman_type: yup.string().required("Salesman Type is required"),
+      warehouse: yup.string().required("Warehouse is required"),
+      route: yup.string().required("Route is required"),
+      salesman: yup.string().required("Salesman is required"),
+    });
+
+    const handleChange = (field: string, value: string) => {
+      setForm((prev) => ({ ...prev, [field]: value }));
+      if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+    };
+
+    // ✅ Handle Qty Change
+    const handleQtyChange = (itemId: string | number, value: string) => {
+      setItemData((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, qty: value } : item))
+      );
+    };
+
+    // ✅ Table Columns
+    const columns: configType["columns"] = [
+      {
+        key: "item",
+        label: "Items",
+        render: (row: TableDataType) => {
+          const currentItem = itemData.find((item) => item.id === row.id);
+          return (
+            <span>
+              {row.item_code && row.name
+                ? `${row.item_code} - ${row.name}`
+                : row.item_code
+                  ? row.item_code
+                  : row.name
+                    ? row.name
+                    : "-"}
+            </span>
+          );
+        },
+      },
+      { key: "volume", label: "Available Stock" },
+      {
+        key: "cse",
+        label: "CSE",
+        render: (row: TableDataType) => {
+          const currentItem = itemData.find((item) => item.id === row.id);
+          return (
+            <div className="w-[100px]">
+              <input
+                type="number"
+                className="border border-gray-300 rounded-md px-2 py-1 w-full text-sm"
+                value={currentItem?.qty ?? ""}
+                onChange={(e) => handleQtyChange(row.id, e.target.value)}
+              />
+            </div>
+          );
+        },
+      },
+      {
+        key: "pcs",
+        label: "PCS",
+        render: (row: TableDataType) => {
+          const currentItem = itemData.find((item) => item.id === row.id);
+          return (
+            <div className="w-[100px]">
+              <input
+                type="number"
+                className="border border-gray-300 rounded-md px-2 py-1 w-full text-sm"
+                value={currentItem?.qty ?? ""}
+                onChange={(e) => handleQtyChange(row.id, e.target.value)}
+              />
+            </div>
+          );
+        },
+      },
+    ];
+
+    // ✅ Handle Submit
+    const handleSubmit = async () => {
+      try {
+        await validationSchema.validate(form, { abortEarly: false });
+        setErrors({});
+        setSubmitting(true);
+        console.log(form);
+
+        const payload = {
+          warehouse_id: Number(form.warehouse),
+          route_id: Number(form.route),
+          salesman_id: Number(form.salesman),
+          salesman_type: String(form.salesman_type),
+          project_type:
+            form.salesman_type == "Project" ? Number(form.project_type) : null,
+          details: itemData
+            .filter((i) => i.qty && Number(i.qty) > 0)
+            .map((i) => {
+              const uomArray =
+                typeof i.uom === "string" ? JSON.parse(i.uom) : i.uom;
+              const secondaryUom =
+                Array.isArray(uomArray) &&
+                uomArray.find(
+                  (u: { uom_type: string }) => u.uom_type === "secondary"
+                );
+
+              return {
+                item_id: i.id,
+                uom: secondaryUom?.id || uomArray?.[0]?.id || null,
+                qty: Number(i.qty),
+                status: i.status ?? 1,
+              };
+            }),
+        };
+
+        let res;
+        if (isEditMode && loadUUID) {
+          res = await salesmanLoadHeaderUpdate(loadUUID, payload);
+        } else {
+          res = await salesmanLoadHeaderAdd(payload);
+        }
+
+        if (res?.error) {
+          showSnackbar(res.data?.message || "Failed to submit form", "error");
+        } else {
+          showSnackbar(
+            isEditMode
+              ? "Salesman Load updated successfully"
+              : "Salesman Load added successfully",
+            "success"
+          );
+          router.push("/salesmanLoad");
+        }
+      } catch (err) {
+        if (err instanceof yup.ValidationError) {
+          const formErrors: Record<string, string> = {};
+          err.inner.forEach((e) => {
+            if (e.path) formErrors[e.path] = e.message;
+          });
+          setErrors(formErrors);
+        } else {
+          console.error(err);
+          showSnackbar("Failed to submit form", "error");
+        }
+      } finally {
+        setSubmitting(false);
+      }
+    };
+
+    const handleRemoveItem = (index: number) => {
+      if (itemData.length <= 1) {
+        setItemData([
+          {
+            item_id: "",
+            itemName: "",
+            UOM: "",
+            uom_id: "",
+            Quantity: "1",
+
+          },
+        ]);
         return;
       }
+      setItemData(itemData.filter((_, i) => i !== index));
+    };
 
-      setSubmitting(true);
+    const handleAddNewItem = () => {
+      setItemData([
+        ...itemData,
+        {
+          item_id: "",
+          itemName: "",
+          UOM: "",
+          uom_id: "",
+          Quantity: "1",
 
-      const details = tableData
-        .filter((i) => i.cse && Number(i.cse) > 0)
-        .map((i) => {
-          const uomArray = typeof i.uom === "string" ? JSON.parse(i.uom) : i.uom;
-          const uomId = Array.isArray(uomArray)
-            ? (
-                uomArray.find(
-                  (u: { id: number | string; uom_type: string }) =>
-                    u.uom_type === "secondary"
-                )?.id || uomArray[0]?.id
-              )
-            : null;
+        },
+      ]);
+    };
 
-          return {
-            item_id: Number(i.id),
-            uom: Number(uomId),
-            qty: Number(i.cse),
-            status: 1,
-          };
-        });
-
-      const payload = {
-        warehouse_id: Number(form.warehouse),
-        route_id: Number(form.route),
-        salesman_id: Number(form.salesman),
-        salesmanType: String(form.salesmanType),
-        project_type: Number(form.project_type),
-        details,
-      };
-
-      let res;
-      if (isEditMode && loadUUID) {
-        res = await salesmanLoadHeaderUpdate(loadUUID, payload);
-      } else {
-        res = await salesmanLoadHeaderAdd(payload);
-      }
-
-      if (res?.error) {
-        showSnackbar(res.data?.message || "Failed to submit form", "error");
-      } else {
-        showSnackbar(
-          isEditMode
-            ? "Salesman Load updated successfully"
-            : "Salesman Load added successfully",
-          "success"
-        );
-        router.push("/salesmanLoad");
-      }
-    } catch (err) {
-      if (err instanceof yup.ValidationError) {
-        const formErrors: Record<string, string> = {};
-        err.inner.forEach((e) => {
-          if (e.path) formErrors[e.path] = e.message;
-        });
-        setErrors(formErrors);
-      } else {
-        showSnackbar(
-          isEditMode ? "Failed to update Salesman Load" : "Failed to add Salesman Load",
-          "error"
-        );
-      }
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-4">
-          <Link href="/salesmanLoad">
-            <Icon icon="lucide:arrow-left" width={24} />
-          </Link>
-          <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Salesman Load" : "Add Salesman Load"}
-          </h1>
+    return (
+      <div className="flex flex-col">
+        <div className="flex justify-between items-center mb-[20px]">
+          <div className="flex items-center gap-[16px]">
+            <Icon
+              icon="lucide:arrow-left"
+              width={24}
+              onClick={() => router.back()}
+            />
+            <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[4px]">
+              Add Load
+            </h1>
+          </div>
         </div>
-      </div>
 
-      {/* Form */}
-      <ContainerCard>
-        <div className="p-6">
-          <h2 className="text-lg font-medium text-gray-800 mb-4">
-            Salesman Load Details
-          </h2>
+        <ContainerCard className="rounded-[10px] scrollbar-none">
+          {/* --- Header Section --- */}
+          <div className="flex justify-between mb-10 flex-wrap gap-[20px]">
+            <div className="flex flex-col gap-[10px]">
+              <Logo type="full" />
+              {/* <span className="text-primary font-normal text-[16px]">
+              Emma-Köhler-Allee 4c, Germering - 13907
+            </span> */}
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
+                Load
+              </span>
+              <span className="text-primary text-[14px] tracking-[10px]">
+                #L0201
+              </span>
+            </div>
+          </div>
+          <hr className="w-full text-[#D5D7DA]" />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-           <div>
-                                       <InputFields
-                                       required
-                                       label="Salesman Type"
-                                       value={form.salesmanType}
-                                       options={[{ label: "Sales Executive-GT", value: "Sales Executive-GT" }, 
-                                           { label: "Salesman", value: "Salesman", },
-                                       { label: "Project", value: "Project", }]}
-                                       onChange={(e) => handleChange("salesmanType", e.target.value)}
-                                   />
-                                   {errors.salesmanType && (
-                                       <p className="text-red-500 text-sm mt-1">{errors.salesmanType}</p>
-                                   )}
-                                   </div>
-                                   {form.salesmanType === "Project" && (
-                                                     <div>
-                                                       <InputFields
-                                                         label="Project List"
-                                                         name="project_type"
-                                                         value={form.project_type || ""}
-                                                         options={salesmanTypeOptions}
-                                                         onChange={(e) => handleChange("project_type", e.target.value)}
-                                                       />
-                                                     </div>
-                                                   )}
+          {/* --- Form Fields --- */}
+          <div className="flex flex-col sm:flex-row gap-4 mt-10 mb-10 flex-wrap">
             <InputFields
-              required
+              label="Salesman Type"
+              name="salesman_type"
+              value={form.salesman_type}
+              options={[
+                { label: "Sales Executive-GT", value: "Sales Executive-GT" },
+                { label: "Salesman", value: "Salesman" },
+                { label: "Project", value: "Project" },
+              ]}
+              onChange={(e) => handleChange("salesman_type", e.target.value)}
+            />
+            {errors.salesman_type && (
+              <p className="text-red-500 text-sm mt-1">{errors.salesman_type}</p>
+            )}
+
+            {form.salesman_type === "Project" && (
+              <InputFields
+                label="Project List"
+                value={form.project_type}
+                options={salesmanTypeOptions}
+                onChange={(e) => handleChange("project_type", e.target.value)}
+              />
+            )}
+            <InputFields
               label="Warehouse"
+              name="warehouse"
               value={form.warehouse}
               options={warehouseOptions}
               onChange={(e) => {
                 const val = e.target.value;
-                handleChange("warehouse", val);
-                handleChange("salesman", "");
-                if (val) fetchSalesmanOptions(val);
-              }}
+                  handleChange("warehouse", val);
+                  // Clear customer when warehouse changes
+                  handleChange("route", "");
+                  // Fetch customers for selected warehouse
+                  if (val) {
+                    fetchRouteOptions(val);
+                  } }
+                }
             />
             <InputFields
-              required
-              label="Salesman"
-              value={form.salesman}
-              options={salesmanOptions}
-              onChange={(e) => {
-                const val = e.target.value;
-                handleChange("salesman", val);
-                fetchRoutesBySalesman(val);
-              }}
-            />
-            <InputFields
-              required
               label="Route"
+              name="route"
               value={form.route}
               options={routeOptions}
-              onChange={(e) => handleChange("route", e.target.value)}
+              onChange={(e) =>  {
+                const val = e.target.value;
+                  handleChange("route", val);
+                  // Clear customer when warehouse changes
+                  handleChange("salesman", "");
+                  // Fetch customers for selected warehouse
+                  if (val) {
+                    fetchSalesmanByRouteOptions(val);
+                  } }}
+            />
+            <InputFields
+              label="Salesman"
+              name="salesman"
+              value={form.salesman}
+              options={salesmanOptions}
+              onChange={(e) => handleChange("salesman", e.target.value)}
             />
           </div>
-        </div>
-      </ContainerCard>
 
-      {/* Items Table */}
-      <div className="mb-6">
-        <CustomTable
-          data={tableData}
-          config={{
-            header: { title: "Items" },
-            columns: [
-              { key: "item", label: "Item", showByDefault: true, width: 250 },
-              {
-                key: "availableStock",
-                label: "Available Stock",
-                showByDefault: true,
-                width: 150,
-              },
-              {
-                key: "cse",
-                label: "CSE (Qty)",
-                showByDefault: true,
-                width: 150,
-                render: (row) => {
-                  const cse = parseFloat(row.cse) || 0;
-                  const stock = parseFloat(row.availableStock) || 0;
-                  const invalid = cse > stock;
-                  return (
-                    <div>
-                      <input
-                        type="number"
-                        value={row.cse}
-                        onChange={(e) =>
-                          handleCseChange(row.id, e.target.value)
-                        }
-                        className={`w-full px-3 py-2 border rounded-lg text-sm ${
-                          invalid
-                            ? "border-red-500"
-                            : "border-gray-300 focus:border-blue-500"
-                        }`}
-                        placeholder="Enter CSE"
-                      />
-                      {invalid && (
-                        <p className="text-red-500 text-xs mt-1">
-                          Exceeds stock
-                        </p>
-                      )}
-                    </div>
-                  );
+          {/* --- Table --- */}
+          <Table
+            data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
+            config={{
+              table: { height: 500 },
+              columns: [
+                {
+        key: "item",
+        label: "Items",
+        render: (row: TableDataType) => {
+          const currentItem = itemData.find((item) => item.id === row.id);
+          return (
+            <span>
+              {row.item_code && row.name
+                ? `${row.item_code} - ${row.name}`
+                : row.item_code
+                  ? row.item_code
+                  : row.name
+                    ? row.name
+                    : "-"}
+            </span>
+          );
+        },
+      },
+                
+                {
+                  key: "UOM",
+                  label: "UOM",
+                  render: (row) => (
+                    <InputFields
+                      label=""
+                      name="UOM"
+                      value={row.UOM_id}
+                      options={JSON.parse(row.UOM ?? "[]")}
+                      onChange={(e) =>
+                        recalculateItem(Number(row.idx), "UOM", e.target.value)
+                      }
+                    />
+                  ),
                 },
-              },
-            ],
-            footer: { pagination: false, nextPrevBtn: false },
-          }}
-        />
-      </div>
+                { key:"cse", label:"CSE"},
+                {
+                  key: "Quantity",
+                  label: "Qty",
+                  render: (row) => (
+                    <InputFields
+                      label=""
+                      type="number"
+                      name="Quantity"
+                      value={row.Quantity}
+                      onChange={(e) =>
+                        recalculateItem(
+                          Number(row.idx),
+                          "Quantity",
+                          e.target.value
+                        )
+                      }
+                    />
+                  ),
+                },
+                { key:"pcs", label:"PCS"},
+                {
+                  key: "Quantity",
+                  label: "Qty",
+                  render: (row) => (
+                    <InputFields
+                      label=""
+                      type="number"
+                      name="Quantity"
+                      value={row.Quantity}
+                      onChange={(e) =>
+                        recalculateItem(
+                          Number(row.idx),
+                          "Quantity",
+                          e.target.value
+                        )
+                      }
+                    />
+                  ),
+                },
+              ],
+            }}
+          />
+          <div className="flex justify-between text-primary gap-0 mb-10">
+            <div></div>
+            <div className="flex justify-between flex-wrap w-full">
+              <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
 
-      {/* Buttons */}
-      <div className="flex justify-end gap-4 mt-6">
-        <button
-          type="button"
-          className="px-6 py-2 rounded-lg border text-gray-700 hover:bg-gray-100"
-          onClick={() => router.push("/salesmanLoad")}
-          disabled={submitting}
-        >
-          Cancel
-        </button>
-        <SidebarBtn
-          label={
-            submitting
-              ? isEditMode
-                ? "Updating..."
-                : "Submitting..."
-              : isEditMode
-              ? "Update"
-              : "Submit"
-          }
-          isActive={!submitting}
-          leadingIcon="mdi:check"
-          onClick={handleSubmit}
-          disabled={submitting}
-        />
+              </div>
+            </div>
+          </div>
+
+          {/* --- Buttons --- */}
+          <hr className="text-[#D5D7DA]" />
+          <div className="flex justify-end gap-4 mt-6">
+            <button
+              type="button"
+              className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+              onClick={() => router.push("/salesmanLoad")}
+            >
+              Cancel
+            </button>
+            <SidebarBtn
+              isActive={true}
+              label="Create Order"
+              onClick={handleSubmit}
+            />
+          </div>
+        </ContainerCard>
       </div>
-    </>
-  );
-}
+    );
+  }
+

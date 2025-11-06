@@ -452,6 +452,7 @@ export default function AddEditSalesmanLoad() {
                   return (
                     <div style={{ minWidth: '150px', maxWidth: '150px' }}>
                       <InputFields 
+                      placeholder="Select UOM"
                         options={uomOptions}
                         value={row.uom}
                         disabled={uomOptions.length === 0}
