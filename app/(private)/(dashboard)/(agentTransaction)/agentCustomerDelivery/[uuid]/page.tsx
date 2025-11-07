@@ -472,6 +472,7 @@ export default function OrderAddEditPage() {
               required
               label="Customer"
               name="customer"
+              searchable={true}
               value={form.customer}
               options={agentCustomerOptions}
               onChange={handleChange}
@@ -504,6 +505,7 @@ export default function OrderAddEditPage() {
                   <InputFields
                     label=""
                     name="itemName"
+                    searchable={true}
                     options={itemOptions}
                     value={row.item_id}
                     onChange={(e) => {

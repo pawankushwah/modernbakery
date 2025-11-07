@@ -367,6 +367,7 @@ export default function InvoiceddEditPage() {
                                 required
                                 label="Warehouse"
                                 name="warehouse"
+                                searchable={true}
                                 value={form.warehouse}
                                 options={warehouseOptions}
                                 onChange={(e) => {
@@ -383,6 +384,7 @@ export default function InvoiceddEditPage() {
                                 required
                                 label="Delivery"
                                 name="customer"
+                                searchable={true}
                                 value={form.customer}
                                 options={agentCustomerOptions}
                                 onChange={handleChange}
@@ -395,6 +397,7 @@ export default function InvoiceddEditPage() {
                             <InputFields
                                 label="Customer Type"
                                 name="customerType"
+
                                 value={form.customerType}
                                 options={[
                                     { label: "Agent Customer", value: "1" },
@@ -406,6 +409,7 @@ export default function InvoiceddEditPage() {
                                 required
                                 label="Warehouse"
                                 name="warehouse"
+                                searchable={true}
                                 value={form.warehouse}
                                 options={warehouseOptions}
                                 onChange={(e) => {
@@ -429,6 +433,7 @@ export default function InvoiceddEditPage() {
                                 required
                                 label="Customer"
                                 name="customer"
+                                searchable={true}
                                 value={form.customer}
                                 options={agentCustomerOptions}
                                 onChange={handleChange}
@@ -458,6 +463,7 @@ export default function InvoiceddEditPage() {
                                         <InputFields
                                             label=""
                                             name="itemName"
+                                            searchable={true}
                                             options={itemOptions}
                                             value={row.item_id}
                                             onChange={(e) => {
