@@ -1,6 +1,7 @@
 import axios from "axios";
 import { Params } from "next/dist/server/request/params";
 
+
 export const API = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   headers: {
@@ -3019,6 +3020,44 @@ export const getSalesmanInWarehouse = async (id?: string, params?: Params) => {
 export const getCustomerInWarehouse = async (id?: string,params?:Params) => {
   try {
     const res = await API.get(`api/master/warehouse/warehouseCustomer/${id}`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const getwarehouseStock = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/settings/warehouse-stocks/list", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addWarehouseStock = async (payload: labelType) => {
+  try {
+    const res = await API.post(`/api/settings/warehouse-stocks/add`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editWarehouseStock = async (uuid: string, payload: object) => {
+  try {
+    const res = await API.put(`/api/settings/warehouse-stocks/${uuid}`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getWarehouseStockById = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/settings/warehouse-stocks/${uuid}`);
+
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

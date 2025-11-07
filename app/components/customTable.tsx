@@ -572,11 +572,18 @@ function TableBody() {
         setNestedLoading(true)
         if (!api?.list) {
             setDisplayedData(tableData.slice(startIndex, endIndex));
+
+            setTimeout(()=>{
         setNestedLoading(false)
+
+            },2000)
             
         } else {
             setDisplayedData(tableData);
+           setTimeout(()=>{
         setNestedLoading(false)
+
+            },2000)
 
         }
     }, [tableDetails]);
@@ -610,7 +617,7 @@ function TableBody() {
     };
 
     return (
-        <>{!nestedLoading?
+        <>{!nestedLoading?<>
             <div
                 className="overflow-x-auto border-b-[1px] border-[#E9EAEB] scrollbar-thin scrollbar-thumb-[#D5D7DA] scrollbar-track-transparent"
                 style={
@@ -819,7 +826,7 @@ function TableBody() {
                             ))}
                     </tbody>
                 </table>
-            </div>:<CustomTableSkelton/>}
+            </div>
             {displayedData.length <= 0 && (
                 <div className="p-2 content-center text-center py-[12px] text-[24px] max-h-full min-h-[200px] text-primary">
                     No data available
@@ -830,6 +837,8 @@ function TableBody() {
                     No Column Selected
                 </div>
             )}
+            </>:<CustomTableSkelton/>}
+            
         </>
     );
 }
