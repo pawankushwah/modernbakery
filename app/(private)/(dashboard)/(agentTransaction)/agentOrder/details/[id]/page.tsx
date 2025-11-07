@@ -332,8 +332,8 @@ export default function OrderDetailPage() {
             label="Download"
             onClick={async () => {
               try {
-                const module = await import('@/app/components/generatePdf');
-                const generatePdf = module.default;
+                const mod = await import('@/app/components/generatePdf');
+                const generatePdf = mod.default;
                 await generatePdf(targetRef.current, { fileName: `${data?.order_code || 'order'}.pdf`, scale: 2 });
               } catch (err) {
                 console.error('PDF generation failed', err);

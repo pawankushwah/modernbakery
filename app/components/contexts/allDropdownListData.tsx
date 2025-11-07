@@ -164,7 +164,7 @@ interface AreaItem {
 interface CustomerItem {
   id?: number | string;
   customer_code?: string;
-  owner_name?: string;
+  business_name?: string;
 }
 
 interface CustomerTypeItem {
@@ -411,7 +411,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const companyCustomersOptions = (Array.isArray(companyCustomersData) ? companyCustomersData : []).map((c: CustomerItem) => ({
     value: String(c.id ?? ''),
-    label: c.customer_code && c.owner_name ? `${c.customer_code} - ${c.owner_name}` : (c.owner_name ?? '')
+    label: c.customer_code && c.business_name ? `${c.customer_code} - ${c.business_name}` : (c.business_name ?? '')
   }));
 
   const companyCustomersTypeOptions = (Array.isArray(companyCustomersTypeData) ? companyCustomersTypeData : []).map((c: CustomerTypeItem) => ({
@@ -557,7 +557,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call subRegionList with an object matching the expected Params shape
-      const res = await subRegionList({ region_id: String(region_id) });
+      const res = await subRegionList({ region_id: String(region_id),page:"1",pageSize:"1000"  });
       const normalize = (r: unknown): AreaItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -644,7 +644,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call routeList with warehouse_id
-      const res = await routeList({ warehouse_id: String(warehouse_id)});
+      const res = await routeList({ warehouse_id: String(warehouse_id),page:"1",pageSize:"1000"  });
       const normalize = (r: unknown): RouteItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -686,7 +686,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call getWarehouse with an object matching the expected Params shape
-      const res = await getWarehouse({ area_id: String(area_id) });
+      const res = await getWarehouse({ area_id: String(area_id),page:"1",pageSize:"1000"  });
       const normalize = (r: unknown): WarehouseItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -708,7 +708,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call regionList with company_id
-      const res = await regionList({ company_id: String(company_id) });
+      const res = await regionList({ company_id: String(company_id),page:"1",pageSize:"1000" });
       const normalize = (r: unknown): RegionItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
