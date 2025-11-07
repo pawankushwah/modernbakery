@@ -433,31 +433,7 @@ export default function ViewPage() {
                 return row.customer_type || "-";
             },
         },
-        {
-            key: "category",
-            label: "Customer Category",
-            render: (row: TableDataType) =>
-                typeof row.category === "object" &&
-                    row.category !== null &&
-                    "customer_category_name" in row.category
-                    ? (row.category as { customer_category_name?: string })
-                        .customer_category_name || "-"
-                    : "-",
-        },
-        {
-            key: "subcategory",
-            label: "Customer Sub Category",
-            render: (row: TableDataType) =>
-                typeof row.subcategory === "object" &&
-                    row.subcategory !== null &&
-                    "customer_sub_category_name" in row.subcategory
-                    ? (row.subcategory as { customer_sub_category_name?: string })
-                        .customer_sub_category_name || "-"
-                    : "-",
-                isSortable:true,
-            showByDefault: true,
-        },
-        {
+         {
             key: "outlet_channel",
             label: "Outlet Channel",
             render: (row: TableDataType) =>
@@ -471,6 +447,18 @@ export default function ViewPage() {
 
             showByDefault: true,
         },
+        {
+            key: "category",
+            label: "Customer Category",
+            render: (row: TableDataType) =>
+                typeof row.category === "object" &&
+                    row.category !== null &&
+                    "customer_category_name" in row.category
+                    ? (row.category as { customer_category_name?: string })
+                        .customer_category_name || "-"
+                    : "-",
+        },
+       
         { key: "landmark", label: "Landmark" },
         { key: "district", label: "District" },
         { key: "street", label: "Street" },
