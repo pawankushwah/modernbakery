@@ -109,46 +109,46 @@ export default function ViewPage() {
         if (typeof tabList === "undefined" || idx < 0 || idx >= tabList.length) return;
         setActiveTab(tabList[idx].key);
 
-        if (tabList[idx].key == "warehouseCustomer") {
-            setNestedLoading(true)
-            const cRes = await getCustomerInWarehouse(id);
-            if (cRes && !cRes.error) {
-                setWarehouseCustomer(cRes?.data);
-                setNestedLoading(false)
-            }
-            else {
-                setWarehouseCustomer([])
-            }
+        // if (tabList[idx].key == "warehouseCustomer") {
+        //     setNestedLoading(true)
+        //     const cRes = await getCustomerInWarehouse(id);
+        //     if (cRes && !cRes.error) {
+        //         setWarehouseCustomer(cRes?.data);
+        //         setNestedLoading(false)
+        //     }
+        //     else {
+        //         setWarehouseCustomer([])
+        //     }
 
-        }
-        else if (tabList[idx].key == "route") {
-            setNestedLoading(true)
+        // }
+        // else if (tabList[idx].key == "route") {
+        //     setNestedLoading(true)
 
-            const rRes = await getRouteInWarehouse(id);
+        //     const rRes = await getRouteInWarehouse(id);
 
-            if (rRes && !rRes.error) {
-                setWarehouseRoutes(rRes?.data);
-                setNestedLoading(false)
+        //     if (rRes && !rRes.error) {
+        //         setWarehouseRoutes(rRes?.data);
+        //         setNestedLoading(false)
 
-            }
-            else {
-                setWarehouseRoutes([]);
-            }
-        }
+        //     }
+        //     else {
+        //         setWarehouseRoutes([]);
+        //     }
+        // }
 
-        else if (tabList[idx].key == "salesman") {
-            setNestedLoading(true)
+        // else if (tabList[idx].key == "salesman") {
+        //     setNestedLoading(true)
 
-            const sRes = await getSalesmanInWarehouse(id);
-            if (sRes && !sRes.error) {
-                setWarehouseSalesman(sRes?.data);
-                setNestedLoading(false)
+        //     const sRes = await getSalesmanInWarehouse(id);
+        //     if (sRes && !sRes.error) {
+        //         setWarehouseSalesman(sRes?.data);
+        //         setNestedLoading(false)
 
-            }
-            else {
-                setWarehouseSalesman([]);
-            }
-        }
+        //     }
+        //     else {
+        //         setWarehouseSalesman([]);
+        //     }
+        // }
     };
     const [activeTab, setActiveTab] = useState("overview");
     const tabList = [
@@ -781,7 +781,7 @@ export default function ViewPage() {
 
             {activeTab === "warehouseCustomer" && (
                 <ContainerCard >
-                    {!nestedLoading ? (
+                 
                         <div className="flex flex-col h-full">
                             <Table
                                 config={{
@@ -799,7 +799,7 @@ export default function ViewPage() {
                                 }}
                             />
                         </div>
-                    ):(<div><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/></div>)}
+                    
                 </ContainerCard>
             )}
             {activeTab === "warehouseStock" && (
@@ -812,7 +812,7 @@ export default function ViewPage() {
             )}
             {activeTab === "route" && (
                 <ContainerCard >
-                    {!nestedLoading ? (
+                    
                         <div className="flex flex-col h-full">
                             <Table
                                 config={{
@@ -830,12 +830,12 @@ export default function ViewPage() {
                                 }}
                             />
                         </div>
-                    ) : (<div><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/></div>)}
+                    
                 </ContainerCard>
             )}
             {activeTab === "salesman" && (
                 <ContainerCard >
-                    {!nestedLoading ? (
+                   
                         <div className="flex flex-col h-full">
                             <Table
                                 config={{
@@ -853,7 +853,7 @@ export default function ViewPage() {
                                 }}
                             />
                         </div>
-                    ):(<div><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/><Skeleton/></div>)}
+                   
                 </ContainerCard>
             )}
             {activeTab === "sales" && (
