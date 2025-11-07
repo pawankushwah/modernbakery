@@ -774,7 +774,7 @@ function TableBody() {
                                                             col.render(row)
                                                         ) : (
                                                             <div className="flex items-center">
-                                                                {row[col.key]}
+                                                                {row[col.key] || "-"}
                                                             </div>
                                                         )}
                                                     </td>

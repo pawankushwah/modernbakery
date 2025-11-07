@@ -54,8 +54,8 @@ type Props = {
   showSkeleton?: boolean;
   maxLength?: number;
   integerOnly?: boolean;
-  numberMin?: number;
-  numberMax?: number;
+  numberMin?: string | number;
+  numberMax?: string | number;
   setSelectedCountry?: ({ name: string; code?: string; flag?: string });
   selectedCountry?: { name: string; code?: string; flag?: string };
   /** When true and this is a multi-select, render selected values as chips inside the field */
