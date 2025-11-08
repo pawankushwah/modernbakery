@@ -272,7 +272,7 @@ export default function AddEditSalesmanLoad() {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(
-          isEditMode ? "Route updated successfully" : "Route added successfully",
+          isEditMode ? "CAPS Collection updated successfully" : "CAPS Collection added successfully",
           "success"
         );
         router.push("/capsCollection");
@@ -286,7 +286,7 @@ export default function AddEditSalesmanLoad() {
         setErrors(formErrors);
       } else {
         showSnackbar(
-          isEditMode ? "Failed to update route" : "Failed to add route",
+          isEditMode ? "Failed to update CAPS Collection" : "Failed to add CAPS Collection",
           "error"
         );
       }
@@ -567,7 +567,7 @@ export default function AddEditSalesmanLoad() {
               ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
               : "border-gray-300"
           }`}
-          onClick={() => router.push("/route")}
+          onClick={() => router.push("/capsCollection")}
           disabled={submitting} 
         >
           Cancel

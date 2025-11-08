@@ -277,14 +277,14 @@ export const initialLinkData: SidebarDataType[] = [
                     {
                         isActive: false,
                         href: "/agentCustomerDelivery",
-                        label: "Agent Customer Delivery",
+                        label: "Agent Delivery",
                         leadingIcon: "hugeicons:invoice",
                         iconColor: "text-cyan-500"
                     },
                     {
                         isActive: false,
                         href: "/invoice",
-                        label: "Agent Customer Invoice",
+                        label: "Agent Invoice",
                         leadingIcon: "hugeicons:invoice",
                         iconColor: "text-cyan-500"
                     },

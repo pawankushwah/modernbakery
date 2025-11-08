@@ -263,13 +263,13 @@ export default function CustomerInvoicePage() {
                                         `/agentCustomerDelivery/details/${row.uuid}`
                                     ),
                             },
-                            {
-                                icon: "lucide:edit-2",
-                                onClick: (row: TableDataType) =>
-                                    router.push(
-                                        `/agentCustomerDelivery/${row.uuid}`
-                                    ),
-                            },
+                            // {
+                            //     icon: "lucide:edit-2",
+                            //     onClick: (row: TableDataType) =>
+                            //         router.push(
+                            //             `/agentCustomerDelivery/${row.uuid}`
+                            //         ),
+                            // },
                         ],
                         pageSize: 10,
                     }}
