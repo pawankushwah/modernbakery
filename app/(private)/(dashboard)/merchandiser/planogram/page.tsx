@@ -41,10 +41,10 @@ export default function Planogram() {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const [showDropdown, setShowDropdown] = useState(false);
-   const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [deleteSelectedRow, setDeleteSelectedRow] = useState<string | null>(null);
+  // const [showDeletePopup, setShowDeletePopup] = useState(false);
+  // const [deleteSelectedRow, setDeleteSelectedRow] = useState<string | null>(null);
 
   type TableRow = TableDataType & { id?: string };
 
@@ -135,7 +135,7 @@ export default function Planogram() {
     try {
       setLoading(true);
 
-      const res = await exportPlanogram({ format : fileType });
+      const res = await exportPlanogram({ format: fileType });
       console.log("Export API Response:", res);
 
       let downloadUrl = "";
@@ -178,8 +178,6 @@ export default function Planogram() {
     }
   };
 
-  
-
   return (
     <div className="flex flex-col h-full">
       <Table
@@ -192,23 +190,22 @@ export default function Planogram() {
           header: {
             title: "Planogram",
 
-  threeDot: [
-                {
-                  icon: "gala:file-document",
-                  label: "Export CSV",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    handleExport("csv")
-                  },
+            threeDot: [
+              {
+                icon: "gala:file-document",
+                label: "Export CSV",
+                onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                  handleExport("csv");
                 },
-                {
-                  icon: "gala:file-document",
-                  label: "Export Excel",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    handleExport("xlsx")
-                  },
+              },
+              {
+                icon: "gala:file-document",
+                label: "Export Excel",
+                onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                  handleExport("xlsx");
                 },
-             
-              ],
+              },
+            ],
 
             searchBar: true,
             columnFilter: true,
@@ -267,15 +264,15 @@ export default function Planogram() {
               onClick: (data: TableDataType) =>
                 router.push(`/merchandiser/planogram/${data.uuid}`),
             },
-            {
-              icon: "lucide:trash-2",
-              onClick: (data: TableDataType) => {
-                setDeleteSelectedRow(
-                  data?.uuid ? String(data.uuid) : data.uuid
-                );
-                setShowDeletePopup(true);
-              },
-            },
+            // {
+            //   icon: "lucide:trash-2",
+            //   onClick: (data: TableDataType) => {
+            //     setDeleteSelectedRow(
+            //       data?.uuid ? String(data.uuid) : data.uuid
+            //     );
+            //     setShowDeletePopup(true);
+            //   },
+            // },
           ],
           pageSize: 10,
         }}
