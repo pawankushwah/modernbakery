@@ -10,7 +10,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { agentCustomerList, genearateCode, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
@@ -188,7 +188,7 @@ export default function OrderAddEditPage() {
   };
 
   const fetchItem = async (searchTerm: string) => {
-    const res = await itemList({ per_page: "10", name: searchTerm });
+    const res = await itemGlobalSearch({ per_page: "10", query: searchTerm });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
       setSkeleton({ ...skeleton, item: false });
@@ -436,9 +436,9 @@ export default function OrderAddEditPage() {
   // };
 
   const fetchAgentCustomers = async (values: FormikValues, search: string) => {
-    const res = await agentCustomerList({
+    const res = await agentCustomerGlobalSearch({
       warehouse_id: values.warehouse,
-      search: search || "",
+      query: search || "",
       // dropdown: "1",
       per_page: "10"
     });
@@ -448,9 +448,9 @@ export default function OrderAddEditPage() {
       return;
     }
     const data = res?.data || [];
-    const options = data.map((customer: { id: number; outlet_name: string }) => ({
+    const options = data.map((customer: { id: number; osa_code: string; business_name: string }) => ({
       value: String(customer.id),
-      label: customer.outlet_name
+      label: customer.osa_code + " - " + customer.business_name
     }));
     setFilteredCustomerOptions(options);
     setSkeleton({ ...skeleton, customer: false });
@@ -591,7 +591,7 @@ export default function OrderAddEditPage() {
                       label="Customer"
                       name="customer"
                       placeholder="Search customer"
-                      onSearch={(q) => fetchAgentCustomers(values, q)}
+                      onSearch={(q) => {console.log("Searching customer:", q); return fetchAgentCustomers(values, q)}}
                       initialValue={filteredCustomerOptions.find(o => o.value === String(values?.customer))?.label || ""}
                       onSelect={(opt) => {
                         if (values.customer !== opt.value) {

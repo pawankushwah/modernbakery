@@ -16,6 +16,7 @@ import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import PrintButton from "@/app/components/printButton";
 
 const columns = [
+  { key: "index", label: "#" },
   { key: "item_name", label: "Item Name" },
   { key: "uom_name", label: "UOM" },
   { key: "quantity", label: "Quantity" },
@@ -233,8 +234,8 @@ export default function OrderDetailPage() {
 
         {/* ---------- Order Table ---------- */}
         <Table
-          data={(data?.details || []).map((row) => {
-            const mappedRow: Record<string, string> = {};
+          data={(data?.details || []).map((row, index) => {
+            const mappedRow: Record<string, string> = { index: String(index + 1) };
             Object.keys(row).forEach((key) => {
               const value = (row as any)[key];
               mappedRow[key] = value === null || value === undefined ? "" : String(value);

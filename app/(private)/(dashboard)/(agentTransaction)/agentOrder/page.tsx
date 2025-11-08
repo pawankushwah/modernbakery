@@ -57,8 +57,8 @@ const columns = [
             return `${code}${code && name ? " - " : ""}${name}`;
         },
     },
-    { key: "payment_method", label: "Payment Method", showByDefault: true, render: (row: TableDataType) => row.payment_method || "-" },
-    { key: "order_source", label: "Order Source", showByDefault: true, render: (row: TableDataType) => row.order_source || "-" },
+    { key: "payment_method", label: "Payment Method", render: (row: TableDataType) => row.payment_method || "-" },
+    { key: "order_source", label: "Order Source", render: (row: TableDataType) => row.order_source || "-" },
     { key: "delivery_date", label: "Delivery Date", showByDefault: true, render: (row: TableDataType) => row.delivery_date || "-" },
     { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
     { key: "status", label: "Status", showByDefault: true, render: (row: TableDataType) => (
