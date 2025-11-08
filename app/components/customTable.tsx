@@ -1019,13 +1019,6 @@ function TableFooter() {
     const cPage = tableDetails.currentPage || 0;
     const totalPages = tableDetails.total || 1;
 
-    // Determine the start and end page indices
-    const firstThreePageIndices = [0, 1, 2];
-
-    // Ensure we don't try to get a negative index if there are fewer than 6 pages
-    const lastThreePageIndices =
-        totalPages > 3 ? [totalPages - 3, totalPages - 2, totalPages - 1] : [];
-
     async function handlePageChange(pageNo: number) {
         if (pageNo < 0 || pageNo > totalPages - 1) return;
         if (api?.list) {
@@ -1063,59 +1056,65 @@ function TableFooter() {
                 <div>
                     {footer?.pagination && (
                         <div className="gap-[2px] text-[14px] hidden md:flex select-none">
-                            {totalPages > 6 ? (
-                                <>
-                                    {firstThreePageIndices.map(
-                                        (pageNo, index) => {
-                                            return (
+                            {(() => {
+                                // Build pagination elements based on totalPages and current page (cPage)
+                                if (totalPages <= 6) {
+                                    return (
+                                        <>
+                                            {[...Array(totalPages)].map((_, index) => (
                                                 <PaginationBtn
                                                     key={index}
-                                                    label={(
-                                                        pageNo + 1
-                                                    ).toString()}
-                                                    isActive={pageNo === cPage}
-                                                    onClick={() =>
-                                                        handlePageChange(pageNo)
-                                                    }
+                                                    label={(index + 1).toString()}
+                                                    isActive={index === cPage}
+                                                    onClick={() => handlePageChange(index)}
                                                 />
-                                            );
-                                        }
-                                    )}
-                                    <PaginationBtn
-                                        label={"..."}
-                                        isActive={false}
-                                    />
-                                    {lastThreePageIndices.map(
-                                        (pageNo, index) => {
-                                            return (
+                                            ))}
+                                        </>
+                                    );
+                                }
+
+                                // totalPages > 6: show smart pagination
+                                const elems: (number | string)[] = [];
+
+                                // If near the start, show first up to five pages then ellipsis + last
+                                if (cPage <= 2) {
+                                    const end = Math.min(totalPages - 1, 4); // pages 0..4 (1..5)
+                                    for (let i = 0; i <= end; i++) elems.push(i);
+                                    if (end < totalPages - 1) elems.push("...", totalPages - 1);
+                                }
+                                // If near the end, show first, ellipsis, then last up to five pages
+                                else if (cPage >= totalPages - 3) {
+                                    const start = Math.max(0, totalPages - 5); // show last 5 pages
+                                    elems.push(0);
+                                    if (start > 1) elems.push("...");
+                                    for (let i = start; i <= totalPages - 1; i++) elems.push(i);
+                                }
+                                // Middle: show first page, ellipsis, two before/after current, ellipsis, last page
+                                else {
+                                    elems.push(0, "...");
+                                    const start = Math.max(0, cPage - 2);
+                                    const end = Math.min(totalPages - 1, cPage + 2);
+                                    for (let i = start; i <= end; i++) elems.push(i);
+                                    elems.push("...", totalPages - 1);
+                                }
+
+                                return (
+                                    <>
+                                        {elems.map((p, idx) =>
+                                            typeof p === "string" ? (
+                                                <PaginationBtn key={`e-${idx}`} label={p} isActive={false} />
+                                            ) : (
                                                 <PaginationBtn
-                                                    key={index}
-                                                    label={(
-                                                        pageNo + 1
-                                                    ).toString()}
-                                                    isActive={pageNo === cPage}
-                                                    onClick={() =>
-                                                        handlePageChange(pageNo)
-                                                    }
+                                                    key={p}
+                                                    label={(p + 1).toString()}
+                                                    isActive={p === cPage}
+                                                    onClick={() => handlePageChange(p)}
                                                 />
-                                            );
-                                        }
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    {[...Array(totalPages)].map((_, index) => (
-                                        <PaginationBtn
-                                            key={index}
-                                            label={(index + 1).toString()}
-                                            isActive={index === cPage}
-                                            onClick={() =>
-                                                handlePageChange(index)
-                                            }
-                                        />
-                                    ))}
-                                </>
-                            )}
+                                            )
+                                        )}
+                                    </>
+                                );
+                            })()}
                         </div>
                     )}
                 </div>
@@ -1147,7 +1146,7 @@ function PaginationBtn({
 }) {
     return (
         <div
-            className={`w-[40px] h-[40px] rounded-[8px] p-[12px] flex items-center justify-center cursor-pointer ${isActive
+            className={`min-w-[40px] h-[40px] rounded-[8px] p-[12px] flex items-center justify-center cursor-pointer ${isActive
                     ? "bg-[#FFF0F2] text-[#EA0A2A]"
                     : "bg-tranparent text-[#717680]"
                 }`}

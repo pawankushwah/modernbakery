@@ -508,7 +508,6 @@ useEffect(() => {
                       )}
                       <div
                         className="flex items-center px-3 py-2 cursor-pointer"
-                        style={{ borderBottomColor: '#9ca3af' }}
                         onClick={() => { if (!disabled) handleSelectAll(); }}
                       >
                         <input
