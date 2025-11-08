@@ -9,7 +9,7 @@ import Table, {
     TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData ,downloadFile} from "@/app/services/allApi";
+import { agentCustomerList, agentCustomerStatusUpdate, exportAgentCustomerData ,downloadFile, agentCustomerGlobalSearch} from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -270,15 +270,32 @@ export default function AgentCustomer() {
                     [columnName]: searchQuery
                 });
             }
+            else{
+                result = await agentCustomerGlobalSearch({
+                    per_page: pageSize.toString(),
+                    query: searchQuery
+                });
+            }
             setLoading(false);
             if (result.error) throw new Error(result.data.message);
             else {
+                if(columnName)
+                {
                 return {
                     data: result.data || [],
                     total: result.pagination.pagination.totalPages || 0,
                     currentPage: result.pagination.pagination.current_page || 0,
                     pageSize: result.pagination.pagination.limit || pageSize,
                 };
+            }
+            else{
+                 return {
+                    data: result.data || [],
+                    total: result.pagination.total_pages || 0,
+                    currentPage: result.pagination.current_page || 0,
+                    pageSize: result.pagination.per_page || pageSize,
+                };
+            }
             }
         },
         []
@@ -332,7 +349,7 @@ export default function AgentCustomer() {
                         api: {
                             list: fetchAgentCustomers,
                             search: search,
-                            filterBy: filterBy
+                            // filterBy: filterBy
                         },
                         header: {
                             title: "Agent Customer",
@@ -400,51 +417,56 @@ export default function AgentCustomer() {
                                     },
                                 },
                             ],
-                            searchBar: false,
+                            searchBar: true,
                             columnFilter: true,
-                            filterByFields: [
-                                {
-                                    key: "date_change",
-                                    label: "Date Range",
-                                    type: "dateChange"
-                                },
-                                {
-                                    key: "warehouse",
-                                    label: "Warehouse",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                                },
-                                {
-                                    key: "route_id",
-                                    label: "Route",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(routeOptions) ? routeOptions : [],
-                                },
-                                {
-                                    key: "outlet_channel_id",
-                                    label: "Outlet Channel",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(channelOptions) ? channelOptions : [],
-                                },
-                                {
-                                    key: "category_id",
-                                    label: "Category",
-                                    type: "select",
-                                    options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                },
-                                {
-                                    key: "subcategory_id",
-                                    label: "Subcategory",
-                                    isSingle: false,
-                                    multiSelectChips: true,
-                                    options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
-                                },
-                            ],
+                            // filterByFields: [
+                            //     {
+                            //         key: "start_date",
+                            //         label: "Start Date",
+                            //         type: "date"
+                            //     },
+                            //      {
+                            //         key: "end_date",
+                            //         label: "End Date",
+                            //         type: "date"
+                            //     },
+                            //     {
+                            //         key: "warehouse",
+                            //         label: "Warehouse",
+                            //         isSingle: false,
+                            //         multiSelectChips: true,
+                            //         options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                            //     },
+                            //     {
+                            //         key: "route_id",
+                            //         label: "Route",
+                            //         isSingle: false,
+                            //         multiSelectChips: true,
+                            //         options: Array.isArray(routeOptions) ? routeOptions : [],
+                            //     },
+                            //     {
+                            //         key: "outlet_channel_id",
+                            //         label: "Outlet Channel",
+                            //         isSingle: false,
+                            //         multiSelectChips: true,
+                            //         options: Array.isArray(channelOptions) ? channelOptions : [],
+                            //     },
+                            //     {
+                            //         key: "category_id",
+                            //         label: "Category",
+                            //         type: "select",
+                            //         options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
+                            //         isSingle: false,
+                            //         multiSelectChips: true,
+                            //     },
+                            //     {
+                            //         key: "subcategory_id",
+                            //         label: "Subcategory",
+                            //         isSingle: false,
+                            //         multiSelectChips: true,
+                            //         options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
+                            //     },
+                            // ],
                             actions: [
                                 <SidebarBtn
                                     key={0}

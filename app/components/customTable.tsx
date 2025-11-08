@@ -172,13 +172,16 @@ interface TableProps {
 
 const defaultPageSize = 50;
 
-export default function Table({ refreshKey = 0, data, config }: TableProps) {
+export default function Table({ refreshKey = 0, data, config  }: TableProps) {
     return (
         <ContextProvider>
             <TableContainer
                 refreshKey={refreshKey}
                 data={data}
-                config={config}
+                config={{
+                    showNestedLoading: true,
+                    ...config
+                }}
             />
         </ContextProvider>
     );

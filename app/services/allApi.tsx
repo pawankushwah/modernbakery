@@ -1797,6 +1797,17 @@ export const routeGlobalSearch = async (params?: Params) => {
   }
 };
 
+export const agentCustomerGlobalSearch = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/agent_customers/global_search", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const agentCustomerList = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/agent_customers/list", {
@@ -1862,6 +1873,16 @@ export const agentCustomerGenerateCode = async () => {
 export const itemList = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/items/list", { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const itemGlobalSearch = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/items/global_search", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

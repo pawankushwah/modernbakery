@@ -952,6 +952,7 @@ function getRandomNumber(count:number) {
                                     header:{
                                         searchBar:true
                                     },
+                                    showNestedLoading:true,
                                     footer: { nextPrevBtn: true, pagination: true },
                                     columns: columns,
                                     rowSelection: false,
@@ -977,6 +978,7 @@ function getRandomNumber(count:number) {
                                     },
                                     footer: { nextPrevBtn: true, pagination: true },
                                     columns: stockColumns,
+                                    showNestedLoading:true,
                                     rowSelection: false,
                                     pageSize: 50,
                                 }}
@@ -1000,6 +1002,7 @@ function getRandomNumber(count:number) {
                                     },
                                     footer: { nextPrevBtn: true, pagination: true },
                                     columns: routeColumns,
+                                    showNestedLoading:true,
                                     rowSelection: false,
                                     pageSize: 50,
                                 }}
@@ -1024,6 +1027,7 @@ function getRandomNumber(count:number) {
                                     footer: { nextPrevBtn: true, pagination: true },
                                     columns: salesmanColumns,
                                     rowSelection: false,
+                                    showNestedLoading:true,
                                     pageSize: 50,
                                 }}
                             />
