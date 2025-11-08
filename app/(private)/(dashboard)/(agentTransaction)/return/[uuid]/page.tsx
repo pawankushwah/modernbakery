@@ -541,20 +541,11 @@ export default function OrderAddEditPage() {
                     type="number"
                     name="Quantity"
                     value={row.Quantity}
+                    integerOnly={true}
+                    min={1}
                     onChange={(e) => {
-                        const value = e.target.value;
-                        const numValue = parseFloat(value);
-                        if (value === "") {
-                          recalculateItem(Number(row.idx), "Quantity", value);
-                        } else if (numValue <= 0) {
-                          recalculateItem(Number(row.idx), "Quantity", "1");
-                        } else {
-                          recalculateItem(Number(row.idx), "Quantity", value);
-                        }
-                      }}
-                    // onChange={(e) =>
-                    //   recalculateItem(Number(row.idx), "Quantity", e.target.value)
-                    // }
+                      recalculateItem(Number(row.idx), "Quantity", e.target.value);
+                    }}
                   />
                   </div>
                 ),

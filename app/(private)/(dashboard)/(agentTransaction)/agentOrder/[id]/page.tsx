@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, ChangeEvent, useState, useEffect, useRef } from "react";
+import React, { Fragment, useState, useEffect, useRef } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -10,8 +10,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { agentCustomerList, genearateCode, getCompanyCustomers, itemById, itemList, pricingHeaderGetItemPrice, routeList, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerList, genearateCode, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
@@ -249,6 +248,7 @@ export default function OrderAddEditPage() {
     const price = Number(item.Price) || 0;
     const total = qty * price;
     const vat = total - total / 1.18;
+    const preVat = total - vat;
     const net = total - vat;
     const excise = 0; // Calculate excise based on your business logic
     const discount = 0; // Calculate discount based on your business logic
@@ -264,6 +264,7 @@ export default function OrderAddEditPage() {
     item.Excise = excise.toFixed(2);
     item.Discount = discount.toFixed(2);
     item.gross = gross.toFixed(2);
+    item.preVat = preVat.toFixed(2);
 
     setItemData(newData);
     // validate this row after updating; if we just changed the item selection, skip UOM required check
@@ -408,12 +409,12 @@ export default function OrderAddEditPage() {
   };
 
   const keyValueData = [
-    { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
-    { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
+    // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
+    // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
     { key: "Net Total", value: `AED ${toInternationalNumber(netAmount)}` },
-    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
     { key: "VAT", value: `AED ${toInternationalNumber(totalVat)}` },
-    { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
+    { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
+    // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
   ];
 
   // const fetchRoutes = async (value: string) => {
@@ -614,6 +615,7 @@ export default function OrderAddEditPage() {
                       type="date"
                       name="delivery_date"
                       value={values.delivery_date}
+                      min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
                       onChange={handleChange}
                     />
                   </div>
@@ -632,6 +634,7 @@ export default function OrderAddEditPage() {
                     Net: String(row.Net ?? ""),
                     Vat: String(row.Vat ?? ""),
                     Total: String(row.Total ?? ""),
+                    PreVat: String(row.PreVat ?? ""),
                   }))}
                   config={{
                     columns: [
@@ -685,7 +688,7 @@ export default function OrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.uom_id;
-                          const options = JSON.parse(row.UOM ?? "[value:'', label:'']");
+                          const options = JSON.parse(row.UOM ?? "[]");
                           return (
                             <div>
                               <InputFields
@@ -756,10 +759,11 @@ export default function OrderAddEditPage() {
                         }
                       },
                       // { key: "excise", label: "Excise", render: (row) => <span>{toInternationalNumber(row.Excise) || "0.00"}</span> },
-                      { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
-                      { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
-                      { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
+                      // { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
+                      { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
                       { key: "Vat", label: "VAT", render: (row) => <span>{toInternationalNumber(row.Vat) || "0.00"}</span> },
+                      { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
+                      // { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
                       { key: "Total", label: "Total", render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span> },
                       {
                         key: "action",

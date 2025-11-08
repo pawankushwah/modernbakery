@@ -6,22 +6,63 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Table, {
     listReturnType,
     TableDataType,
-    searchReturnType,
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { agentOrderList, changeStatusAgentOrder, deleteAgentOrder } from "@/app/services/agentTransaction";
-import { agentCustomerStatusUpdate } from "@/app/services/allApi";
-import StatusBtn from "@/app/components/statusBtn2";
+import { agentOrderList, changeStatusAgentOrder } from "@/app/services/agentTransaction";
+import OrderStatus from "@/app/components/orderStatus";
 
 const columns = [
-    { key: "order_code", label: "Order Code", render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
-    { key: "warehouse_name", label: "Warehouse Name", render: (row: TableDataType) => row.warehouse_name || "-" },
-    { key: "customer_name", label: "Customer Name", render: (row: TableDataType) => row.customer_name || "-" },
-    { key: "delivery_date", label: "Delivery Date", render: (row: TableDataType) => row.delivery_date || "-" },
+    { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.created_at.split("T")[0]}</span> },
+    { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
+    {
+        key: "warehouse_name",
+        label: "Warehouse Name",
+        showByDefault: true,
+        render: (row: TableDataType) => {
+            const code = row.warehouse_code ?? "";
+            const name = row.warehouse_name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    {
+        key: "customer_name",
+        label: "Customer Name",
+        showByDefault: true,
+        render: (row: TableDataType) => {
+            const code = row.customer_code ?? "";
+            const name = row.customer_name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    {
+        key: "salesman_name",
+        label: "Salesman Name",
+        render: (row: TableDataType) => {
+            const code = row.salesman_code ?? "";
+            const name = row.salesman_name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    {
+        key: "route_name",
+        label: "Route Name",
+        render: (row: TableDataType) => {
+            const code = row.route_code ?? "";
+            const name = row.route_name ?? "";
+            if (!code && !name) return "-";
+            return `${code}${code && name ? " - " : ""}${name}`;
+        },
+    },
+    { key: "payment_method", label: "Payment Method", showByDefault: true, render: (row: TableDataType) => row.payment_method || "-" },
+    { key: "order_source", label: "Order Source", showByDefault: true, render: (row: TableDataType) => row.order_source || "-" },
+    { key: "delivery_date", label: "Delivery Date", showByDefault: true, render: (row: TableDataType) => row.delivery_date || "-" },
     { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
-    { key: "status", label: "Status", render: (row: TableDataType) => (
-        <StatusBtn isActive={row.status === "1"} />
+    { key: "status", label: "Status", showByDefault: true, render: (row: TableDataType) => (
+        <OrderStatus status={row.status} />
     )},
 ];
 
@@ -137,6 +178,7 @@ export default function CustomerInvoicePage() {
                                 },
                             ],
                             searchBar: false,
+                            columnFilter: true,
                             actions: [
                                 // <SidebarBtn
                                 //     key={0}

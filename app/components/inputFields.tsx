@@ -787,6 +787,8 @@ useEffect(() => {
               onChange={safeOnChange}
               disabled={disabled}
               onBlur={onBlur}
+              min={min as any}
+              max={max as any}
               className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
               placeholder={`Enter ${label}`}
             />
