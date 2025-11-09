@@ -280,7 +280,7 @@ export default function OrderDetailPage() {
             </div>
 
             {/* Notes (Mobile) */}
-            <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px]">
+            <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px] mt-[20px]">
               {data?.comment && <div className="flex flex-col space-y-[10px]">
                 <div className="font-semibold text-[#181D27]">Customer Note</div>
                 <div>{data?.comment}</div>
@@ -301,10 +301,10 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
-        <hr className="text-[#D5D7DA]" />
+        <hr className="text-[#D5D7DA] print:hidden" />
 
         {/* ---------- Footer Buttons ---------- */}
-        <div className="flex flex-wrap justify-end gap-[20px]">
+        <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
           <SidebarBtn
             leadingIcon={"lucide:download"}
             leadingIconSize={20}

@@ -58,6 +58,9 @@ interface FormData {
 
 interface ItemData {
   item_id: string;
+  item_name: string;
+  // stored human-readable label for a selected item (used when server results don't include it)
+  item_label?: string;
   UOM: { label: string; value: string }[];
   uom_id?: string;
   Quantity: string;
@@ -115,6 +118,8 @@ export default function OrderAddEditPage() {
   const [itemData, setItemData] = useState<ItemData[]>([
     {
       item_id: "",
+      item_name: "",
+      item_label: "",
       UOM: [],
       Quantity: "1",
       Price: "",
@@ -187,6 +192,7 @@ export default function OrderAddEditPage() {
     }
   };
 
+  // Function for fetching Item
   const fetchItem = async (searchTerm: string) => {
     const res = await itemGlobalSearch({ per_page: "10", query: searchTerm });
     if (res.error) {
@@ -196,11 +202,17 @@ export default function OrderAddEditPage() {
     }
     const data = res?.data || [];
     setOrderData(data);
-    const options = data.map((item: { id: number; name: string; code: string; }) => ({
-      value: String(item.id),
-      label: item.code + " - " + item.name
-    }));
-    setItemsOptions(options);
+      const options = data.map((item: { id: number; name: string; code?: string; item_code?: string; erp_code?: string }) => ({
+        value: String(item.id),
+        label: (item.code ?? item.item_code ?? item.erp_code ?? "") + " - " + (item.name ?? "")
+      }));
+      // Merge newly fetched options with existing ones so previously selected items remain available
+      setItemsOptions((prev: { label: string; value: string }[] = []) => {
+        const map = new Map<string, { label: string; value: string }>();
+        prev.forEach((o) => map.set(o.value, o));
+        options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
+        return Array.from(map.values());
+      });
     setSkeleton({ ...skeleton, item: false });
     return options;
   };
@@ -228,77 +240,63 @@ export default function OrderAddEditPage() {
 
   const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
     const newData = [...itemData];
-    // Defensive: if index is out of bounds, create missing rows so we never assign to undefined
-    while (newData.length <= index) {
-      newData.push({
-        item_id: "",
-        UOM: [],
-        Quantity: "1",
-        Price: "",
-        Excise: "",
-        Discount: "",
-        Net: "",
-        Vat: "",
-        Total: "",
-      } as ItemData);
-    }
     const item: ItemData = newData[index] as ItemData;
     (item as any)[field] = value;
 
-    // If user selects an item, update UI immediately and show skeletons while fetching price/UOM
+    // If user selects an item, update UI immediately and persist a label so selection survives searches
     if (field === "item_id") {
-      // keep item id and name aligned for existing logic
+      // set item_id to the chosen value
       item.item_id = value;
-      item.UOM = [];
-      item.Price = "-";
-      setItemData(newData);
-      setItemLoading((prev) => ({ ...prev, [index]: { uom: true } }));
-      item.UOM = orderData.find((order: FormData) => order.id.toString() === item.item_id)?.item_uoms?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
-      setItemLoading((prev) => ({ ...prev, [index]: { uom: false } }));
+      if (!value) {
+        // cleared selection
+        item.item_name = "";
+        item.UOM = [];
+        item.uom_id = "";
+        item.Price = "";
+        item.Quantity = "1";
+        item.item_label = "";
+      } else {
+        const selectedOrder = orderData.find((order: FormData) => order.id.toString() === value);
+        item.item_id = selectedOrder ? String(selectedOrder.id || value) : value;
+        item.item_name = selectedOrder?.name ?? "";
+        item.UOM = selectedOrder?.item_uoms?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
+        item.uom_id = selectedOrder?.item_uoms?.[0]?.id ? String(selectedOrder.item_uoms[0].id) : "";
+        item.Price = selectedOrder?.item_uoms?.[0]?.price ? String(selectedOrder.item_uoms[0].price) : "";
+        item.Quantity = "1";
+        // persist a readable label
+        const computedLabel = selectedOrder ? `${selectedOrder.item_code ?? selectedOrder.erp_code ?? ''}${selectedOrder.item_code || selectedOrder.erp_code ? ' - ' : ''}${selectedOrder.name ?? ''}` : "";
+        item.item_label = computedLabel;
+        // ensure the selected item is available in itemsOptions
+        if (item.item_label) {
+          setItemsOptions((prev: { label: string; value: string }[] = []) => {
+            if (prev.some(o => o.value === item.item_id)) return prev;
+            return [...prev, { value: item.item_id, label: item.item_label as string }];
+          });
+        }
+      }
     }
-
-    // Ensure numeric calculations use the latest values
     const qty = Number(item.Quantity) || 0;
     const price = Number(item.Price) || 0;
     const total = qty * price;
     const vat = total - total / 1.18;
     const preVat = total - vat;
     const net = total - vat;
-    const excise = 0; // Calculate excise based on your business logic
-    const discount = 0; // Calculate discount based on your business logic
-    const gross = total;
-
-    // Persist any value changes for qty/uom/price
-    if (field === "Quantity") item.Quantity = value;
-    if (field === "uom_id") item.uom_id = value;
+    // const excise = 0;
+    // const discount = 0;
+    // const gross = total;
 
     item.Total = total.toFixed(2);
     item.Vat = vat.toFixed(2);
     item.Net = net.toFixed(2);
-    item.Excise = excise.toFixed(2);
-    item.Discount = discount.toFixed(2);
-    item.gross = gross.toFixed(2);
     item.preVat = preVat.toFixed(2);
+    // item.Excise = excise.toFixed(2);
+    // item.Discount = discount.toFixed(2);
+    // item.gross = gross.toFixed(2);
 
-    // sanitize array: ensure no null/undefined elements
-    const sanitized = newData.map((r) => r ?? {
-      item_id: "",
-      UOM: [],
-      Quantity: "1",
-      Price: "",
-      Excise: "",
-      Discount: "",
-      Net: "",
-      Vat: "",
-      Total: "",
-    } as ItemData);
-    setItemData(sanitized);
-    // validate this row after updating; if we just changed the item selection, skip UOM required check
-    if (field === "item_id") {
-      validateRow(index, newData[index], { skipUom: true });
-    } else {
+    if (field !== "item_id") {
       validateRow(index, newData[index]);
     }
+    setItemData(newData);
   };
 
   const handleAddNewItem = () => {
@@ -306,7 +304,8 @@ export default function OrderAddEditPage() {
       ...itemData,
       {
         item_id: "",
-        itemName: "",
+        item_name: "",
+        item_label: "",
         UOM: [],
         uom_id: "",
         Quantity: "1",
@@ -325,7 +324,8 @@ export default function OrderAddEditPage() {
       setItemData([
         {
           item_id: "",
-          itemName: "",
+          item_name: "",
+          item_label: "",
           UOM: [],
           uom_id: "",
           Quantity: "1",
@@ -443,29 +443,10 @@ export default function OrderAddEditPage() {
     // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
   ];
 
-  // const fetchRoutes = async (value: string) => {
-  //   setSkeleton({ ...skeleton, route: true });
-  //   const filteredOptions = await routeList({
-  //     warehouse_id: value,
-  //     per_page: "10",
-  //   });
-  //   if (filteredOptions.error) {
-  //     showSnackbar(filteredOptions.data?.message || "Failed to fetch routes", "error");
-  //     return;
-  //   }
-  //   const options = filteredOptions?.data || [];
-  //   setFilteredRouteOptions(options.map((route: { id: number; route_name: string }) => ({
-  //     value: String(route.id),
-  //     label: route.route_name,
-  //   })));
-  //   setSkeleton({ ...skeleton, route: false });
-  // };
-
   const fetchAgentCustomers = async (values: FormikValues, search: string) => {
     const res = await agentCustomerGlobalSearch({
       warehouse_id: values.warehouse,
       query: search || "",
-      // dropdown: "1",
       per_page: "10"
     });
     if (res.error) {
@@ -503,16 +484,16 @@ export default function OrderAddEditPage() {
     return options;
   }
 
-  const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
-    const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
-    if (res.error) {
-      showSnackbar(res.data?.message || "Failed to fetch items", "error");
-      setSkeleton({ ...skeleton, item: false });
-      return;
-    }
-    const data = res?.data || [];
-    return data;
-  };
+  // const fetchPrice = async (item_id: string, customer_id: string, warehouse_id?: string, route_id?: string) => {
+  //   const res = await pricingHeaderGetItemPrice({ customer_id, item_id });
+  //   if (res.error) {
+  //     showSnackbar(res.data?.message || "Failed to fetch items", "error");
+  //     setSkeleton({ ...skeleton, item: false });
+  //     return;
+  //   }
+  //   const data = res?.data || [];
+  //   return data;
+  // };
 
   return (
     <div className="flex flex-col">
@@ -591,27 +572,6 @@ export default function OrderAddEditPage() {
                       }
                     />
                   </div>
-                  {/* <div>
-                    <InputFields
-                      required
-                      label="Route"
-                      name="route"
-                      value={filteredRouteOptions.length === 0 ? "" : (values.route?.toString() || "")}
-                      onChange={(e) => {
-                        setSkeleton((prev) => ({ ...prev, customer: true }));
-                        setFieldValue("route", e.target.value);
-                        setFieldValue("customer", "");
-                        console.log(e.target.value, "route id");
-                        fetchAgentCustomers(e.target.value);
-                      }}
-                      disabled={filteredRouteOptions.length === 0}
-                      showSkeleton={skeleton.route}
-                      error={
-                        touched.route && (errors.route as string)
-                      }
-                      options={filteredRouteOptions}
-                    />
-                  </div> */}
                   <div>
                     <AutoSuggestion
                       required
@@ -672,11 +632,12 @@ export default function OrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.item_id;
-                          // Filter out items that are already selected in other rows
-                          const selectedIds = itemData.map((r, i) => (i === idx ? null : r.item_id)).filter(Boolean) as string[];
-                          // const filteredOptions = itemsOptions.filter(opt => (
-                          //   opt.value === row.item_id || !selectedIds.includes(opt.value)
-                          // ));
+                          // Optimized: avoid mapping+filtering arrays on every render.
+                          // Find the option for the current row (if still present) and fall back to stored label
+                          // so the selection remains visible even when the option isn't returned by a search.
+                          const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
+                          const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
+                          console.log(row);
                           return (
                             <div>
                               <AutoSuggestion
@@ -684,21 +645,14 @@ export default function OrderAddEditPage() {
                                 name={`item_id_${row.idx}`}
                                 placeholder="Search item"
                                 onSearch={(q) => fetchItem(q)}
-                                initialValue={
-                                  itemsOptions.find(o => o.value === row.item_id)?.label
-                                  || orderData.find(o => String(o.id) === row.item_id)?.name || ""
-                                }
+                                initialValue={initialLabel}
                                 onSelect={(opt) => {
                                   if (opt.value !== row.item_id) {
-                                    recalculateItem(Number(row.idx), "item_id", opt.value);
-                                    recalculateItem(Number(row.idx), "uom_id", "");
-                                  } else {
                                     recalculateItem(Number(row.idx), "item_id", opt.value);
                                   }
                                 }}
                                 onClear={() => {
                                   recalculateItem(Number(row.idx), "item_id", "");
-                                  recalculateItem(Number(row.idx), "uom_id", "");
                                 }}
                                 disabled={!values.customer}
                                 error={err && err}
@@ -754,7 +708,7 @@ export default function OrderAddEditPage() {
                                 // integerOnly={true}
                                 placeholder="Enter Qty"
                                 value={row.Quantity}
-                                disabled={!values.customer}
+                                disabled={ !row.uom_id || !values.customer}
                                 onChange={(e) => {
                                   const raw = (e.target as HTMLInputElement).value;
                                   const intPart = raw.split('.')[0];
@@ -818,7 +772,7 @@ export default function OrderAddEditPage() {
                 {/* --- Summary --- */}
                 <div className="flex justify-between text-primary gap-0 mb-10">
                   <div className="flex justify-between flex-wrap w-full mt-[20px]">
-                    <div className="flex flex-col justify-between gap-[20px]">
+                    <div className="flex flex-col justify-between gap-[20px] w-full lg:w-auto">
                       <div className="">
                         <button
                           type="button"
