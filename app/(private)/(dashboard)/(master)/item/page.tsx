@@ -6,7 +6,7 @@ import Table, { listReturnType, TableDataType } from "@/app/components/customTab
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import StatusBtn from "@/app/components/statusBtn2";
-import { updateItemStatus, itemList } from "@/app/services/allApi";
+import { updateItemStatus, itemList, itemGlobalSearch } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -131,6 +131,38 @@ export default function Item() {
         []
     );
 
+
+
+      const searchItems = useCallback(
+        async (
+            query:string,
+            page: number = 1,
+            columnName?:string,
+            pageSize: number = 50
+        ): Promise<listReturnType> => {
+            try {
+                setLoading(true);
+                const res = await itemGlobalSearch({query:query, page: page.toString() });
+                setLoading(false);
+                const data = res.data.map((item: LocalTableDataType) => ({
+                    ...item,
+                }));
+                
+                return {
+                    data,
+                    total: res.pagination.totalPages,
+                    currentPage: res.pagination.page,
+                    pageSize: res.pagination.limit,
+                };
+            } catch (error) {
+                setLoading(false);
+                console.error(error);
+                throw error;
+            }
+        },
+        []
+    );
+
       const handleStatusChange = async (
             data: TableDataType[],
             selectedRow: number[] | undefined,
@@ -186,9 +218,10 @@ export default function Item() {
                 <Table
                     refreshKey={refreshKey}
                     config={{
-                        api: { list: fetchItems },
+                        api: { list: fetchItems, search:searchItems },
                         header: {
                             title: "Item",
+                             searchBar: true,
                              threeDot: [
                 // {
                 //   icon: "gala:file-document",
@@ -247,8 +280,9 @@ export default function Item() {
                             //         />
                             //     </div>,
                             // ],
-                            searchBar: false,
+                      
                             columnFilter: true,
+                          
                             actions: [
                                 <SidebarBtn
                                     key={0}

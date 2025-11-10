@@ -133,6 +133,8 @@ export const updateStatusNewCustomer = async (data: object) => {
     return handleError(error);
   }
 };
+
+
 type SalesmanUnloadParams = {
   start_date?: string;
   end_date?: string;

@@ -1409,6 +1409,18 @@ export const updateSalesmanStatus = async (body: object) => {
   }
 };
 
+export const projectList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/settings/projects-list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error) {
+    console.error("Project List failed ❌", error);
+    throw error;
+  }
+};
+
 export const salesmanTypeList = async (params: Params) => {
   try {
     const res = await API.get("/api/settings/salesman_type/list", {
@@ -1785,6 +1797,17 @@ export const routeGlobalSearch = async (params?: Params) => {
   }
 };
 
+export const agentCustomerGlobalSearch = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/agent_customers/global_search", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const agentCustomerList = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/agent_customers/list", {
@@ -1850,6 +1873,16 @@ export const agentCustomerGenerateCode = async () => {
 export const itemList = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/items/list", { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const itemGlobalSearch = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/items/global_search", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3066,16 +3099,6 @@ export const editWarehouseStock = async (uuid: string, payload: object) => {
 export const getWarehouseStockById = async (uuid: string) => {
   try {
     const res = await API.get(`/api/settings/warehouse-stocks/${uuid}`);
-
-    return res.data;
-  } catch (error: unknown) {
-    return handleError(error);
-  }
-};
-
-export const projectList = async (params: Params) => {
-  try {
-    const res = await API.get(`api/settings/projects-list`, {params:params});
 
     return res.data;
   } catch (error: unknown) {

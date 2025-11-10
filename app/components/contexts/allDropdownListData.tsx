@@ -30,10 +30,13 @@ import {
   getWarehouse,
   subRegionList,
   labelList,
-  roleList
+  roleList,
+  projectList,
+  companyTypeList,
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
+import { set } from 'date-fns';
 
 interface DropdownDataContextType {
   companyList: CompanyItem[];
@@ -60,6 +63,8 @@ interface DropdownDataContextType {
   menuList: MenuList[];
   labels: LabelItem[];
   roles: Role[];
+  projectList: Project[];
+  companyTypeList: CompanyType[];
   // mapped dropdown options
   companyOptions: { value: string; label: string }[];
   countryOptions: { value: string; label: string }[];
@@ -90,11 +95,14 @@ interface DropdownDataContextType {
   agentCustomerOptions: { value: string; label: string; contact_no?: string }[];
   shelvesOptions: { value: string; label: string }[];
   submenuOptions: { value: string; label: string }[];
+  projectOptions: { value: string; label: string}[];
+  companyTypeOptions: { value: string; label: string}[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   fetchItemSubCategoryOptions: (category_id: string | number) => Promise<void>;
   fetchAgentCustomerOptions: (warehouse_id: string | number) => Promise<void>;
   fetchSalesmanOptions: (warehouse_id: string | number) => Promise<void>;
+  fetchSalesmanByRouteOptions: (warehouse_id: string | number) => Promise<void>;
   fetchAreaOptions: (region_id: string | number) => Promise<void>;
   fetchRouteOptions: (warehouse_id: string | number) => Promise<void>;
   fetchRoutebySalesmanOptions: (salesman_id: string | number) => Promise<void>;
@@ -124,6 +132,12 @@ interface CountryItem {
   currency?: string;
 }
 
+interface CompanyType {
+  id?: number | string;
+  code?: string;
+  name?: string;
+}
+
 interface RegionItem {
   id?: number | string;
   region_code?: string;
@@ -139,6 +153,12 @@ interface SurveyItem {
   id?: number | string;
   survey_code?: string;
   survey_name?: string;
+}
+
+interface Project {
+  id?: number | string;
+  osa_code?: string;
+  name?: string;
 }
 
 
@@ -353,6 +373,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [permissions, setPermissions] = useState<permissionsList[]>([]);
   const [labels, setLabels] = useState<LabelItem[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
+  const [project, setProject] = useState<Project[]>([]);
+  const [companyType, setComapanyType] = useState<CompanyType[]>([]);
   const [loading, setLoading] = useState(false);
 
   // mapped dropdown options (explicit typed mappings)
@@ -419,6 +441,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
   }));
 
+  const companyTypeOptions = (Array.isArray(companyType) ? companyType : []).map((c: CompanyType) => ({
+    value: String(c.id ?? ''),
+    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+  }));
+
   const itemCategoryOptions = (Array.isArray(itemCategoryData) ? itemCategoryData : []).map((c: ItemCategoryItem) => ({
     value: String(c.id ?? ''),
     label: c.category_code && c.category_name ? `${c.category_code} - ${c.category_name}` : (c.category_name ?? '')
@@ -463,19 +490,29 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.customer_sub_category_code && c.customer_sub_category_name ? `${c.customer_sub_category_code} - ${c.customer_sub_category_name}` : (c.customer_sub_category_name ?? '')
   }));
 
-  const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
+  const projectOptions = (Array.isArray(project) ? project : []).map((c: Project) => ({
     value: String(c.id ?? ''),
-    label: c.item_code && c.name ? `${c.item_code} - ${c.name}` : (c.name ?? ''),
-    volume: (c).volume ?? '',
-    status: (c).status ?? '',
-    uoms: Array.isArray((c as any).uom) ? (c as any).uom.map((u: any) => ({
-      id: String(u.id ?? ''),
-      name: String(u.name ?? ''),
-      uom_type: String(u.uom_type ?? ''),
-      price: String(u.price ?? ''),
-      upc: String(u.upc ?? ''),
-    })) : []
-  }));
+    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+  }))
+  console.log(projectOptions)
+
+  const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
+  value: String(c.id ?? ""),
+  label:
+    c.item_code && c.name
+      ? `${c.item_code} - ${c.name}`
+      : c.name ?? "",
+  uom: Array.isArray((c as any).uom)
+    ? (c as any).uom.map((u: any) => ({
+        id: Number(u.id ?? 0),
+        name: String(u.name ?? ""),
+        uom_type: String(u.uom_type ?? ""),
+        price: Number(u.price ?? 0),
+        upc: String(u.upc ?? ""),
+      }))
+    : [],
+}));
+
 
   const getItemUoms = (item_id: string | number) => {
     const idStr = String(item_id ?? '');
@@ -557,7 +594,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call subRegionList with an object matching the expected Params shape
-      const res = await subRegionList({ region_id: String(region_id),page:"1",pageSize:"1000"  });
+      const res = await subRegionList({ region_id: String(region_id),dropdown:"true"  });
       const normalize = (r: unknown): AreaItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -644,7 +681,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call routeList with warehouse_id
-      const res = await routeList({ warehouse_id: String(warehouse_id),page:"1",pageSize:"1000"  });
+      const res = await routeList({ warehouse_id: String(warehouse_id),dropdown:"true"  });
       const normalize = (r: unknown): RouteItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -686,7 +723,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call getWarehouse with an object matching the expected Params shape
-      const res = await getWarehouse({ area_id: String(area_id),page:"1",pageSize:"1000"  });
+      const res = await getWarehouse({ area_id: String(area_id),dropdown:"true" });
       const normalize = (r: unknown): WarehouseItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -708,7 +745,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call regionList with company_id
-      const res = await regionList({ company_id: String(company_id),page:"1",pageSize:"1000" });
+      const res = await regionList({ company_id: String(company_id),dropdown:"true" });
       const normalize = (r: unknown): RegionItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -789,6 +826,28 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   }, []);
 
+  const fetchSalesmanByRouteOptions = useCallback(async (route_id: string | number) => {
+    // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
+    setLoading(false);
+    try {
+      // call salesmanList with warehouse_id
+      const res = await salesmanList({ route_id: String(route_id) });
+      const normalize = (r: unknown): SalesmanList[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as SalesmanList[];
+        }
+        if (Array.isArray(r)) return r as SalesmanList[];
+        return [];
+      };
+      setSalesman(normalize(res));
+    } catch (error) {
+      setSalesman([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const refreshDropdowns = async () => {
     setLoading(true);
     try {
@@ -823,6 +882,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         permissionList(),
         labelList(),
         roleList(),
+        projectList({}),
+        companyTypeList(),
       ]);
 
 
@@ -866,6 +927,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setPermissions(normalize(res[27]) as permissionsList[]);
       setLabels(normalize(res[28]) as LabelItem[]);
       setRoles(normalize(res[29]) as Role[]);
+      setProject(normalize(res[30]) as Project[]);
+      setComapanyType(normalize(res[31]) as CompanyType[]);
 
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -900,6 +963,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setPermissions([]);
       setLabels([]);
       setRoles([]);
+      setProject([]);
+      setComapanyType([]);
     } finally {
       setLoading(false);
     }
@@ -938,9 +1003,12 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         menuList: menuList,
         labels: labels,
         roles: roles,
+        projectList: project,
+        companyTypeList: companyType,
         fetchItemSubCategoryOptions,
         fetchAgentCustomerOptions,
         fetchSalesmanOptions,
+        fetchSalesmanByRouteOptions,
         fetchRegionOptions,
         companyOptions,
         countryOptions,
@@ -982,6 +1050,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         fetchItemOptions,
         fetchWarehouseOptions,
         roleOptions,
+        projectOptions,
+        companyTypeOptions,
         getItemUoms,
         getPrimaryUom,
         loading

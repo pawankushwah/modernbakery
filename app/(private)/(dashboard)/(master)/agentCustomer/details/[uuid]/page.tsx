@@ -13,6 +13,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { agentCustomerById } from "@/app/services/allApi";
 import Financial from "./financial";
+import Table from "@/app/components/customTable";
 
 export interface AgentCustomerDetails {
     id: string;
@@ -54,7 +55,7 @@ export interface AgentCustomerDetails {
     status: number | string;
 }
 
-const tabs = ["Overview"];
+const tabs = ["Overview","Sales","Return"];
 
 export default function CustomerDetails() {
     const router = useRouter();
@@ -197,7 +198,23 @@ export default function CustomerDetails() {
                 <Financial data={item} />
             ) : activeTab === "Additional" ? (
                 <Additional data={item} />
-            ) : null}
+            ) : activeTab === "Sales"?(<div>  <Table
+                                              data={[]}
+                                            config={{
+                                               
+                                                columns: [],
+                                                rowSelection: false,
+                                                pageSize: 50,
+                                            }}
+                                        /></div>):activeTab === "Return"?(<div> <Table
+                                              data={[]}
+                                            config={{
+                                               
+                                                columns: [],
+                                                rowSelection: false,
+                                                pageSize: 50,
+                                            }}
+                                        /></div>):""}
         </>
     );
 }

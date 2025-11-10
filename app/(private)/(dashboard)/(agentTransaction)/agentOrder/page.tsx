@@ -10,7 +10,7 @@ import Table, {
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { agentOrderList, changeStatusAgentOrder, deleteAgentOrder } from "@/app/services/agentTransaction";
+import { agentOrderList } from "@/app/services/agentTransaction";
 import { agentCustomerStatusUpdate } from "@/app/services/allApi";
 import StatusBtn from "@/app/components/statusBtn2";
 
@@ -66,21 +66,21 @@ export default function CustomerInvoicePage() {
     //     }
     // }, [setLoading]);
 
-    const handleStatusChange = async (order_ids: (string | number)[] | undefined, status: number) => {
-        if (!order_ids || order_ids.length === 0) return;
-        const res = await changeStatusAgentOrder({
-            order_ids,
-            status: Number(status)
-        });
+    // const handleStatusChange = async (order_ids: (string | number)[] | undefined, status: number) => {
+    //     if (!order_ids || order_ids.length === 0) return;
+    //     const res = await changeStatusAgentOrder({
+    //         order_ids,
+    //         status: Number(status)
+    //     });
 
-        if (res.error) {
-            showSnackbar(res.data.message || "Failed to update status", "error");
-            throw new Error(res.data.message);
-        }
-        setRefreshKey(refreshKey + 1);
-        showSnackbar("Status updated successfully", "success");
-        return res;
-    }
+    //     if (res.error) {
+    //         showSnackbar(res.data.message || "Failed to update status", "error");
+    //         throw new Error(res.data.message);
+    //     }
+    //     setRefreshKey(refreshKey + 1);
+    //     showSnackbar("Status updated successfully", "success");
+    //     return res;
+    // }
 
 
     return (
@@ -111,7 +111,7 @@ export default function CustomerInvoicePage() {
                                             }
                                             return data[id].uuid;
                                         })
-                                        handleStatusChange(ids, Number(0));
+                                        // handleStatusChange(ids, Number(0));
                                     },
                                 },
                                 {
@@ -132,7 +132,7 @@ export default function CustomerInvoicePage() {
                                             }
                                             return data[id].uuid;
                                         })
-                                        handleStatusChange(ids, Number(1));
+                                        // handleStatusChange(ids, Number(1));
                                     },
                                 },
                             ],

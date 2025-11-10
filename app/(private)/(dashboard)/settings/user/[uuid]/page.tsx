@@ -163,7 +163,7 @@ export default function UserAddEdit() {
               }
             }
             if (regionIds.length > 0) {
-              const firstRegion = regionIds[0];
+              const firstRegion = regionIds.join(",")
               setSkeleton((s) => ({ ...s, area: true }));
               try {
                 await fetchAreaOptions(firstRegion);
@@ -172,7 +172,7 @@ export default function UserAddEdit() {
               }
             }
             if (areaIds.length > 0) {
-              const firstArea = areaIds[0];
+              const firstArea = areaIds.join(",");
               setSkeleton((s) => ({ ...s, warehouse: true }));
               try {
                 await fetchWarehouseOptions(firstArea);
@@ -181,7 +181,7 @@ export default function UserAddEdit() {
               }
             }
             if (warehouseIds.length > 0) {
-              const firstWarehouse = warehouseIds[0];
+              const firstWarehouse = warehouseIds.join(",");
               setSkeleton((s) => ({ ...s, route: true }));
               try {
                 await fetchRouteOptions(firstWarehouse);
@@ -557,6 +557,7 @@ export default function UserAddEdit() {
                     const raw = e?.target?.value;
                     // allow CSV of company ids or array
                     const vals = normalizeToArray(raw);
+                    console.log(values.company,"company")
                     setFieldValue("company", vals);
                     setSkeleton((s) => ({ ...s, region: true }));
                     try {
@@ -652,7 +653,9 @@ export default function UserAddEdit() {
                   options={areaOptions}
                   onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
                     const v = e?.target?.value;
+                    console.log(values.area,"area")
                     setFieldValue("area", v);
+
                     setSkeleton((s) => ({ ...s, warehouse: true }));
                     try {
                       await fetchWarehouseOptions(v);
