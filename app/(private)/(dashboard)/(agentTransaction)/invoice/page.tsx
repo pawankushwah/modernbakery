@@ -235,13 +235,13 @@ export default function CustomerInvoicePage() {
                                         `/invoice/details/${row.uuid}`
                                     ),
                             },
-                            // {
-                            //     icon: "lucide:trash-2",
-                            //     onClick: (row: TableDataType) =>
-                            //         router.push(
-                            //             `/invoice/${row.id}`
-                            //         ),
-                            // },
+                            {
+                                icon: "lucide:edit-2",
+                                onClick: (row: TableDataType) =>
+                                    router.push(
+                                        `/invoice/${row.uuid}`
+                                    ),
+                            },
                         ],
                         pageSize: 10,
                     }}
