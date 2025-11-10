@@ -204,14 +204,14 @@ export default function CustomerInvoicePage() {
                             ],
                             searchBar: false,
                             actions: [
-                              <SidebarBtn
-                                  key={0}
-                                  href="#"
-                                  isActive
-                                  leadingIcon="mdi:download"
-                                  label="Download"
-                                  labelTw="hidden lg:block"
-                              />,
+                            //   <SidebarBtn
+                            //       key={0}
+                            //       href="#"
+                            //       isActive
+                            //       leadingIcon="mdi:download"
+                            //       label="Download"
+                            //       labelTw="hidden lg:block"
+                            //   />,
                               <SidebarBtn
                                   key={1}
                                   href="/invoice/add"

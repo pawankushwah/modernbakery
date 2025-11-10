@@ -1797,9 +1797,9 @@ export const routeGlobalSearch = async (params?: Params) => {
   }
 };
 
-export const agentCustomerGlobalSearch = async (params?: Params) => {
+export const agentCustomerList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/agent_customers/global_search", {
+    const res = await API.get("/api/master/agent_customers/list", {
       params: params,
     });
     return res.data;
@@ -1808,9 +1808,9 @@ export const agentCustomerGlobalSearch = async (params?: Params) => {
   }
 };
 
-export const agentCustomerList = async (params?: Params) => {
+export const agentCustomerGlobalSearch = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/agent_customers/list", {
+    const res = await API.get("/api/master/agent_customers/global_search", {
       params: params,
     });
     return res.data;

@@ -291,6 +291,17 @@ useEffect(() => {
 
   const handleNumberKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!integerOnly) return;
+    // If user presses backspace, clear the whole input value
+    if (e.key === 'Backspace') {
+      const input = e.currentTarget as HTMLInputElement;
+      if (input && input.value && input.value.length > 0) {
+        e.preventDefault();
+        try { safeOnChange({ target: { value: '', name } } as any); } catch (err) {}
+        // update DOM immediately
+        input.value = '';
+      }
+      return;
+    }
     // prevent decimal point, exponent, plus/minus
     if (e.key === '.' || e.key === 'e' || e.key === 'E' || e.key === '+' || e.key === '-') {
       e.preventDefault();
@@ -298,7 +309,7 @@ useEffect(() => {
   };
 
   return (
-    <div className={`flex flex-col gap-[6px] w-full ${width} min-w-0 relative`}>
+    <div className={`flex flex-col gap-[6px] w-full ${width} relative`}>
         {showSkeleton && <div className="absolute h-[90px] w-full rounded-[5px] bg-white z-40 flex flex-col gap-[5px]">
           {label && <Skeleton variant="rounded" width={"50%"} height={"20%"} />}
           <Skeleton variant="rounded" width={"100%"} height={"60%"} />
@@ -344,7 +355,7 @@ useEffect(() => {
                   onMouseDown={() => { pointerDownRef.current = true; }}
                   onMouseUp={() => { pointerDownRef.current = false; }}
                   onFocus={() => { if (!pointerDownRef.current && !disabled) { computeDropdownProps(); setDropdownOpen(true); } }}
-                  className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer min-w-0 ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-100" : "bg-white"}`}
+                  className={`${showBorder === true && "border"} h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer w-full ${error ? "border-red-500" : "border-gray-300"} ${disabled ? "bg-gray-100" : "bg-white"}`}
                   onClick={() => { if (!loading && !isSearchable) { computeDropdownProps(); setDropdownOpen(v => !v); } }}
                 >
                   {isSearchable ? (
@@ -481,9 +492,9 @@ useEffect(() => {
                 </div>
                 {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
                   <>
-                    <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                    <div style={dropdownProperties} className="fixed z-50 mt-1 bg-white rounded-md shadow-lg">
                       {!isSearchable && (
-                        <div className="px-3 py-2 border-b flex items-center" style={{ borderBottomColor: '#9ca3af' }}>
+                        <div className="px-3 py-2 flex items-center">
                           <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
                           <input
                             type="text"
@@ -496,8 +507,7 @@ useEffect(() => {
                         </div>
                       )}
                       <div
-                        className="flex items-center px-3 py-2 border-b cursor-pointer"
-                        style={{ borderBottomColor: '#9ca3af' }}
+                        className="flex items-center px-3 py-2 cursor-pointer"
                         onClick={() => { if (!disabled) handleSelectAll(); }}
                       >
                         <input
@@ -777,6 +787,8 @@ useEffect(() => {
               onChange={safeOnChange}
               disabled={disabled}
               onBlur={onBlur}
+              min={min as any}
+              max={max as any}
               className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"}`}
               placeholder={`Enter ${label}`}
             />
