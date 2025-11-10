@@ -300,7 +300,7 @@ export const deleteDelivery= async (uuid:string) => {
 
 export const createInvoice = async (body: object) => {
   try {
-    const res = await API.post(`/api/agent_transaction/invoices/add`, body);
+    const res = await API.post(`/api/agent_transaction/invoices/create`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -383,15 +383,23 @@ export const changeStatusAgentOrder = async (body: object) => {
 
 export const createReturn = async (body: object) => {
   try {
-    const res = await API.post(`/api/agent_transaction/retuns/create`, body);
+    const res = await API.post(`/api/agent_transaction/returns/create`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
   }
 };
 
+export const returnList = async (params:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/returns/list`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
-export const returnByUuid = async (uuid: string) => {
+export const returnByUuid = async (uuid:string) => {
   try {
     const res = await API.get(`/api/agent_transaction/returns/show/${uuid}`);
     return res.data;
@@ -399,6 +407,16 @@ export const returnByUuid = async (uuid: string) => {
     return handleError(error);
   }
 };
+
+
+// export const returnByUuid = async (uuid: string) => {
+//   try {
+//     const res = await API.get(`/api/agent_transaction/returns/show/${uuid}`);
+//     return res.data;
+//   } catch (error: unknown) {
+//     return handleError(error);
+//   }
+// };
 
 
 // export const deliveryByUuid = async (uuid: string) => {

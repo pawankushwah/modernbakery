@@ -407,6 +407,7 @@ export default function NewCustomer() {
 
                             searchBar: false,
                             columnFilter: true,
+<<<<<<< HEAD
                             // actions: [
                             //     <SidebarBtn
                             //         key={0}
@@ -417,6 +418,18 @@ export default function NewCustomer() {
                             //         labelTw="hidden sm:block"
                             //     />,
                             // ],
+=======
+                            actions: [
+                                // <SidebarBtn
+                                //     key={0}
+                                //     href="/newCustomer/new"
+                                //     isActive
+                                //     leadingIcon="lucide:plus"
+                                //     label="Add"
+                                //     labelTw="hidden sm:block"
+                                // />,
+                            ],
+>>>>>>> 5810a973fbd0cd1be5bed2c47bca832355299d5e
                         },
                         localStorageKey: "newCustomer-table",
                         footer: { nextPrevBtn: true, pagination: true },
