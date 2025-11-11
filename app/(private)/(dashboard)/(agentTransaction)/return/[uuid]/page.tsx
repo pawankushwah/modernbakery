@@ -453,7 +453,6 @@ const handleCustomerSearch = async (searchText: string) => {
 };
 
 const handleItemSearch = async (searchText: string) => {
-  if (!searchText || searchText.trim().length < 1) return [];
   try {
     const response = await itemGlobalSearch({ query: searchText });
     const data = Array.isArray(response?.data) ? response.data : [];

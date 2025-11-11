@@ -378,7 +378,11 @@ export default function InvoiceddEditPage() {
 
     const handleItemSearch = useCallback(async (searchText: string) => {
         // Prevent searches while we're auto-populating items from a delivery selection
-        if (suppressItemSearch) return [];
+        if (suppressItemSearch) {
+            // Reset the flag after blocking one search
+            setSuppressItemSearch(false);
+            return [];
+        }
         // Avoid API calls for empty/very short queries
         const qRaw = (searchText || "").trim();
         if (qRaw.length < 1) return [];
@@ -399,7 +403,6 @@ export default function InvoiceddEditPage() {
         try {
             const response = await itemGlobalSearch({ 
                 query: q,
-                
             });
             const data = Array.isArray(response?.data) ? (response.data as unknown[]) : [];
 
@@ -1195,7 +1198,7 @@ const isFormReadyForItems = [
                                                 });
                                                 setItemData(newData);
                                             }}
-                                            disabled={!isFormReadyForItems}
+                                            disabled={!isFormReadyForItems && !row.item_id}
                                         />
                                     </div>
                                 ),
