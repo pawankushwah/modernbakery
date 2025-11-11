@@ -1,6 +1,5 @@
 "use client";
 
-import AutoSuggestion from "@/app/components/autoSuggestion";
 import ContainerCard from "@/app/components/containerCard";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
