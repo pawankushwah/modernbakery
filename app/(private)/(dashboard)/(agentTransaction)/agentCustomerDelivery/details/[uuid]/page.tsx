@@ -229,11 +229,11 @@ export default function OrderDetailPage() {
             <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
               <span>From (Seller)</span>
               <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">Hariss Store</span>
-                <span>Business Bay, Dubai - UAE</span>
-                <span>
-                  Phone: +971 123456789 <br /> Email: support@hariss.com
-                </span>
+              <span className="font-semibold">
+                          {deliveryData?.warehouse?.code && deliveryData?.warehouse?.name
+                            ? `${deliveryData?.warehouse?.code} - ${deliveryData?.warehouse?.name}`
+                            : "-"}
+                        </span>
               </div>
             </div>
           </div>
@@ -243,7 +243,7 @@ export default function OrderDetailPage() {
             <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
               <span>To (Customer)</span>
               <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">{deliveryData?.customer?.name || "-"}</span>
+                <span className="font-semibold">{deliveryData?.customer?.code && deliveryData?.customer?.code ? `${deliveryData?.customer?.code} - ${deliveryData?.customer?.name}` : "-"}</span>
                 <span>{deliveryData?.customer?.address || "-"}</span>
                 <span>
                   Phone: {deliveryData?.customer?.phone || "-"} <br /> 
