@@ -248,7 +248,7 @@ export default function Page() {
                   </p>
                   <p>
                     <strong>Stock Keeping Unit:</strong>{" "}
-                    {singleItem?.keeping_quantity}
+                    {singleItem?.is_stock_keeping ? "Yes" : "No"}
                   </p>
                 </div>
               </ContainerCard>)
