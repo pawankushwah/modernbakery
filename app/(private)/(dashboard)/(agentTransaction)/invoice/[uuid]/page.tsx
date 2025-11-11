@@ -57,10 +57,19 @@ interface CustomerLike {
 }
 
 interface DeliveryDetail {
+    // Some APIs provide nested item object, some provide flat item_id/code/name fields — accept both
     item?: { id?: number | string; code?: string; name?: string };
+    item_id?: number | string;
+    code?: string;
+    item_name?: string;
     uom_id?: number | string;
     uom_name?: string;
     item_price?: number | string;
+    itemvalue?: number | string;
+    excise?: number | string;
+    net?: number | string;
+    vat?: number | string;
+    total?: number | string;
     quantity?: number | string;
     discount?: number | string;
 }
@@ -216,7 +225,7 @@ export default function InvoiceddEditPage() {
                                     const newRowUomOptions: Record<string, { value: string; label: string; price?: string }[]> = {};
                                     const newFullItemsData: Record<string, FullItem> = { ...fullItemsData };
 
-                                    const loadedItems: InvoiceItemRow[] = data.details.map((detail: any, index: number) => {
+                                    const loadedItems: InvoiceItemRow[] = data.details.map((detail: DeliveryDetail, index: number) => {
                                         const itemId = String(detail.item_id ?? "");
                                         const uomId = String(detail.uom_id ?? "");
 
@@ -685,15 +694,13 @@ export default function InvoiceddEditPage() {
         }
 
         const now = new Date();
-        const invoiceTime = now.toTimeString().split(' ')[0]; // Gets "HH:mm:ss"
-
-        // If Against Delivery, API expects delivery_id instead of customer_id
-        const deliveryId = form.invoice_type === "0" && form.customer ? Number(form.customer) : undefined;
+        const invoiceTime = now.toTimeString().split(' ')[0];
+    const deliveryId = form.invoice_type === "0" && form.customer ? Number(form.customer) : undefined;
 
         return {
             invoice_type: Number(form.invoice_type),
             warehouse_id: Number(form.warehouse),
-            customer_id: form.invoice_type === "0" ? undefined : customerId,
+            customer_id: customerId,
             delivery_id: deliveryId,
             customer_type: form.customerType ? Number(form.customerType) : undefined,
             route_id: routeId,
@@ -726,18 +733,12 @@ export default function InvoiceddEditPage() {
                 })),
         };
     };
-
-    // Submit handler
     const handleSubmit = async () => {
-        if (isSubmitting) return; // Prevent multiple submissions
-
+        if (isSubmitting) return;
         try {
-            // Validate form using dynamic schema based on invoice type
             const schema = createValidationSchema(form);
             await schema.validate(form, { abortEarly: false });
             setErrors({});
-
-            // Validate that at least one item is added
             const validItems = itemData.filter(item => item.item_id && item.uom_id);
             if (validItems.length === 0) {
                 showSnackbar("Please add at least one item with UOM selected", "error");
@@ -829,10 +830,6 @@ export default function InvoiceddEditPage() {
         }
     };
 
-    // Helper to check if all required fields are filled for enabling item/UOM inputs.
-    // For "Against Delivery" (invoice_type === "0") we don't require route/customerType,
-    // only warehouse and the selected delivery (customer) are needed. For Direct Invoice
-    // require customerType and route as well.
     const isFormReadyForItems = (() => {
         if (String(form.invoice_type) === "0") {
             return [form.warehouse, form.customer, form.invoice_type, form.invoice_date].every(Boolean);
@@ -858,9 +855,6 @@ export default function InvoiceddEditPage() {
                 <div className="flex justify-between flex-wrap gap-[20px]">
                     <div className="flex flex-col gap-[10px]">
                         <Logo type="full" />
-                        {/* <span className="text-primary font-normal text-[16px]">
-                            Emma-Köhler-Allee 4c, Germering - 13907
-                        </span> */}
                     </div>
 
                     <div className="flex flex-col items-end">
@@ -1247,10 +1241,6 @@ export default function InvoiceddEditPage() {
                                                 newData[index].item_id = selectedItemId;
                                                 newData[index].itemName = selectedItemId;
                                                 newData[index].itemLabel = option.label;
-
-                                                // Get the full item data to access UOMs. If not available, fall back to the
-                                                // selected option's uoms (provided by itemGlobalSearch) so newly-added rows
-                                                // get UOMs immediately after selecting an item.
                                                 let uomSource: ItemUom[] | undefined = undefined;
                                                 const selectedItem = fullItemsData[selectedItemId];
                                                 if (selectedItem && Array.isArray(selectedItem.uom) && selectedItem.uom.length > 0) {
@@ -1260,7 +1250,6 @@ export default function InvoiceddEditPage() {
                                                     if (Array.isArray(opt.uoms) && opt.uoms.length > 0) {
                                                         const uomArray: ItemUom[] = opt.uoms.map((u) => ({ id: String(u.id ?? ""), name: u.name ?? "", price: u.price }));
                                                         uomSource = uomArray;
-                                                        // Persist to fullItemsData for later use
                                                         setFullItemsData(prev => ({
                                                             ...prev,
                                                             [selectedItemId]: {

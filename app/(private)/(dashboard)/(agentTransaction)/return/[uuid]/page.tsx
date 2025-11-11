@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, ChangeEvent, useState, useEffect } from "react";
+import React, { Fragment, ChangeEvent, useState, useEffect, useRef } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -14,7 +14,7 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import * as yup from "yup";
-import { warehouseListGlobalSearch, routeList, agentCustomerList, getCompanyCustomers, itemGlobalSearch } from "@/app/services/allApi";
+import { warehouseListGlobalSearch, routeList, agentCustomerList, getCompanyCustomers, itemGlobalSearch, genearateCode, saveFinalCode } from "@/app/services/allApi";
 
 // TypeScript interfaces
 interface Uom {
@@ -30,7 +30,10 @@ interface DeliveryDetail {
     name: string;
   };
   uom_id: number;
+  uom_name?: string;
   quantity: number;
+  item_price?: number | string;
+  item_uoms?: Uom[];
   return_type: string;
   return_reason: string;
 }
@@ -67,11 +70,16 @@ export default function OrderAddEditPage() {
   const uuid = params?.uuid as string | undefined;
   const isEditMode = uuid !== undefined && uuid !== "add";
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const codeGeneratedRef = useRef(false);
+  const [code, setCode] = useState("");
   const [form, setForm] = useState({
     warehouse: "",
+    warehouse_name: "",
     customer: "",
+    customer_name: "",
     customer_type: "",
     route: "",
+    route_name: "",
   });
   const goodOptions = [{ label: "Near By Expiry", value: "0" },
                       { label: "Package Issue", value: "1" },
@@ -92,6 +100,7 @@ export default function OrderAddEditPage() {
       itemLabel: "", // Store the display label separately
       UOM: "",
       uom_id: "",
+      Price: "",
       Quantity: "1",
       return_type: "",
       return_reason: "",
@@ -107,13 +116,37 @@ export default function OrderAddEditPage() {
           const response = await deliveryByUuid(uuid);
           const data = (response?.data ?? response) as DeliveryResponse;
           
-          // Set form data
+          // Build display labels defensively (APIs vary in property names)
+          const warehouseObj = data?.warehouse as Record<string, unknown> | undefined;
+          const warehouseCode = warehouseObj && typeof (warehouseObj['code'] ?? warehouseObj['warehouse_code']) === 'string' ? String(warehouseObj['code'] ?? warehouseObj['warehouse_code']) : '';
+          const warehouseName = warehouseObj && typeof (warehouseObj['name'] ?? warehouseObj['warehouse_name']) === 'string' ? String(warehouseObj['name'] ?? warehouseObj['warehouse_name']) : '';
+          const warehouseLabel = `${warehouseCode ? warehouseCode + ' - ' : ''}${warehouseName}`.trim();
+
+          const customerObj = data?.customer as Record<string, unknown> | undefined;
+          const customerLabel = customerObj && typeof (customerObj['name'] ?? customerObj['outlet_name']) === 'string' ? String(customerObj['name'] ?? customerObj['outlet_name']) : '';
+
+          const routeObj = data?.route as Record<string, unknown> | undefined;
+          const routeLabel = routeObj && typeof (routeObj['name'] ?? routeObj['route_name']) === 'string' ? String(routeObj['name'] ?? routeObj['route_name']) : '';
+
+          // Set form data (include display labels so AutoSuggestion shows the label instead of the id)
           setForm({
             warehouse: data?.warehouse?.id ? String(data.warehouse.id) : "",
+            warehouse_name: warehouseLabel,
             customer: data?.customer?.id ? String(data.customer.id) : "",
+            customer_name: customerLabel,
             customer_type: data?.customer_type?.id ? String(data.customer_type?.id) : "",
             route: data?.route?.id ? String(data.route?.id) : "",
+            route_name: routeLabel,
           });
+
+          // If the delivery/return response included a reserved code, capture it so we can display/save it
+          try {
+            const dataObj = data as Record<string, unknown>;
+            const maybeCode = String(dataObj['return_code'] ?? dataObj['delivery_code'] ?? dataObj['code'] ?? "");
+            if (maybeCode) setCode(maybeCode);
+          } catch (e) {
+            // ignore
+          }
           
           if (data?.warehouse?.id) {
             await fetchAgentCustomerOptions(String(data.warehouse.id));
@@ -126,17 +159,25 @@ export default function OrderAddEditPage() {
               const rowIdx = index.toString();
               
               const selectedItem = itemOptions.find(item => item.value === itemId);
+              let matchedPrice = "";
               if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
                 const uomOpts = (selectedItem.uoms as Uom[]).map((uom: Uom) => ({
                   value: uom.id || "",
                   label: uom.name || "",
                   price: uom.price || "0"
                 }));
-                
+
+                // set options for this row
                 setRowUomOptions(prev => ({
                   ...prev,
                   [rowIdx]: uomOpts
                 }));
+
+                const matched = uomOpts.find(u => u.value === uomId);
+                matchedPrice = matched ? String(matched.price ?? "") : String(uomOpts[0]?.price ?? "");
+              } else {
+                // try to use item price from delivery detail if available
+                matchedPrice = String(detail.item_price ?? "");
               }
               
              
@@ -147,6 +188,7 @@ export default function OrderAddEditPage() {
                 itemLabel: detail.item?.name || "", // Store the display label
                 UOM: uomId,
                 uom_id: uomId,
+                Price: matchedPrice,
                 Quantity: (detail?.quantity ?? 1).toString(),
                return_type: detail?.return_type || "",
                return_reason: detail?.return_reason || "",
@@ -187,6 +229,27 @@ export default function OrderAddEditPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, uuid ?? ""]);
 
+  // Auto-generate return code in add mode only (prevent on edit)
+  useEffect(() => {
+    if (!isEditMode && !codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        try {
+          setLoading(true);
+          const res = await genearateCode({ model_name: "return" });
+          if (res?.code) {
+            setCode(res.code);
+          }
+        } catch (err) {
+          console.error("Failed to generate return code:", err);
+          showSnackbar("Failed to generate return code", "error");
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [isEditMode, setLoading, showSnackbar]);
+
   const handleChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -223,6 +286,7 @@ export default function OrderAddEditPage() {
         itemLabel: "",
         UOM: "",
         uom_id: "",
+        Price: "",
         Quantity: "1",
         return_type: "",
         return_reason: "",
@@ -239,6 +303,7 @@ export default function OrderAddEditPage() {
           itemLabel: "",
           UOM: "",
           uom_id: "",
+          Price: "",
           Quantity: "1",
             return_type: "",
             return_reason: "",
@@ -260,10 +325,11 @@ export default function OrderAddEditPage() {
       route_id: Number(form.route),
       details: itemData
         .filter(item => item.item_id && item.uom_id) // Only include rows with item and UOM selected
-        .map((item) => ({
+          .map((item) => ({
           item_id: Number(item.item_id),
           uom_id: Number(item.uom_id),
-          quantity: Number(item.Quantity) || 0,
+          item_price: Number(item.Price) || 0,
+          item_quantity: Number(item.Quantity) || 0,
             return_type: item.return_type,
             return_reason: item.return_reason,
         })),
@@ -309,6 +375,16 @@ export default function OrderAddEditPage() {
       }
       
       // Success
+      // Save the generated code after successful creation (add mode only)
+      if (!isEditMode && code) {
+        try {
+          await saveFinalCode({ reserved_code: code, model_name: "return" });
+        } catch (e) {
+          // Don't block success flow if saving the final code fails
+          console.error("Failed to save final code:", e);
+        }
+      }
+
       showSnackbar(
         isEditMode 
           ? "Return updated successfully!" 
@@ -510,7 +586,7 @@ const handleItemSearch = async (searchText: string) => {
               Return
             </span>
             <span className="text-primary text-[14px] tracking-[10px]">
-              #W1O20933
+              #{code}
             </span>
           </div>
         </div>
@@ -532,27 +608,36 @@ const handleItemSearch = async (searchText: string) => {
             label="Warehouse"
             name="warehouse"
             placeholder="Search warehouse..."
-            initialValue={form.warehouse}
+            initialValue={form.warehouse_name}
             onSearch={handleWarehouseSearch}
             onSelect={(option) => {
-              setForm(prev => ({ ...prev, warehouse: option.value }));
+              setForm(prev => ({
+                ...prev,
+                warehouse: option.value,
+                warehouse_name: option.label,
+                // clear dependent selections
+                route: "",
+                route_name: "",
+                customer: "",
+                customer_name: "",
+              }));
               if (errors.warehouse) setErrors(prev => ({ ...prev, warehouse: "" }));
             }}
-            onClear={() => setForm(prev => ({ ...prev, warehouse: "" }))}
+            onClear={() => setForm(prev => ({ ...prev, warehouse: "", warehouse_name: "", route: "", route_name: "", customer: "", customer_name: "" }))}
             error={errors.warehouse}
           />
-           <AutoSuggestion
+          <AutoSuggestion
             required
             label="Route"
             name="route"
             placeholder="Search route..."
-            initialValue={form.route}
+            initialValue={form.route_name}
             onSearch={handleRouteSearch}
             onSelect={(option) => {
-              setForm(prev => ({ ...prev, route: option.value }));
+              setForm(prev => ({ ...prev, route: option.value, route_name: option.label, customer: "", customer_name: "" }));
               if (errors.route) setErrors(prev => ({ ...prev, route: "" }));
             }}
-            onClear={() => setForm(prev => ({ ...prev, route: "" }))}
+            onClear={() => setForm(prev => ({ ...prev, route: "", route_name: "", customer: "", customer_name: "" }))}
             error={errors.route}
             disabled={!form.warehouse}
             noOptionsMessage={!form.warehouse ? "Please select a warehouse first" : "No routes found"}
@@ -562,13 +647,13 @@ const handleItemSearch = async (searchText: string) => {
             label="Customer"
             name="customer"
             placeholder="Search customer..."
-            initialValue={form.customer}
+            initialValue={form.customer_name}
             onSearch={handleCustomerSearch}
             onSelect={(option) => {
-              setForm(prev => ({ ...prev, customer: option.value }));
+              setForm(prev => ({ ...prev, customer: option.value, customer_name: option.label }));
               if (errors.customer) setErrors(prev => ({ ...prev, customer: "" }));
             }}
-            onClear={() => setForm(prev => ({ ...prev, customer: "" }))}
+            onClear={() => setForm(prev => ({ ...prev, customer: "", customer_name: "" }))}
             error={errors.customer}
             disabled={!form.route}
             noOptionsMessage={!form.route ? "Please select a route first" : "No customers found"}
@@ -591,27 +676,54 @@ const handleItemSearch = async (searchText: string) => {
                       placeholder="Search item..."
                       initialValue={row.itemLabel}
                       onSearch={handleItemSearch}
-                      onSelect={(option) => {
+                      onSelect={async (option: { value: string; label: string; uoms?: Uom[] }) => {
                         const selectedItemId = option.value;
                         const newData = [...itemData];
                         const index = Number(row.idx);
                         newData[index].item_id = selectedItemId;
                         newData[index].itemName = selectedItemId;
                         newData[index].itemLabel = option.label;
-                        // Find selected item and set UOM options
-                        const selectedItem = option;
-                        if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
-                          const uomOpts = (selectedItem.uoms as Uom[]).map((uom: Uom) => ({
-                            value: uom.id || "",
-                            label: uom.name || "",
-                            price: uom.price || "0"
-                          }));
+
+                        // Try to get UOMs from the selected option first
+                        let uoms: Uom[] | undefined = option.uoms;
+
+                        // If option doesn't include UOMs, fetch item info by searching the id
+                        if ((!uoms || uoms.length === 0) && selectedItemId) {
+                          try {
+                            const resp = await itemGlobalSearch({ query: selectedItemId });
+                            const items = Array.isArray(resp?.data) ? resp.data : (resp ? [resp] : []);
+                            // Find the matching item by id (or value) and extract uoms/uom/item_uoms
+                            const found = (items as unknown[]).find((it) => {
+                              const obj = it as Record<string, unknown>;
+                              const idVal = obj['id'] ?? obj['value'];
+                              return String(idVal ?? '') === String(selectedItemId);
+                            }) as Record<string, unknown> | undefined;
+                            if (found) {
+                              // handle both `item_uoms` and `uom` shapes
+                              const rawUoms = Array.isArray(found['item_uoms']) ? (found['item_uoms'] as unknown[]) : (Array.isArray(found['uom']) ? (found['uom'] as unknown[]) : []);
+                              if (Array.isArray(rawUoms) && rawUoms.length > 0) {
+                                uoms = rawUoms.map((u) => {
+                                  const uu = u as Record<string, unknown>;
+                                  return { id: String(uu['id'] ?? ''), name: String(uu['name'] ?? ''), price: uu['price'] as string | number | undefined } as Uom;
+                                });
+                              }
+                            }
+                          } catch (err) {
+                            // ignore fetch error and continue without UOMs
+                            console.error('Failed to fetch item UOMs for selected item:', err);
+                          }
+                        }
+
+                        if (uoms && uoms.length > 0) {
+                          const uomOpts = uoms.map((uom: Uom) => ({ value: uom.id || "", label: uom.name || "", price: uom.price || "0" }));
                           setRowUomOptions(prev => ({ ...prev, [row.idx]: uomOpts }));
-                          // Auto-select first UOM
+
+                          // Auto-select first UOM and store friendly label for display
                           const firstUom = uomOpts[0];
                           if (firstUom) {
                             newData[index].uom_id = firstUom.value;
-                            newData[index].UOM = firstUom.value;
+                            newData[index].UOM = firstUom.label;
+                            newData[index].Price = String(firstUom.price ?? "");
                           }
                         } else {
                           setRowUomOptions(prev => {
@@ -621,7 +733,9 @@ const handleItemSearch = async (searchText: string) => {
                           });
                           newData[index].uom_id = "";
                           newData[index].UOM = "";
+                          newData[index].Price = "";
                         }
+
                         setItemData(newData);
                         recalculateItem(index, "itemName", selectedItemId);
                       }}
@@ -664,8 +778,9 @@ const handleItemSearch = async (searchText: string) => {
                         const newData = [...itemData];
                         const index = Number(row.idx);
                         newData[index].uom_id = selectedUomId;
-                        newData[index].UOM = selectedUomId;
-                        
+                        newData[index].UOM = selectedUom?.label ?? selectedUomId;
+                        newData[index].Price = String(selectedUom?.price ?? "");
+
                         setItemData(newData);
                         recalculateItem(index, "UOM", selectedUomId);
                       }}
