@@ -679,7 +679,29 @@ export default function AddEditRouteVisit() {
                   error={errors.to_date}
                 />
               </div>
-
+ {/* {!isEditMode && ( */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Salesman Type */}
+                  <div>
+                    <InputFields
+                      required
+                      label="Salesman Type"
+                      value={form.salesman_type}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          salesman_type: e.target.value,
+                        }))
+                      }
+                      options={[
+                        { value: "1", label: "Agent Customer" },
+                        { value: "2", label: "Merchandiser" },
+                      ]}
+                      error={errors.salesman_type}
+                    />
+                  </div>
+                </div>
+              {/* )} */}
               {/* Company - Multi Select */}
               <div>
                 <InputFields
@@ -803,29 +825,7 @@ export default function AddEditRouteVisit() {
         return (
           <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
             <div className="p-6">
-              {!isEditMode && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {/* Salesman Type */}
-                  <div>
-                    <InputFields
-                      required
-                      label="Salesman Type"
-                      value={form.salesman_type}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          salesman_type: e.target.value,
-                        }))
-                      }
-                      options={[
-                        { value: "1", label: "Agent Customer" },
-                        { value: "2", label: "Merchandiser" },
-                      ]}
-                      error={errors.salesman_type}
-                    />
-                  </div>
-                </div>
-              )}
+             
 
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Customer Schedule

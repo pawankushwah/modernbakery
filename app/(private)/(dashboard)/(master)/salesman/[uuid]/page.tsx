@@ -222,7 +222,7 @@ export default function AddEditSalesman({
               osa_code: d.osa_code || "",
               name: d.name || "",
               type: d.salesman_type?.id?.toString() || "",
-              sub_type: d.sub_type?.id?.toString() || "",
+              sub_type: d.project_type?.id?.toString() || "",
               designation: d.designation || "",
               route_id: d.route?.id?.toString() || "",
               password: d.password, // password is not returned from API → leave empty
