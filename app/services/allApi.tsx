@@ -1708,6 +1708,16 @@ export const getSalesmanById = async (uuid: string) => {
     return handleError(error);
   }
 };
+
+export const getSalesmanBySalesId = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/master/salesmen/salespersalesman/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const updateSalesman = async (uuid: string, body: object) => {
   try {
     const res = await API.put(`/api/master/salesmen/update/${uuid}`, body);

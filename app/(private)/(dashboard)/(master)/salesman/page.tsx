@@ -129,7 +129,7 @@ const SalesmanPage = () => {
     ): Promise<listReturnType> => {
       try {
         setLoading(true);
-        const res = await SalesmanListGlobalSearch({ per_page: pageSize.toString() });
+        const res = await SalesmanListGlobalSearch({ query: query, per_page: pageSize.toString() });
         setLoading(false);
         console.log({
           data: res.data || [],
