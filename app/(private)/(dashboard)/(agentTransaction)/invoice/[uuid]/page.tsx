@@ -493,6 +493,52 @@ export default function InvoiceddEditPage() {
 
     const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
+
+        // Special handling when invoice type changes
+        if (name === "invoice_type") {
+            // If switching to Direct Invoice, clear delivery/customer and item rows
+            if (value === "1") {
+                setForm((prev) => ({
+                    ...prev,
+                    invoice_type: value,
+                    customer: "",
+                    customer_name: "",
+                }));
+
+                // Clear delivery cache and per-row UOMs
+                setDeliveriesById({});
+                setRowUomOptions({});
+
+                // Reset items to a single empty row
+                setItemData([
+                    {
+                        item_id: "",
+                        itemName: "",
+                        itemLabel: "",
+                        UOM: "",
+                        uom_id: "",
+                        Quantity: "1",
+                        Price: "",
+                        Excise: "",
+                        Discount: "",
+                        Net: "",
+                        Vat: "",
+                        Total: "",
+                    },
+                ]);
+            } else {
+                // For other invoice types just update the value
+                setForm((prev) => ({ ...prev, invoice_type: value }));
+            }
+
+            // Clear any existing invoice_type validation error
+            if (errors.invoice_type) {
+                setErrors((prev) => ({ ...prev, invoice_type: "" }));
+            }
+
+            return;
+        }
+
         setForm({ ...form, [name]: value });
         // Clear error for this field when user starts typing
         if (errors[name]) {

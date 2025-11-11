@@ -253,6 +253,33 @@ export const invoiceByUuid = async (uuid: string) => {
   }
 };
 
+export const exportInvoice = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/invoices/export`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const exportInvoiceWithDetails = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/invoices/exportFull`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const invoiceStatusUpdate = async (body:object) => {
+  try {
+    const res = await API.post(`/api/agent_transaction/invoices/updatestatus`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const deliveryList = async (params: Params) => {
   try {
     const res = await API.get("/api/agent_transaction/agent-delivery/list", { params });
