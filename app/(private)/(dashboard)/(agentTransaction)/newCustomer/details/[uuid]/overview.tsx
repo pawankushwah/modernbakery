@@ -19,7 +19,7 @@ export default function Overview({ data }: { data: NewCustomerDetails | null }) 
                     },
                     {
                         key: "Customer Type",
-                        value: data?.customertype?.name || "-",
+                        value: data?.customertype?.name || "-"
                     },
                 ]}
             />
@@ -36,7 +36,7 @@ export default function Overview({ data }: { data: NewCustomerDetails | null }) 
                             className="text-[#EA0A2A]"
                         />
                         <span>
-                            {data?.contact_no} / {data?.contact_no2}
+                            {data?.contact_no} ,<br /> {data?.contact_no2}
                         </span>
                     </div>
                     <div className="flex items-center gap-[8px] text-[16px]">
@@ -49,6 +49,21 @@ export default function Overview({ data }: { data: NewCustomerDetails | null }) 
                     </div>
                 </div>
             </div>
+              <hr className="text-[#D5D7DA] my-[25px]" />
+             <div>
+                <div className="text-[18px] mb-[25px] font-semibold">
+                    Reject Reason
+                </div>
+                  <KeyValueData
+                  
+                    data={[
+                        { key: "Reject Reason", value: data?.reject_reason || "-" },
+                    ]}
+                />
+               
+            </div>
+              {/* Reject reason inside same card */}
+            
         </ContainerCard>
     );
 }

@@ -17,18 +17,19 @@ export default function SalesmanUnloadPage() {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions } = useAllDropdownListData();
+  const {
+    regionOptions,
+    warehouseOptions,
+    routeOptions,
+    channelOptions,
+    itemCategoryOptions,
+    customerSubCategoryOptions,
+  } = useAllDropdownListData();
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFiltered, setIsFiltered] = useState(false);
 
   const [form, setForm] = useState({
-    start_date: "",
-    end_date: "",
-    region_id: "",
-  });
-
-  const [errors, setErrors] = useState({
     start_date: "",
     end_date: "",
     region_id: "",
@@ -44,26 +45,27 @@ export default function SalesmanUnloadPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  // ✅ Validate filters
+  // ✅ Allow any filter combination (at least one required)
   const validateFilters = () => {
-    const newErrors: any = {};
-    let isValid = true;
+    if (!form.start_date && !form.end_date && !form.region_id) {
+      showSnackbar("Please select at least one filter", "warning");
+      return false;
+    }
+    return true;
+  };
 
-    if (!form.start_date) {
-      newErrors.start_date = "From Date is required";
-      isValid = false;
-    }
-    if (!form.end_date) {
-      newErrors.end_date = "To Date is required";
-      isValid = false;
-    }
-    if (!form.region_id) {
-      newErrors.region_id = "Region is required";
-      isValid = false;
-    }
+  // ✅ Apply Filter
+  const handleFilter = () => {
+    if (!validateFilters()) return;
+    setIsFiltered(true);
+    setRefreshKey((prev) => prev + 1);
+  };
 
-    setErrors(newErrors);
-    return isValid;
+  // ✅ Reset Filter
+  const handleReset = () => {
+    setForm({ start_date: "", end_date: "", region_id: "" });
+    setIsFiltered(false);
+    setRefreshKey((prev) => prev + 1);
   };
 
   // ✅ Fetch Data API (used by Table)
@@ -79,18 +81,18 @@ export default function SalesmanUnloadPage() {
       try {
         setLoading(true);
 
-        // Build proper query object
-        const params = {
-          start_date: form.start_date,
-          end_date: form.end_date,
-          region_id: form.region_id,
+        // ✅ Build query with only filled filters
+        const params: any = {
           page: page.toString(),
           per_page: pageSize.toString(),
           submit: "Filter",
         };
 
-        const listRes = await salesmanUnloadList(params);
+        if (form.start_date) params.start_date = form.start_date;
+        if (form.end_date) params.end_date = form.end_date;
+        if (form.region_id) params.region_id = form.region_id;
 
+        const listRes = await salesmanUnloadList(params);
         setLoading(false);
 
         return {
@@ -108,19 +110,41 @@ export default function SalesmanUnloadPage() {
     [setLoading, isFiltered, form]
   );
 
-  // ✅ Apply Filter
-  const handleFilter = () => {
-    if (!validateFilters()) return;
-    setIsFiltered(true);
-    setRefreshKey((prev) => prev + 1);
-  };
+   const filterBy = useCallback(
+            async (
+                payload: Record<string, string | number | null>,
+                pageSize: number
+            ): Promise<listReturnType> => {
+                let result;
+                setLoading(true);
+                try {
+                    const params: Record<string, string> = { };
+                    Object.keys(payload || {}).forEach((k) => {
+                        const v = payload[k as keyof typeof payload];
+                        if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                            params[k] = String(v);
+                        }
+                    });
+                    result = await salesmanUnloadList(params);
+                } finally {
+                    setLoading(false);
+                }
+    
+                if (result?.error) throw new Error(result.data?.message || "Filter failed");
+                else {
+                    const pagination = result.pagination?.pagination || result.pagination || {};
+                    return {
+                        data: result.data || [],
+                        total: pagination.last_page || result.pagination?.last_page || 0,
+                        totalRecords: pagination.total || result.pagination?.total || 0,
+                        currentPage: pagination.current_page || result.pagination?.currentPage || 0,
+                        pageSize: pagination.limit || pageSize,
+                    };
+                }
+            },
+            [setLoading]
+        );
 
-  // ✅ Reset Filter
-  const handleReset = () => {
-    setForm({ start_date: "", end_date: "", region_id: "" });
-    setIsFiltered(false);
-    setRefreshKey((prev) => prev + 1);
-  };
 
   // ✅ Table Columns
   const columns: configType["columns"] = [
@@ -170,69 +194,16 @@ export default function SalesmanUnloadPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="gap-3">
-        <h1 className="text-bold-700">Salesman Unload</h1>
-      </div>{" "}
+      <div className="gap-3 mb-4">
+        <h1 className="text-bold-700 text-lg">Salesman Unload</h1>
+      </div>
 
-      {/* 🔍 Filter Section
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4 bg-white p-4 rounded-lg shadow">
-        <div>
-          <InputFields
-            required
-            label="From Date"
-            type="date"
-            value={form.start_date}
-            onChange={(e) => handleChange("start_date", e.target.value)}
-          />
-          {errors.start_date && (
-            <p className="text-red-500 text-sm">{errors.start_date}</p>
-          )}
-        </div>
-
-        <div>
-          <InputFields
-            required
-            label="To Date"
-            type="date"
-            value={form.end_date}
-            onChange={(e) => handleChange("end_date", e.target.value)}
-          />
-          {errors.end_date && (
-            <p className="text-red-500 text-sm">{errors.end_date}</p>
-          )}
-        </div>
-
-        <div>
-          <InputFields
-            required
-            label="Region"
-            value={form.region_id}
-            onChange={(e) => handleChange("region_id", e.target.value)}
-            options={regionOptions}
-          />
-          {errors.region_id && (
-            <p className="text-red-500 text-sm">{errors.region_id}</p>
-          )}
-        </div>
-
-        <div className="flex items-end">
-          <SidebarBtn
-            href="#"
-            isActive
-            leadingIcon="lucide:filter"
-            label="Apply Filter"
-            labelTw="hidden sm:block"
-            onClick={handleFilter}
-          />
-        </div>
-      </div> */}
-      {/* 📋 Table Section */}
+      {/* 📋 Table Section with Dynamic Filters */}
       <Table
         refreshKey={refreshKey}
         config={{
           api: { list: fetchSalesmanUnloadHeader },
           header: {
-            // title: "Salesman Unload",
             searchBar: false,
             columnFilter: true,
             filterByFields: [
@@ -251,15 +222,18 @@ export default function SalesmanUnloadPage() {
                 label: "Warehouse",
                 isSingle: false,
                 multiSelectChips: true,
-                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                options: Array.isArray(warehouseOptions)
+                  ? warehouseOptions
+                  : [],
               },
-              
               {
                 key: "region_id",
                 label: "Region",
                 isSingle: false,
                 multiSelectChips: true,
-                options: Array.isArray(regionOptions) ? regionOptions : [{ value: "1", label: "Rajneesh" }],
+                options: Array.isArray(regionOptions)
+                  ? regionOptions
+                  : [{ value: "1", label: "Default Region" }],
               },
               {
                 key: "route_id",
@@ -278,8 +252,9 @@ export default function SalesmanUnloadPage() {
               {
                 key: "category_id",
                 label: "Category",
-                type: "select",
-                options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
+                options: Array.isArray(itemCategoryOptions)
+                  ? itemCategoryOptions
+                  : [],
                 isSingle: false,
                 multiSelectChips: true,
               },
@@ -288,7 +263,9 @@ export default function SalesmanUnloadPage() {
                 label: "Subcategory",
                 isSingle: false,
                 multiSelectChips: true,
-                options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
+                options: Array.isArray(customerSubCategoryOptions)
+                  ? customerSubCategoryOptions
+                  : [],
               },
             ],
             actions: [
@@ -314,13 +291,6 @@ export default function SalesmanUnloadPage() {
                 router.push(`/salesmanUnload/details/${String(row.uuid)}`);
               },
             },
-            // {
-            //   icon: "lucide:edit-2",
-            //   onClick: (data: object) => {
-            //     const row = data as TableDataType;
-            //     router.push(`/salesmanUnload/${String(row.uuid)}`);
-            //   },
-            // },
           ],
           pageSize: 50,
         }}

@@ -9,7 +9,6 @@ import Table, {
     searchReturnType,
     TableDataType,
 } from "@/app/components/customTable";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { downloadFile} from "@/app/services/allApi";
 import { newCustomerList,exportNewCustomerData,newCustomerStatusUpdate } from "@/app/services/agentTransaction";
 import { useSnackbar } from "@/app/services/snackbarContext"; // ✅ import snackbar
@@ -35,20 +34,16 @@ export default function NewCustomer() {
     },
     { key: "outlet_name", label: "Outlet Name", showByDefault: true },
     { key: "owner_name", label: "Owner Name" },
-    // {
-    //     key: "customer_type",
-    //     label: "Customer Type",
-    //     render: (row: TableDataType) => {
-    //         if (
-    //             typeof row.customer_type === "object" &&
-    //             row.customer_type !== null &&
-    //             "name" in row.customer_type
-    //         ) {
-    //             return (row.customer_type as { name?: string }).name || "-";
-    //         }
-    //         return row.customer_type || "-";
-    //     },
-    // },
+  {
+  key: "customertype",
+  label: "Customer Type",
+  render: (row: TableDataType) =>
+    typeof row.customertype === "object" &&
+    row.customertype !== null &&
+    "route_name" in row.customertype
+      ? (row.customertype as { route_name?: string }).route_name || "-"
+      : "-",
+},
     {
         key: "category",
         label: "Customer Category",
@@ -155,9 +150,61 @@ export default function NewCustomer() {
         showByDefault: true,
     },
     { key: "contact_no", label: "Contact No." },
+  
+
+
     { key: "whatsapp_no", label: "Whatsapp No." },
     { key: "buyertype", label: "Buyer Type", render: (row: TableDataType) => (row.buyertype === "0" ? "B2B" : "B2C") },
-    { key: "payment_type", label: "Payment Type" },
+
+{
+  key: "customer",
+  label: "Customer",
+  render: (row: TableDataType) =>
+    typeof row.customer === "object" &&
+    row.customer !== null &&
+    "route_name" in row.customer
+      ? (row.customer as { route_name?: string }).route_name || "-"
+      : "-",
+},
+{
+  key: "payment_type",
+  label: "Payment Type",
+  render: (row: TableDataType) => {
+    const paymentTypes: Record<string, string> = {
+      "1": "Cash",
+      "2": "Credit",
+      "3": "bill Tobill", // add more if needed
+    };
+    return paymentTypes[String(row.payment_type)] || "-";
+  },
+},
+
+    //   { key: "reject_reason", label: "Reject Reason" },
+  {
+  key: "approval_status",
+  label: "Approval Status",
+  render: (row) => {
+    const value = String(row.approval_status);
+
+    const statusMap: Record<string, { label: string; color: string }> = {
+      "1": { label: "Approved", color: "bg-green-100 text-green-700" },
+      "2": { label: "Pending", color: "bg-yellow-100 text-yellow-700" },
+      "3": { label: "Rejected", color: "bg-red-100 text-red-700" }
+    };
+
+    const status = statusMap[value];
+
+    if (!status) return "-";
+
+    return (
+      <span
+        className={`px-3 py-1 rounded-full text-sm font-semibold ${status.color}`}
+      >
+        {status.label}
+      </span>
+    );
+  }
+},
     {
         key: "status",
         label: "Status",
@@ -308,7 +355,7 @@ export default function NewCustomer() {
                             search: search,
                         },
                         header: {
-                            title: "New Customer",
+                            title: "Approval Customers",
                             threeDot: [
                                 {
                                     icon: "gala:file-document",
@@ -376,16 +423,16 @@ export default function NewCustomer() {
 
                             searchBar: false,
                             columnFilter: true,
-                            actions: [
-                                // <SidebarBtn
-                                //     key={0}
-                                //     href="/newCustomer/new"
-                                //     isActive
-                                //     leadingIcon="lucide:plus"
-                                //     label="Add"
-                                //     labelTw="hidden sm:block"
-                                // />,
-                            ],
+                            // actions: [
+                            //     <SidebarBtn
+                            //         key={0}
+                            //         href="/newCustomer/new"
+                            //         isActive
+                            //         leadingIcon="lucide:plus"
+                            //         label="Add"
+                            //         labelTw="hidden sm:block"
+                            //     />,
+                            // ],
                         },
                         localStorageKey: "newCustomer-table",
                         footer: { nextPrevBtn: true, pagination: true },
@@ -399,6 +446,15 @@ export default function NewCustomer() {
                                     router.push(`/newCustomer/details/${row.uuid}`);
                                 },
                             },
+                            // {
+                            //     icon: "lucide:edit-2",
+                            //     onClick: (data: object) => {
+                            //         const row = data as TableRow;
+                            //         router.push(
+                            //             `/newCustomer/${row.uuid}`
+                            //         );
+                            //     },
+                            // },
                             // {
                             //     icon: "lucide:edit-2",
                             //     onClick: (data: object) => {

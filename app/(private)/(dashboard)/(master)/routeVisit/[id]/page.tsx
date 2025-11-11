@@ -20,6 +20,7 @@ import {
   subRegionList,
   agentCustomerList,
   companyList,
+  agentCustomerFilteredList,
 } from "@/app/services/allApi";
 import Table from "./toggleTable";
 import StepperForm, {
@@ -27,11 +28,88 @@ import StepperForm, {
   StepperStep,
 } from "@/app/components/stepperForm";
 
-// Types for customer schedule
-type CustomerSchedule = {
-  customer_id: number;
-  days: string[];
+// Types for API responses
+type Company = {
+  id: number;
+  company_name?: string;
+  name?: string;
 };
+
+type Region = {
+  id: number;
+  region_name?: string;
+  name?: string;
+};
+
+type Area = {
+  id: number;
+  area_name?: string;
+  name?: string;
+};
+
+type Warehouse = {
+  id: number;
+  warehouse_name?: string;
+  name?: string;
+};
+
+type Route = {
+  id: number;
+  route_name?: string;
+  name?: string;
+};
+
+type Customer = {
+  id: number;
+  owner_name: string;
+  osa_code: string;
+};
+
+type RouteVisitDetails = {
+  customer_type: string;
+  region: Region[];
+  area: Area[];
+  warehouse: Warehouse[];
+  route: Route[];
+  companies: Company[];
+  days: string[];
+  from_date: string;
+  to_date: string;
+  status: number;
+  customer: {
+    id: number;
+  };
+};
+
+type ApiResponse<T> = {
+  data?: T;
+  error?: boolean;
+  message?: string;
+  pagination?: {
+    totalPages?: number;
+    page?: number;
+    limit?: number;
+  };
+};
+
+type Option = {
+  value: string;
+  label: string;
+};
+
+type DropdownOption = Option;
+
+type RowStates = {
+  Monday: boolean;
+  Tuesday: boolean;
+  Wednesday: boolean;
+  Thursday: boolean;
+  Friday: boolean;
+  Saturday: boolean;
+  Sunday: boolean;
+};
+
+type CustomerSchedules = Record<number, RowStates>;
 
 export default function AddEditRouteVisit() {
   const router = useRouter();
@@ -44,25 +122,17 @@ export default function AddEditRouteVisit() {
   const [submitting, setSubmitting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const [regionOptions, setRegionOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [areaOptions, setAreaOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [warehouseOptions, setWarehouseOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [routeOptions, setRouteOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [companyOptions, setCompanyOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
-  const [customers, setCustomers] = useState<any[]>([]);
-  const [customerSchedules, setCustomerSchedules] = useState<
-    CustomerSchedule[]
-  >([]);
+  const [regionOptions, setRegionOptions] = useState<DropdownOption[]>([]);
+  const [areaOptions, setAreaOptions] = useState<DropdownOption[]>([]);
+  const [warehouseOptions, setWarehouseOptions] = useState<DropdownOption[]>(
+    []
+  );
+  const [routeOptions, setRouteOptions] = useState<DropdownOption[]>([]);
+  const [companyOptions, setCompanyOptions] = useState<DropdownOption[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerSchedules, setCustomerSchedules] = useState<CustomerSchedules>(
+    {}
+  );
 
   const [selectedCustomerType, setSelectedCustomerType] = useState<string>();
 
@@ -152,11 +222,11 @@ export default function AddEditRouteVisit() {
       !isEditMode && setLoading(true);
       // Fetch companies
       setSkeleton({ ...skeleton, company: true });
-      const companies = await companyList();
+      const companies: ApiResponse<Company[]> = await companyList();
       setCompanyOptions(
-        companies?.data?.map((c: any) => ({
+        companies?.data?.map((c: Company) => ({
           value: String(c.id),
-          label: c.company_name || c.name,
+          label: c.company_name || c.name || "",
         })) || []
       );
       setSkeleton({ ...skeleton, company: false });
@@ -170,7 +240,9 @@ export default function AddEditRouteVisit() {
   const loadVisitData = async (uuid: string) => {
     setLoading(true);
     try {
-      const res = await getRouteVisitDetails(uuid);
+      const res: ApiResponse<RouteVisitDetails> = await getRouteVisitDetails(
+        uuid
+      );
       console.log("API Response for edit:", res);
 
       if (res?.data) {
@@ -197,11 +269,12 @@ export default function AddEditRouteVisit() {
         // Set form values based on API response
         setForm({
           salesman_type: existing.customer_type || "1",
-          region: existing.region?.map((r: any) => String(r.id)) || [],
-          area: existing.area?.map((a: any) => String(a.id)) || [],
-          warehouse: existing.warehouse?.map((w: any) => String(w.id)) || [],
-          route: existing.route?.map((r: any) => String(r.id)) || [],
-          company: existing.companies?.map((c: any) => String(c.id)) || [],
+          region: existing.region?.map((r: Region) => String(r.id)) || [],
+          area: existing.area?.map((a: Area) => String(a.id)) || [],
+          warehouse:
+            existing.warehouse?.map((w: Warehouse) => String(w.id)) || [],
+          route: existing.route?.map((r: Route) => String(r.id)) || [],
+          company: existing.companies?.map((c: Company) => String(c.id)) || [],
           days: existing.days || [],
           from_date: formatDate(existing.from_date),
           to_date: formatDate(existing.to_date),
@@ -213,20 +286,27 @@ export default function AddEditRouteVisit() {
 
         // Create customer schedule from the API response
         if (existing.customer && existing.customer.id) {
-          const schedule: CustomerSchedule = {
-            customer_id: existing.customer.id,
-            days: existing.days || [],
+          const schedule: CustomerSchedules = {
+            [existing.customer.id]: {
+              Monday: existing.days?.includes("Monday") || false,
+              Tuesday: existing.days?.includes("Tuesday") || false,
+              Wednesday: existing.days?.includes("Wednesday") || false,
+              Thursday: existing.days?.includes("Thursday") || false,
+              Friday: existing.days?.includes("Friday") || false,
+              Saturday: existing.days?.includes("Saturday") || false,
+              Sunday: existing.days?.includes("Sunday") || false,
+            },
           };
-          setCustomerSchedules([schedule]);
+          setCustomerSchedules(schedule);
         }
 
         console.log("Form set with values:", {
           salesman_type: existing.customer_type,
-          region: existing.region?.map((r: any) => String(r.id)),
-          area: existing.area?.map((a: any) => String(a.id)),
-          warehouse: existing.warehouse?.map((w: any) => String(w.id)),
-          route: existing.route?.map((r: any) => String(r.id)),
-          company: existing.companies?.map((c: any) => String(c.id)),
+          region: existing.region?.map((r: Region) => String(r.id)),
+          area: existing.area?.map((a: Area) => String(a.id)),
+          warehouse: existing.warehouse?.map((w: Warehouse) => String(w.id)),
+          route: existing.route?.map((r: Route) => String(r.id)),
+          company: existing.companies?.map((c: Company) => String(c.id)),
           days: existing.days,
           from_date: formatDate(existing.from_date),
           to_date: formatDate(existing.to_date),
@@ -246,11 +326,15 @@ export default function AddEditRouteVisit() {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        let res = null;
-        res = await agentCustomerList({ type: form.salesman_type });
+        let res: ApiResponse<Customer[]> | null = null;
+        if (isEditMode) {
+          res = await agentCustomerList({ type: form.salesman_type });
+        } else {
+          res = await agentCustomerFilteredList({ type: form.salesman_type });
+        }
 
         console.log("Fetched customers:", res);
-        setCustomers(res.data || []);
+        setCustomers((res && res.data) || []);
       } catch (error) {
         console.error("Error fetching customers:", error);
         setCustomers([]);
@@ -280,13 +364,13 @@ export default function AddEditRouteVisit() {
       try {
         setSkeleton({ ...skeleton, region: true });
         // Pass company IDs as parameters to regionList
-        const regions = await regionList({
+        const regions: ApiResponse<Region[]> = await regionList({
           company_id: form.company.join(","),
         });
         setRegionOptions(
-          regions?.data?.map((r: any) => ({
+          regions?.data?.map((r: Region) => ({
             value: String(r.id),
-            label: r.region_name || r.name,
+            label: r.region_name || r.name || "",
           })) || []
         );
         setSkeleton({ ...skeleton, region: false });
@@ -310,13 +394,16 @@ export default function AddEditRouteVisit() {
     const fetchAreas = async () => {
       try {
         setSkeleton({ ...skeleton, area: true });
-        const res = await subRegionList({ region_id: form.region.join(",") });
-        const areaList = res?.data?.data || res?.data || [];
+        const res: ApiResponse<{ data: Area[] } | Area[]> = await subRegionList(
+          { region_id: form.region.join(",") }
+        );
+        const areaList =
+          (res as { data: Area[] })?.data || (res as Area[]) || [];
 
         setAreaOptions(
-          areaList.map((a: any) => ({
+          areaList.map((a: Area) => ({
             value: String(a.id),
-            label: a.area_name || a.name,
+            label: a.area_name || a.name || "",
           }))
         );
         setSkeleton({ ...skeleton, area: false });
@@ -340,13 +427,15 @@ export default function AddEditRouteVisit() {
     const fetchWarehouses = async () => {
       try {
         setSkeleton({ ...skeleton, warehouse: true });
-        const res = await warehouseList({ area_id: form.area.join(",") });
-        const warehousesList = res?.data?.data || res?.data || [];
+        const res: ApiResponse<{ data: Warehouse[] } | Warehouse[]> =
+          await warehouseList({ area_id: form.area.join(",") });
+        const warehousesList =
+          (res as { data: Warehouse[] })?.data || (res as Warehouse[]) || [];
 
         setWarehouseOptions(
-          warehousesList.map((w: any) => ({
+          warehousesList.map((w: Warehouse) => ({
             value: String(w.id),
-            label: w.warehouse_name || w.name,
+            label: w.warehouse_name || w.name || "",
           }))
         );
         setSkeleton({ ...skeleton, warehouse: false });
@@ -371,14 +460,17 @@ export default function AddEditRouteVisit() {
     const fetchRoutes = async () => {
       try {
         setSkeleton({ ...skeleton, route: true });
-        const res = await routeList({ warehouse_id: form.warehouse.join(",") });
+        const res: ApiResponse<{ data: Route[] } | Route[]> = await routeList({
+          warehouse_id: form.warehouse.join(","),
+        });
         console.log(res);
-        const routeListData = res?.data?.data || res?.data || [];
+        const routeListData =
+          (res as { data: Route[] })?.data || (res as Route[]) || [];
 
         setRouteOptions(
-          routeListData.map((r: any) => ({
+          routeListData.map((r: Route) => ({
             value: String(r.id),
-            label: r.route_name || r.name,
+            label: r.route_name || r.name || "",
           }))
         );
         setSkeleton({ ...skeleton, route: false });
@@ -446,7 +538,7 @@ export default function AddEditRouteVisit() {
   };
 
   // ✅ Convert rowStates object to array format
-  const convertRowStatesToSchedules = (rowStates: Record<number, any>) => {
+  const convertRowStatesToSchedules = (rowStates: CustomerSchedules) => {
     return Object.entries(rowStates)
       .map(([customerId, daysObj]) => {
         const days = Object.entries(daysObj)
@@ -476,9 +568,9 @@ export default function AddEditRouteVisit() {
       }
 
       console.log("Form data:", form);
-      console.log("Raw customerSchedules (rowStates):", customerSchedules);
+      console.log("Raw customerSchedules:", customerSchedules);
 
-      // ✅ Convert your raw object to expected format
+      // ✅ Convert your raw object to expected format - customerSchedules is already in Record format
       const formattedSchedules = convertRowStatesToSchedules(customerSchedules);
 
       console.log("✅ Converted customer schedules:", formattedSchedules);
@@ -511,7 +603,7 @@ export default function AddEditRouteVisit() {
 
       console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
-      let res;
+      let res: ApiResponse<any>;
       if (isEditMode && visitId) {
         console.log("Updating existing route visit...");
         res = await updateRouteVisitDetails(payload);
@@ -566,7 +658,7 @@ export default function AddEditRouteVisit() {
                   required
                   label="From Date"
                   type="date"
-                  value={form.from_date.slice(0, 10)}
+                  value={form.from_date ? form.from_date.split("T")[0] : ""}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, from_date: e.target.value }))
                   }
@@ -580,7 +672,7 @@ export default function AddEditRouteVisit() {
                   required
                   label="To Date"
                   type="date"
-                  value={form.to_date.slice(0, 10)}
+                  value={form.to_date ? form.to_date.split("T")[0] : ""}
                   onChange={(e) =>
                     setForm((prev) => ({ ...prev, to_date: e.target.value }))
                   }
@@ -711,27 +803,29 @@ export default function AddEditRouteVisit() {
         return (
           <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
             <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {/* Salesman Type */}
-                <div>
-                  <InputFields
-                    required
-                    label="Salesman Type"
-                    value={form.salesman_type}
-                    onChange={(e) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        salesman_type: e.target.value,
-                      }))
-                    }
-                    options={[
-                      { value: "1", label: "Agent Customer" },
-                      { value: "2", label: "Merchandiser" },
-                    ]}
-                    error={errors.salesman_type}
-                  />
+              {!isEditMode && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  {/* Salesman Type */}
+                  <div>
+                    <InputFields
+                      required
+                      label="Salesman Type"
+                      value={form.salesman_type}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          salesman_type: e.target.value,
+                        }))
+                      }
+                      options={[
+                        { value: "1", label: "Agent Customer" },
+                        { value: "2", label: "Merchandiser" },
+                      ]}
+                      error={errors.salesman_type}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Customer Schedule
@@ -739,7 +833,14 @@ export default function AddEditRouteVisit() {
               <Table
                 customers={customers}
                 setCustomerSchedules={setCustomerSchedules}
-                initialSchedules={customerSchedules}
+                initialSchedules={Object.entries(customerSchedules).map(
+                  ([customerId, daysObj]) => ({
+                    customer_id: Number(customerId),
+                    days: Object.entries(daysObj)
+                      .filter(([_, isSelected]) => isSelected)
+                      .map(([day]) => day),
+                  })
+                )}
                 loading={loading}
                 editMode={isEditMode}
                 visitUuid={visitId} // Pass the visit ID when in edit mode

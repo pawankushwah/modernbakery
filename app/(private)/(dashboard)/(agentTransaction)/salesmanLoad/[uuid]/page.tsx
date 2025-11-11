@@ -3,7 +3,6 @@
 import ContainerCard from "@/app/components/containerCard";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
-  configType,
   TableDataType
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
@@ -14,12 +13,12 @@ import {
   salesmanLoadHeaderById,
   salesmanLoadHeaderUpdate,
 } from "@/app/services/agentTransaction";
-import { itemList } from "@/app/services/allApi";
+import { genearateCode, itemList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as yup from "yup";
 
 export default function AddEditSalesmanLoad() {
@@ -68,6 +67,10 @@ export default function AddEditSalesmanLoad() {
       name: string,
       code: string
     },
+    warehouse_stocks: {
+      id: number,
+      qty: number,
+    }[],
     shelf_life: string,
     commodity_goods_code: string,
     excise_duty_code: string,
@@ -93,6 +96,8 @@ export default function AddEditSalesmanLoad() {
   const [isItemsLoaded, setIsItemsLoaded] = useState(false);
   const [itemOptions, setItemsOptions] = useState();
   const [orderData, setOrderData] = useState<FormData[]>([]);
+  const [skeleton, setSkeleton] = useState({});
+  const codeGeneratedRef = useRef(false);
 
   // ✅ Load items on mount
   // ✅ Load all items
@@ -101,14 +106,16 @@ export default function AddEditSalesmanLoad() {
       (async () => {
         try {
           setLoading(true);
-          const res = await itemList({ page: "1" });
+          const res = await itemList({ allData: "true" });
           const data = res.data.map((item: any) => ({
             id: item.id,
             item_code: item.item_code,
             name: item.name,
-            uoms: item.uom || [], // 👈 attach uoms
-            qty: "",
-            uom_id: "",
+            cse_qty: "",
+            pcs_qty: "",
+            status: 1,
+            uom: item.uom,
+            warehouse_stocks: item.warehouse_stocks || [],
           }));
           setItemData(data);
           setIsItemsLoaded(true);
@@ -122,15 +129,17 @@ export default function AddEditSalesmanLoad() {
   }, [isItemsLoaded, setLoading]);
 
 
+
   const recalculateItem = (index: number, field: string, value: string) => {
-    const newData = [...itemData];
-    newData[index][field] = value;
-    setItemData(newData);
+    const updated = [...itemData];
+    updated[index][field] = value;
+    setItemData(updated);
   };
 
 
+
   const fetchItem = async (searchTerm: string) => {
-    const res = await itemList({ per_page: "10", name: searchTerm });
+    const res = await itemList({ allData: "true" });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
 
@@ -148,6 +157,26 @@ export default function AddEditSalesmanLoad() {
 
   useEffect(() => {
     fetchItem("");
+  }, []);
+
+  const [code, setCode] = useState("");
+  useEffect(() => {
+    setSkeleton({ ...skeleton, item: true });
+    fetchItem("");
+
+    // generate code
+    if (!codeGeneratedRef.current) {
+      codeGeneratedRef.current = true;
+      (async () => {
+        const res = await genearateCode({
+          model_name: "salesman_load",
+        });
+        if (res?.code) {
+          setCode(res.code);
+        }
+        setLoading(false);
+      })();
+    }
   }, []);
 
   // ✅ Fetch existing data in edit mode
@@ -194,10 +223,12 @@ export default function AddEditSalesmanLoad() {
   }, [isEditMode, loadUUID, isItemsLoaded, setLoading, showSnackbar]);
 
   // ✅ Validation Schema
+  // ✅ Validation Schema
   const validationSchema = yup.object().shape({
     salesman_type: yup.string().required("Salesman Type is required"),
     warehouse: yup.string().required("Warehouse is required"),
     route: yup.string().required("Route is required"),
+    
     salesman: yup.string().required("Salesman is required"),
   });
 
@@ -213,93 +244,57 @@ export default function AddEditSalesmanLoad() {
     );
   };
 
-  // ✅ Table Columns
-  const columns: configType["columns"] = [
-    {
-      key: "item",
-      label: "Items",
-      render: (row: TableDataType) => {
-        const currentItem = itemData.find((item) => item.id === row.id);
-        return (
-          <span>
-            {row.item_code && row.name
-              ? `${row.item_code} - ${row.name}`
-              : row.item_code
-                ? row.item_code
-                : row.name
-                  ? row.name
-                  : "-"}
-          </span>
-        );
-      },
-    },
-    { key: "volume", label: "Available Stock" },
-    {
-      key: "cse",
-      label: "CSE",
-      render: (row: TableDataType) => {
-        const currentItem = itemData.find((item) => item.id === row.id);
-        return (
-          <div className="w-[100px]">
-            <input
-              type="number"
-              className="border border-gray-300 rounded-md px-2 py-1 w-full text-sm"
-              value={currentItem?.qty ?? ""}
-              onChange={(e) => handleQtyChange(row.id, e.target.value)}
-            />
-          </div>
-        );
-      },
-    },
-    {
-      key: "pcs",
-      label: "PCS",
-      render: (row: TableDataType) => {
-        const currentItem = itemData.find((item) => item.id === row.id);
-        return (
-          <div className="w-[100px]">
-            <input
-              type="number"
-              className="border border-gray-300 rounded-md px-2 py-1 w-full text-sm"
-              value={currentItem?.qty ?? ""}
-              onChange={(e) => handleQtyChange(row.id, e.target.value)}
-            />
-          </div>
-        );
-      },
-    },
-  ];
-
   // ✅ Handle Submit
   const handleSubmit = async () => {
     try {
-      console.log("hiii")
       await validationSchema.validate(form, { abortEarly: false });
       setErrors({});
       setSubmitting(true);
 
-      if (!itemData.some((i) => Number(i.Quantity) > 0)) {
+      const validItems = itemData.filter(
+        (i) =>
+          (i.cse_qty && Number(i.cse_qty) > 0) ||
+          (i.pcs_qty && Number(i.pcs_qty) > 0)
+      );
+
+      if (validItems.length === 0) {
         showSnackbar("Please add at least one item with quantity", "error");
         setSubmitting(false);
         return;
       }
+      const details: any = []
+
+      validItems.map((singleItems: any, index) => {
+        console.log(singleItems, "jkl")
+
+        singleItems.uom.map((singleUom: any) => {
+          details.push({
+            item_id: Number(singleItems.id),
+            qty: singleUom.name == "PAC" ? singleItems.pcs_qty : singleItems.cse_qty,
+            uom: singleUom.uom_id,
+
+          });
+        })
+
+
+      })
+
+
+
+
 
       const payload = {
+        salesman_type: Number(form.salesman_type),
+        project_type: form.project_type ? Number(form.project_type) : null, // ✅ fix here
         warehouse_id: Number(form.warehouse),
         route_id: Number(form.route),
         salesman_id: Number(form.salesman),
-        salesman_type: Number(form.salesman_type),
-        project_type:
-          form.salesman_type == "6" ? Number(form.project_type) : null,
-        details: itemData
-          .filter((i) => i.Quantity && Number(i.Quantity) > 0)
-          .map((i) => ({
-            item_id: i.id,
-            uom: i.uom_id ? Number(i.uom_id) : null,
-            qty: String(i.Quantity || "0"),
-            status: 1,
-          })),
+        status: 1,
+        details: details,
       };
+
+
+      console.log("📦 Final Payload:", JSON.stringify(payload, null, 2));
 
       let res;
       if (isEditMode && loadUUID) {
@@ -329,12 +324,13 @@ export default function AddEditSalesmanLoad() {
       } else {
         console.error(err);
         showSnackbar("Failed to submit form", "error");
+        console.error(err);
+        showSnackbar("Failed to submit form", "error");
       }
     } finally {
       setSubmitting(false);
     }
   };
-
 
   const handleRemoveItem = (index: number) => {
     if (itemData.length <= 1) {
@@ -342,8 +338,6 @@ export default function AddEditSalesmanLoad() {
         {
           item_id: "",
           itemName: "",
-          UOM: "",
-          uom_id: "",
           Quantity: "1",
 
         },
@@ -359,10 +353,7 @@ export default function AddEditSalesmanLoad() {
       {
         item_id: "",
         itemName: "",
-        UOM: "",
-        uom_id: "",
         Quantity: "1",
-
       },
     ]);
   };
@@ -391,12 +382,12 @@ export default function AddEditSalesmanLoad() {
               Emma-Köhler-Allee 4c, Germering - 13907
             </span> */}
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col items-end">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
               Load
             </span>
             <span className="text-primary text-[14px] tracking-[10px]">
-              #L0201
+              #{code}
             </span>
           </div>
         </div>
@@ -469,15 +460,14 @@ export default function AddEditSalesmanLoad() {
             onChange={(e) => handleChange("salesman", e.target.value)}
           />
         </div>
-
         {/* --- Table --- */}
         <div>
-
         </div>
         <Table
           data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
           config={{
             table: { height: 500 },
+            showNestedLoading: false,
             columns: [
               {
                 key: "item",
@@ -497,48 +487,27 @@ export default function AddEditSalesmanLoad() {
                   );
                 },
               },
-
               {
-                key: "UOM",
-                label: "UOM",
-                render: (row) => {
-                  const currentItem = itemData.find((item) => item.id === row.id);
-                  const uomOptions =
-                    Array.isArray(currentItem?.uoms)
-                      ? currentItem.uoms.map((u: any) => ({
-                        label: u.name,
-                        value: u.id.toString(),
-                      }))
-                      : [];
-
-                  return (
-                    <InputFields
-                      label=""
-                      name="uom_id"
-                      value={row.uom_id || ""}
-                      options={uomOptions}
-                      onChange={(e) =>
-                        recalculateItem(Number(row.idx), "uom_id", e.target.value)
-                      }
-                    />
-                  );
+                key: "warehouse_stocks",
+                label: "Available Stocks",
+                render: (row: TableDataType) => {
+                  const stockQty = (row as any)?.warehouse_stocks?.[0]?.qty;
+                  return <span>{stockQty !== undefined ? stockQty : "0"}</span>;
                 },
               },
-
-              { key: "available_stock", label: "Available Stocks" },
               {
-                key: "Quantity",
-                label: "CSE Qty",
+                key: "cse_qty",
+                label: "CSE",
                 render: (row) => (
                   <InputFields
                     label=""
                     type="number"
-                    name="Quantity"
-                    value={row.Quantity}
+                    name="cse_qty"
+                    value={row.cse_qty}
                     onChange={(e) =>
                       recalculateItem(
                         Number(row.idx),
-                        "Quantity",
+                        "cse_qty",
                         e.target.value
                       )
                     }
@@ -547,18 +516,18 @@ export default function AddEditSalesmanLoad() {
               },
 
               {
-                key: "Quantity",
-                label: "PCS Qty",
+                key: "pcs_qty",
+                label: "PCS",
                 render: (row) => (
                   <InputFields
                     label=""
                     type="number"
-                    name="Quantity"
-                    value={row.Quantity}
+                    name="pcs_qty"
+                    value={row.pcs_qty}
                     onChange={(e) =>
                       recalculateItem(
                         Number(row.idx),
-                        "Quantity",
+                        "pcs_qty",
                         e.target.value
                       )
                     }
@@ -566,10 +535,12 @@ export default function AddEditSalesmanLoad() {
                 ),
               },
             ],
+            pageSize: itemData.length
           }}
         />
 
-
+        <div>
+        </div>
 
 
         <div className="flex justify-between text-primary gap-0 mb-10">

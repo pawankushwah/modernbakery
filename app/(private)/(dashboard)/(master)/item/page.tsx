@@ -142,7 +142,7 @@ export default function Item() {
         ): Promise<listReturnType> => {
             try {
                 setLoading(true);
-                const res = await itemGlobalSearch({query:query, page: page.toString() });
+                const res = await itemGlobalSearch({query:query, perPage: page.toString() });
                 setLoading(false);
                 const data = res.data.map((item: LocalTableDataType) => ({
                     ...item,

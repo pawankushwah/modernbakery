@@ -1,5 +1,6 @@
 import axios from "axios";
 import { Params } from "next/dist/server/request/params";
+import { APIFormData } from "./merchandiserApi";
 
 
 export const API = axios.create({
@@ -902,7 +903,7 @@ export const updateRegion = async (id: string, payload: ipdatePayload) => {
       payload
     );
     return res.data;
-  } catch (error: unknown) {  
+  } catch (error: unknown) {
     return handleError(error);
   }
 };
@@ -1797,6 +1798,17 @@ export const routeGlobalSearch = async (params?: Params) => {
   }
 };
 
+export const agentCustomerList = async (params?: Params) => {
+  try {
+    const res = await API.get("/api/master/agent_customers/list", {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const agentCustomerGlobalSearch = async (params?: Params) => {
   try {
     const res = await API.get("/api/master/agent_customers/global_search", {
@@ -1808,9 +1820,9 @@ export const agentCustomerGlobalSearch = async (params?: Params) => {
   }
 };
 
-export const agentCustomerList = async (params?: Params) => {
+export const agentCustomerFilteredList = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/agent_customers/list", {
+    const res = await API.get("/api/master/agent_customers/agent-list", {
       params: params,
     });
     return res.data;
@@ -1882,7 +1894,7 @@ export const itemList = async (params?: Params) => {
 
 export const itemGlobalSearch = async (params?: Params) => {
   try {
-    const res = await API.get("/api/master/items/global_search", { params: params });
+    const res = await API.get("/api/master/items/global-search", { params: params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -2800,7 +2812,10 @@ export const addAgentOrder = async (payload: object) => {
 
 export const editAgentOrder = async (uuid: string, payload: object) => {
   try {
-    const res = await API.put(`/api/agent_transaction/orders/update/${uuid}`, payload);
+    const res = await API.put(
+      `/api/agent_transaction/orders/update/${uuid}`,
+      payload
+    );
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -2815,8 +2830,6 @@ export const getAgentOrderById = async (uuid: string) => {
     return handleError(error);
   }
 };
-
-
 
 export const promotionHeaderList = async (params?: Params) => {
   try {
@@ -3004,6 +3017,93 @@ export const updateAuthUser = async (uuid: string, body: object) => {
   }
 };
 
+export const addPayment = async (body?: FormData) => {
+  try {
+    const res = await APIFormData.post(
+      "api/agent_transaction/advancepayments/create",
+      body
+    );
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updatePaymentById = async (uuid: string, body?: any) => {
+  try {
+    const res = await API.put(
+      `api/agent_transaction/advancepayments/update/${uuid}`,
+      body
+    );
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getPaymentById = async (uuid: string) => {
+  try {
+    const res = await API.get(
+      `api/agent_transaction/advancepayments/show/${uuid}`
+    );
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const allPaymentList = async (body?: any) => {
+  try {
+    const res = await API.get("api/agent_transaction/advancepayments/list");
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getbankList = async (params?: any) => {
+  try {
+    const res = await API.get("/api/settings/banks/list", { params });
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getbankDetailbyId = async (uuid?: any) => {
+  try {
+    const res = await API.get(`/api/settings/banks/show/${uuid}`);
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateBankbyId = async (body: any, uuid?: any) => {
+  try {
+    const res = await API.put(`/api/settings/banks/update/${uuid}`, body);
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const createBank = async (body: any, uuid?: any) => {
+  try {
+    const res = await API.post("/api/settings/banks/create", body);
+    console.log(res);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 export const getUserList = async (params?: Params) => {
   try {

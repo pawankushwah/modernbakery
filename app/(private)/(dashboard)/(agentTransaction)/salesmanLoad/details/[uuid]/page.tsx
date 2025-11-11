@@ -114,7 +114,6 @@ export default function ViewPage() {
   // ✅ Table config
   const columns: configType["columns"] = [
     { key: "item", label: "Item" },
-    { key: "uom", label: "UOM" },
     { key: "qty", label: "Quantity" },
     { key: "price", label: "Price" },
   ];
@@ -164,61 +163,52 @@ export default function ViewPage() {
           <hr className="border-gray-200 my-5" />
 
           {/* ---------- Info & Table Section ---------- */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            {/* ---------- Left Side (Details) ---------- */}
-            <div className="flex flex-col ">
-              <KeyValueData
-                data={[
-                  {
-                    key: "Warehouse",
-                    value:
-                      customer?.warehouse?.code && customer?.warehouse?.name
-                        ? `${customer.warehouse.code} - ${customer.warehouse.name}`
-                        : "-",
-                  },
-                  {
-                    key: "Route",
-                    value: customer?.route
-                      ? `${customer.route.code} - ${customer.route.name}`
-                      : "-",
-                  },
-                  {
-                    key: "Salesman Type",
-                    value: customer?.salesman_type?.name || "-",
-                  },
-                  {
-                    key: "Project Type",
-                    value: customer?.project_type?.name || "-",
-                  },
-                  {
-                    key: "Salesman",
-                    value: customer?.salesman
-                      ? `${customer.salesman.code} - ${customer.salesman.name}`
-                      : "-",
-                  },
-                ]}
-              />
+         {/* ---------- Info & Table Section ---------- */}
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-6">
+  {/* ---------- Left Side (Details) ---------- */}
+  <div className="lg:col-span-1">
+    <KeyValueData
+      data={[
+        {
+          key: "Warehouse",
+          value:
+            customer?.warehouse?.code && customer?.warehouse?.name
+              ? `${customer.warehouse.code} - ${customer.warehouse.name}`
+              : "-",
+        },
+        {
+          key: "Route",
+          value: customer?.route
+            ? `${customer.route.code} - ${customer.route.name}`
+            : "-",
+        },
+        {
+          key: "Salesman Type",
+          value: customer?.salesman_type?.name || "-",
+        },
+        {
+          key: "Project Type",
+          value: customer?.project_type?.name || "-",
+        },
+        {
+          key: "Salesman",
+          value: customer?.salesman
+            ? `${customer.salesman.code} - ${customer.salesman.name}`
+            : "-",
+        },
+      ]}
+    />
+  </div>
 
-              {/* Image Section */}
-              {/* <div className="flex justify-start items-center">
-                <Image
-                  src="/logo.png"
-                  alt="Salesman Signature"
-                  width={250}
-                  height={250}
-                  className="rounded-lg object-contain"
-                />
-              </div> */}
-            </div>
+  {/* ---------- Right Side (Table) ---------- */}
+  <div className="lg:col-span-2 w-full">
+    <h3 className="text-lg font-semibold text-gray-700 mb-3">
+      Load Items
+    </h3>
+    <Table data={tableData} config={{ columns }} />
+  </div>
+</div>
 
-            {/* ---------- Right Side (Table) ---------- */}
-            <div>
-              <h3 className="text-lg font-semibold text-gray-700 mb-3">
-                Load Items
-              </h3>
-              <Table data={tableData} config={{ columns }} />
-            </div>
-          </div>
         </div>
 
         {/* ---------- Footer Buttons ---------- */}
