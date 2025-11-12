@@ -194,13 +194,13 @@ export default function Page() {
                       {
                         key: "Category",
                         value: item?.item_category?.category_name
-                          ? `${item.item_category.code} - ${item.item_category.category_name}`
+                          ? `${item.item_category.category_name}`
                           : "-",
                       },
                       {
                         key: "Sub Category",
                         value: item?.item_sub_category?.name
-                          ? `${item.item_sub_category.code} - ${item.item_sub_category.name}`
+                          ? `${item.item_sub_category.name}`
                           : "-",
                       },
                       { key: "Shelf Life", value: item?.shelf_life || "-" },

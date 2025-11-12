@@ -485,6 +485,23 @@ export const saveRouteVisit = async (body: object) => {
   }
 };
 
+export const merchandiserData = async () => {
+  try {
+    const res = await API.get("/api/master/route-visits/salesmen");
+    return res.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+export const getCustomerByMerchandiser = async (merchandiser_id:string) => {
+  try {
+    const res = await API.get(`/api/master/route-visits/customerlist/${merchandiser_id}`);
+    return res.data;
+  } catch (error) {
+    return handleError(error);
+  }
+};
+
 export const getRouteVisitList = async (params: {
   from_date: string | null;
   to_date: string | null;
@@ -521,6 +538,26 @@ export const getRouteVisitDetails = async (uuid: string) => {
 export const warehouseListGlobalSearch = async (params?: Params) => {
   try {
     const res = await API.get(`/api/master/warehouse/global_search`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const warehouseReturn = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/master/warehouse/returns`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const warehouseSales = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/master/warehouse/invoices`, {
       params: params,
     });
     return res.data;
@@ -2784,6 +2821,15 @@ export const deleteSubmenu = async (uuid: string) => {
 export const exportWarehouseData = async (body: object) => {
   try {
     const res = await API.post(`/api/master/warehouse/export`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const exportRouteVisit = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/route-visits/export`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

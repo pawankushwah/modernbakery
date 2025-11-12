@@ -27,6 +27,11 @@ export const tabs = [
     url: "overview",
     component: <Overview />,
   },
+  // {
+  //   name: "Overview",
+  //   url: "overview",
+  //   component: <Overview />,
+  // },
 ];
 
 export default function Page() {
@@ -34,6 +39,17 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState(0); // default to Overview tab
   const [loading, setLoading] = useState(false)
   const [company, setCompany] = useState<Company | null>(null);
+
+  // Helper to ensure logo src is a valid URL for next/image
+  const getSafeLogo = (logo?: string | null) => {
+    if (!logo) return "/logo.png";
+    const s = String(logo).trim();
+    if (s === "") return "/logo.png";
+    // allow absolute URLs and root-relative paths
+    if (s.startsWith("/") || s.startsWith("http://") || s.startsWith("https://")) return s;
+    // otherwise prepend a leading slash for relative file paths
+    return "/" + s;
+  };
 
   const { showSnackbar } = useSnackbar()
   const onTabClick = (index: number) => {
@@ -93,7 +109,7 @@ export default function Page() {
         <div className="flex flex-col sm:flex-row items-center gap-[20px]">
           <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB]">
             <Image
-              src={company?.logo || "/logo.png"}
+              src={getSafeLogo(company?.logo)}
               alt="Company Logo"
               width={150}
               height={150}

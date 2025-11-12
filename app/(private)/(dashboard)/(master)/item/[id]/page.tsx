@@ -296,6 +296,7 @@ export default function AddEditItem() {
             is_stock_keeping: boolean | number;
             upc?: string | null;
             enable_for: string | string[];
+            keeping_quantity?: number;
           }
 
           // Prefill UOM table - support both `data.uom` and `data.item_uoms` and different key names
@@ -312,6 +313,8 @@ export default function AddEditItem() {
               }))
             );
           }
+
+
         }
         setLoading(false);
       })();
@@ -381,6 +384,7 @@ export default function AddEditItem() {
 
   const handleEditUom = (index: number) => {
     const u = uomList[index];
+    console.log(u,"uomedit")
     setUomData(u);
     setEditingIndex(index);
   };
@@ -962,14 +966,21 @@ export default function AddEditItem() {
             <div className="w-full xl:w-7/12 p-6">
               <h2 className="text-xl font-bold mb-4">UOM List</h2>
               <Table
-                data={uomList.map((row, idx) => ({
-                  ...row,
-                  idx: idx.toString(),
-                }))}
+                data={uomList.map((row, idx) =>{ console.log(row,"row") 
+                  return({ ...row, idx: idx.toString() })})}
                 config={{
                   showNestedLoading: false,
                   columns: [
-                    { key: "uom", label: "UOM" },
+                    { key: "uom", label: "UOM",render:(row)=>{
+                    
+                    
+                      
+                    
+                    return(<span>{uomOptions.map((uom, index)=>{
+                        if(uom.value==row.uom){
+                          return(<span key={index}>{uom.label.split("-")[1]}</span>)
+                        }
+                      }) }</span>) }},
                     { key: "uomType", label: "UOM Type" },
                     { key: "upc", label: "UPC" },
                     { key: "price", label: "Price", width: 80 },

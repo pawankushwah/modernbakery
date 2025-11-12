@@ -78,15 +78,27 @@ const columns = [
     },
   },
   {
-    key: "depotLocation", label: "Warehouse", render: (data: TableDataType) => {
-      const warehouseObj = typeof data.warehouse === "string"
-        ? JSON.parse(data.warehouse)
-        : data.warehouse;
-      return warehouseObj?.warehouse_name || "-";
-    }, filter: {
+    key: "warehouse", label: "Warehouse",render: (row: TableDataType) => {
+        const wh = row.warehouse;
+        let code = "-";
+        let name = "-";
+        if (wh && typeof wh === "object" && wh !== null) {
+          const w = wh as { warehouse_code?: string; warehouse_name?: string };
+          code = w.warehouse_code ?? "-";
+          name = w.warehouse_name ?? "-";
+        } else if (typeof wh === "string") {
+          name = wh;
+        }
+        return `${code}${code && name ? " - " : ""}${name}`;
+      },
+       filter: {
       isFilterable: true,
       render: (data: TableDataType[]) => {
-        return data.map((item, index) => <div key={item.id + index} className="w-full text-left p-2">{item.warehouse_name}</div>);
+        return data.map((item, index) => {
+          const wh: any = item.warehouse;
+          const display = (wh && typeof wh === "object") ? (wh.warehouse_name || "-") : (typeof wh === "string" ? wh : "-");
+          return <div key={String(item.id) + index} className="w-full text-left p-2">{display}</div>;
+        });
       }
     }
   },
@@ -114,26 +126,6 @@ export default function VehiclePage() {
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-
-  // ✅ Map vehicles → TableDataType safely
-  const tableData: TableDataType[] = vehicles.map((v) => ({
-    id: String(v.id ?? ""),
-    vehicle_code: v.vehicle_code ?? "-",
-    vehicle_brand: v.vehicle_brand !== undefined ? String(v.vehicle_brand) : "-",
-    number_plat: v.number_plat ?? "-",
-    vehicle_chesis_no: v.vehicle_chesis_no ?? "-",
-    opening_odometer: v.opening_odometer ?? "-",
-    vehicle_type: v.vehicle_type ?? "-",
-    capacity: v.capacity ?? "-",
-    owner_type: v.owner_type ?? "-",
-    warehouse: v.warehouse?.warehouse_name ?? "-",
-    ownerReference: v.owner_reference ?? "-",
-    vehicleRoute: v.vehicle_route ?? "-",
-    description: v.description ?? "-",
-    valid_from: v.valid_from !== undefined ? String(v.valid_from) : "-",
-    valid_to: v.valid_to !== undefined ? String(v.valid_to) : "-",
-    status: v.status === 1 ? "Active" : "Inactive",
-  }));
 
 
   const fetchVehicles = useCallback(
@@ -203,13 +195,13 @@ export default function VehiclePage() {
   const statusUpdate = async (ids?: (string | number)[], status: number = 0) => {
     try {
       if (!ids || ids.length === 0) {
-        showSnackbar("No warehouses selected", "error");
+        showSnackbar("No vehicle selected", "error");
         return;
       }
       const selectedRowsData: number[] = ids.map((id) => Number(id)).filter((n) => !Number.isNaN(n));
       console.log("selectedRowsData", selectedRowsData);
       if (selectedRowsData.length === 0) {
-        showSnackbar("No warehouses selected", "error");
+        showSnackbar("No vehicle selected", "error");
         return;
       }
       await vehicleStatusUpdate({ vehicle_ids: selectedRowsData, status });

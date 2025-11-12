@@ -455,6 +455,24 @@ export const returnList = async (params:Params) => {
   }
 };
 
+export const returnType = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/returns/return_types`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const reasonList = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/returns/reson`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const returnByUuid = async (uuid:string) => {
   try {
     const res = await API.get(`/api/agent_transaction/returns/show/${uuid}`);

@@ -863,7 +863,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         regionList(),
         SurveyList(),
         routeList({}),
-        getWarehouse(),
+        getWarehouse({dropdown:"true"}),
         routeType(),
         getSubRegion(),
         getCompanyCustomers(),
@@ -1020,7 +1020,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
           break;
         }
         case 'warehouse': {
-          const res = await getWarehouse(params ?? {});
+          const res = await getWarehouse({...params,dropdown:"true"});
           setWarehouseListData(normalizeResponse(res) as WarehouseItem[]);
           break;
         }

@@ -6,17 +6,25 @@ import Table, {
   TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getRouteVisitList } from "@/app/services/allApi"; // Adjust import path
+import { getRouteVisitList,downloadFile ,exportRouteVisit} from "@/app/services/allApi"; // Adjust import path
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
+import StatusBtn from "@/app/components/statusBtn2";
 import { useCallback, useEffect, useState } from "react";
 
 const columns = [
+  { key: "osa_code", label: "Code" },
   { key: "from_date", label: "From Date" },
   { key: "to_date", label: "To Date" },
   { key: "customer_type", label: "Customer Type" },
-  { key: "status", label: "Status" },
+  {
+      key: "status",
+      label: "Status",
+      render: (row: TableDataType) => (
+        <StatusBtn isActive={String(row.status) === "1"} />
+      ),
+    },
 ];
 
 export default function RouteVisits() {
@@ -41,6 +49,8 @@ export default function RouteVisits() {
   const { showSnackbar } = useSnackbar();
   type TableRow = TableDataType & { uuid?: string };
 
+           
+         
   const fetchRouteVisits = useCallback(
     async (
       page: number = 1,
@@ -67,7 +77,8 @@ export default function RouteVisits() {
           ...item,
           customer_type:
             item.customer_type == 1 ? "Agent Customer" : "Merchandiser",
-          status: item.status == 1 ? "Active" : "Inactive",
+          // Keep numeric status so StatusBtn (which checks String(row.status) === "1") works
+          status: item.status,
           // Add date formatting:
           from_date: item.from_date ? item.from_date.split("T")[0] : "",
           to_date: item.to_date ? item.to_date.split("T")[0] : "",
@@ -117,7 +128,8 @@ export default function RouteVisits() {
           ...item,
           customer_type:
             item.customer_type == 1 ? "Agent Customer" : "Merchandiser",
-          status: item.status == 1 ? "Active" : "Inactive",
+          // Keep numeric status so StatusBtn (which checks String(row.status) === "1") works
+          status: item.status,
           // Add date formatting:
           from_date: item.from_date ? item.from_date.split("T")[0] : "",
           to_date: item.to_date ? item.to_date.split("T")[0] : "",
@@ -138,7 +150,20 @@ export default function RouteVisits() {
     },
     [filters, setLoading, showSnackbar]
   );
-
+const exportFile = async (format: string) => {
+           try {
+             const response = await exportRouteVisit({ format }); 
+             if (response && typeof response === 'object' && response.file_url) {
+              await downloadFile(response.file_url);
+               showSnackbar("File downloaded successfully ", "success");
+             } else {
+               showSnackbar("Failed to get download URL", "error");
+             }
+           } catch (error) {
+             showSnackbar("Failed to download route visit data", "error");
+           } finally {
+           }
+         };
   // Refresh table when filters change
   useEffect(() => {
     setRefreshKey((prev) => prev + 1);
@@ -159,6 +184,21 @@ export default function RouteVisits() {
             },
             header: {
               title: "Route Visits",
+              threeDot: [
+                {
+                  icon: "gala:file-document",
+                  label: "Export CSV",
+                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: () => exportFile("csv"),
+                },
+                {
+                  icon: "gala:file-document",
+                  label: "Export Excel",
+                  labelTw: "text-[12px] hidden sm:block",
+                  onClick: () => exportFile("xls"),
+
+                },
+              ],
               searchBar: true,
               columnFilter: true,
               actions: [
@@ -183,6 +223,13 @@ export default function RouteVisits() {
             columns,
             rowSelection: false, // Set to true if you need row selection
             rowActions: [
+              // {
+              //   icon: "lucide:eye",
+              //   onClick: (data: object) => {
+              //     const row = data as TableRow;
+              //     router.push(`/routeVisit/details/${row.uuid}`);
+              //   },
+              // },
               {
                 icon: "lucide:edit-2",
                 onClick: (data: object) => {

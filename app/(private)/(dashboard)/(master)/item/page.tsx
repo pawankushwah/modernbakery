@@ -146,9 +146,9 @@ export default function Item() {
 
         return {
           data,
-          total: res.pagination.totalPages,
-          currentPage: res.pagination.page,
-          pageSize: res.pagination.limit,
+          total: res.pagination.last_page,
+          currentPage: res.pagination.current_page,
+          pageSize: res.pagination.per_page,
         };
       } catch (error) {
         setLoading(false);

@@ -207,6 +207,7 @@ export default function AddPricing() {
   const rawParam = (typeof params === "object" && params !== null ? (params as Record<string, unknown>)?.uuid : undefined) ?? (typeof params === "object" && params !== null ? (params as Record<string, unknown>)?.id : undefined);
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
   const isEditMode = id !== undefined && id !== "add" && id !== "";
+  const [loading, setLoading] = useState(false);
 
   // Fetch existing pricing details in edit mode
   useEffect(() => {
@@ -230,6 +231,7 @@ export default function AddPricing() {
 
           // Map description (array of key ids) back to checkbox labels
           try {
+
             const descArr: number[] = Array.isArray((res as Record<string, unknown>).description)
               ? ((res as Record<string, unknown>).description as unknown[]).map((d) => Number(d)).filter((n: number) => !Number.isNaN(n))
               : [];
@@ -323,6 +325,46 @@ export default function AddPricing() {
                 console.error("Failed to fetch item details for edit mode", innerErr);
               }
             }
+            // If API returned pricing details (per-item prices), map them into promotion.orderItems
+            try {
+              const detailsArr = Array.isArray((res as Record<string, unknown>).details)
+                ? ((res as Record<string, unknown>).details as unknown[])
+                : [];
+              if (detailsArr.length > 0) {
+                const mappedOrderItems = detailsArr.map((d) => {
+                  const det = d as Record<string, unknown>;
+                  const rec = det as Record<string, unknown>;
+                  const itemName = typeof rec["item_name"] === "string"
+                    ? (rec["item_name"] as string)
+                    : typeof rec["name"] === "string"
+                      ? (rec["name"] as string)
+                      : "";
+                  let itemCodeStr = "";
+                  if (rec["item_code"] != null) itemCodeStr = String(rec["item_code"]);
+                  else if (rec["item_id"] != null) itemCodeStr = String(rec["item_id"]);
+                  const itemIdNum = rec["item_id"] != null ? Number(rec["item_id"]) : undefined;
+                  const buom = rec["buom_ctn_price"] != null ? String(rec["buom_ctn_price"]) : "";
+                  const auom = rec["auom_pc_price"] != null ? String(rec["auom_pc_price"]) : "";
+
+                  return {
+                    itemName,
+                    // keep both itemCode (string code) and item_id for flexible matching
+                    itemCode: itemCodeStr,
+                    item_id: itemIdNum,
+                    quantity: "",
+                    toQuantity: "",
+                    uom: "CTN",
+                    // keep `price` empty — use buom/auom fields for base/secondary prices
+                    price: "",
+                    buom_ctn_price: buom,
+                    auom_pc_price: auom,
+                  };
+                });
+                setPromotion((p) => ({ ...p, orderItems: mappedOrderItems }));
+              }
+            } catch (mapErr) {
+              console.error("Failed to map details to orderItems", mapErr);
+            }
           } catch (innerErr) {
             console.error("Failed to map pricing detail for edit mode", innerErr);
           }
@@ -335,8 +377,6 @@ export default function AddPricing() {
     }
     fetchEditData();
   }, [isEditMode, id]);
-  const [loading, setLoading] = useState(false);
-  // While loading in edit-mode, show a full-page loader until data is ready
  
   const validateStep = (step: number) => {
     if (step === 1) {
@@ -495,7 +535,7 @@ export default function AddPricing() {
           return (
             String(oi.itemCode) === String(itemCodeStr) ||
             String(oi.itemCode) === String(itemId) ||
-            String((oi as any).item_id) === String(itemId)
+            String(oi.item_id) === String(itemId)
           );
         });
 
@@ -574,6 +614,7 @@ export default function AddPricing() {
     price?: string;
     buom_ctn_price?: string;
     auom_pc_price?: string;
+    item_id?: number;
   };
 
   const [keyValue, setKeyValue] = useState<Record<string, string[]>>({});
@@ -792,7 +833,7 @@ export default function AddPricing() {
           </ContainerCard>
         );
       case 3:
-        const itemsData = (keyValue["Item"] || []).map((itemId, idx) => {
+          const itemsData = (keyValue["Item"] || []).map((itemId, idx) => {
           let itemData = selectedItemDetails.find(
             (item) => String(item.code || item.itemCode) === String(itemId)
           );
@@ -825,7 +866,9 @@ export default function AddPricing() {
                   : labelParts[0];
             }
           }
-          const orderItem = promotion.orderItems.find((oi) => oi.itemCode === itemCode);
+          const orderItem = promotion.orderItems.find((oi) =>
+            oi.itemCode === itemCode || String(oi.item_id) === String(itemId) || String(oi.itemCode) === String(itemId)
+          );
           return {
             itemName,
             itemCode,
@@ -923,14 +966,9 @@ export default function AddPricing() {
         //     </div>
         //   );
         // };
- if (isEditMode && loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[280px]">
-        <Loading />
-      </div>
-    );
-  }
-        return (
+ // inner small loader removed — top-level full-page loader handles edit-mode
+        
+ return (
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
             <h2 className="text-xl font-semibold mb-6">Pricing</h2>
             <div className="grid grid-cols-4 gap-6 mb-6">
@@ -1182,7 +1220,15 @@ export default function AddPricing() {
         return null;
     }
   };
-
+if (
+    isEditMode && loading
+  ) {
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <Loading />
+      </div>
+    );
+  } 
   return (
     <>
       <div className="flex items-center gap-2">

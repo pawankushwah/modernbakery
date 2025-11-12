@@ -3,7 +3,7 @@
 import KeyValueData from "@/app/(private)/(dashboard)/(master)/customer/[customerId]/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import { useLoading } from "@/app/services/loadingContext";
-import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse, getStockOfWarehouse } from "@/app/services/allApi";
+import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse, getStockOfWarehouse,warehouseReturn,warehouseSales } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -249,6 +249,178 @@ export default function ViewPage() {
             ),
             showByDefault: true,
             isSortable: true
+        },
+    ];
+    const salesColumns: configType["columns"] = [
+        {
+            key: "invoice_code",
+            label: "Invoice Number",
+            render: (data: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {data.invoice_code ? data.invoice_code : "-"}
+                </span>
+            ),
+            showByDefault: true,
+        },
+        {
+            key: "invoice_date",
+            label: "Invoice Date",
+            isSortable: true,
+            render: (data: TableDataType) => (data.invoice_date ? data.invoice_date : "-"),
+            showByDefault: true,
+        },
+        {
+            key: "invoice_time",
+            label: "Invoice Time",
+            isSortable: true,
+            render: (data: TableDataType) => (data.invoice_time ? data.invoice_time : "-"),
+            showByDefault: true,
+        },
+        {
+            key: "order_number",
+            label: "Order No.",
+            render: (data: TableDataType) => (data.order_number ? data.order_number : "-"),
+            showByDefault: true,
+        },
+        {
+            key: "delivery_number",
+            label: "Delivery No.",
+            render: (data: TableDataType) => (data.delivery_number ? data.delivery_number : "-"),
+            showByDefault: true,
+        },
+        {
+            key: "route_code",
+            label: "Route",
+             render: (row: TableDataType) => {
+            const code = row.route_code || "-";
+            const name = row.route_name || "-";
+            return `${code}${code && name ? " - " : "-"}${name}`;
+      },
+            
+            showByDefault: true,
+        },
+        {
+            key: "customer_code",
+            label: "Customer",
+             render: (row: TableDataType) => {
+            const code = row.customer_code || "-";
+            const name = row.customer_name || "-";
+            return `${code}${code && name ? " - " : "-"}${name}`;
+      },
+            showByDefault: true,
+        },
+        {
+            key: "salesman_code",
+            label: "Salesman",
+             render: (row: TableDataType) => {
+            const code = row.salesman_code || "-";
+            const name = row.salesman_name || "-";
+            return `${code}${code && name ? " - " : "-"}${name}`;
+      },
+            showByDefault: true,
+        },
+        {
+            key: "total_amount",
+            label: "Amount",
+            render: (data: TableDataType) => (data.total_amount ? data.total_amount : "-"),
+            
+            showByDefault: true,
+        },
+       
+        {
+            key: "status",
+            label: "Status",
+            render: (row: TableDataType) => (
+                <StatusBtn isActive={row.status && row.status.toString() === "0" ? false : true} />
+            ),
+            showByDefault: true,
+            isSortable: true
+        },
+    ];
+    const returnColumns: configType["columns"] = [
+        {
+            key: "osa_code",
+            label: "Code",
+            render: (data: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {data.osa_code ? data.osa_code : "-"}
+                </span>
+            ),
+            showByDefault: true,
+        },
+         {
+            key: "return_date",
+            label: "Return Date",
+            isSortable: true,
+            render: (data: TableDataType) => (data.return_date ? data.return_date : "-"),
+            showByDefault: true,
+        },
+        {
+            key: "order_code",
+            label: "Order Code",
+            render: (data: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {data.order_code ? data.order_code : "-"}
+                </span>
+            ),
+            showByDefault: true,
+        },
+        {
+            key: "delivery_code",
+            label: "Delivery Code",
+            render: (data: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {data.delivery_code ? data.delivery_code : "-"}
+                </span>
+            ),
+            showByDefault: true,
+        },
+       
+       {
+            key: "route_code",
+            label: "Route",
+             render: (row: TableDataType) => {
+            const code = row.route_code || "-";
+            const name = row.route_name || "-";
+            return `${code}${code && name ? " - " : "-"}${name}`;
+      },
+            showByDefault: true,
+        },
+        {
+            key: "customer_code",
+            label: "Customer",
+             render: (row: TableDataType) => {
+            const code = row.customer_code || "-";
+            const name = row.customer_name || "-";
+            return `${code}${code && name ? " - " : "-"}${name}`;
+      },
+            showByDefault: true,
+        },
+        {
+            key: "salesman_code",
+            label: "Salesman",
+             render: (row: TableDataType) => {
+            const code = row.salesman_code || "-";
+            const name = row.salesman_name || "-";
+            return `${code}${code && name ? " - " : "-"}${name}`;
+      },
+            showByDefault: true,
+        },
+        {
+            key: "total",
+            label: "Amount",
+            render: (data: TableDataType) => (data.total_amount ? data.total_amount : "-"),
+            
+            showByDefault: true,
+        },
+       
+        {
+            key: "status",
+            label: "Status",
+            render: (row: TableDataType) => (
+                <StatusBtn isActive={row.status && row.status.toString() === "0" ? false : true} />
+            ),
+            showByDefault: true,
         },
     ];
     const vehicleColumns: configType["columns"] = [
@@ -677,6 +849,52 @@ function getRandomNumber(count:number) {
             },
             []
         );
+  const listReturnByWarehouse = useCallback(
+            async (
+                pageNo: number = 1,
+                pageSize: number = 50,
+            ): Promise<searchReturnType> => {
+                const result = await warehouseReturn({
+                    warehouse_id: id,
+                    per_page: pageSize.toString()
+                });
+    
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+                
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+  const listSalesByWarehouse = useCallback(
+            async (
+                pageNo: number = 1,
+                pageSize: number = 50,
+            ): Promise<searchReturnType> => {
+                const result = await warehouseSales({
+                    warehouse_id : id,
+                    per_page: pageSize.toString()
+                });
+    
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+                
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
 
           const listStockByWarehouse = useCallback(
             async (
@@ -709,6 +927,52 @@ function getRandomNumber(count:number) {
                 columnName?: string
             ): Promise<searchReturnType> => {
                 const result = await getSalesmanInWarehouse(id,{
+                    query: searchQuery,
+                });
+                
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+    
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+  const searchReturnByWarehouse = useCallback(
+            async (
+                searchQuery: string,
+                pageSize: number = 5,
+                columnName?: string
+            ): Promise<searchReturnType> => {
+                const result = await warehouseReturn({warehouse_id:id,
+                    query: searchQuery,
+                });
+                
+                if (result.error) {
+                    throw new Error(result.data?.message || "Search failed");
+                }
+    
+                return {
+                    data: result.data || [],
+                    currentPage: result?.pagination?.current_page || 1,
+                    pageSize: result?.pagination?.per_page || pageSize,
+                    total: result?.pagination?.last_page || 1,
+                };
+            },
+            []
+        );
+  const searchSalesByWarehouse = useCallback(
+            async (
+                searchQuery: string,
+                pageSize: number = 5,
+                columnName?: string
+            ): Promise<searchReturnType> => {
+                const result = await warehouseSales({warehouse_id:id,
                     query: searchQuery,
                 });
                 
@@ -795,7 +1059,19 @@ function getRandomNumber(count:number) {
                         <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
                             {item?.warehouse_code || "-"} - {item?.warehouse_name}
                         </h2>
-
+                        <span className="flex items-center text-[#414651] text-[16px]">
+                                <Icon
+                                    icon="mdi:location"
+                                    width={16}
+                                    className="text-[#EA0A2A] mr-[5px]"
+                                />
+                                <span>
+                                    {item?.location || "-"}
+                                </span>
+                                {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
+                                    <StatusBtn status="active" />
+                                </span> */}
+                        </span>
                     </div>
                 </div>
                 <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
@@ -863,7 +1139,7 @@ function getRandomNumber(count:number) {
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                <span>{item?.owner_email}</span></>:"Email not Available"}
+                                                <span>{item?.owner_email}</span></>:""}
                                             </div>
 
                                         </div>
@@ -883,7 +1159,6 @@ function getRandomNumber(count:number) {
                                                 key: "Area Name",
                                                 value: item?.area?.area_name || "-"
                                             },
-                                            { key: "Location", value: item?.location || "-" },
                                             { key: "City", value: item?.city || "-" },
                                             { key: "Town Village", value: item?.town_village || "-" },
                                             { key: "Street", value: item?.street || "-" },
@@ -1034,18 +1309,50 @@ function getRandomNumber(count:number) {
             )}
             {activeTab === "sales" && (
                 <ContainerCard >
-
-                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                        No Data Found
-                    </div>
+                    
+                        <div className="flex flex-col h-full">
+                            <Table
+                                config={{
+                                    api: {
+                                        search: searchSalesByWarehouse,
+                                        list: listSalesByWarehouse
+                                    },
+                                    header: {
+                                        searchBar: true,
+                                    },
+                                    footer: { nextPrevBtn: true, pagination: true },
+                                    columns: salesColumns,
+                                    showNestedLoading:true,
+                                    rowSelection: false,
+                                    pageSize: 50,
+                                }}
+                            />
+                        </div>
+                    
                 </ContainerCard>
             )}
             {activeTab === "return" && (
                 <ContainerCard >
-
-                    <div className="text-[18px] mt-4 text-center items-center font-semibold mb-[25px]">
-                        No Data Found
-                    </div>
+                    
+                        <div className="flex flex-col h-full">
+                            <Table
+                                config={{
+                                    api: {
+                                        search: searchReturnByWarehouse,
+                                        list: listReturnByWarehouse
+                                    },
+                                    header: {
+                                        searchBar: true,
+                                    },
+                                    footer: { nextPrevBtn: true, pagination: true },
+                                    columns: returnColumns,
+                                    showNestedLoading:true,
+                                    rowSelection: false,
+                                    pageSize: 50,
+                                }}
+                            />
+                        </div>
+                    
                 </ContainerCard>
             )}
         </>

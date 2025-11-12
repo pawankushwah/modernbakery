@@ -378,7 +378,7 @@ function TableHeader() {
         setTableDetails({
             data,
             total: total || 0,
-            currentPage: currentPage - 1 || 0,
+            currentPage:    currentPage - 1 || 0,
             pageSize: pageSize || defaultPageSize,
         });
     }
