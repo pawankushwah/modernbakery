@@ -224,6 +224,20 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
+            href: "/settings/brand",
+            label: "Brand",
+            leadingIcon: "mdi:earth",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/location",
+            label: "Location",
+            leadingIcon: "mdi:earth",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
             href: "/settings/region",
             label: "Region",
             leadingIcon: "mdi:map-outline",

@@ -30,14 +30,13 @@ import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
 import { useEffect, useState, useRef } from "react";
 import Loading from "@/app/components/Loading";
-import { address } from "framer-motion/client";
 
 interface CompanyFormValues {
   company_name: string;
   company_code: string;
   company_type: string;
   website: string;
-  company_logo: string;
+  company_logo: string | File;
   primary_contact: string;
   primary_code: string;
   toll_free_no: string;
@@ -70,7 +69,7 @@ const CompanySchema = Yup.object().shape({
         return false;
       }
     }),
-  company_logo: Yup.string().required("Company Logo is required"),
+  company_logo: Yup.mixed().required("Company Logo is required"),
   email: Yup.string().email("Invalid email").required("Email is required"),
   country_id: Yup.string().required("Country is required"),
   selling_currency: Yup.string().required("Selling currency is required"),
@@ -87,18 +86,15 @@ const CompanySchema = Yup.object().shape({
     .matches(/^[0-9]+$/, "Only numbers are allowed")
     .min(9, "Must be at least 9 digits")
     .max(10, "Must be at most 10 digits"),
-
   toll_free_no: Yup.string()
     .required("Toll free number is required")
     .matches(/^[0-9]+$/, "Only numbers are allowed")
     .min(10, "Must be at least 10 digits")
     .max(13, "Must be at most 13 digits"),
-
-  module_access: Yup.string().required("Module is required field "),
- 
+  module_access: Yup.string().required("Module is required field"),
 });
 
-// 🔹 Step-wise schemas
+// Step-wise schemas
 const stepSchemas = [
   Yup.object({
     company_name: Yup.string().required("Company name is required"),
@@ -116,12 +112,11 @@ const stepSchemas = [
           return false;
         }
       }),
-    company_logo: Yup.string().required("Company Logo is required"),
-    address: Yup.string().required("address is required"),
-    city: Yup.string().required("city is required"),
-    
+    company_logo: Yup.mixed().required("Company Logo is required"),
+    address: Yup.string().required("Address is required"),
+    city: Yup.string().required("City is required"),
     country_id: Yup.string().required("Country is required"),
-     module_access: Yup.string().required("Module is required"),
+    module_access: Yup.string().required("Module is required"),
     service_type: Yup.string().required("Service type is required"),
     status: Yup.string().required("Status is required"),
   }),
@@ -132,18 +127,14 @@ const stepSchemas = [
       .matches(/^[0-9]+$/, "Only numbers are allowed")
       .min(9, "Must be at least 9 digits")
       .max(10, "Must be at most 10 digits"),
-
     primary_code: Yup.string(),
     toll_free_no: Yup.string()
       .required("Toll free number is required")
       .matches(/^[0-9]+$/, "Only numbers are allowed")
-      .min(10, "Must be at least 9 digits")
-      .max(13, "Must be at most 10 digits"),
-   
+      .min(10, "Must be at least 10 digits")
+      .max(13, "Must be at most 13 digits"),
     email: Yup.string().email("Invalid email").required("Email is required"),
   }),
-
- 
 
   Yup.object({
     selling_currency: Yup.string()
@@ -156,7 +147,6 @@ const stepSchemas = [
       .required("VAT Number is a required field")
       .max(15, "VAT Number cannot be more than 15 characters"),
   }),
-
 ];
 
 export default function AddEditCompany() {
@@ -170,6 +160,7 @@ export default function AddEditCompany() {
   const router = useRouter();
   const params = useParams();
   const [isEditMode, setIsEditMode] = useState(false);
+  const [existingLogoUrl, setExistingLogoUrl] = useState<string>("");
   const [initialValues, setInitialValues] = useState<CompanyFormValues>({
     company_name: "",
     company_code: "",
@@ -178,9 +169,9 @@ export default function AddEditCompany() {
     company_logo: "",
     email: "",
     primary_contact: "",
-    primary_code: "",
+    primary_code: "+256",
     toll_free_no: "",
-    toll_free_code: "",
+    toll_free_code: "+256",
     country_id: "",
     address: "",
     city: "",
@@ -192,21 +183,28 @@ export default function AddEditCompany() {
     status: "1",
   });
 
-  // Local country selector state for contact fields (used by InputFields contact type)
-  const [primaryCountry, setPrimaryCountry] = useState<{ name: string; code?: string; flag?: string }>({
+  const [primaryCountry, setPrimaryCountry] = useState<{ 
+    name: string; 
+    code?: string; 
+    flag?: string 
+  }>({
     name: "Uganda",
     code: "+256",
     flag: "🇺🇬",
   });
 
-  const [tollFreeCountry, setTollFreeCountry] = useState<{ name: string; code?: string; flag?: string }>({
+  const [tollFreeCountry, setTollFreeCountry] = useState<{ 
+    name: string; 
+    code?: string; 
+    flag?: string 
+  }>({
     name: "Uganda",
     code: "+256",
     flag: "🇺🇬",
   });
 
-  // Load company for edit mode or generate code for add mode
   const codeGeneratedRef = useRef(false);
+
   useEffect(() => {
     if (params?.id && params.id !== "add") {
       setIsEditMode(true);
@@ -215,25 +213,79 @@ export default function AddEditCompany() {
         try {
           const res = await getCompanyById(params.id as string);
           if (res && !res.error) {
+            const data = res.data;
+            
+            // Store existing logo URL
+            if (data.logo) {
+              setExistingLogoUrl(data.logo);
+            }
+            
+            // Set form values
             setInitialValues({
-              ...res.data,
-              country_id: res.data.country?.id?.toString() || "",
-              selling_currency: res.data.selling_currency || "",
-              purchase_currency: res.data.purchase_currency || "",
-              primary_contact: res.data.primary_contact || "",
-              toll_free_no: res.data.toll_free_no || "",
-              company_code: res.data.company_code || "",
-              company_name: res.data.company_name || "",
-              email: res.data.email || "",
-              vat: res.data.vat || "",
-              city: res.data.city || "",
-              address: res.data.address || "",
-              module_access: res.data.module_access || "",
-              service_type: res.data.service_type || "",
-              status: res.data.status || "1",
+              company_code: data.company_code || "",
+              company_name: data.company_name || "",
+              company_type: data.company_type || "",
+              website: data.website || "",
+              company_logo: data.logo || "",
+              email: data.email || "",
+              primary_contact: data.primary_contact || "",
+              primary_code: data.primary_code || "+256",
+              toll_free_no: data.toll_free_no || "",
+              toll_free_code: data.toll_free_code || "+256",
+              country_id: data.country?.id?.toString() || "",
+              address: data.address || "",
+              city: data.city || "",
+              selling_currency: data.selling_currency || "",
+              purchase_currency: data.purchase_currency || "",
+              vat: data.vat || "",
+              module_access: data.module_access || "",
+              service_type: data.service_type || "",
+              status: data.status?.toString() || "1",
             });
+
+            // Set country dropdowns for contact fields
+            if (data.primary_code && onlyCountryOptions) {
+              const country = onlyCountryOptions.find((c: any) => 
+                c.code === data.primary_code || c.value === data.primary_code
+              );
+              if (country) {
+                setPrimaryCountry({
+                  name: country.label,
+                  code: data.primary_code,
+                  flag: "🇺🇬"
+                });
+              } else {
+                setPrimaryCountry({
+                  name: "Unknown",
+                  code: data.primary_code,
+                  flag: "🏳️"
+                });
+              }
+            }
+
+            if (data.toll_free_code && onlyCountryOptions) {
+              const country = onlyCountryOptions.find((c: any) => 
+                c.code === data.toll_free_code || c.value === data.toll_free_code
+              );
+              if (country) {
+                setTollFreeCountry({
+                  name: country.label,
+                  code: data.toll_free_code,
+                  flag: "🇺🇬"
+                });
+              } else {
+                setTollFreeCountry({
+                  name: "Unknown",
+                  code: data.toll_free_code,
+                  flag: "🏳️"
+                });
+              }
+            }
+          } else {
+            showSnackbar(res.message || "Failed to fetch company details", "error");
           }
         } catch (err) {
+          console.error("Error fetching company:", err);
           showSnackbar("Failed to fetch company details", "error");
         } finally {
           setLoading(false);
@@ -252,16 +304,13 @@ export default function AddEditCompany() {
           }
           if (res?.prefix) {
             setPrefix(res.prefix);
-          } else if (res?.code) {
-            const match = res.prefix;
-            if (match) setPrefix(prefix);
           }
         } catch (e) {
-          // Optionally handle error
+          console.error("Error generating code:", e);
         }
       })();
     }
-  }, [params?.id]);
+  }, [params?.id, onlyCountryOptions]);
 
   const steps: StepperStep[] = [
     { id: 1, label: "Company" },
@@ -286,8 +335,20 @@ export default function AddEditCompany() {
       await CompanySchema.validate(values, { abortEarly: false });
       setLoading(true);
       const formData = new FormData();
+
+      // Append all fields
       (Object.keys(values) as (keyof CompanyFormValues)[]).forEach((key) => {
-        formData.append(key, values[key] ?? "");
+        if (key === "company_logo") {
+          // Handle logo: if it's a File, append it; if string (existing), skip or handle accordingly
+          if (values[key] instanceof File) {
+            formData.append("logo", values[key] as File);
+          } else if (isEditMode && typeof values[key] === "string") {
+            // Don't append logo if it's the existing URL in edit mode unless you want to send it
+            // Backend should handle this - only send if changed
+          }
+        } else {
+          formData.append(key, values[key]?.toString() ?? "");
+        }
       });
 
       let res;
@@ -298,7 +359,7 @@ export default function AddEditCompany() {
       }
 
       if (res.error) {
-        showSnackbar(res.data?.message || "Failed to submit form", "error");
+        showSnackbar(res.data?.message || res.message || "Failed to submit form", "error");
       } else {
         showSnackbar(
           isEditMode
@@ -307,26 +368,38 @@ export default function AddEditCompany() {
           "success"
         );
         router.push("/settings/manageCompany/company");
-        try {
-          await saveFinalCode({
-            reserved_code: values.company_code,
-            model_name: "company",
-          });
-        } catch (e) {
-          // Optionally handle error, but don't block success
+        
+        // Save final code
+        if (!isEditMode) {
+          try {
+            await saveFinalCode({
+              reserved_code: values.company_code,
+              model_name: "company",
+            });
+          } catch (e) {
+            console.error("Error saving final code:", e);
+          }
         }
       }
     } catch (err) {
-      showSnackbar("Validation failed, please check your inputs", "error");
+      console.error("Validation error:", err);
+      if (err instanceof Yup.ValidationError) {
+        showSnackbar(err.errors[0] || "Validation failed", "error");
+      } else {
+        showSnackbar("Failed to submit form", "error");
+      }
     } finally {
       setSubmitting(false);
       setLoading(false);
     }
   };
 
-  // 🔹 Helper function to allow only numeric input
-  const handleNumericInput = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string, setFieldValue: any) => {
-    const value = e.target.value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
+  const handleNumericInput = (
+    e: React.ChangeEvent<HTMLInputElement>, 
+    fieldName: string, 
+    setFieldValue: any
+  ) => {
+    const value = e.target.value.replace(/[^0-9]/g, "");
     setFieldValue(fieldName, value);
   };
 
@@ -353,34 +426,10 @@ export default function AddEditCompany() {
                   onChange={(e) =>
                     setFieldValue("company_code", e.target.value)
                   }
-                  disabled={codeMode === "auto"}
+                  disabled={codeMode === "auto" || isEditMode}
                 />
-                {/* {!isEditMode && (
-                  <>
-                    <IconButton
-                      bgClass="white"
-                      className="cursor-pointer text-[#252B37] pt-12"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Company Code"
-                      prefix={prefix}
-                      setPrefix={setPrefix}
-                      onSave={(mode, code) => {
-                        setCodeMode(mode);
-                        if (mode === "auto" && code) {
-                          setFieldValue("company_code", code);
-                        } else if (mode === "manual") {
-                          setFieldValue("company_code", "");
-                        }
-                      }}
-                    />
-                  </>
-                )} */}
               </div>
+
               <div>
                 <InputFields
                   required
@@ -396,7 +445,6 @@ export default function AddEditCompany() {
                       : false
                   }
                 />
-                
               </div>
 
               <div>
@@ -412,7 +460,6 @@ export default function AddEditCompany() {
                   ]}
                   error={touched.company_type && errors.company_type}
                 />
-                
               </div>
 
               <div>
@@ -424,30 +471,46 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("website", e.target.value)}
                   error={touched.website && errors.website}
                 />
-                
               </div>
+
               <div>
                 <InputFields
-                required
+                  required
                   label="Logo"
                   name="company_logo"
                   type="file"
-                  value={values.company_logo}
-                  onChange={(e) => setFieldValue("company_logo", e.target.value)}
+                  onChange={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    if (target.files && target.files[0]) {
+                      setFieldValue("company_logo", target.files[0]);
+                    }
+                  }}
                   error={touched.company_logo && errors.company_logo}
                 />
-                
+                {isEditMode && existingLogoUrl && typeof values.company_logo === "string" && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600 mb-1">Current Logo:</p>
+                    <img 
+                      src={existingLogoUrl.startsWith("http") ? existingLogoUrl : `${process.env.NEXT_PUBLIC_API_URL || ""}/${existingLogoUrl}`} 
+                      alt="Current logo" 
+                      className="h-16 w-16 object-cover rounded border"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
               </div>
+
               <div>
                 <InputFields
-                required
+                  required
                   label="Module"
                   name="module_access"
                   value={values.module_access}
                   onChange={(e) => setFieldValue("module_access", e.target.value)}
                   error={touched.module_access && errors.module_access}
                 />
-                
               </div>
 
               <div>
@@ -463,7 +526,6 @@ export default function AddEditCompany() {
                   ]}
                   error={touched.service_type && errors.service_type}
                 />
-                
               </div>
 
               <div>
@@ -475,7 +537,6 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("address", e.target.value)}
                   error={touched.address && errors.address}
                 />
-                
               </div>
 
               <div>
@@ -487,10 +548,8 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("city", e.target.value)}
                   error={touched.city && errors.city}
                 />
-                
               </div>
 
-             
               <div>
                 <InputFields
                   required
@@ -501,8 +560,8 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("country_id", e.target.value)}
                   error={touched.country_id && errors.country_id}
                 />
-                
               </div>
+
               <div>
                 <InputFields
                   required
@@ -517,7 +576,6 @@ export default function AddEditCompany() {
                   ]}
                   error={touched.status && errors.status}
                 />
-                
               </div>
             </div>
           </ContainerCard>
@@ -539,7 +597,9 @@ export default function AddEditCompany() {
                     setFieldValue("primary_code", c?.code ?? "");
                   }}
                   value={values.primary_contact}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => handleNumericInput(e as React.ChangeEvent<HTMLInputElement>, "primary_contact", setFieldValue)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => 
+                    handleNumericInput(e as React.ChangeEvent<HTMLInputElement>, "primary_contact", setFieldValue)
+                  }
                   error={touched.primary_contact && errors.primary_contact}
                 />
               </div>
@@ -556,7 +616,9 @@ export default function AddEditCompany() {
                     setFieldValue("toll_free_code", c?.code ?? "");
                   }}
                   value={values.toll_free_no}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => handleNumericInput(e as React.ChangeEvent<HTMLInputElement>, "toll_free_no", setFieldValue)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => 
+                    handleNumericInput(e as React.ChangeEvent<HTMLInputElement>, "toll_free_no", setFieldValue)
+                  }
                   error={touched.toll_free_no && errors.toll_free_no}
                 />
               </div>
@@ -570,12 +632,10 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("email", e.target.value)}
                   error={touched.email && errors.email}
                 />
-                
               </div>
             </div>
           </ContainerCard>
         );
-
 
       case 3:
         return (
@@ -591,7 +651,6 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("selling_currency", e.target.value)}
                   error={touched.selling_currency && errors.selling_currency}
                 />
-                
               </div>
 
               <div>
@@ -604,25 +663,22 @@ export default function AddEditCompany() {
                   onChange={(e) => setFieldValue("purchase_currency", e.target.value)}
                   error={touched.purchase_currency && errors.purchase_currency}
                 />
-                
               </div>
 
               <div>
                 <InputFields
-                required
+                  required
                   label="VAT Number"
                   name="vat"
                   value={values.vat}
                   onChange={(e) => setFieldValue("vat", e.target.value)}
                   error={touched.vat && errors.vat}
                 />
-                
               </div>
             </div>
           </ContainerCard>
         );
 
-     
       default:
         return null;
     }
@@ -635,6 +691,7 @@ export default function AddEditCompany() {
       </div>
     );
   }
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -647,6 +704,7 @@ export default function AddEditCompany() {
           </h1>
         </div>
       </div>
+
       <Formik
         enableReinitialize
         initialValues={initialValues}
@@ -679,6 +737,11 @@ export default function AddEditCompany() {
                   }
                 });
                 setTouched({ ...touched, ...formTouched });
+                
+                // Show first error
+                if (err.errors && err.errors.length > 0) {
+                  showSnackbar(err.errors[0], "error");
+                }
               }
             }
           };
@@ -698,7 +761,7 @@ export default function AddEditCompany() {
                 showSubmitButton={isLastStep}
                 showNextButton={!isLastStep}
                 nextButtonText="Save & Next"
-                submitButtonText="Submit"
+                submitButtonText={isEditMode ? "Update" : "Submit"}
               >
                 {renderStepContent(values, setFieldValue, errors, touched)}
               </StepperForm>

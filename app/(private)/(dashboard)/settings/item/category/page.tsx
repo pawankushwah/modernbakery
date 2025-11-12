@@ -34,7 +34,7 @@ export type categoryType = {
     id: number;
     category_name: string;
     status: string;
-    item_category_code?: string;
+    category_code?: string;
 };
 
 export default function Category() {
@@ -169,6 +169,7 @@ export default function Category() {
                                             id: parseInt(data.id),
                                             category_name: data.category_name,
                                             status: data.status,
+                                            category_code: data.category_code,
                                         });
                                     },
                                 },

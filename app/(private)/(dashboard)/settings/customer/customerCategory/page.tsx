@@ -6,7 +6,7 @@ import Table, { listReturnType, searchReturnType, TableDataType } from "@/app/co
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { customerCategoryList, deleteCustomerCategory, customerCategoryListGlobalSearch } from "@/app/services/allApi";
+import { customerCategoryList, deleteCustomerCategory } from "@/app/services/allApi";
 import BorderIconButton from "@/app/components/borderIconButton";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import CustomDropdown from "@/app/components/customDropdown";
@@ -63,51 +63,6 @@ export default function CustomerCategoryPage() {
       }
   };
 
-  const searchCategories = async (query: string, pageSize: number = 10): Promise<searchReturnType> => {
-      setLoading(true);
-      const res = await customerCategoryListGlobalSearch({
-        query: query,
-        per_page: pageSize.toString()
-      });
-      setLoading(false);
-
-      if(res.error){
-        showSnackbar(res.data.message || "Failed to search customer categories", "error");
-        throw new Error("Unable to fetch the customer categories");
-      } else {
-        return {
-          data: res.data || [],
-          currentPage: res.pagination.page || 1,
-          pageSize: res.pagination.limit || pageSize,
-          total: res.pagination.totalPages || 1
-        }
-      }
-  };
-
-     const searchCustomerCategory = useCallback(
-          async (
-              searchQuery: string,
-              pageSize: number
-          ): Promise<searchReturnType> => {
-              setLoading(true);
-              const result = await customerCategoryListGlobalSearch({
-                  query: searchQuery,
-                  per_page: pageSize.toString(),
-              });
-              setLoading(false);
-              if (result.error) throw new Error(result.data.message);
-              else {
-                  return {
-                      data: result.data || [],
-                      total: result.pagination.pagination.totalPages || 0,
-                      currentPage: result.pagination.pagination.current_page || 0,
-                      pageSize: result.pagination.pagination.limit || pageSize,
-                  };
-              }
-          },
-          []
-      );
-
   const columns = useMemo(() => [
     { key: "outlet_channel", label: "Outlet Channel Code", render:(data: TableDataType) =>{
       if (typeof data.outlet_channel === "object" && data.outlet_channel !== null) {
@@ -141,8 +96,7 @@ export default function CustomerCategoryPage() {
         <Table
           config={{
             api: {
-              list: fetchCategories,
-              search: searchCategories
+              list: fetchCategories
             },
             header: {
               title:  "Customer Category",
@@ -171,7 +125,7 @@ export default function CustomerCategoryPage() {
                   />
                 </div>
               ],
-              searchBar: true,  
+              searchBar: false,  
               columnFilter: true,
               actions: [
                 <SidebarBtn
@@ -195,7 +149,7 @@ export default function CustomerCategoryPage() {
                 onClick: (row: object) => {
                   const r = row as TableDataType;
                   router.push(
-                    `/settings/customer/customerCategory/updateCustomerCategory/${r.id}`
+                    `/settings/customer/customerCategory/${r.id}`
                   );
                 },
               },

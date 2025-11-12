@@ -21,6 +21,7 @@ export default function NewCustomer() {
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [channelId, setChannelId] = useState<string>("");
     const [routeId, setRouteId] = useState<string>("");
+    const [approvalStatus, setApprovalStatus] = useState<string>("");
     const columns: configType["columns"] = [
     {
         key: "osa_code",
@@ -203,21 +204,22 @@ export default function NewCustomer() {
         {status.label}
       </span>
     );
-  }
-},
-    {
-        key: "status",
-        label: "Status",
-        render: (row: TableDataType) => {
-            // Treat status 1 or 'active' (case-insensitive) as active
-            const isActive =
-                String(row.status) === "1" ||
-                (typeof row.status === "string" &&
-                    row.status.toLowerCase() === "active");
-            return <StatusBtn isActive={isActive} />;
-        },
-        showByDefault: true,
+  },
+  filter: {
+    isFilterable: true,
+    width: 320,
+    options: [
+      { value: "1", label: "Approved" },
+      { value: "2", label: "Pending" },
+      { value: "3", label: "Rejected" }
+    ],
+    onSelect: (selected) => {
+      setApprovalStatus((prev) => prev === selected ? "" : (selected as string));
     },
+    selectedValue: approvalStatus,
+  },
+  showByDefault: true,
+},
     ];
 
     const { setLoading } = useLoading();
@@ -248,6 +250,9 @@ export default function NewCustomer() {
                 if (routeId) {
                     params.route_id = routeId;
                 }
+                if (approvalStatus) {
+                    params.approval_status = approvalStatus;
+                }
                 const listRes = await newCustomerList(params);
                 setLoading(false);
                 return {
@@ -266,7 +271,7 @@ export default function NewCustomer() {
                 };
             }
         },
-        [selectedSubCategoryId, warehouseId, channelId, routeId, setLoading]
+        [selectedSubCategoryId, warehouseId, channelId, routeId, approvalStatus, setLoading]
     );
 
     const exportfile = async (ids: string[] | undefined) => {
@@ -342,7 +347,7 @@ export default function NewCustomer() {
     // Refresh table when subcategory filter changes
     useEffect(() => {
         setRefreshKey((k) => k + 1);
-    }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions, selectedSubCategoryId, warehouseId, channelId, routeId]);
+    }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions, selectedSubCategoryId, warehouseId, channelId, routeId, approvalStatus]);
 
     return (
         <>
@@ -376,48 +381,6 @@ export default function NewCustomer() {
                                         })
                                         exportfile(ids);
                                     }
-                                },
-                                {
-                                    icon: "lucide:radio",
-                                    label: "Inactive",
-                                    // showOnSelect: true,
-                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
-                                        const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        return status?.includes("1") || false;
-                                    },
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const status: string[] = [];
-                                        const ids = selectedRow?.map((id) => {
-                                            const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
-                                                status.push(currentStatus);
-                                            }
-                                            return data[id].id;
-                                        })
-                                        handleStatusChange(ids, Number(0));
-                                    },
-                                },
-                                {
-                                    icon: "lucide:radio",
-                                    label: "Active",
-                                    // showOnSelect: true,
-                                    showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
-                                        const status = selectedRow?.map((id) => data[id].status).map(String);
-                                        return status?.includes("0") || false;
-                                    },
-                                    onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                        const status: string[] = [];
-                                        const ids = selectedRow?.map((id) => {
-                                            const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
-                                                status.push(currentStatus);
-                                            }
-                                            return data[id].id;
-                                        })
-                                        handleStatusChange(ids, Number(1));
-                                    },
                                 },
                             ],
 

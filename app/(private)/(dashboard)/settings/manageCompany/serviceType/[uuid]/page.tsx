@@ -65,16 +65,31 @@ export default function AddEditServiceType() {
       if (!codeGeneratedRef.current) {
         codeGeneratedRef.current = true;
         (async () => {
-          let code = "";
-          let prefixVal = "";
-          
-          if (!code) {
-            const res2 = await genearateCode({ model_name: "service_type" });
-            if (res2?.code) code = res2.data.code;
-            if (res2?.prefix) prefixVal = res2.data.prefix;
+          try {
+            const res2 = await genearateCode({ model_name: "services_type" });
+            console.log("🔍 Code generation response:", res2);
+            
+            let code = "";
+            let prefixVal = "";
+            
+            if (res2?.code) {
+              code = res2.code;
+              console.log("✅ Generated code:", code);
+            } else {
+              console.warn("⚠️ No code in response");
+            }
+            
+            if (res2?.prefix) {
+              prefixVal = res2.prefix;
+              console.log("✅ Generated prefix:", prefixVal);
+            }
+            
+            setPrefix(prefixVal);
+            setInitialValues({ service_type_code: code, name: "", status: 1 });
+          } catch (error) {
+            console.error("❌ Code generation failed:", error);
+            showSnackbar("Failed to generate service type code", "error");
           }
-          setPrefix(prefixVal);
-          setInitialValues({ service_type_code: code, name: "", status: 1 });
         })();
       } else {
         setInitialValues({ service_type_code: "", name: "", status: 1 });

@@ -13,8 +13,7 @@ import { categoryType } from "./page";
 import { useState, useRef, useEffect } from "react";
 
 export default function CreateUpdate({
-    
-type,
+    type,
     updateItemCategoryData,
     onClose,
     onRefresh
@@ -36,9 +35,10 @@ type,
     const formik = useFormik({
         initialValues: {
             categoryName: updateItemCategoryData?.category_name || "",
-            status: updateItemCategoryData?.status || 0,
-            item_category_code: updateItemCategoryData?.item_category_code || "",
+            status: updateItemCategoryData?.status ?? 0,
+            category_code: updateItemCategoryData?.category_code || "",
         },
+        enableReinitialize: true,
         validationSchema: Yup.object({
             categoryName: Yup.string()
                 .required("Category Name is required")
@@ -47,71 +47,81 @@ type,
             status: Yup.number()
                 .oneOf([0, 1], "Status must be either 0 or 1")
                 .required("Status is required"),
-            item_category_code: Yup.string().required("Code is required"),
+            category_code: Yup.string().required("Code is required"),
         }),
         onSubmit: async (values) => {
             if (type === "create") {
                 const res = await createItemCategory(
                     values.categoryName,
-                    values.status as 0 | 1
+                    values.status as 0 | 1,
+                    values.category_code
                 );
                 if (res.error) return showSnackbar(res.data.message, "error")
                 else {
-                    await saveFinalCode({ reserved_code: values.item_category_code, model_name: "item_categories" });
+                    await saveFinalCode({ reserved_code: values.category_code, model_name: "item_categories" });
                     showSnackbar(res.message || "Item Category Created Successfully", "success");
                     onClose();
                     onRefresh();
                 }
             }
             if (type === "update") {
-                const payload: { category_name?: string; status?: 0 | 1 } = {};
-                if (
-                    values.categoryName !==
-                    updateItemCategoryData?.category_name
-                ) {
-                    payload.category_name = values.categoryName;
-                }
-
-                if (values.status !== updateItemCategoryData?.status) {
-                    payload.status = values.status as 0 | 1;
-                }
-                if (Object.keys(payload).length > 0) {
-                    const res = await updateItemCategory(
-                        updateItemCategoryData?.id || 0,
-                        values.categoryName,
-                        values.status as 0 | 1
-                    );
-                    if (res.error) return showSnackbar(res.data.message, "error");
-                    else {
-                        showSnackbar(res.message || "Item Category Updated Successfully", "success");
-                        onClose();
-                        onRefresh();
-                    }
+                const res = await updateItemCategory(
+                    updateItemCategoryData?.id || 0,
+                    values.categoryName,
+                    values.status as 0 | 1,
+                    values.category_code
+                );
+                if (res.error) return showSnackbar(res.data.message, "error");
+                else {
+                    showSnackbar(res.message || "Item Category Updated Successfully", "success");
+                    onClose();
+                    onRefresh();
                 }
             }
         },
     });
 
-    // Generate code on mount (add mode only)
+    // Initialize code and prefix on mount
     useEffect(() => {
         if (type === "create" && !codeGeneratedRef.current) {
+            // Generate code for create mode
             codeGeneratedRef.current = true;
             (async () => {
                 const res = await genearateCode({ model_name: "item_categories" });
+                console.log("🔍 Code generation response:", res);
                 if (res?.code) {
                     setCode(res.code);
-                    formik.setFieldValue("item_category_code", res.code);
+                    formik.setFieldValue("category_code", res.code);
+                    console.log("✅ Set code:", res.code);
                 }
                 if (res?.prefix) {
                     setPrefix(res.prefix);
-                } else if (res?.code) {
-                    // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
-                    const match = res.prefix;
-                    if (match) setPrefix(prefix);
+                    console.log("✅ Set prefix:", res.prefix);
                 }
             })();
+        } else if (type === "update" && updateItemCategoryData) {
+            // In update mode, set the existing code from updateItemCategoryData
+            console.log("📝 Update mode - updateItemCategoryData:", updateItemCategoryData);
+            
+            const existingCode = updateItemCategoryData.category_code || "";
+            console.log("📦 Existing code:", existingCode);
+            
+            if (existingCode) {
+                setCode(existingCode);
+                formik.setFieldValue("category_code", existingCode);
+                
+                // Try to extract prefix from existing code (e.g., "CAT-001" => "CAT-")
+                const match = existingCode.match(/^([A-Za-z]+-)/);
+                if (match) {
+                    setPrefix(match[1]);
+                    console.log("✅ Extracted prefix:", match[1]);
+                }
+            }
+            
+            // In update mode, treat code as readonly/manual
+            setCodeMode('manual');
         }
-    }, [type]);
+    }, [type, updateItemCategoryData, formik.setFieldValue]);
 
     return (
         <div>
@@ -124,90 +134,82 @@ type,
                 onSubmit={formik.handleSubmit}
                 className="mt-[20px] space-y-5"
             >
-                {type === "update" && (
-                    <>
-                        <InputFields
-                            value={updateItemCategoryData?.id?.toString() || ""}
-                            label="Category Id"
-                            disabled={true}
-                            onChange={() => {}}
-                        />
-                    </>
-                )}
-
                 {/* Item Category Code (auto-generated, disabled, with settings icon/popup) */}
                 <div className="flex items-start gap-2 max-w-[406px]">
                     <InputFields
                         label="Item Category Code"
-                        name="item_category_code"
-                        value={formik.values.item_category_code}
+                        name="category_code"
+                        value={formik.values.category_code}
                         onChange={formik.handleChange}
-                        disabled={codeMode === 'auto'}
-                        error={formik.touched?.item_category_code && formik.errors?.item_category_code}
+                        disabled={type === "update" || codeMode === 'auto'}
+                        error={formik.touched?.category_code && formik.errors?.category_code}
                     />
-                    <IconButton
-                        bgClass="white"
-                         className="  cursor-pointer text-[#252B37] pt-12"
-                        icon="mi:settings"
-                        onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                        isOpen={isOpen}
-                        onClose={() => setIsOpen(false)}
-                        title="Item Category Code"
-                        prefix={prefix}
-                        setPrefix={setPrefix}
-                        onSave={(mode, code) => {
-                            setCodeMode(mode);
-                            if (mode === 'auto' && code) {
-                                formik.setFieldValue('item_category_code', code);
-                            } else if (mode === 'manual') {
-                                formik.setFieldValue('item_category_code', '');
-                            }
-                        }}
-                    />
+                    {type === "create" && (
+                        <>
+                            <IconButton
+                                bgClass="white"
+                                className="cursor-pointer text-[#252B37] pt-12"
+                                icon="mi:settings"
+                                onClick={() => setIsOpen(true)}
+                            />
+                            <SettingPopUp
+                                isOpen={isOpen}
+                                onClose={() => setIsOpen(false)}
+                                title="Item Category Code"
+                                prefix={prefix}
+                                setPrefix={setPrefix}
+                                onSave={(mode, code) => {
+                                    setCodeMode(mode);
+                                    if (mode === 'auto' && code) {
+                                        formik.setFieldValue('category_code', code);
+                                    } else if (mode === 'manual') {
+                                        formik.setFieldValue('category_code', '');
+                                    }
+                                }}
+                            />
+                        </>
+                    )}
                 </div>
 
-              <div>
-              <div>
-                    <InputFields
-                    required
-                    id="categoryName"
-                    name="categoryName"
-                    value={formik.values.categoryName}
-                    label="Category Name"
-                    error={formik.errors.categoryName}
-                    onChange={formik.handleChange}
-                />
-                {formik.touched.categoryName && formik.errors.categoryName && (
-                    <span className="text-xs text-red-500">
-                        {formik.errors.categoryName}
-                    </span>
-                )}
-              </div>
-                
-              </div>
+                <div>
+                    <div>
+                        <InputFields
+                            required
+                            id="categoryName"
+                            name="categoryName"
+                            value={formik.values.categoryName}
+                            label="Category Name"
+                            error={formik.errors.categoryName}
+                            onChange={formik.handleChange}
+                        />
+                        {formik.touched.categoryName && formik.errors.categoryName && (
+                            <span className="text-xs text-red-500">
+                                {formik.errors.categoryName}
+                            </span>
+                        )}
+                    </div>
+                </div>
 
-               <InputFields
-                                required
-                                label="Status"
-                                name="status"
-                                value={String(formik.values.status)}
-                                options={[
-                                  { value: "1", label: "Active" },
-                                  { value: "0", label: "Inactive" },
-                                ]}
-                                onChange={(e) => formik.setFieldValue("status", e.target.value)}
-                                type="radio"
-                                error={
-                                  formik.touched.status && formik.errors.status
-                                    ? formik.errors.status
-                                    : false
-                                }
-                              />
-                              {formik.touched.status && formik.errors.status ? (
-                                <span className="text-xs text-red-500">{formik.errors.status}</span>
-                              ) : null}
+                <InputFields
+                    required
+                    label="Status"
+                    name="status"
+                    value={String(formik.values.status)}
+                    options={[
+                        { value: "1", label: "Active" },
+                        { value: "0", label: "Inactive" },
+                    ]}
+                    onChange={(e) => formik.setFieldValue("status", e.target.value)}
+                    type="radio"
+                    error={
+                        formik.touched.status && formik.errors.status
+                            ? formik.errors.status
+                            : false
+                    }
+                />
+                {formik.touched.status && formik.errors.status ? (
+                    <span className="text-xs text-red-500">{formik.errors.status}</span>
+                ) : null}
 
                 <div className="flex justify-between gap-[8px] mt-[50px]">
                     <div></div>
