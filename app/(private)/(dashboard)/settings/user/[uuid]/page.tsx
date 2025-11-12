@@ -256,13 +256,19 @@ export default function UserAddEdit() {
   };
   const passwordField = isEditMode
     ? Yup.string().notRequired()
-    : Yup.string().required("Password is required").min(6, "Password too short");
+  : Yup.string()
+    .required("Password is required")
+    .min(12, "Password must be at least 12 characters")
+    .matches(/(?=.*[a-z])/, "Password must contain a lowercase letter")
+    .matches(/(?=.*[A-Z])/, "Password must contain an uppercase letter")
+    .matches(/(?=.*\d)/, "Password must contain a number")
+    .matches(/(?=.*[^A-Za-z0-9\s])/, "Password must contain a special character");
 
   const passwordConfirmationField = isEditMode
-    ? Yup.string().notRequired()
-    : Yup.string()
-        .oneOf([Yup.ref("password"), undefined], "Passwords must match")
-        .required("Confirm password is required");
+  ? Yup.string().notRequired()
+  : Yup.string()
+    .oneOf([Yup.ref("password"), undefined], "Passwords must match")
+    .required("Confirm password is required");
 
   const baseFields = {
     name: Yup.string().required("Name is required"),
@@ -469,7 +475,8 @@ export default function UserAddEdit() {
     values: User,
     setFieldValue: (field: string, value: unknown) => void,
     errors: FormikErrors<User>,
-    touched: FormikTouched<User>
+    touched: FormikTouched<User>,
+    setFieldTouched?: (field: string, touched?: boolean, shouldValidate?: boolean) => void
   ) => {
     switch (currentStep) {
       case 1:
@@ -483,7 +490,8 @@ export default function UserAddEdit() {
                 name="name"
                 value={values.name}
                 onChange={(e) => setFieldValue("name", e.target.value)}
-                error={touched.name && errors.name}
+                onBlur={() => setFieldTouched && setFieldTouched('name', true)}
+                error={touched.name ? (errors.name as string) : undefined}
               />
               <InputFields
                 required
@@ -491,7 +499,8 @@ export default function UserAddEdit() {
                 name="email"
                 value={values.email}
                 onChange={(e) => setFieldValue("email", e.target.value)}
-                error={touched.email && errors.email}
+                onBlur={() => setFieldTouched && setFieldTouched('email', true)}
+                error={touched.email ? (errors.email as string) : undefined}
               />
               <InputFields
                 required
@@ -499,7 +508,8 @@ export default function UserAddEdit() {
                 name="username"
                 value={values.username}
                 onChange={(e) => setFieldValue("username", e.target.value)}
-                error={touched.username && errors.username}
+                onBlur={() => setFieldTouched && setFieldTouched('username', true)}
+                error={touched.username ? (errors.username as string) : undefined}
               />
               <InputFields
                 required
@@ -512,29 +522,28 @@ export default function UserAddEdit() {
                   setCountry((prev) => ({ ...prev, contact_number: c }))
                 }
                 onChange={(e) => setFieldValue("contact_number", e.target.value)}
-                error={touched.contact_number && errors.contact_number}
+                onBlur={() => setFieldTouched && setFieldTouched('contact_number', true)}
+                error={touched.contact_number ? (errors.contact_number as string) : undefined}
               />
               {!isEditMode && (
                 <>
                   <CustomPasswordInput
                     label="Password"
                     value={values.password}
+                    autoComplete={false}
                     width="max-w-[406px]"
                     onChange={(e) => setFieldValue("password", e.target.value)}
-                    onBlur={() => {
-                      /* optional: touched will be set by step validation; no-op here */
-                    }}
-                    error={touched.password && (errors.password as string)}
+                    onBlur={() => setFieldTouched && setFieldTouched('password', true)}
+                    error={touched.password ? (errors.password as string) : undefined}
                   />
                   <CustomPasswordInput
                     label="Confirm Password"
                     value={values.password_confirmation}
+                    autoComplete={false}
                     width="max-w-[406px]"
                     onChange={(e) => setFieldValue("password_confirmation", e.target.value)}
-                    onBlur={() => {
-                      /* optional: touched will be set by step validation; no-op here */
-                    }}
-                    error={touched.password_confirmation && (errors.password_confirmation as string)}
+                    onBlur={() => setFieldTouched && setFieldTouched('password_confirmation', true)}
+                    error={touched.password_confirmation ? (errors.password_confirmation as string) : undefined}
                   />
                 </>
               )}
@@ -558,7 +567,8 @@ export default function UserAddEdit() {
                   setFieldValue("role", val);
                   await fetchLabelsForRoles(val);
                 }}
-                error={touched.role && errors.role}
+                onBlur={() => setFieldTouched && setFieldTouched('role', true)}
+                error={touched.role ? (errors.role as string) : undefined}
               />
 
               {visibleLabels.includes("company") && (
@@ -593,7 +603,8 @@ export default function UserAddEdit() {
                       setFieldValue("route", []);
                     }
                   }}
-                  error={touched.company && errors.company}
+                  onBlur={() => setFieldTouched && setFieldTouched('company', true)}
+                  error={touched.company ? (errors.company as string) : undefined}
                   showSkeleton={skeleton.region}
                 />
               )}
@@ -625,7 +636,8 @@ export default function UserAddEdit() {
                       setFieldValue("route", "");
                     }
                   }}
-                  error={touched.region && errors.region}
+                  onBlur={() => setFieldTouched && setFieldTouched('region', true)}
+                  error={touched.region ? (errors.region as string) : undefined}
                   showSkeleton={skeleton.region}
                 />: <InputFields
                   required
@@ -654,7 +666,8 @@ export default function UserAddEdit() {
                       setFieldValue("route", "");
                     }
                   }}
-                  error={touched.region && errors.region}
+                  onBlur={() => setFieldTouched && setFieldTouched('region', true)}
+                  error={touched.region ? (errors.region as string) : undefined}
                   showSkeleton={skeleton.region}
                   disabled
                 />
@@ -687,7 +700,8 @@ export default function UserAddEdit() {
                       setFieldValue("route", "");
                     }
                   }}
-                  error={touched.area && errors.area}
+                  onBlur={() => setFieldTouched && setFieldTouched('area', true)}
+                  error={touched.area ? (errors.area as string) : undefined}
                   showSkeleton={skeleton.area}
                 />:<InputFields
                   required
@@ -714,7 +728,8 @@ export default function UserAddEdit() {
                       setFieldValue("route", "");
                     }
                   }}
-                  error={touched.area && errors.area}
+                  onBlur={() => setFieldTouched && setFieldTouched('area', true)}
+                  error={touched.area ? (errors.area as string) : undefined}
                   showSkeleton={skeleton.area}
                   disabled
                 />
@@ -745,7 +760,8 @@ export default function UserAddEdit() {
                       setFieldValue("route", "");
                     }
                   }}
-                  error={touched.warehouse && errors.warehouse}
+                  onBlur={() => setFieldTouched && setFieldTouched('warehouse', true)}
+                  error={touched.warehouse ? (errors.warehouse as string) : undefined}
                   showSkeleton={skeleton.warehouse}
                 />
               :<InputFields
@@ -773,7 +789,8 @@ export default function UserAddEdit() {
                       setFieldValue("route", "");
                     }
                   }}
-                  error={touched.warehouse && errors.warehouse}
+                  onBlur={() => setFieldTouched && setFieldTouched('warehouse', true)}
+                  error={touched.warehouse ? (errors.warehouse as string) : undefined}
                   showSkeleton={skeleton.warehouse}
                   disabled
                 />)}
@@ -786,7 +803,8 @@ export default function UserAddEdit() {
                   value={values.route}
                   options={routeOptions}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setFieldValue("route", e?.target?.value)}
-                  error={touched.route && errors.route}
+                  onBlur={() => setFieldTouched && setFieldTouched('route', true)}
+                  error={touched.route ? (errors.route as string) : undefined}
                   showSkeleton={skeleton.route}
 
                 />: <InputFields
@@ -797,7 +815,8 @@ export default function UserAddEdit() {
                   value={values.route}
                   options={routeOptions}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setFieldValue("route", e?.target?.value)}
-                  error={touched.route && errors.route}
+                  onBlur={() => setFieldTouched && setFieldTouched('route', true)}
+                  error={touched.route ? (errors.route as string) : undefined}
                   showSkeleton={skeleton.route}
                   disabled
 
@@ -812,7 +831,8 @@ export default function UserAddEdit() {
                   value={values.salesman}
                   options={salesmanOptions}
                   onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setFieldValue("salesman", e?.target?.value)}
-                  error={touched.salesman && errors.salesman}
+                  onBlur={() => setFieldTouched && setFieldTouched('salesman', true)}
+                  error={touched.salesman ? (errors.salesman as string) : undefined}
                 />
               )}
             </div>
@@ -837,11 +857,12 @@ export default function UserAddEdit() {
       <Formik
         initialValues={initialValues}
         validationSchema={dynamicSchema}
+        validateOnMount={true}
         enableReinitialize
         onSubmit={handleSubmit}
       >
-        {({ values, setFieldValue, errors, touched, setErrors, setTouched, isSubmitting }) => (
-          <Form>
+      {({ values, setFieldValue, errors, touched, setErrors, setTouched, setFieldTouched, isSubmitting }) => (
+        <Form>
               <StepperForm
               steps={steps.map((step) => ({
                 ...step,
@@ -856,7 +877,7 @@ export default function UserAddEdit() {
               nextButtonText="Save & Next"
               submitButtonText={isSubmitting ? "Submitting..." : "Submit"}
             >
-              {renderStepContent(values, setFieldValue, errors, touched)}
+              {renderStepContent(values, setFieldValue, errors, touched, setFieldTouched)}
             </StepperForm>
           </Form>
         )}

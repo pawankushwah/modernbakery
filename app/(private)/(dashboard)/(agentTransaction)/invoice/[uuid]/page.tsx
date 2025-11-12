@@ -776,14 +776,14 @@ const isFormReadyForItems = [
                 <div className="flex justify-between flex-wrap gap-[20px]">
                     <div className="flex flex-col gap-[10px]">
                         <Logo type="full" />
-                        <span className="text-primary font-normal text-[16px]">
+                        {/* <span className="text-primary font-normal text-[16px]">
                             Emma-Köhler-Allee 4c, Germering - 13907
-                        </span>
+                        </span> */}
                     </div>
 
-                    <div className="flex flex-col">
+                    <div className="flex flex-col items-end">
                         <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-                            I n v o i c e
+                            Invoice
                         </span>
                         <span className="text-primary text-[14px] tracking-[10px]">
                             #{code}
@@ -1124,6 +1124,7 @@ const isFormReadyForItems = [
                 <Table
                     data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
                     config={{
+                        showNestedLoading: false,
                         columns: [
                             {
                                 key: "itemName",

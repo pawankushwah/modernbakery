@@ -9,9 +9,10 @@ import Table, {
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { agentOrderList, changeStatusAgentOrder } from "@/app/services/agentTransaction";
+import { agentOrderExport, agentOrderList, changeStatusAgentOrder } from "@/app/services/agentTransaction";
 import OrderStatus from "@/app/components/orderStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { downloadFile } from "@/app/services/allApi";
 
 const columns = [
     { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.created_at.split("T")[0]}</span> },
@@ -132,6 +133,21 @@ export default function CustomerInvoicePage() {
         [setLoading]
     );
 
+    const exportFile = async () => {
+        try {
+            const response = await agentOrderExport({ format: "xlsx" });
+            if (response && typeof response === 'object' && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+        } catch (error) {
+            showSnackbar("Failed to download warehouse data", "error");
+        } finally {
+        }
+    };
+
     useEffect(() => {
         setRefreshKey((k) => k + 1);
     }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions]);
@@ -190,14 +206,15 @@ export default function CustomerInvoicePage() {
                                 }
                             ],
                             actions: [
-                                // <SidebarBtn
-                                //     key={0}
-                                //     href="#"
-                                //     isActive
-                                //     leadingIcon="mdi:download"
-                                //     label="Download"
-                                //     labelTw="hidden lg:block"
-                                // />,
+                                <SidebarBtn
+                                    key={0}
+                                    href="#"
+                                    isActive
+                                    leadingIcon="mdi:download"
+                                    label="Download"
+                                    labelTw="hidden lg:block"
+                                    onClick={exportFile}
+                                />,
                                 <SidebarBtn
                                     key={1}
                                     href="/agentOrder/add"

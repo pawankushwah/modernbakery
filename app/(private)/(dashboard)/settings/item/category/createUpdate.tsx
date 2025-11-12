@@ -37,7 +37,7 @@ type,
         initialValues: {
             categoryName: updateItemCategoryData?.category_name || "",
             status: updateItemCategoryData?.status || 0,
-            item_category_code: updateItemCategoryData?.item_category_code || "",
+            category_code: updateItemCategoryData?.category_code || "",
         },
         validationSchema: Yup.object({
             categoryName: Yup.string()
@@ -47,7 +47,7 @@ type,
             status: Yup.number()
                 .oneOf([0, 1], "Status must be either 0 or 1")
                 .required("Status is required"),
-            item_category_code: Yup.string().required("Code is required"),
+            category_code: Yup.string().required("Code is required"),
         }),
         onSubmit: async (values) => {
             if (type === "create") {
@@ -57,7 +57,7 @@ type,
                 );
                 if (res.error) return showSnackbar(res.data.message, "error")
                 else {
-                    await saveFinalCode({ reserved_code: values.item_category_code, model_name: "item_categories" });
+                    await saveFinalCode({ reserved_code: values.category_code, model_name: "item_categories" });
                     showSnackbar(res.message || "Item Category Created Successfully", "success");
                     onClose();
                     onRefresh();
@@ -100,7 +100,7 @@ type,
                 const res = await genearateCode({ model_name: "item_categories" });
                 if (res?.code) {
                     setCode(res.code);
-                    formik.setFieldValue("item_category_code", res.code);
+                    formik.setFieldValue("category_code", res.code);
                 }
                 if (res?.prefix) {
                     setPrefix(res.prefix);
@@ -139,11 +139,11 @@ type,
                 <div className="flex items-start gap-2 max-w-[406px]">
                     <InputFields
                         label="Item Category Code"
-                        name="item_category_code"
-                        value={formik.values.item_category_code}
+                        name="category_code"
+                        value={formik.values.category_code}
                         onChange={formik.handleChange}
                         disabled={codeMode === 'auto'}
-                        error={formik.touched?.item_category_code && formik.errors?.item_category_code}
+                        error={formik.touched?.category_code && formik.errors?.category_code}
                     />
                     <IconButton
                         bgClass="white"
@@ -160,9 +160,9 @@ type,
                         onSave={(mode, code) => {
                             setCodeMode(mode);
                             if (mode === 'auto' && code) {
-                                formik.setFieldValue('item_category_code', code);
+                                formik.setFieldValue('category_code', code);
                             } else if (mode === 'manual') {
-                                formik.setFieldValue('item_category_code', '');
+                                formik.setFieldValue('category_code', '');
                             }
                         }}
                     />

@@ -67,12 +67,29 @@ export default function OrderAddEditPage() {
   const uuid = params?.uuid as string | undefined;
   const isEditMode = uuid !== undefined && uuid !== "add";
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    warehouse: string;
+    warehouse_name: string;
+    customer: string;
+    customer_type: string;
+    route: string;
+  }>({
     warehouse: "",
+    warehouse_name: "",
     customer: "",
     customer_type: "",
     route: "",
   });
+  // store warehouse display name separately so we can keep id for payload
+  // and show name in AutoSuggestion initialValue
+  // we keep backward compatible shape by adding warehouse_name
+  // (not included in validation schema as id is still used)
+  // Note: other code continues to use form.warehouse (id)
+  // while UI shows form.warehouse_name
+  // initialize warehouse_name
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  form.warehouse_name = form.warehouse_name || "";
   const goodOptions = [{ label: "Near By Expiry", value: "0" },
                       { label: "Package Issue", value: "1" },
                       { label: "Not Saleable", value: "2" },];
@@ -113,6 +130,7 @@ export default function OrderAddEditPage() {
             customer: data?.customer?.id ? String(data.customer.id) : "",
             customer_type: data?.customer_type?.id ? String(data.customer_type?.id) : "",
             route: data?.route?.id ? String(data.route?.id) : "",
+            warehouse_name: data?.warehouse?.name || "",
           });
           
           if (data?.warehouse?.id) {
@@ -184,7 +202,7 @@ export default function OrderAddEditPage() {
         }
       })();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [isEditMode, uuid ?? ""]);
 
   const handleChange = (
@@ -502,9 +520,9 @@ const handleItemSearch = async (searchText: string) => {
         <div className="flex justify-between mb-10 flex-wrap gap-[20px]">
           <div className="flex flex-col gap-[10px]">
             <Logo type="full" />
-            <span className="text-primary font-normal text-[16px]">
+            {/* <span className="text-primary font-normal text-[16px]">
               Emma-Köhler-Allee 4c, Germering - 13907
-            </span>
+            </span> */}
           </div>
           <div className="flex flex-col">
             <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
@@ -533,13 +551,20 @@ const handleItemSearch = async (searchText: string) => {
             label="Warehouse"
             name="warehouse"
             placeholder="Search warehouse..."
-            initialValue={form.warehouse}
+            initialValue={form.warehouse_name}
             onSearch={handleWarehouseSearch}
-            onSelect={(option) => {
-              setForm(prev => ({ ...prev, warehouse: option.value }));
+            onSelect={async (option) => {
+              // option.value is id, option.label is display name
+              setForm(prev => ({ ...prev, warehouse: option.value, warehouse_name: option.label }));
               if (errors.warehouse) setErrors(prev => ({ ...prev, warehouse: "" }));
+              // fetch customers for selected warehouse
+              try {
+                await fetchAgentCustomerOptions(option.value);
+              } catch (e) {
+                // ignore fetch errors here
+              }
             }}
-            onClear={() => setForm(prev => ({ ...prev, warehouse: "" }))}
+            onClear={() => setForm(prev => ({ ...prev, warehouse: "", warehouse_name: "" }))}
             error={errors.warehouse}
           />
            <AutoSuggestion

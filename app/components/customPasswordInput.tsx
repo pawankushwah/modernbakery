@@ -11,6 +11,7 @@ export default function CustomPasswordInput({
   width = "w-full",
   error,
   onBlur,
+  autoComplete = true,
 }: {
   label: string;
   value: string;
@@ -19,6 +20,7 @@ export default function CustomPasswordInput({
   required?: boolean;
   error?: string | false;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  autoComplete?: boolean;
 }) {
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
@@ -32,9 +34,9 @@ export default function CustomPasswordInput({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-      <div className="relative mt-[13.5px]">
+      <div className="relative mt-[6px]">
         <input
-          autoComplete={"off"}
+          autoComplete={autoComplete ? "on" : "off"}
           type={isPasswordVisible ? "text" : "password"}
           id={label}
           value={value}

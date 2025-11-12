@@ -121,14 +121,29 @@ export default function OrderDetailPage() {
   const finalTotal = grossTotal + totalVat;
 
   const keyValueData = [
-    { key: "Net Total", value: "AED "+toInternationalNumber( netAmount ?? 0) },
+    { key: "Net Total", value: "AED " + toInternationalNumber(netAmount ?? 0) },
     // { key: "Gross Total", value: "AED "+toInternationalNumber( grossTotal ?? 0 ) },
     // { key: "Discount", value: "AED "+toInternationalNumber( discount ?? 0 ) },
     // { key: "Excise", value: "AED 0.00" },
-    { key: "Vat", value: "AED "+toInternationalNumber( totalVat ?? 0 ) },
-    { key: "Pre VAT", value: "AED "+toInternationalNumber(preVat ?? 0) },
+    { key: "Vat", value: "AED " + toInternationalNumber(totalVat ?? 0) },
+    { key: "Pre VAT", value: "AED " + toInternationalNumber(preVat ?? 0) },
     // { key: "Delivery Charges", value: "AED 0.00" },
   ];
+
+  const exportFile = async () => {
+    try {
+      const response = await agentOrderExport({ uuid: UUID, format: "csv" });
+      if (response && typeof response === 'object' && response.download_url) {
+        await downloadFile(response.download_url);
+        showSnackbar("File downloaded successfully ", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
+      }
+    } catch (error) {
+      showSnackbar("Failed to download warehouse data", "error");
+    } finally {
+    }
+  };
 
   const targetRef = useRef<HTMLDivElement | null>(null);
 
@@ -176,154 +191,146 @@ export default function OrderDetailPage() {
 
       <div ref={targetRef}>
         <ContainerCard className="rounded-[10px] space-y-[40px]">
-        <div className="flex justify-between flex-wrap gap-[20px]">
-          <div className="flex flex-col gap-[10px]">
-            <Logo type="full" />
-          </div>
+          <div className="flex justify-between flex-wrap gap-[20px]">
+            <div className="flex flex-col gap-[10px]">
+              <Logo type="full" />
+            </div>
 
-          <div className="flex flex-col items-end">
-            <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Order</span>
-            <span className="text-primary text-[14px] tracking-[8px]">#{data?.order_code || "-"}</span>
-          </div>
-        </div>
-
-        <hr className="text-[#D5D7DA]" />
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8 items-start">
-          {/* From (Seller) */}
-          <div>
-            <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-              <span>From (Seller)</span>
-              <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">{data?.warehouse_code && data?.warehouse_name  
-                  ? `${data?.warehouse_code} - ${data?.warehouse_name } ` : "-"}</span>
-                <span>{data?.warehouse_address ?? ""} {data?.warehouse_address && ", "}</span>
-                <span>
-                  {data?.warehouse_contact && <>Phone: {data?.warehouse_contact}</>} <br /> {data?.warehouse_email && <>Email: {data?.warehouse_email}</>}
-                </span>
-              </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">Order</span>
+              <span className="text-primary text-[14px] tracking-[8px]">#{data?.order_code || "-"}</span>
             </div>
           </div>
 
-          {/* To (Customer) */}
-          <div>
-            <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-              <span>To (Customer)</span>
-              <div className="flex flex-col space-y-[10px]">
-                <span className="font-semibold">{data?.customer_code && data?.customer_name  ? `${data?.customer_code} - ${data?.customer_name}` : "-"}</span>
-                <span>{data?.customer_street && ` ${data?.customer_street}`}</span>
-                <span>
-                  {data?.customer_contact && `Phone: ${data?.customer_contact}`} <br /> {data?.customer_email && `Email: ${data?.customer_email}`}
-                </span>
-              </div>
-            </div>
-          </div>
+          <hr className="text-[#D5D7DA]" />
 
-          {/* Dates / meta - right column */}
-          <div className="flex md:justify-end">
-            <div className="text-primary-bold text-[14px] md:text-right">
-              {data?.created_at && <div>
-                Order Date: <span className="font-bold">{data?.created_at.split("T")[0] || ""}</span>
-              </div>}
-              {data?.delivery_date && <div className="mt-2">
-                Delivery Date: <span className="font-bold">{data?.delivery_date || ""}</span>
-              </div>}
-              {data?.order_source && <div className="mt-2">
-                Order Source: <span className="font-bold">{data?.order_source || "Online"}</span>
-              </div>}
-            </div>
-          </div>
-        </div>
-
-        {/* ---------- Order Table ---------- */}
-        <Table
-          data={(data?.details || []).map((row, index) => {
-            const mappedRow: Record<string, string> = { index: String(index + 1) };
-            Object.keys(row).forEach((key) => {
-              const value = (row as any)[key];
-              mappedRow[key] = value === null || value === undefined ? "" : String(value);
-            });
-            return mappedRow;
-          })}
-          config={{
-            columns: columns,
-          }}
-        />
-
-        {/* ---------- Order Summary ---------- */}
-        <div className="flex justify-between text-primary">
-          <div className="flex justify-between flex-wrap w-full">
-            {/* Notes Section */}
-            <div className="hidden flex-col justify-end gap-[20px] w-full lg:flex lg:w-[400px]">
-              {data?.comment && <div className="flex flex-col space-y-[10px]">
-                <div className="font-semibold text-[#181D27]">Customer Note</div>
-                <div>{data?.comment}</div>
-              </div>}
-              <div className="flex flex-col space-y-[10px]">
-                <div className="font-semibold text-[#181D27]">
-                  Payment Method
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 md:gap-x-8 items-start">
+            {/* From (Seller) */}
+            <div>
+              <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
+                <span>From (Seller)</span>
+                <div className="flex flex-col space-y-[10px]">
+                  <span className="font-semibold">{data?.warehouse_code && data?.warehouse_name
+                    ? `${data?.warehouse_code} - ${data?.warehouse_name} ` : "-"}</span>
+                  <span>{data?.warehouse_address ?? ""} {data?.warehouse_address && ", "}</span>
+                  <span>
+                    {data?.warehouse_contact && <>Phone: {data?.warehouse_contact}</>} <br /> {data?.warehouse_email && <>Email: {data?.warehouse_email}</>}
+                  </span>
                 </div>
-                <div>{"Cash on Delivery"}</div>
               </div>
             </div>
 
-            {/* Totals */}
-            <div className="flex flex-col gap-[10px] w-full lg:w-[350px]">
-              {keyValueData.map((item) => (
-                <Fragment key={item.key}>
-                  <KeyValueData data={[item]} />
-                  <hr className="text-[#D5D7DA]" />
-                </Fragment>
-              ))}
-              <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
-                <span>Total</span>
-                {/* <span>AED {toInternationalNumber(finalTotal) || 0}</span> */}
-                <span>AED {toInternationalNumber(finalTotal) || 0}</span>
-              </div>
-            </div>
-
-            {/* Notes (Mobile) */}
-            <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px] mt-[20px]">
-              {data?.comment && <div className="flex flex-col space-y-[10px]">
-                <div className="font-semibold text-[#181D27]">Customer Note</div>
-                <div>{data?.comment}</div>
-              </div>}
-              <div className="flex flex-col space-y-[10px]">
-                <div className="font-semibold text-[#181D27]">
-                  Payment Method
+            {/* To (Customer) */}
+            <div>
+              <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
+                <span>To (Customer)</span>
+                <div className="flex flex-col space-y-[10px]">
+                  <span className="font-semibold">{data?.customer_code && data?.customer_name ? `${data?.customer_code} - ${data?.customer_name}` : "-"}</span>
+                  <span>{data?.customer_street && ` ${data?.customer_street}`}</span>
+                  <span>
+                    {data?.customer_contact && `Phone: ${data?.customer_contact}`} <br /> {data?.customer_email && `Email: ${data?.customer_email}`}
+                  </span>
                 </div>
-                <div>{"Cash on Delivery"}</div>
               </div>
-              {/* {data?.payment_method && <div className="flex flex-col space-y-[10px]">
+            </div>
+
+            {/* Dates / meta - right column */}
+            <div className="flex md:justify-end">
+              <div className="text-primary-bold text-[14px] md:text-right">
+                {data?.created_at && <div>
+                  Order Date: <span className="font-bold">{data?.created_at.split("T")[0] || ""}</span>
+                </div>}
+                {data?.delivery_date && <div className="mt-2">
+                  Delivery Date: <span className="font-bold">{data?.delivery_date || ""}</span>
+                </div>}
+                {data?.order_source && <div className="mt-2">
+                  Order Source: <span className="font-bold">{data?.order_source || "Online"}</span>
+                </div>}
+              </div>
+            </div>
+          </div>
+
+          {/* ---------- Order Table ---------- */}
+          <Table
+            data={(data?.details || []).map((row, index) => {
+              const mappedRow: Record<string, string> = { index: String(index + 1) };
+              Object.keys(row).forEach((key) => {
+                const value = (row as any)[key];
+                mappedRow[key] = value === null || value === undefined ? "" : String(value);
+              });
+              return mappedRow;
+            })}
+            config={{
+              columns: columns,
+            }}
+          />
+
+          {/* ---------- Order Summary ---------- */}
+          <div className="flex justify-between text-primary">
+            <div className="flex justify-between flex-wrap w-full">
+              {/* Notes Section */}
+              <div className="hidden flex-col justify-end gap-[20px] w-full lg:flex lg:w-[400px]">
+                {data?.comment && <div className="flex flex-col space-y-[10px]">
+                  <div className="font-semibold text-[#181D27]">Customer Note</div>
+                  <div>{data?.comment}</div>
+                </div>}
+                <div className="flex flex-col space-y-[10px]">
+                  <div className="font-semibold text-[#181D27]">
+                    Payment Method
+                  </div>
+                  <div>{"Cash on Delivery"}</div>
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="flex flex-col gap-[10px] w-full lg:w-[350px]">
+                {keyValueData.map((item) => (
+                  <Fragment key={item.key}>
+                    <KeyValueData data={[item]} />
+                    <hr className="text-[#D5D7DA]" />
+                  </Fragment>
+                ))}
+                <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
+                  <span>Total</span>
+                  {/* <span>AED {toInternationalNumber(finalTotal) || 0}</span> */}
+                  <span>AED {toInternationalNumber(finalTotal) || 0}</span>
+                </div>
+              </div>
+
+              {/* Notes (Mobile) */}
+              <div className="flex flex-col justify-end gap-[20px] w-full lg:hidden lg:w-[400px] mt-[20px]">
+                {data?.comment && <div className="flex flex-col space-y-[10px]">
+                  <div className="font-semibold text-[#181D27]">Customer Note</div>
+                  <div>{data?.comment}</div>
+                </div>}
+                <div className="flex flex-col space-y-[10px]">
+                  <div className="font-semibold text-[#181D27]">
+                    Payment Method
+                  </div>
+                  <div>{"Cash on Delivery"}</div>
+                </div>
+                {/* {data?.payment_method && <div className="flex flex-col space-y-[10px]">
                 <div className="font-semibold text-[#181D27]">
                   Payment Method
                 </div>
                 <div>{data?.payment_method || "Cash on Delivery"}</div>
               </div>} */}
+              </div>
             </div>
           </div>
-        </div>
 
-        <hr className="text-[#D5D7DA] print:hidden" />
+          <hr className="text-[#D5D7DA] print:hidden" />
 
-        {/* ---------- Footer Buttons ---------- */}
-        <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
-          <SidebarBtn
-            leadingIcon={"lucide:download"}
-            leadingIconSize={20}
-            label="Download"
-            onClick={async () => {
-              const res = await agentOrderExport({uuid: UUID,format:"csv"});
-              if(res.error){
-                showSnackbar(res.error.message || "Failed to export order", "error");
-              } else {
-                const downloadUrl = res.data?.download_url;
-                downloadFile(downloadUrl || "", `order_${data?.order_code || UUID}.csv`);
-              }
-            }}
-          />
-          <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
-        </div>
+          {/* ---------- Footer Buttons ---------- */}
+          <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
+            <SidebarBtn
+              leadingIcon={"lucide:download"}
+              leadingIconSize={20}
+              label="Download"
+              onClick={exportFile}
+            />
+            <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
+          </div>
         </ContainerCard>
       </div>
     </>

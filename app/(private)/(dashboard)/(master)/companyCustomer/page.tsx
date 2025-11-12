@@ -11,6 +11,7 @@ import {
   deleteCompanyCustomer,
   exportCompanyCustomerData,
   companyCustomerStatusUpdate,
+  companyCustomersGlobalSearch,
 } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import StatusBtn from "@/app/components/statusBtn2";
@@ -71,9 +72,9 @@ export default function CompanyCustomers() {
   };
 
   const search = async ( searchQuery: string, pageSize: number, columnName?: string ): Promise<searchReturnType> => {
-    if (!columnName) throw new Error("Column name is required for search");
+    // if (!columnName) throw new Error("Column name is required for search");
     setLoading(true);
-    const res = await getCompanyCustomers({ search: searchQuery, pageSize: pageSize.toString() });
+    const res = await companyCustomersGlobalSearch({ search: searchQuery, pageSize: pageSize.toString() });
     setLoading(false);
     if(res.error) {
       showSnackbar(res.data.message || "Failed to fetch search results", "error");
@@ -87,25 +88,25 @@ export default function CompanyCustomers() {
     }
   };
 
-  const handleConfirmDelete = async () => {
-    if (!selectedRow) return;
+  // const handleConfirmDelete = async () => {
+  //   if (!selectedRow) return;
 
-    // Optimistically remove row first
-    setCustomers((prev) => prev.filter((c) => c.id !== selectedRow.id));
-    setShowDeletePopup(false);
+  //   // Optimistically remove row first
+  //   setCustomers((prev) => prev.filter((c) => c.id !== selectedRow.id));
+  //   setShowDeletePopup(false);
 
-    setLoading(true);
-    try {
-      await deleteCompanyCustomer(selectedRow.id.toString());
-      showSnackbar("Company Customer deleted successfully ✅", "success");
-    } catch (error) {
-      setCustomers((prev) => [...prev, selectedRow]);
-      showSnackbar("Failed to delete Customer ❌", "error");
-    } finally {
-      setSelectedRow(null);
-    }
-    setLoading(false);
-  };
+  //   setLoading(true);
+  //   try {
+  //     await deleteCompanyCustomer(selectedRow.id.toString());
+  //     showSnackbar("Company Customer deleted successfully ✅", "success");
+  //   } catch (error) {
+  //     setCustomers((prev) => [...prev, selectedRow]);
+  //     showSnackbar("Failed to delete Customer ❌", "error");
+  //   } finally {
+  //     setSelectedRow(null);
+  //   }
+  //   setLoading(false);
+  // };
 
 
   /* ---------- Column Configuration ---------- */
@@ -321,7 +322,7 @@ export default function CompanyCustomers() {
       </div>
 
       {/* Delete Popup */}
-      {showDeletePopup && (
+      {/* {showDeletePopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
           <DeleteConfirmPopup
             title="Company Customer"
@@ -329,7 +330,7 @@ export default function CompanyCustomers() {
             onConfirm={handleConfirmDelete}
           />
         </div>
-      )}
+      )} */}
     </>
   );
 }

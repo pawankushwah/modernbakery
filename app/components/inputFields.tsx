@@ -1,8 +1,7 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
 import Skeleton from '@mui/material/Skeleton';
-import 'react-phone-input-2/lib/style.css';
-import LoaderCircle from "./loaderCircle";
+import React, { useEffect, useRef, useState } from "react";
+// import 'react-phone-input-2/lib/style.css';
 import DateRangePicker from "./DateRangePicker";
 
 export type Option = {
@@ -246,7 +245,7 @@ export default function InputFields({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]); // Only depend on search text, not the callback function
 
-useEffect(() => {
+  useEffect(() => {
     const dropdown = dropdownRef.current;
     if (dropdown) {
       const { width, top, left, height } = dropdown.getBoundingClientRect();
@@ -360,7 +359,7 @@ useEffect(() => {
       const input = e.currentTarget as HTMLInputElement;
       if (input && input.value && input.value.length > 0) {
         e.preventDefault();
-        try { safeOnChange({ target: { value: '', name } } as any); } catch (err) {}
+        try { safeOnChange({ target: { value: '', name } } as any); } catch (err) { }
         // update DOM immediately
         input.value = '';
       }
@@ -374,18 +373,18 @@ useEffect(() => {
 
   return (
     <div className={`flex flex-col gap-[6px] w-full ${width} relative`}>
-        {showSkeleton && <div className="absolute h-[90px] w-full rounded-[5px] bg-white z-40 flex flex-col gap-[5px]">
-          {label && <Skeleton variant="rounded" width={"50%"} height={"20%"} />}
-          <Skeleton variant="rounded" width={"100%"} height={"60%"} />
-          {error && <Skeleton variant="rounded" width={"100%"} height={"20%"} />}
-        </div>}
-        <label
-          htmlFor={id ?? name}
-          className="text-sm font-medium text-gray-700"
-        >
-          {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
-        </label>
+      {showSkeleton && <div className="absolute h-[90px] w-full rounded-[5px] bg-white z-40 flex flex-col gap-[5px]">
+        {label && <Skeleton variant="rounded" width={"50%"} height={"20%"} />}
+        <Skeleton variant="rounded" width={"100%"} height={"60%"} />
+        {error && <Skeleton variant="rounded" width={"100%"} height={"20%"} />}
+      </div>}
+      <label
+        htmlFor={id ?? name}
+        className="text-sm font-medium text-gray-700"
+      >
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
       <div className="relative">
         {type === "radio" && options && options.length > 0 ? (
           loading ? (
@@ -770,27 +769,27 @@ useEffect(() => {
 
 
                 return (
-                  <div className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"} rounded-lg`} ref={dropdownRef}>
+                  <div className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"} rounded-md`} ref={dropdownRef}>
                     <div className="flex items-center relative">
                       {/* Dropdown Button */}
                       <button
                         type="button"
                         onClick={() => setDropdownOpen(!dropdownOpen)}
-                        className="shrink-0 z-10 inline-flex items-center py-2.5 px-4 text-sm font-medium text-gray-900 bg-gray-100 border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100"
+                        className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none"
                       >
                         {selectedCountry?.flag}{" "}
                         {selectedCountry?.code}
                       </button>
                       {/* Dropdown List */}
                       {dropdownOpen && (
-                        <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75">
+                        <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75 mt-[6px]">
                           <ul className="py-2 text-sm text-gray-700">
                             {countries.map((country: { name?: string; code?: string; flag?: string } | undefined, index) => (
                               <li key={index}>
                                 <button
                                   type="button"
                                   onClick={() => handleSelect(country)}
-                                  className="inline-flex w-full px-4 py-2 text-sm hover:bg-gray-100"
+                                  className="inline-flex w-full px-4 py-2 text-sm"
                                 >
                                   <span className="inline-flex items-center">
                                     {country?.flag} {" "} {country?.name} ({country?.code})
@@ -813,7 +812,7 @@ useEffect(() => {
                           type="tel"
                           id="phone-input"
                           placeholder={placeholder || "Enter phone number"}
-                          className="block p-2.5 w-full z-20 text-sm text-gray-900 bg-gray-50 rounded-e-lg outline-none border border-gray-300 shadow-[0px_1px_2px_0px_#0A0D120D]"
+                          className="block p-2.5 w-full z-20  h-[44px] text-sm text-gray-900 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
                           value={phone}
                           onChange={handlePhoneChange}
                           disabled={disabled}

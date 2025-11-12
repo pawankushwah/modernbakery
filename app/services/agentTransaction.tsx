@@ -271,6 +271,15 @@ export const deliveryByUuid = async (uuid: string) => {
   }
 };
 
+export const agentDeliveryExport = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/agent-delivery/exportall`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const createDelivery= async (body: object) => {
   try {
     const res = await API.post(`/api/agent_transaction/agent-delivery/add`,  body );
@@ -465,6 +474,16 @@ export const exchangeUpdateStatus = async (body: string) => {
 export const exportExchangeData = async (body: string) => {
   try {
     const res = await API.post(`/api/agent_transaction/exchanges/export`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const exportInvoice = async (params: Params ) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/invoices/exportall`, {params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

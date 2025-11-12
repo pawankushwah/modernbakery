@@ -10,9 +10,10 @@ import Table, {
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { deliveryList } from "@/app/services/agentTransaction";
+import { agentDeliveryExport, agentOrderExport, deliveryList } from "@/app/services/agentTransaction";
 import StatusBtn from "@/app/components/statusBtn2";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { downloadFile } from "@/app/services/allApi";
 
 // const dropdownDataList = [
 //     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -193,6 +194,20 @@ export default function CustomerInvoicePage() {
         [setLoading]
     );
 
+    const exportFile = async () => {
+        try {
+            const response = await agentDeliveryExport({ format: "xlsx" });
+            if (response && typeof response === 'object' && response.download_url) {
+                await downloadFile(response.download_url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
+            }
+        } catch (error) {
+            showSnackbar("Failed to download warehouse data", "error");
+        } finally {
+        }
+    };
 
     useEffect(() => {
         setRefreshKey((k) => k + 1);
@@ -210,6 +225,15 @@ export default function CustomerInvoicePage() {
                         columnFilter: true,
                         searchBar: false,
                         actions: [
+                            <SidebarBtn
+                                key={0}
+                                href="#"
+                                isActive
+                                leadingIcon="mdi:download"
+                                label="Download"
+                                labelTw="hidden lg:block"
+                                onClick={exportFile}
+                            />,
                             <SidebarBtn
                                 key={1}
                                 href="/agentCustomerDelivery/add"

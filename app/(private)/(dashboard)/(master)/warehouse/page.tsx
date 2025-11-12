@@ -239,11 +239,11 @@ export default function Warehouse() {
          );
  
 
-         const exportFile = async () => {
+         const exportFile = async (format: string) => {
          try {
-           const response = await exportWarehouseData({}); 
-           if (response && typeof response === 'object' && response.url) {
-            await downloadFile(response.url);
+           const response = await exportWarehouseData({ format }); 
+           if (response && typeof response === 'object' && response.download_url) {
+            await downloadFile(response.download_url);
              showSnackbar("File downloaded successfully ", "success");
            } else {
              showSnackbar("Failed to get download URL", "error");
@@ -346,13 +346,13 @@ export default function Warehouse() {
                   icon: "gala:file-document",
                   label: "Export CSV",
                   labelTw: "text-[12px] hidden sm:block",
-                  onClick: exportFile,
+                  onClick: () => exportFile("csv"),
                 },
                 {
                   icon: "gala:file-document",
                   label: "Export Excel",
                   labelTw: "text-[12px] hidden sm:block",
-                  onClick: exportFile,
+                  onClick: () => exportFile("excel"),
 
                 },
                 // {
