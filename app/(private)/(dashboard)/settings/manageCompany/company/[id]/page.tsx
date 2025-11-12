@@ -206,9 +206,9 @@ export default function AddEditCompany() {
     logo: "",
     email: "",
     primary_contact: "",
-    primary_code: "",
+    primary_code: "+256",
     toll_free_no: "",
-    toll_free_code: "",
+    toll_free_code: "+256",
     country_id: "",
     address: "",
     city: "",
@@ -233,14 +233,18 @@ export default function AddEditCompany() {
     flag: "🇺🇬",
   });
 
-  const [tollFreeCountry, setTollFreeCountry] = useState<{ name: string; code?: string; flag?: string }>({
+  const [tollFreeCountry, setTollFreeCountry] = useState<{ 
+    name: string; 
+    code?: string; 
+    flag?: string 
+  }>({
     name: "Uganda",
     code: "+256",
     flag: "🇺🇬",
   });
 
-  // Load company for edit mode or generate code for add mode
   const codeGeneratedRef = useRef(false);
+
   useEffect(() => {
     if (params?.id && params.id !== "add") {
       setIsEditMode(true);
@@ -249,6 +253,14 @@ export default function AddEditCompany() {
         try {
           const res = await getCompanyById(params.id as string);
           if (res && !res.error) {
+            const data = res.data;
+            
+            // Store existing logo URL
+            if (data.logo) {
+              setExistingLogoUrl(data.logo);
+            }
+            
+            // Set form values
             setInitialValues({
               ...res.data,
               country_id: res.data.country?.id?.toString() || "",
@@ -268,6 +280,7 @@ export default function AddEditCompany() {
             });
           }
         } catch (err) {
+          console.error("Error fetching company:", err);
           showSnackbar("Failed to fetch company details", "error");
         } finally {
           setLoading(false);
@@ -289,16 +302,13 @@ export default function AddEditCompany() {
           }
           if (res?.prefix) {
             setPrefix(res.prefix);
-          } else if (res?.code) {
-            const match = res.prefix;
-            if (match) setPrefix(prefix);
           }
         } catch (e) {
-          // Optionally handle error
+          console.error("Error generating code:", e);
         }
       })();
     }
-  }, [params?.id]);
+  }, [params?.id, onlyCountryOptions]);
 
   const steps: StepperStep[] = [
     { id: 1, label: "Company" },
@@ -366,17 +376,21 @@ export default function AddEditCompany() {
       }
 
       if (res.error) {
-        showSnackbar(res.data?.message || "Failed to submit form", "error");
+        showSnackbar(res.data?.message || res.message || "Failed to submit form", "error");
       } else {
         showSnackbar(isEditMode ? "Company Updated Successfully" : "Company Created Successfully", "success");
         router.push("/settings/manageCompany/company");
-        try {
-          await saveFinalCode({
-            reserved_code: values.company_code,
-            model_name: "company",
-          });
-        } catch (e) {
-          // Optionally handle error, but don't block success
+        
+        // Save final code
+        if (!isEditMode) {
+          try {
+            await saveFinalCode({
+              reserved_code: values.company_code,
+              model_name: "company",
+            });
+          } catch (e) {
+            console.error("Error saving final code:", e);
+          }
         }
       }
     } catch (err: any) {
@@ -440,34 +454,10 @@ export default function AddEditCompany() {
                   onChange={(e) =>
                     setFieldValue("company_code", e.target.value)
                   }
-                  disabled={codeMode === "auto"}
+                  disabled={codeMode === "auto" || isEditMode}
                 />
-                {/* {!isEditMode && (
-                  <>
-                    <IconButton
-                      bgClass="white"
-                      className="cursor-pointer text-[#252B37] pt-12"
-                      icon="mi:settings"
-                      onClick={() => setIsOpen(true)}
-                    />
-                    <SettingPopUp
-                      isOpen={isOpen}
-                      onClose={() => setIsOpen(false)}
-                      title="Company Code"
-                      prefix={prefix}
-                      setPrefix={setPrefix}
-                      onSave={(mode, code) => {
-                        setCodeMode(mode);
-                        if (mode === "auto" && code) {
-                          setFieldValue("company_code", code);
-                        } else if (mode === "manual") {
-                          setFieldValue("company_code", "");
-                        }
-                      }}
-                    />
-                  </>
-                )} */}
               </div>
+
               <div>
                 <InputFields
                   required
@@ -511,6 +501,7 @@ export default function AddEditCompany() {
               </div>
               <div className="relative">
                 <InputFields
+                  required
                   required
                   label="Logo"
                   name="logo"
@@ -568,8 +559,10 @@ export default function AddEditCompany() {
                 {/* thumbnail preview removed - use view (eye) button to open modal */}
                 {logoError && <div className="text-xs text-red-500 mt-1">{logoError}</div>}
               </div>
+
               <div>
                 <InputFields
+                  required
                   required
                   label="Module"
                   name="module_access"
@@ -613,6 +606,7 @@ export default function AddEditCompany() {
                   error={((touched.country_id || submitCount > 0) && errors.country_id) || false}
                 />
               </div>
+
 
               <div>
                 <InputFields
@@ -716,6 +710,7 @@ export default function AddEditCompany() {
               <div>
                 <InputFields
                   required
+                  required
                   label="VAT Number"
                   name="vat"
                   value={values.vat}
@@ -727,6 +722,7 @@ export default function AddEditCompany() {
             </div>
           </ContainerCard>
         );
+
 
       default:
         return null;
@@ -744,6 +740,7 @@ export default function AddEditCompany() {
           </h1>
         </div>
       </div>
+
       <Formik
         enableReinitialize
         initialValues={initialValues}

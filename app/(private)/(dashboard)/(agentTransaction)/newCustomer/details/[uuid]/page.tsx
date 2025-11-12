@@ -48,7 +48,7 @@
     subcategory_id?: number;
 
     enable_promotion?: string;
-    credit_day?: number;
+    creditday?: number;
     credit_limit?: string | null;
 
     latitude?: string;
@@ -70,7 +70,9 @@
     const [activeTab, setActiveTab] = useState("Overview");
     const [showRejectPopup, setShowRejectPopup] = useState(false);
     const [rejectReason, setRejectReason] = useState("");
-    const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [hideActionMenu, setHideActionMenu] = useState(false);
+  const [actionResult, setActionResult] = useState<"approved" | "rejected" | null>(null);
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
 
@@ -175,9 +177,9 @@
         category_id: d.category_id ?? d.category?.id ?? d.category?.id ?? undefined,
         subcategory_id: d.subcategory_id ?? d.subcategory?.id ?? undefined,
         enable_promotion: d.enable_promotion ?? undefined,
-        credit_day: typeof d.credit_day === "number" ? d.credit_day : Number(d.credit_day),
+        creditday: typeof d.creditday === "number" ? d.creditday : (d.creditday ? Number(d.creditday) : 0),
         credit_limit: d.credit_limit ?? null,
-        latitude: d.latitude ?? undefined,
+        latitude: d.latitude ?? undefined, 
         longitude: d.longitude ?? undefined,
         is_cash: d.is_cash ?? undefined,
         status: d.status ?? undefined,
@@ -217,6 +219,20 @@
       };
     }, [uuid]);
 
+  // Ensure action icons remain hidden on revisit when already approved/rejected
+  useEffect(() => {
+    if (item?.approval_status === 1) {
+      setHideActionMenu(true);
+      // setActionResult("approved");
+    } else if (item?.approval_status === 3) {
+      setHideActionMenu(true);
+      // setActionResult("rejected");
+    } else {
+      // pending or undefined
+      setHideActionMenu(false);
+      setActionResult(null);
+    }
+  }, [item?.approval_status]);
 
   const handleApproval = async (approval_status: number, reason?: string) => {
     if (!item) return;
@@ -235,6 +251,7 @@
     customer_id: item.customer_id,
     status: item.status,
     name: item.name,
+  // osa_code: item.osa_code,
     owner_name: item.owner_name || "Unknown Owner",
 
     outlet_channel_id: item.outlet_channel?.id,
@@ -257,7 +274,7 @@
     subcategory_id: item.subcategory?.id,
 
     enable_promotion: item.enable_promotion,
-    credit_day: item.credit_day,
+    creditday: item.creditday || 0,
     credit_limit: item.credit_limit,
 
     is_cash: item.is_cash,
@@ -279,23 +296,46 @@
       //  API returns error object?
       if (res?.error) {
         showSnackbar(res?.data?.message || "Failed to update approval", "error");
+        // Restore menu on error so user can try again
+        setHideActionMenu(false);
+        setActionResult(null);
         return;
       }
 
-      // ✅ Customer Already Exist Check
-      if (res?.message === "Customer already exist") {
+      // ✅ Check response message for different scenarios
+      const message = res?.message || "";
+      
+      // Check if customer already exists (contact number match)
+      if (message.toLowerCase().includes("already exist") || message.toLowerCase().includes("contact") || res?.status === "exists") {
         showSnackbar("Customer already exist in Agent Customers!", "error");
+        // Error case: keep the action menu available again
+        setHideActionMenu(false);
+        setActionResult(null);
         return;
       }
+
+      // Success flows: show message, hide action menu, show status icon, and update local item state
       if (approval_status === 1) {
         showSnackbar("Customer approved & added to Agent Customer!", "success");
-      } else {
+        setHideActionMenu(true);
+        setActionResult("approved");
+        setItem((prev) => (prev ? { ...prev, approval_status: 1 } : prev));
+      } else if (approval_status === 3) {
         showSnackbar("Customer rejected!", "success");
+        setHideActionMenu(true);
+        setActionResult("rejected");
+        setItem((prev) => (prev ? { ...prev, approval_status: 3, reject_reason: reason || prev.reject_reason } : prev));
       }
+            
       router.push("/newCustomer");
+
+      // Stay on the page after success so the new icon is visible
     } catch (err) {
       console.error(err);
       showSnackbar("Unexpected error", "error");
+      // Restore menu on exception so user can try again
+      setHideActionMenu(false);
+      setActionResult(null);
     } finally {
       setLoading(false);
     }
@@ -312,34 +352,56 @@
             <Icon icon="lucide:arrow-left" width={24} onClick={() => router.back()} />
             <h1 className="text-[20px] font-semibold text-[#181D27]">Approval Customers </h1>
           </div>
-          <div className="flex items-center gap-[10px] border border-[#D5D7DA] relative rounded-lg px-1 bg-[#FFFFFF] opacity-100">
-            {/* 3-dot menu button */}
-            <button onClick={() => setShowMenu((prev) => !prev)} className="p-[6px] rounded-full">
-              <Icon icon="lucide:more-vertical" width={20} />
-            </button>
+          {!hideActionMenu && (
+            <div className="flex items-center gap-[10px] border border-[#D5D7DA] relative rounded-lg px-1 bg-[#FFFFFF] opacity-100">
+              {/* 3-dot menu button */}
+              <button onClick={() => setShowMenu((prev) => !prev)} className="p-[6px] rounded-full">
+                <Icon icon="lucide:more-vertical" width={20} />
+              </button>
 
-            {/* dropdown menu */}
-            {showMenu && (
-              <div className="absolute right-0 top-12 bg-[#FFFFFF] shadow-lg rounded-lg border border-gray-200 w-[160px] z-10">
-                <button onClick={() => handleApproval(1)} className="w-full text-left px-4 pb-2 pt-[10px] hover:bg-[#FAFAFA] leading-[20px] text-[#252B37] text-lg">
-                <div>
-                    <Icon icon="material-symbols:order-approve" width={20} /> Approve
+              {/* dropdown menu */}
+              {showMenu && (
+                <div className="absolute right-0 top-12 bg-[#FFFFFF] shadow-lg rounded-lg border border-gray-200 w-[160px] z-10">
+                  <button
+                    onClick={() => {
+                      setHideActionMenu(true);
+                      setShowMenu(false);
+                      handleApproval(1);
+                    }}
+                    className="w-full text-left px-4 pb-2 pt-[10px] hover:bg-[#FAFAFA] leading-[20px] text-[#252B37] text-lg"
+                  >
+                    <div>
+                      <Icon icon="material-symbols:order-approve" width={20} /> Approve
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setHideActionMenu(true);
+                      setShowRejectPopup(true);
+                      setShowMenu(false);
+                    }}
+                    className="w-full text-left text-[#252B37] px-4 py-[10px] font-inter  hover:bg-[#FAFAFA] text-lg leading-[20px]"
+                  >
+                    <div>
+                      <Icon icon="fluent:text-change-reject-24-filled" width={20} /> Reject
+                    </div>
+                  </button>
                 </div>
-                </button>
-                <button
-                  onClick={() => {
-                    setShowRejectPopup(true);
-                    setShowMenu(false);
-                  }}
-              className="w-full text-left text-[#252B37] px-4 py-[10px] font-inter  hover:bg-[#FAFAFA] text-lg leading-[20px]"
-                >
-                  <div>
-                    <Icon icon="fluent:text-change-reject-24-filled" width={20} /> Reject
-                  </div>
-                </button>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
+          {hideActionMenu && actionResult === "approved" && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-green-50 text-green-700 border border-green-200">
+              <Icon icon="mdi:check-circle" width={20} />
+              <span className="text-sm font-medium">Approved</span>
+            </div>
+          )}
+          {hideActionMenu && actionResult === "rejected" && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 text-red-700 border border-red-200">
+              <Icon icon="mdi:close-circle" width={20} />
+              <span className="text-sm font-medium">Rejected</span>
+            </div>
+          )}
         </div>
 
         <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0 relative">
@@ -361,7 +423,23 @@
 
           {/* right side buttons */}
           <div className="flex items-center gap-[10px] relative">
-            <StatusBtn isActive={!!item?.status} />
+            {/* {item?.approval_status} */}
+            {item?.approval_status === 1 && (
+  <span className="px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
+    Approved
+  </span>
+)}
+{item?.approval_status === 2 && (
+  <span className="px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-700">
+    Pending
+  </span>
+)}
+{item?.approval_status === 3 && (
+  <span className="px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
+    Rejected
+  </span>
+)}
+
           </div>
         </ContainerCard>
 
@@ -396,7 +474,13 @@
                 rows={3}
               ></textarea>
               <div className="flex justify-end gap-3">
-                <button onClick={() => setShowRejectPopup(false)} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                <button
+                  onClick={() => {
+                    setShowRejectPopup(false);
+                    setHideActionMenu(false);
+                  }}
+                  className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+                >
                   Cancel
                 </button>
                 <button

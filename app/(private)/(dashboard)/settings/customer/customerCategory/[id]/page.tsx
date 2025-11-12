@@ -9,6 +9,8 @@ import {
   channelList,
   genearateCode,
   saveFinalCode,
+  getCustomerCategoryById,
+  updateCustomerCategory,
 } from "@/app/services/allApi";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
@@ -18,7 +20,7 @@ import { useFormik } from "formik";
 import Link from "next/link";
 import { useEffect, useState, useRef } from "react";
 import * as Yup from "yup";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 interface OutletChannel {
   id: number;
@@ -36,6 +38,11 @@ export default function AddCustomerCategory() {
   const codeGeneratedRef = useRef(false);
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
+  const params = useParams();
+  const id = params?.id
+    ? (Array.isArray(params.id) ? params.id[0] : (params.id as string))
+    : "";
+  const isEditMode = Boolean(id);
 
   useEffect(() => {
     const fetchOutletChannels = async () => {
@@ -54,6 +61,31 @@ export default function AddCustomerCategory() {
     };
     fetchOutletChannels();
   }, []);
+
+  // Fetch existing category when in edit mode
+  useEffect(() => {
+    if (!isEditMode) return;
+    (async () => {
+      try {
+        const res = await getCustomerCategoryById(id);
+        const data = res?.data || res; // handle either shape
+        if (data) {
+          // populate form values (convert to strings for selects/radios)
+          formik.setValues({
+            outlet_channel_id: data.outlet_channel_id ? String(data.outlet_channel_id) : "",
+            customer_category_name: data.customer_category_name || "",
+            status: data.status !== undefined && data.status !== null ? String(data.status) : "1",
+            customer_category_code: data.customer_category_code || "",
+          });
+          // keep code in state helpers as well
+          setCode(data.customer_category_code || "");
+        }
+      } catch (e) {
+        console.error("Failed to fetch customer category by id", e);
+        showSnackbar("Unable to load Customer Category", "error");
+      }
+    })();
+  }, [isEditMode, id]);
 
   const formik = useFormik({
     initialValues: {
@@ -76,19 +108,29 @@ export default function AddCustomerCategory() {
           status: Number(values.status),
           customer_category_code: values.customer_category_code,
         };
-        const res = await addCustomerCategory(payload);
-        if (!res.error) {
-          try {
-            await saveFinalCode({
-              reserved_code: values.customer_category_code,
-              model_name: "customer_categories",
-            });
-          } catch (e) {}
-          showSnackbar("Customer category added successfully ✅", "success");
-          resetForm();
-          router.push("/settings/customer/customerCategory");
+        if (isEditMode) {
+          const res = await updateCustomerCategory(id, payload);
+          if (!res?.error) {
+            showSnackbar("Customer category updated successfully ✅", "success");
+            router.push("/settings/customer/customerCategory");
+          } else {
+            showSnackbar(res?.data?.message || "Failed to update customer category ❌", "error");
+          }
         } else {
-          showSnackbar("Failed to add customer category ❌", "error");
+          const res = await addCustomerCategory(payload);
+          if (!res.error) {
+            try {
+              await saveFinalCode({
+                reserved_code: values.customer_category_code,
+                model_name: "customer_categories",
+              });
+            } catch (e) {}
+            showSnackbar("Customer category added successfully ✅", "success");
+            resetForm();
+            router.push("/settings/customer/customerCategory");
+          } else {
+            showSnackbar("Failed to add customer category ❌", "error");
+          }
         }
       } catch (error) {
         console.error("❌ Add Customer Category failed", error);
@@ -99,6 +141,7 @@ export default function AddCustomerCategory() {
 
   // Generate code on mount (add mode only)
   useEffect(() => {
+    if (isEditMode) return; // skip generation in edit mode
     if (!codeGeneratedRef.current) {
       codeGeneratedRef.current = true;
       (async () => {
@@ -109,14 +152,10 @@ export default function AddCustomerCategory() {
         }
         if (res?.prefix) {
           setPrefix(res.prefix);
-        } else if (res?.code) {
-          // fallback: extract prefix from code if possible (e.g. ABC-00123 => ABC-)
-          const match = res.prefix;
-          if (match) setPrefix(prefix);
         }
       })();
     }
-  }, []);
+  }, [isEditMode]);
 
   return (
     <>
@@ -126,7 +165,7 @@ export default function AddCustomerCategory() {
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[5px]">
-            Add Customer Category
+            {isEditMode ? "Edit Customer Category" : "Add Customer Category"}
           </h1>
         </div>
       </div>
@@ -134,7 +173,7 @@ export default function AddCustomerCategory() {
       <form onSubmit={formik.handleSubmit}>
         <ContainerCard>
           <h2 className="text-lg font-semibold mb-6">
-            Customer Category Details
+            {isEditMode ? "Edit Customer Category" : "Customer Category Details"}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Customer Category Code (auto-generated, disabled, with settings icon/popup) */}
@@ -150,27 +189,31 @@ export default function AddCustomerCategory() {
                   formik.errors.customer_category_code
                 }
               />
-              <IconButton
-                bgClass="white"
-                 className="  cursor-pointer text-[#252B37] pt-12"
-                icon="mi:settings"
-                onClick={() => setIsOpen(true)}
-              />
-              <SettingPopUp
-                isOpen={isOpen}
-                onClose={() => setIsOpen(false)}
-                title="Customer Category Code"
-                prefix={prefix}
-                setPrefix={setPrefix}
-                onSave={(mode, code) => {
-                  setCodeMode(mode);
-                  if (mode === "auto" && code) {
-                    formik.setFieldValue("customer_category_code", code);
-                  } else if (mode === "manual") {
-                    formik.setFieldValue("customer_category_code", "");
-                  }
-                }}
-              />
+              {!isEditMode && (
+                <IconButton
+                  bgClass="white"
+                  className="  cursor-pointer text-[#252B37] pt-12"
+                  icon="mi:settings"
+                  onClick={() => setIsOpen(true)}
+                />
+              )}
+              {!isEditMode && (
+                <SettingPopUp
+                  isOpen={isOpen}
+                  onClose={() => setIsOpen(false)}
+                  title="Customer Category Code"
+                  prefix={prefix}
+                  setPrefix={setPrefix}
+                  onSave={(mode, code) => {
+                    setCodeMode(mode);
+                    if (mode === "auto" && code) {
+                      formik.setFieldValue("customer_category_code", code);
+                    } else if (mode === "manual") {
+                      formik.setFieldValue("customer_category_code", "");
+                    }
+                  }}
+                />
+              )}
             </div>
 
             <InputFields
@@ -224,10 +267,11 @@ export default function AddCustomerCategory() {
             Cancel
           </button>
           <SidebarBtn
-            label="Submit"
+            label={isEditMode ? "Update" : "Submit"}
             isActive={true}
-            leadingIcon="mdi:check"
+            leadingIcon={isEditMode ? "mdi:content-save-edit" : "mdi:check"}
             type="submit"
+            disabled={formik.isSubmitting}
           />
         </div>
       </form>

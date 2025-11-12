@@ -153,7 +153,7 @@ export default function AddEditSubRegion() {
         validationSchema={SubRegionSchema}
         onSubmit={handleSubmit}
       >
-        {({ handleSubmit, values, setFieldValue, errors, touched }) => (
+        {({ handleSubmit, values, setFieldValue, errors, touched,isSubmitting }) => (
           <Form onSubmit={handleSubmit}>
             <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
               <div className="p-6">
@@ -275,10 +275,12 @@ export default function AddEditSubRegion() {
                 Cancel
               </button>
               <SidebarBtn
-                label={isEditMode ? "Update" : "Submit"}
+                label={isEditMode ? ( isSubmitting?"Updating..":"Update") : (isSubmitting?"Submitting..":"Submit")}
                 isActive={true}
                 leadingIcon="mdi:check"
                 type="submit"
+                disabled={isSubmitting}
+
               />
             </div>
           </Form>

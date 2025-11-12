@@ -79,6 +79,7 @@ export default function CreateUpdate({
                 res = await createItemSubCategory(
                     parseInt(values.category_id),
                     values.sub_category_name,
+                    values.sub_category_code,
                     values.status === "1" ? 1 : 0
                 );
                 if (!res.error) {
@@ -90,6 +91,7 @@ export default function CreateUpdate({
                     parseInt(values.category_id),
                     updateItemCategoryData?.id || 0,
                     values.sub_category_name,
+                    values.sub_category_code,
                     values.status === "1" ? 1 : 0
                 );
             }

@@ -169,6 +169,7 @@ export default function Category() {
                                             category_code: data.category_code,
                                             category_name: data.category_name,
                                             status: data.status,
+                                            category_code: data.category_code,
                                         });
                                     },
                                 },

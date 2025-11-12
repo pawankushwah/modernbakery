@@ -17,7 +17,6 @@ import { categoryType } from "./page";
 import { useState, useRef, useEffect } from "react";
 
 export default function CreateUpdate({
-
     type,
     updateItemCategoryData,
     onClose,
@@ -207,6 +206,26 @@ export default function CreateUpdate({
 
                 </div>
 
+                <InputFields
+                    required
+                    label="Status"
+                    name="status"
+                    value={String(formik.values.status)}
+                    options={[
+                        { value: "1", label: "Active" },
+                        { value: "0", label: "Inactive" },
+                    ]}
+                    onChange={(e) => formik.setFieldValue("status", e.target.value)}
+                    type="radio"
+                    error={
+                        formik.touched.status && formik.errors.status
+                            ? formik.errors.status
+                            : false
+                    }
+                />
+                {formik.touched.status && formik.errors.status ? (
+                    <span className="text-xs text-red-500">{formik.errors.status}</span>
+                ) : null}
                 <InputFields
                     required
                     label="Status"

@@ -200,6 +200,7 @@ export default function OrderDetailPage() {
     if (netTotal > 0 && vatTotal > 0) {
       return netTotal - vatTotal;
     }
+    
     return 0;
   })();
 
