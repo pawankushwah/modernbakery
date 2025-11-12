@@ -13,6 +13,8 @@ import {
   regionList,
   routeList,
   saveRouteVisit,
+  merchandiserData,
+  getCustomerByMerchandiser,
   subRegionList,
   updateRouteVisitDetails,
   warehouseList
@@ -65,6 +67,7 @@ type Customer = {
 
 type RouteVisitDetails = {
   customer_type: string;
+  merchandiser_id: string;
   region: Region[];
   area: Area[];
   warehouse: Warehouse[];
@@ -127,6 +130,7 @@ export default function AddEditRouteVisit() {
   );
   const [routeOptions, setRouteOptions] = useState<DropdownOption[]>([]);
   const [companyOptions, setCompanyOptions] = useState<DropdownOption[]>([]);
+  const [merchandiserOptions, setMerchandiserOptions] = useState<DropdownOption[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerSchedules, setCustomerSchedules] = useState<CustomerSchedules>(
     {}
@@ -140,10 +144,12 @@ export default function AddEditRouteVisit() {
     warehouse: false,
     area: false,
     company: false,
+    merchandiser: false,
   });
 
   const [form, setForm] = useState({
     salesman_type: "1",
+    merchandiser: "",
     region: [] as string[],
     area: [] as string[],
     warehouse: [] as string[],
@@ -214,6 +220,33 @@ export default function AddEditRouteVisit() {
     }),
   ];
 
+  // Build dynamic schema for step 1 based on salesman_type
+  const getStep1Schema = (salesmanType: string) => {
+    if (salesmanType === "2") {
+      // Merchandiser: require merchandiser, company, region
+      return yup.object().shape({
+        merchandiser: yup.string().required("Merchandiser is required"),
+        company: yup.array().of(yup.string()).min(1, "At least one company is required"),
+        region: yup.array().of(yup.string()).min(1, "At least one region is required"),
+        from_date: validationSchema.fields.from_date,
+        to_date: validationSchema.fields.to_date,
+        status: validationSchema.fields.status,
+      });
+    }
+
+    // Agent customer (default) - require company, region, area, warehouse, route
+    return yup.object().shape({
+      company: yup.array().of(yup.string()).min(1, "At least one company is required"),
+      region: yup.array().of(yup.string()).min(1, "At least one region is required"),
+      area: yup.array().of(yup.string()).min(1, "At least one area is required"),
+      warehouse: yup.array().of(yup.string()).min(1, "At least one warehouse is required"),
+      route: yup.array().of(yup.string()).min(1, "At least one route is required"),
+      from_date: validationSchema.fields.from_date,
+      to_date: validationSchema.fields.to_date,
+      status: validationSchema.fields.status,
+    });
+  };
+
   // ✅ Fetch dropdowns
   const loadDropdownData = async () => {
     try {
@@ -228,6 +261,20 @@ export default function AddEditRouteVisit() {
         })) || []
       );
       setSkeleton({ ...skeleton, company: false });
+      // Fetch merchandiser list for merchandiser dropdown
+      try {
+        const merchRes: ApiResponse<any[]> = await merchandiserData();
+        const merchOpts = (merchRes?.data || merchRes || []) as any[];
+        setMerchandiserOptions(
+          merchOpts.map((m) => ({
+            value: String(m.id),
+            label: `${m?.osa_code ? `${m.osa_code} - ` : ""}${m?.name || m?.full_name || m?.label || String(m.id)}`,
+          })) || []
+        );
+      } catch (mErr) {
+        console.error("Failed to load merchandiser data:", mErr);
+        setMerchandiserOptions([]);
+      }
       !isEditMode && setLoading(false);
     } catch {
       showSnackbar("Failed to load dropdown data", "error");
@@ -261,12 +308,11 @@ export default function AddEditRouteVisit() {
           typeof backendStatus
         );
 
-        // Convert status to string for the form, but ensure it matches your radio options
         const statusValue = backendStatus === 0 ? "0" : "1";
 
-        // Set form values based on API response
         setForm({
           salesman_type: existing.customer_type || "1",
+          merchandiser:String(existing.merchandiser_id),
           region: existing.region?.map((r: Region) => String(r.id)) || [],
           area: existing.area?.map((a: Area) => String(a.id)) || [],
           warehouse:
@@ -279,10 +325,8 @@ export default function AddEditRouteVisit() {
           status: statusValue, // ✅ Use the properly converted value
         });
 
-        // Set customer type for fetching customers
         setSelectedCustomerType(existing.customer_type || "1");
 
-        // Create customer schedule from the API response
         if (existing.customer && existing.customer.id) {
           const schedule: CustomerSchedules = {
             [existing.customer.id]: {
@@ -298,18 +342,7 @@ export default function AddEditRouteVisit() {
           setCustomerSchedules(schedule);
         }
 
-        console.log("Form set with values:", {
-          salesman_type: existing.customer_type,
-          region: existing.region?.map((r: Region) => String(r.id)),
-          area: existing.area?.map((a: Area) => String(a.id)),
-          warehouse: existing.warehouse?.map((w: Warehouse) => String(w.id)),
-          route: existing.route?.map((r: Route) => String(r.id)),
-          company: existing.companies?.map((c: Company) => String(c.id)),
-          days: existing.days,
-          from_date: formatDate(existing.from_date),
-          to_date: formatDate(existing.to_date),
-          status: statusValue, // ✅ Log the correct value
-        });
+       
       } else {
         showSnackbar("Route visit not found", "error");
       }
@@ -317,12 +350,12 @@ export default function AddEditRouteVisit() {
       console.error("Error loading visit data:", error);
       showSnackbar("Failed to fetch route visit details", "error");
     } finally {
-      // setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    const fetchCustomers = async () => {
+    const fetchCustomersForAgent = async () => {
       try {
         let res: ApiResponse<Customer[]> | null = null;
         if (isEditMode) {
@@ -330,19 +363,44 @@ export default function AddEditRouteVisit() {
         } else {
           res = await agentCustomerFilteredList({ type: form.salesman_type });
         }
-
-        console.log("Fetched customers:", res);
+        console.log("Fetched customers (agent):", res);
         setCustomers((res && res.data) || []);
       } catch (error) {
-        console.error("Error fetching customers:", error);
+        console.error("Error fetching agent customers:", error);
         setCustomers([]);
       }
     };
 
-    if (form.salesman_type) {
-      fetchCustomers();
+    const fetchCustomersForMerchandiser = async (merchId?: string) => {
+      if (!merchId) {
+        setCustomers([]);
+        return;
+      }
+      try {
+        const normalizedId = String(merchId)
+          .trim()
+          .replace(/\\\\/g, "")
+          .replace(/^"+|"+$/g, "")
+          .replace(/^'+|'+$/g, "");
+        const res = await getCustomerByMerchandiser(normalizedId);
+        console.log("Fetched customers (merchandiser):", res);
+        // API might return array or { data: [] }
+        const list = (res && (Array.isArray(res) ? res : (res.data || []))) as Customer[];
+        setCustomers(list || []);
+      } catch (error) {
+        console.error("Error fetching merchandiser customers:", error);
+        setCustomers([]);
+      }
+    };
+
+    if (form.salesman_type === "2") {
+      // Merchandiser path: fetch merchandiser-specific customers when a merchandiser is selected
+      fetchCustomersForMerchandiser(form.merchandiser);
+    } else if (form.salesman_type) {
+      // Agent customer path
+      fetchCustomersForAgent();
     }
-  }, [form.salesman_type]);
+  }, [form.salesman_type, form.merchandiser, form.company, form.region, isEditMode]);
 
   // ✅ When Company changes → Fetch Regions
   useEffect(() => {
@@ -497,6 +555,11 @@ export default function AddEditRouteVisit() {
       console.log(value);
       setSelectedCustomerType(value[0] || "");
       setForm((prev) => ({ ...prev, [field]: value[0] || "" }));
+    } else if (field === "merchandiser") {
+      // Merchandiser is a single-select logically; normalize to a string id
+      const raw = Array.isArray(value) ? value[0] : value;
+      const normalized = raw == null ? "" : String(raw).trim().replace(/^\"|\"$/g, "");
+      setForm((prev) => ({ ...prev, merchandiser: normalized }));
     } else {
       setForm((prev) => ({
         ...prev,
@@ -519,8 +582,16 @@ export default function AddEditRouteVisit() {
   // ✅ Step navigation
   const handleNext = async () => {
     try {
-      const schema = stepSchemas[currentStep - 1];
-      await schema.validate(form, { abortEarly: false });
+      let schema: any;
+      if (currentStep === 1) {
+        schema = getStep1Schema(form.salesman_type);
+      } else if (currentStep === 2) {
+        schema = yup.object().shape({ salesman_type: validationSchema.fields.salesman_type });
+      }
+
+      if (schema) {
+        await schema.validate(form, { abortEarly: false });
+      }
       markStepCompleted(currentStep);
       nextStep();
       setErrors({});
@@ -583,7 +654,7 @@ export default function AddEditRouteVisit() {
       setSubmitting(true);
 
       // ✅ Build payload in correct format
-      const payload = {
+      const payload: Record<string, unknown> = {
         customer_type: Number(form.salesman_type),
         customers: formattedSchedules.map((schedule) => ({
           customer_id: Number(schedule.customer_id),
@@ -598,6 +669,12 @@ export default function AddEditRouteVisit() {
           status: Number(form.status),
         })),
       };
+
+      // If salesman type is Merchandiser, include selected merchandiser id in payload
+      if (form.salesman_type === "2" && form.merchandiser) {
+        const merchId = String(form.merchandiser).trim().replace(/^"+|"+$/g, "");
+        payload.merchandiser_id = Number(merchId);
+      }
 
       console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
@@ -678,7 +755,6 @@ export default function AddEditRouteVisit() {
                 />
               </div>
  {/* {!isEditMode && ( */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                   {/* Salesman Type */}
                   <div>
                     <InputFields
@@ -698,7 +774,29 @@ export default function AddEditRouteVisit() {
                       error={errors.salesman_type}
                     />
                   </div>
-                </div>
+
+                  {/* Merchandiser select shown when Salesman Type = Merchandiser */}
+                  {form.salesman_type === "2" && (
+                    <div>
+                      <InputFields
+                        required
+                        label="Merchandiser"
+                        value={form.merchandiser}
+                        // InputFields is single-select here; normalize value to string
+                        onChange={(e) => {
+                          const raw = (e as any).target?.value;
+                          const val = Array.isArray(raw) ? raw[0] : raw;
+                          const normalized = val == null ? "" : String(val).trim().replace(/^"+|"+$/g, "");
+                          setForm((prev) => ({ ...prev, merchandiser: normalized }));
+                        }}
+                        showSkeleton={skeleton.merchandiser}
+                        options={merchandiserOptions}
+                        isSingle={true}
+                        error={errors.merchandiser}
+                      />
+                     
+                    </div>
+                  )}
               {/* )} */}
               {/* Company - Multi Select */}
               <div>
@@ -740,6 +838,7 @@ export default function AddEditRouteVisit() {
               </div>
 
               {/* Area - Multi Select */}
+              {form.salesman_type !== "2" && (
               <div>
                 <InputFields
                   required
@@ -758,8 +857,10 @@ export default function AddEditRouteVisit() {
                   error={errors.area}
                 />
               </div>
+              )}
 
               {/* Warehouse - Multi Select */}
+              {form.salesman_type !== "2" && (
               <div>
                 <InputFields
                   required
@@ -778,8 +879,10 @@ export default function AddEditRouteVisit() {
                   error={errors.warehouse}
                 />
               </div>
+              )}
 
               {/* Route - Multi Select */}
+              {form.salesman_type !== "2" && (
               <div>
                 <InputFields
                   required
@@ -798,6 +901,7 @@ export default function AddEditRouteVisit() {
                   error={errors.route}
                 />
               </div>
+              )}
 
               {/* Status */}
               <div>

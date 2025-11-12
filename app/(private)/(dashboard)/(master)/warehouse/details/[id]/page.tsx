@@ -950,7 +950,7 @@ function getRandomNumber(count:number) {
                 columnName?: string
             ): Promise<searchReturnType> => {
                 const result = await warehouseReturn({warehouse_id:id,
-                    name: searchQuery,
+                    query: searchQuery,
                 });
                 
                 if (result.error) {
@@ -973,7 +973,7 @@ function getRandomNumber(count:number) {
                 columnName?: string
             ): Promise<searchReturnType> => {
                 const result = await warehouseSales({warehouse_id:id,
-                    name: searchQuery,
+                    query: searchQuery,
                 });
                 
                 if (result.error) {

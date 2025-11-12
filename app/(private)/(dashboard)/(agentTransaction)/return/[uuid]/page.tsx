@@ -9,7 +9,7 @@ import { useRouter, useParams } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { createReturn, deliveryByUuid, updateDelivery } from "@/app/services/agentTransaction";
+import { createReturn, deliveryByUuid, updateDelivery,returnType ,reasonList} from "@/app/services/agentTransaction";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
@@ -21,6 +21,24 @@ interface Uom {
   id: string;
   name?: string;
   price?: string;
+  uom_price?: string | number;
+}
+
+// Typed shape for reason API responses
+interface Reason {
+  id?: number | string;
+  reson?: string;
+  return_reason?: string;
+  return_type?: string;
+  reason?: string;
+}
+
+// Raw item UOM shape from different API shapes
+interface ItemUomRaw {
+  id?: number | string;
+  name?: string;
+  uom_price?: string | number;
+  price?: string | number;
 }
 
 interface DeliveryDetail {
@@ -62,6 +80,8 @@ interface DeliveryResponse {
 
 export default function OrderAddEditPage() {
   const { warehouseOptions, agentCustomerOptions, companyCustomersOptions, itemOptions, fetchAgentCustomerOptions, routeOptions } = useAllDropdownListData();
+  const [returnTypeOptions, setReturnTypeOptions] = useState<{ label: string; value: string }[]>([]);
+  const [goodReasonOptions, setGoodReasonOptions] = useState<{ label: string; value: string }[]>([]);
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const router = useRouter();
@@ -81,15 +101,7 @@ export default function OrderAddEditPage() {
     route: "",
     route_name: "",
   });
-  // store warehouse display name separately so we can keep id for payload
-  // and show name in AutoSuggestion initialValue
-  // we keep backward compatible shape by adding warehouse_name
-  // (not included in validation schema as id is still used)
-  // Note: other code continues to use form.warehouse (id)
-  // while UI shows form.warehouse_name
-  // initialize warehouse_name
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
+
   form.warehouse_name = form.warehouse_name || "";
   const goodOptions = [{ label: "Near By Expiry", value: "0" },
   { label: "Package Issue", value: "1" },
@@ -102,6 +114,7 @@ export default function OrderAddEditPage() {
 
   // Store UOM options for each row
   const [rowUomOptions, setRowUomOptions] = useState<Record<string, { value: string; label: string; price?: string }[]>>({});
+  const [rowReasonOptions, setRowReasonOptions] = useState<Record<string, { label: string; value: string }[]>>({});
 
   const [itemData, setItemData] = useState([
     {
@@ -111,12 +124,54 @@ export default function OrderAddEditPage() {
       UOM: "",
       uom_id: "",
       Price: "",
+      Total: "0.00",
       Quantity: "1",
       return_type: "",
       return_reason: "",
     },
   ]);
-
+useEffect(() => {
+    // Fetch reason list on component mount
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await returnType();
+        if (res && Array.isArray(res.data)) {
+          const list = res.data as Reason[];
+          const options = list.map((reason: Reason) => ({
+                label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+            value: String(reason.id),
+          }));
+          setReturnTypeOptions(options);
+        }
+      } catch (error) {
+        console.error("Failed to fetch reason list:", error);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+useEffect(() => {
+    // Fetch reason list on component mount
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await reasonList();
+        if (res && Array.isArray(res.data)) {
+          const list = res.data as Reason[];
+          const options = list.map((reason: Reason) => ({
+                label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+            value: String(reason.id),
+          }));
+          setGoodReasonOptions(options);
+        }
+      } catch (error) {
+        console.error("Failed to fetch reason list:", error);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
   // Fetch delivery data in edit mode
   useEffect(() => {
     if (isEditMode && uuid && itemOptions.length > 0) {
@@ -200,12 +255,42 @@ export default function OrderAddEditPage() {
                 uom_id: uomId,
                 Price: matchedPrice,
                 Quantity: (detail?.quantity ?? 1).toString(),
+                Total: ((Number(matchedPrice) || 0) * Number(detail?.quantity ?? 0)).toFixed(2),
                 return_type: detail?.return_type || "",
                 return_reason: detail?.return_reason || "",
               };
             });
 
             setItemData(loadedItemData);
+            // Fetch reason lists for any preloaded rows that have a return_type
+            (async () => {
+              try {
+                const promises = loadedItemData.map(async (d, idx) => {
+                  const rt = d.return_type;
+                  if (!rt) return null;
+                  try {
+                    const res = await reasonList({ return_id: rt });
+                    const list = Array.isArray(res?.data) ? (res.data as Reason[]) : (Array.isArray(res) ? (res as Reason[]) : []);
+                    const options = list.map((reason: Reason) => ({
+                        label: reason.reson || reason.return_reason || reason.return_type || String(reason.id),
+                      value: String(reason.id),
+                    }));
+                    return { idx: idx.toString(), options };
+                  } catch (err) {
+                    return { idx: idx.toString(), options: [] };
+                  }
+                });
+
+                const results = await Promise.all(promises);
+                const map: Record<string, { label: string; value: string }[]> = {};
+                results.forEach((r) => {
+                  if (r && r.idx) map[r.idx] = r.options;
+                });
+                if (Object.keys(map).length > 0) setRowReasonOptions((prev) => ({ ...prev, ...map }));
+              } catch (err) {
+                console.error('Failed to preload reason lists for rows', err);
+              }
+            })();
           }
         } catch (error) {
           console.error("Error fetching delivery data:", error);
@@ -246,7 +331,7 @@ export default function OrderAddEditPage() {
       (async () => {
         try {
           setLoading(true);
-          const res = await genearateCode({ model_name: "return" });
+          const res = await genearateCode({ model_name: "agent_returns" });
           if (res?.code) {
             setCode(res.code);
           }
@@ -284,6 +369,11 @@ export default function OrderAddEditPage() {
     const newData = [...itemData];
     const item = newData[index];
     item[field as keyof typeof item] = value;
+    // Recompute total as Price * Quantity whenever either changes
+    const priceNum = Number(item.Price) || 0;
+    const qtyNum = Number(item.Quantity) || 0;
+    // store as string to keep consistency with the rest of the row fields
+    item.Total = (priceNum * qtyNum).toFixed(2);
     setItemData(newData);
   };
 
@@ -297,6 +387,7 @@ export default function OrderAddEditPage() {
         UOM: "",
         uom_id: "",
         Price: "",
+        Total: "",
         Quantity: "1",
         return_type: "",
         return_reason: "",
@@ -314,6 +405,7 @@ export default function OrderAddEditPage() {
           UOM: "",
           uom_id: "",
           Price: "",
+          Total: "",
           Quantity: "1",
           return_type: "",
           return_reason: "",
@@ -331,6 +423,7 @@ export default function OrderAddEditPage() {
     return {
       warehouse_id: Number(form.warehouse),
       customer_id: Number(form.customer),
+      osa_code: code,
       customer_type: Number(form.customer_type),
       route_id: Number(form.route),
       details: itemData
@@ -340,6 +433,7 @@ export default function OrderAddEditPage() {
           uom_id: Number(item.uom_id),
           item_price: Number(item.Price) || 0,
           item_quantity: Number(item.Quantity) || 0,
+          item_total: Number(parseFloat(String(item.Total)) || 0),
           return_type: item.return_type,
           return_reason: item.return_reason,
         })),
@@ -388,7 +482,7 @@ export default function OrderAddEditPage() {
       // Save the generated code after successful creation (add mode only)
       if (!isEditMode && code) {
         try {
-          await saveFinalCode({ reserved_code: code, model_name: "return" });
+          await saveFinalCode({ reserved_code: code, model_name: "agent_returns" });
         } catch (e) {
           // Don't block success flow if saving the final code fails
           console.error("Failed to save final code:", e);
@@ -528,7 +622,7 @@ export default function OrderAddEditPage() {
           const agent = customer as AgentCustomer;
           return {
             value: String(agent.id),
-            label: `${agent.osa_code || ""} - ${agent.outlet_name || ""}`,
+            label: `${agent.osa_code || ""} - ${agent.name || ""}`,
             name: agent.outlet_name || agent.customer_name || agent.name || '',
           };
         }
@@ -549,19 +643,26 @@ export default function OrderAddEditPage() {
         name?: string;
         uom?: Uom[];
         uoms?: Uom[];
+        item_uoms?: ItemUomRaw[];
       }
       interface Uom {
         id: string;
         name?: string;
         price?: string;
       }
-      return data.map((item: Item) => ({
-        value: String(item.id),
-        label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
-        code: item.item_code || item.code,
-        name: item.name,
-        uoms: item.uom || item.uoms || [],
-      }));
+      return data.map((item: Item) => {
+        const itemRecord = item as Item;
+        return {
+          value: String(item.id),
+          label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
+          code: item.item_code || item.code,
+          name: item.name,
+          // include possible shapes from API: item_uoms, uom, uoms
+          uoms: Array.isArray(itemRecord.item_uoms)
+            ? itemRecord.item_uoms.map((u: ItemUomRaw) => ({ id: String(u.id ?? ''), name: String(u.name ?? ''), price: String(u.uom_price ?? u.price ?? '') }))
+            : (item.uom || item.uoms || []),
+        };
+      });
     } catch {
       return [];
     }
@@ -692,6 +793,7 @@ export default function OrderAddEditPage() {
                       placeholder="Search item..."
                       initialValue={row.itemLabel}
                       onSearch={handleItemSearch}
+                      disabled={!form.customer_name}
                       onSelect={async (option: { value: string; label: string; uoms?: Uom[] }) => {
                         const selectedItemId = option.value;
                         const newData = [...itemData];
@@ -720,7 +822,7 @@ export default function OrderAddEditPage() {
                               if (Array.isArray(rawUoms) && rawUoms.length > 0) {
                                 uoms = rawUoms.map((u) => {
                                   const uu = u as Record<string, unknown>;
-                                  return { id: String(uu['id'] ?? ''), name: String(uu['name'] ?? ''), price: uu['price'] as string | number | undefined } as Uom;
+                                  return { id: String(uu['id'] ?? ''), name: String(uu['name'] ?? ''), price: String(uu['uom_price'] ?? uu['price'] ?? '') } as Uom;
                                 });
                               }
                             }
@@ -731,7 +833,7 @@ export default function OrderAddEditPage() {
                         }
 
                         if (uoms && uoms.length > 0) {
-                          const uomOpts = uoms.map((uom: Uom) => ({ value: uom.id || "", label: uom.name || "", price: uom.price || "0" }));
+                          const uomOpts = uoms.map((uom: Uom) => ({ value: String(uom.id || ""), label: uom.name || "", price: String(uom.uom_price ?? uom.price ?? "0") }));
                           setRowUomOptions(prev => ({ ...prev, [row.idx]: uomOpts }));
 
                           // Auto-select first UOM and store friendly label for display
@@ -740,6 +842,7 @@ export default function OrderAddEditPage() {
                             newData[index].uom_id = firstUom.value;
                             newData[index].UOM = firstUom.label;
                             newData[index].Price = String(firstUom.price ?? "");
+                            newData[index].Total = ((Number(firstUom.price) || 0) * (Number(newData[index].Quantity) || 0)).toFixed(2);
                           }
                         } else {
                           setRowUomOptions(prev => {
@@ -750,19 +853,20 @@ export default function OrderAddEditPage() {
                           newData[index].uom_id = "";
                           newData[index].UOM = "";
                           newData[index].Price = "";
+                          newData[index].Total = "0.00";
                         }
 
                         setItemData(newData);
-                        recalculateItem(index, "itemName", selectedItemId);
                       }}
                       onClear={() => {
                         const newData = [...itemData];
                         const index = Number(row.idx);
-                        newData[index].item_id = "";
+                          newData[index].item_id = "";
                         newData[index].itemName = "";
                         newData[index].itemLabel = "";
                         newData[index].uom_id = "";
                         newData[index].UOM = "";
+                        newData[index].Total = "0.00";
                         setRowUomOptions(prev => {
                           const newOpts = { ...prev };
                           delete newOpts[row.idx];
@@ -796,9 +900,9 @@ export default function OrderAddEditPage() {
                           newData[index].uom_id = selectedUomId;
                           newData[index].UOM = selectedUom?.label ?? selectedUomId;
                           newData[index].Price = String(selectedUom?.price ?? "");
-
+                          // compute total immediately from updated price and existing qty
+                          newData[index].Total = ((Number(newData[index].Price) || 0) * (Number(newData[index].Quantity) || 0)).toFixed(2);
                           setItemData(newData);
-                          recalculateItem(index, "UOM", selectedUomId);
                         }}
                       />
                     </div>
@@ -826,6 +930,20 @@ export default function OrderAddEditPage() {
                 ),
               },
               {
+                key: "Price",
+                label: "Price",
+                 render: (row) => <span>{Number(row.Price || 0).toFixed(2)}</span>
+              },
+              {
+                key: "Total",
+                label: "Total",
+                render: (row) => (
+                  
+                    <span > {Number(row.Total || 0).toFixed(2)}</span>
+                ),
+              },
+
+              {
                 key: "return_type",
                 label: "Return Type",
                 width: 100,
@@ -835,10 +953,7 @@ export default function OrderAddEditPage() {
                       label=""
                       name="return_type"
                       value={row.return_type}
-                      options={[
-                        { label: "Good", value: "1" },
-                        { label: "Bad", value: "2" },
-                      ]}
+                      options={returnTypeOptions}
                       disabled={!row.item_id}
                       onChange={(e) => {
                         const value = e.target.value;
@@ -848,6 +963,21 @@ export default function OrderAddEditPage() {
                         // Reset return_reason when type changes
                         newData[index].return_reason = "";
                         setItemData(newData);
+                        // Fetch reason list for this return type and row
+                        (async () => {
+                          try {
+                            const res = await reasonList({ return_id: value });
+                            const list = Array.isArray(res?.data) ? (res.data as Reason[]) : (Array.isArray(res) ? (res as Reason[]) : []);
+                            const options = list.map((reason: Reason) => ({
+                              label: reason.reson || reason.return_reason || reason.reason || reason.return_type || String(reason.id),
+                              value: String(reason.id),
+                            }));
+                            setRowReasonOptions(prev => ({ ...prev, [row.idx]: options }));
+                          } catch (err) {
+                            console.error('Failed to fetch reasons for return type', value, err);
+                            setRowReasonOptions(prev => ({ ...prev, [row.idx]: [] }));
+                          }
+                        })();
                       }}
                     />
                   </div>
@@ -858,7 +988,10 @@ export default function OrderAddEditPage() {
                 label: "Return Reason",
                 width: 200,
                 render: (row) => {
-                  const options = row.return_type === "1" ? goodOptions : row.return_type === "2" ? badOptions : [];
+                  // Prefer fetched reason options for the specific row, fall back to static lists
+                  const fetched = rowReasonOptions[row.idx] || [];
+                  const fallback = row.return_type === "1" ? goodOptions : row.return_type === "2" ? badOptions : [];
+                  const options = fetched.length > 0 ? fetched : fallback;
                   return (
                     <div style={{ minWidth: '200px', maxWidth: '200px' }}>
                       <InputFields

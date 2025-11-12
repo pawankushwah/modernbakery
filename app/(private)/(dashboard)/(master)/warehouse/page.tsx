@@ -51,7 +51,7 @@ type WarehouseRow = TableDataType & {
 const columns = [
   // { key: "warehouse_code", label: "Warehouse Code", showByDefault: true, render: (row: WarehouseRow) =>(<span className="font-semibold text-[#181D27] text-[14px]">{ row.warehouse_code || "-"}</span>) },
   // { key: "registation_no", label: "Registration No.", render: (row: WarehouseRow) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.registation_no || "-" }</span>)},
-  { key: "warehouse_name", label: "Warehouse Name", showByDefault: true, render: (row: WarehouseRow) => row.warehouse_code + " " + row.warehouse_name || "-" },
+  { key: "warehouse_name", label: "Warehouse Name", showByDefault: true, render: (row: WarehouseRow) => row.warehouse_code + " - " + row.warehouse_name || "-" },
   { key: "owner_name", label: "Owner Name", render: (row: WarehouseRow) => row.owner_name || "-" },
   { key: "owner_number", label: "Owner Contact No.", render: (row: WarehouseRow) => row.owner_number || "-" },
   // { key: "owner_email", label: "Owner Email", render: (row: WarehouseRow) => row.owner_email || "-" },
@@ -251,56 +251,6 @@ export default function Warehouse() {
          }
        };
 
-          //  const statusUpdate = async (
-          //    dataOrIds: WarehouseRow[] | (string | number)[] | undefined,
-          //    selectedRowOrStatus?: number[] | number
-          //  ) => {
-          //    try {
-          //      // normalize to an array of numeric ids and determine status
-          //      if (!dataOrIds || dataOrIds.length === 0) {
-          //        showSnackbar("No warehouses selected", "error");
-          //        return;
-          //      }
-       
-          //      let selectedRowsData: number[] = [];
-          //      let status: number | undefined;
-       
-          //      const first = dataOrIds[0];
-          //      // if first element is an object, treat dataOrIds as WarehouseRow[] and selectedRowOrStatus as selected indexes
-          //      if (typeof first === "object") {
-          //        const data = dataOrIds as WarehouseRow[];
-          //        const selectedRow = selectedRowOrStatus as number[] | undefined;
-          //        if (!selectedRow || selectedRow.length === 0) {
-          //          showSnackbar("No warehouses selected", "error");
-          //          return;
-          //        }
-          //        selectedRowsData = data
-          //          .filter((row: WarehouseRow, index) => selectedRow.includes(index))
-          //          .map((row: WarehouseRow) => Number(row.id));
-          //        status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
-          //      } else {
-          //        // otherwise treat dataOrIds as an array of ids
-          //        const ids = dataOrIds as (string | number)[];
-          //        if (ids.length === 0) {
-          //          showSnackbar("No warehouses selected", "error");
-          //          return;
-          //        }
-          //        selectedRowsData = ids.map((id) => Number(id));
-          //        status = typeof selectedRowOrStatus === "number" ? selectedRowOrStatus : 0;
-          //      }
-       
-          //      if (selectedRowsData.length === 0) {
-          //        showSnackbar("No warehouses selected", "error");
-          //        return;
-          //      }
-       
-          //      await warehouseStatusUpdate({ warehouse_ids: selectedRowsData, status: status ?? 0 });
-          //      setRefreshKey((k) => k + 1);
-          //      showSnackbar("Warehouse status updated successfully", "success");
-          //    } catch (error) {
-          //      showSnackbar("Failed to update warehouse status", "error");
-          //    }
-          //  };
            const statusUpdate = async (ids?: (string | number)[], status: number = 0) => {
              try {
                if (!ids || ids.length === 0) {
