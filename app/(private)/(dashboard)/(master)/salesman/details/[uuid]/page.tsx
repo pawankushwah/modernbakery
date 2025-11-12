@@ -123,14 +123,14 @@ export default function Page() {
       },
     },
     { key: "total_amount", label: "Invoice Total", render: (row: TableDataType) => toInternationalNumber(row.total_amount) },
-    {
-      key: "download", label: "Download", render: (row: TableDataType) => <>
+    // {
+    //   key: "download", label: "Download", render: (row: TableDataType) => <>
 
-        <Icon icon={"materival-symbols:download"} width={24} onClick={() => {
-          exportFile(row.uuid, "csv");
-        }} />
-      </>
-    },
+    //     <Icon icon={"materival-symbols:download"} width={24} onClick={() => {
+    //       exportFile(row.uuid, "csv");
+    //     }} />
+    //   </>
+    // },
 
   ];
 
@@ -363,14 +363,14 @@ export default function Page() {
                   height: 500,
                 },
                 rowSelection: false,
-                // rowActions: [
-                //   {
-                //     icon: "material-symbols:download",
-                //     onClick: (data: TableDataType) => {
-                //       exportFile("csv");
-                //     },
-                //   }
-                // ],
+                rowActions: [
+                  {
+  icon: "material-symbols:download",
+  onClick: (data: TableDataType) => {
+    exportFile(data.uuid, "pdf"); // or "excel", "csv" etc.
+  },
+}
+                ],
                 pageSize: 50,
               }}
             />

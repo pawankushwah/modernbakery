@@ -12,8 +12,9 @@ import {
     routeList,
     deleteRoute,
     routeGlobalSearch,
-    exportRoutesCSV,
     routeStatusUpdate,
+    downloadFile,
+    exportRoutes,
 } from "@/app/services/allApi";
 import DeleteConfirmPopup from "@/app/components/deletePopUp";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -131,7 +132,7 @@ export default function Route() {
     },
 ];
 
-useEffect(() => {
+    useEffect(() => {
         setRefreshKey((k) => k + 1);
     }, [warehouseId]);
 
@@ -232,30 +233,17 @@ useEffect(() => {
         }
     };
 
-    const handleDownloadCSV = async () => {
+    const exportFile = async (format: string) => {
         try {
-            const blob = await exportRoutesCSV({ format: "csv" });
-            if (!blob) {
-                showSnackbar("No file received ❌", "error");
-                return;
+            const response = await exportRoutes({ format });
+            if (response && typeof response === 'object' && response.url) {
+                await downloadFile(response.url);
+                showSnackbar("File downloaded successfully ", "success");
+            } else {
+                showSnackbar("Failed to get download URL", "error");
             }
-
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "routes.csv"; // 👈 downloaded filename
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-
-            showSnackbar("Route exported successfully ✅", "success");
         } catch (error) {
-            console.error("Export failed ❌:", error);
-            showSnackbar("Failed to export Route ❌", "error");
-        } finally {
-            setShowDeletePopup(false);
-            setSelectedRowId(undefined);
+            showSnackbar("Failed to download warehouse data", "error");
         }
     };
 
@@ -275,17 +263,18 @@ useEffect(() => {
                                 {
                                     icon: "gala:file-document",
                                     label: "Export CSV",
-                                    onClick: handleDownloadCSV,
+                                    onClick: () => exportFile("csv")
                                 },
                                 {
                                     icon: "gala:file-document",
                                     label: "Export Excel",
+                                    onClick: () => exportFile("xlsx")
                                 },
                                 {
                                     icon: "lucide:radio",
                                     label: "Inactive",
                                     showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        if (!selectedRow || selectedRow.length === 0) return false;
                                         const status = selectedRow?.map((id) => data[id].status).map(String);
                                         return status?.includes("1") || false;
                                     },
@@ -293,7 +282,7 @@ useEffect(() => {
                                         const status: string[] = [];
                                         const ids = selectedRow?.map((id) => {
                                             const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
+                                            if (!status.includes(currentStatus)) {
                                                 status.push(currentStatus);
                                             }
                                             return data[id].id;
@@ -305,7 +294,7 @@ useEffect(() => {
                                     icon: "lucide:radio",
                                     label: "Active",
                                     showWhen: (data: TableDataType[], selectedRow?: number[]) => {
-                                        if(!selectedRow || selectedRow.length === 0) return false;
+                                        if (!selectedRow || selectedRow.length === 0) return false;
                                         const status = selectedRow?.map((id) => data[id].status).map(String);
                                         return status?.includes("0") || false;
                                     },
@@ -313,7 +302,7 @@ useEffect(() => {
                                         const status: string[] = [];
                                         const ids = selectedRow?.map((id) => {
                                             const currentStatus = data[id].status;
-                                            if(!status.includes(currentStatus)){
+                                            if (!status.includes(currentStatus)) {
                                                 status.push(currentStatus);
                                             }
                                             return data[id].id;

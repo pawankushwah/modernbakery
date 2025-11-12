@@ -37,7 +37,6 @@ import {
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
-import { set } from 'date-fns';
 
 interface DropdownDataContextType {
   companyList: CompanyItem[];
@@ -54,7 +53,6 @@ interface DropdownDataContextType {
   itemSubCategory: ItemSubCategoryItem[];
   channelList: ChannelItem[];
   customerType: CustomerType[];
-  userTypes: UserTypeItem[];
   salesmanType: SalesmanType[];
   vehicleList: VehicleListItem[];
   customerCategory: CustomerCategory[];
@@ -84,7 +82,6 @@ interface DropdownDataContextType {
   itemSubCategoryOptions: { value: string; label: string }[];
   channelOptions: { value: string; label: string }[];
   customerTypeOptions: { value: string; label: string }[];
-  userTypeOptions: { value: string; label: string }[];
   salesmanTypeOptions: { value: string; label: string }[];
   vehicleListOptions: { value: string; label: string }[];
   customerCategoryOptions: { value: string; label: string }[];
@@ -97,9 +94,9 @@ interface DropdownDataContextType {
   agentCustomerOptions: { value: string; label: string; contact_no?: string }[];
   shelvesOptions: { value: string; label: string }[];
   submenuOptions: { value: string; label: string }[];
-  projectOptions: { value: string; label: string}[];
-  companyTypeOptions: { value: string; label: string}[];
-  uomOptions: { value: string; label: string}[];
+  projectOptions: { value: string; label: string }[];
+  companyTypeOptions: { value: string; label: string }[];
+  uomOptions: { value: string; label: string }[];
   permissions: permissionsList[];
   refreshDropdowns: () => Promise<void>;
   refreshDropdown: (name: string, params?: any) => Promise<void>;
@@ -367,7 +364,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [itemSubCategoryData, setItemSubCategoryData] = useState<ItemSubCategoryItem[]>([]);
   const [channelListData, setChannelListData] = useState<ChannelItem[]>([]);
   const [customerTypeData, setCustomerTypeData] = useState<CustomerType[]>([]);
-  const [userTypesData, setUserTypesData] = useState<UserTypeItem[]>([]);
   const [salesmanTypesData, setSalesmanTypesData] = useState<SalesmanType[]>([]);
   const [VehicleList, setVehicleList] = useState<VehicleListItem[]>([]);
   const [customerCategory, setCustomerCategory] = useState<VehicleListItem[]>([]);
@@ -476,11 +472,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
   }));
 
-  const userTypeOptions = (Array.isArray(userTypesData) ? userTypesData : []).map((c: UserTypeItem) => ({
-    value: String(c.id ?? ''),
-    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
-  }));
-
   const salesmanTypeOptions = (Array.isArray(salesmanTypesData) ? salesmanTypesData : []).map((c: SalesmanType) => ({
     value: String(c.id ?? ''),
     label: c.salesman_type_code && c.salesman_type_name ? `${c.salesman_type_code} - ${c.salesman_type_name}` : (c.salesman_type_name ?? '')
@@ -512,21 +503,21 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }))
 
   const itemOptions = (Array.isArray(item) ? item : []).map((c: Item) => ({
-  value: String(c.id ?? ""),
-  label:
-    c.item_code && c.name
-      ? `${c.item_code} - ${c.name}`
-      : c.name ?? "",
-  uom: Array.isArray((c as any).uom)
-    ? (c as any).uom.map((u: any) => ({
+    value: String(c.id ?? ""),
+    label:
+      c.item_code && c.name
+        ? `${c.item_code} - ${c.name}`
+        : c.name ?? "",
+    uom: Array.isArray((c as any).uom)
+      ? (c as any).uom.map((u: any) => ({
         id: Number(u.id ?? 0),
         name: String(u.name ?? ""),
         uom_type: String(u.uom_type ?? ""),
         price: Number(u.price ?? 0),
         upc: String(u.upc ?? ""),
       }))
-    : [],
-}));
+      : [],
+  }));
 
 
   const getItemUoms = (item_id: string | number) => {
@@ -602,14 +593,14 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }));
 
 
-    // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
-  
-    const fetchAreaOptions = useCallback(async (region_id: string | number) => {
+  // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
+
+  const fetchAreaOptions = useCallback(async (region_id: string | number) => {
 
     setLoading(false);
     try {
       // call subRegionList with an object matching the expected Params shape
-      const res = await subRegionList({ region_id: String(region_id),dropdown:"true"  });
+      const res = await subRegionList({ region_id: String(region_id), dropdown: "true" });
       const normalize = (r: unknown): AreaItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -692,11 +683,11 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   }, []);
 
-  const fetchRouteOptions =  useCallback(async (warehouse_id: string | number) => {
+  const fetchRouteOptions = useCallback(async (warehouse_id: string | number) => {
     setLoading(false);
     try {
       // call routeList with warehouse_id
-      const res = await routeList({ warehouse_id: String(warehouse_id),dropdown:"true"  });
+      const res = await routeList({ warehouse_id: String(warehouse_id), dropdown: "true" });
       const normalize = (r: unknown): RouteItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -711,12 +702,12 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     } finally {
       setLoading(false);
     }
-  },[]);
-  const fetchRoutebySalesmanOptions =  useCallback(async (salesman_id: string | number) => {
+  }, []);
+  const fetchRoutebySalesmanOptions = useCallback(async (salesman_id: string | number) => {
     setLoading(false);
     try {
       // call routeList with warehouse_id
-      const res = await routeList({ salesman_id: String(salesman_id)});
+      const res = await routeList({ salesman_id: String(salesman_id) });
       const normalize = (r: unknown): RouteItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -731,14 +722,14 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     } finally {
       setLoading(false);
     }
-  },[]);
+  }, []);
 
   const fetchWarehouseOptions = useCallback(async (area_id: string | number) => {
     // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
     setLoading(false);
     try {
       // call getWarehouse with an object matching the expected Params shape
-      const res = await getWarehouse({ area_id: String(area_id),dropdown:"true" });
+      const res = await getWarehouse({ area_id: String(area_id), dropdown: "true" });
       const normalize = (r: unknown): WarehouseItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -760,7 +751,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     setLoading(false);
     try {
       // call regionList with company_id
-      const res = await regionList({ company_id: String(company_id),dropdown:"true" });
+      const res = await regionList({ company_id: String(company_id), dropdown: "true" });
       const normalize = (r: unknown): RegionItem[] => {
         if (r && typeof r === 'object') {
           const obj = r as Record<string, unknown>;
@@ -819,7 +810,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   }, []);
 
-    const fetchSalesmanOptions = useCallback(async (warehouse_id: string | number) => {
+  const fetchSalesmanOptions = useCallback(async (warehouse_id: string | number) => {
     // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
     setLoading(false);
     try {
@@ -927,25 +918,25 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setItemSubCategoryData(normalize(res[11]) as ItemSubCategoryItem[]);
       setChannelListData(normalize(res[12]) as ChannelItem[]);
       setCustomerTypeData(normalize(res[13]) as CustomerType[]);
-      setUserTypesData(normalize(res[14]) as UserTypeItem[]);
-      setSalesmanTypesData(normalize(res[15]) as SalesmanType[]);
-      setVehicleList(normalize(res[16]) as VehicleListItem[]);
-      setCustomerCategory(normalize(res[17]) as CustomerCategory[]);
-      setCustomerSubCategory(normalize(res[18]) as CustomerSubCategory[]);
-      setItem(normalize(res[19]) as Item[]);
-      setDiscountType(normalize(res[20]) as DiscountType[]);
-      setMenuList(normalize(res[21]) as MenuList[]);
-      setVendor(normalize(res[22]) as VendorList[]);
-      setSalesman(normalize(res[23]) as SalesmanList[]);
-      setAgentCustomer(normalize(res[24]) as AgentCustomerList[]);
-      setShelves(normalize(res[25]) as ShelvesList[]);
-      setSubmenu(normalize(res[26]) as submenuList[]);
-      setPermissions(normalize(res[27]) as permissionsList[]);
-      setLabels(normalize(res[28]) as LabelItem[]);
-      setRoles(normalize(res[29]) as Role[]);
-      setProject(normalize(res[30]) as Project[]);
-      setComapanyType(normalize(res[31]) as CompanyType[]);
-      setUom(normalize(res[32]) as UOM[]);
+      // setUserTypesData(normalize(res[14]) as UserTypeItem[]);
+      setSalesmanTypesData(normalize(res[14]) as SalesmanType[]);
+      setVehicleList(normalize(res[15]) as VehicleListItem[]);
+      setCustomerCategory(normalize(res[16]) as CustomerCategory[]);
+      setCustomerSubCategory(normalize(res[17]) as CustomerSubCategory[]);
+      setItem(normalize(res[18]) as Item[]);
+      setDiscountType(normalize(res[19]) as DiscountType[]);
+      setMenuList(normalize(res[20]) as MenuList[]);
+      setVendor(normalize(res[21]) as VendorList[]);
+      setSalesman(normalize(res[22]) as SalesmanList[]);
+      setAgentCustomer(normalize(res[23]) as AgentCustomerList[]);
+      setShelves(normalize(res[24]) as ShelvesList[]);
+      setSubmenu(normalize(res[25]) as submenuList[]);
+      setPermissions(normalize(res[26]) as permissionsList[]);
+      setLabels(normalize(res[27]) as LabelItem[]);
+      setRoles(normalize(res[28]) as Role[]);
+      setProject(normalize(res[29]) as Project[]);
+      setComapanyType(normalize(res[30]) as CompanyType[]);
+      setUom(normalize(res[31]) as UOM[]);
 
     } catch (error) {
       console.error('Error loading dropdown data:', error);
@@ -964,7 +955,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setItemSubCategoryData([]);
       setChannelListData([]);
       setCustomerTypeData([]);
-      setUserTypesData([]);
+      // setUserTypesData([]);
       setSalesmanTypesData([]);
       setVehicleList([]);
       setCustomerCategory([]);
@@ -1073,11 +1064,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         case 'customertype': {
           const res = await getCustomerType(params ?? {});
           setCustomerTypeData(normalizeResponse(res) as CustomerType[]);
-          break;
-        }
-        case 'usertypes': {
-          const res = await userTypes(params ?? {});
-          setUserTypesData(normalizeResponse(res) as UserTypeItem[]);
           break;
         }
         case 'salesmantype': {
@@ -1203,7 +1189,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategory: itemSubCategoryData,
         channelList: Array.isArray(channelListData) ? channelListData : [],
         customerType: customerTypeData,
-        userTypes: userTypesData,
         salesmanType: salesmanTypesData,
         vehicleList: VehicleList,
         customerCategory: customerCategory,
@@ -1237,7 +1222,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         itemSubCategoryOptions,
         channelOptions,
         customerTypeOptions,
-        userTypeOptions,
         salesmanTypeOptions,
         vehicleListOptions,
         customerCategoryOptions,
@@ -1252,8 +1236,8 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         submenuOptions,
         permissions,
         labelOptions,
-  refreshDropdowns,
-  refreshDropdown,
+        refreshDropdowns,
+        refreshDropdown,
         fetchAreaOptions,
         fetchRouteOptions,
         fetchRoutebySalesmanOptions,

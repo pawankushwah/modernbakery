@@ -172,15 +172,6 @@ export default function Category() {
                                         });
                                     },
                                 },
-                                {
-                                    icon: "lucide:trash-2",
-                                    onClick: (data: Record<string, string>) => {
-                                        setShowDeletePopup(true);
-                                        setDeleteItemCategoryId(
-                                            parseInt(data.id)
-                                        );
-                                    },
-                                },
                             ],
                         }}
                     />

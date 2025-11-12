@@ -108,7 +108,6 @@ export default function ViewPage() {
                 },
                 { key: "Toll Free No", value: company?.toll_free_no || "-" },
                 { key: "Module Access", value: company?.module_access || "-" },
-                { key: "Service Type", value: company?.service_type || "-" },
                 { key: "VAT", value: company?.vat || "-" },
                 { key: "City", value: company?.city || "-" },
                 { key: "Address", value: company?.address || "-" },
