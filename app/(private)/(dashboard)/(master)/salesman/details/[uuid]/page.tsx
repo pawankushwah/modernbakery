@@ -8,7 +8,7 @@ import TabBtn from "@/app/components/tabBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import Image from "next/image";
 
-import { downloadFile, getSalesmanById, getSalesmanBySalesId } from "@/app/services/allApi";
+import { downloadFile, getOrderOfSalesmen, getSalesmanById, getSalesmanBySalesId } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
 // import Role from "./role/page";
@@ -134,6 +134,100 @@ export default function Page() {
 
   ];
 
+ 
+ const orderColumns: configType["columns"] = [
+  {
+    key: "delivery_date",
+    label: "Delivery Date",
+    render: (row: TableDataType) => row.delivery_date?.split("T")[0] || "-",
+  },
+  {
+    key: "order_code",
+    label: "Order Code",
+    render: (row: TableDataType) => row.order_code || "-",
+  },
+  {
+    key: "warehouse_id",
+    label: "Warehouse",
+    render: (row: TableDataType | any) =>
+      typeof row.warehouse_id === "object" &&
+      row.warehouse_id !== null &&
+      "warehouse_name" in row.warehouse_id
+        ? (row.warehouse_id as { warehouse_name?: string }).warehouse_name || "-"
+        : row.warehouse?.warehouse_name || "-",
+  },
+  {
+    key: "customer_id",
+    label: "Customer",
+    render: (row: TableDataType | any) =>
+      typeof row.customer_id === "object" &&
+      row.customer_id !== null &&
+      "name" in row.customer_id
+        ? (row.customer_id as { name?: string }).name || "-"
+        : row.customer?.name || "-",
+  },
+  {
+    key: "salesman_id",
+    label: "Salesman",
+    render: (row: TableDataType | any) =>
+      typeof row.salesman_id === "object" &&
+      row.salesman_id !== null &&
+      "name" in row.salesman_id
+        ? (row.salesman_id as { name?: string }).name || "-"
+        : row.salesman?.name || "-",
+  },
+  {
+    key: "route_id",
+    label: "Route",
+    render: (row: TableDataType) => {
+      if (
+        typeof row.route_id === "object" &&
+        row.route_id !== null &&
+        "route_name" in row.route_id
+      ) {
+        return (row.route_id as { route_name?: string }).route_name || "-";
+      }
+      return typeof row.route_id === "string" ? row.route_id : "-";
+    },
+  },
+  {
+    key: "gross_total",
+    label: "Gross Total",
+    render: (row: TableDataType) =>
+      toInternationalNumber ? toInternationalNumber(row.gross_total) : row.gross_total,
+  },
+  {
+    key: "net_amount",
+    label: "Net Amount",
+    render: (row: TableDataType) =>
+      toInternationalNumber ? toInternationalNumber(row.net_amount) : row.net_amount,
+  },
+  {
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) =>
+      row.status === "1" ? (
+        <span className="text-green-600 font-semibold">Active</span>
+      ) : (
+        <span className="text-red-600 font-semibold">Inactive</span>
+      ),
+  },
+  // Optional: download icon column
+  // {
+  //   key: "download",
+  //   label: "Download",
+  //   render: (row: TableDataType) => (
+  //     <Icon
+  //       icon="material-symbols:download"
+  //       width={24}
+  //       onClick={() => exportFile(row.uuid, "csv")}
+  //       className="cursor-pointer text-blue-600 hover:text-blue-800"
+  //     />
+  //   ),
+  // },
+];
+
+
 
   const salesBySalesman = useCallback(
     async (
@@ -141,6 +235,25 @@ export default function Page() {
       pageSize: number = 50
     ): Promise<searchReturnType> => {
       const result = await getSalesmanBySalesId(uuid);
+      if (result.error) {
+        throw new Error(result.data?.message || "Search failed");
+      }
+
+      return {
+        data: result.data || [],
+        currentPage: result?.pagination?.page || 1,
+        pageSize: result?.pagination?.limit || pageSize,
+        total: result?.pagination?.totalPages || 1,
+      };
+    },
+    []
+  );
+  const orderBySalesman = useCallback(
+    async (
+      pageNo: number = 1,
+      pageSize: number = 50
+    ): Promise<searchReturnType> => {
+      const result = await getOrderOfSalesmen(uuid,{from:"2025-11-01",to:"2025-11-12"});
       if (result.error) {
         throw new Error(result.data?.message || "Search failed");
       }
@@ -380,8 +493,38 @@ export default function Page() {
       )}
 
       {activeTab === "order" && (
-        <ContainerCard className="w-full h-fit">
-          <div className="text-center">Data not found</div>
+        <ContainerCard >
+
+          <div className="flex flex-col h-full">
+            <Table
+              config={{
+                api: {
+                  // search: searchCustomerById,
+                  list: orderBySalesman
+                },
+                header: {
+                  searchBar: false
+                },
+                showNestedLoading: true,
+                footer: { nextPrevBtn: true, pagination: true },
+                columns: orderColumns,
+                table: {
+                  height: 500,
+                },
+                rowSelection: false,
+                rowActions: [
+                  {
+  icon: "material-symbols:download",
+  onClick: (data: TableDataType) => {
+    exportFile(data.uuid, "pdf"); // or "excel", "csv" etc.
+  },
+}
+                ],
+                pageSize: 50,
+              }}
+            />
+          </div>
+
         </ContainerCard>
       )}
     </>

@@ -44,7 +44,7 @@ interface SalesmanFormValues {
   route_id: string;
   password: string;
   contact_no: string;
-  warehouse_id: string;
+  warehouse_id: string | string[];
   forceful_login: string;
   is_block: string;
   status: string;
@@ -79,7 +79,19 @@ const SalesmanSchema = Yup.object().shape({
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>/?]).{12,}$/,
       "Password must include uppercase, lowercase, number, and special character"
     ),
-  warehouse_id: Yup.array().required("Warehouse is required"),
+  warehouse_id: Yup.mixed()
+    .required("Warehouse is required")
+    .test("warehouse-type", "Invalid warehouse format", function (value) {
+      const { type } = this.parent;
+
+      // ✅ When Project type (6), must be array with at least one item
+      if (type === "6") {
+        return Array.isArray(value) && value.length > 0;
+      }
+
+      // ✅ For other types, must be a non-empty string
+      return typeof value === "string" && value.trim() !== "";
+    }),
   email: Yup.string().required("Email is required").email("Invalid email"),
 });
 
@@ -89,7 +101,19 @@ const stepSchemas = [
     name: Yup.string().required("Name is required"),
     type: Yup.string().required("Type is required"),
     designation: Yup.string().required("Designation is required"),
-    warehouse_id: Yup.array().required("Warehouse is required"),
+     warehouse_id: Yup.mixed()
+    .required("Warehouse is required")
+    .test("warehouse-type", "Invalid warehouse format", function (value) {
+      const { type } = this.parent;
+
+      // ✅ When Project type (6), must be array with at least one item
+      if (type === "6") {
+        return Array.isArray(value) && value.length > 0;
+      }
+
+      // ✅ For other types, must be a non-empty string
+      return typeof value === "string" && value.trim() !== "";
+    }),
   }),
   Yup.object({
     contact_no: Yup.string()
@@ -221,14 +245,12 @@ export default function AddEditSalesman({
           if (res && !res.error && res.data) {
             const d = res.data;
             console.log(d,"data")
-            const idsWareHouses = []
+            const idsWareHouses:string[] = []
             d.warehouses.map((dta:any)=>{
               console.log(dta.id,"warehouse id")
-              idsWareHouses.push({
-                value: dta.id.toString(),
-                label: dta.warehouse_name,
-              });
+              idsWareHouses.push(dta.id.toString());
             })
+            console.log(d.salesman_type?.id?.toString(),"project type id")
             setInitialValues({
               osa_code: d.osa_code || "",
               name: d.name || "",
@@ -238,7 +260,7 @@ export default function AddEditSalesman({
               route_id: d.route?.id?.toString() || "",
               password: d.password, // password is not returned from API → leave empty
               contact_no: d.contact_no || "",
-              warehouse_id: d.warehouses[0]?.id?.toString() || "",
+              warehouse_id:d.salesman_type?.id?.toString() ==="6" ? idsWareHouses: d.warehouses?.[0]?.id?.toString() ,
               is_block: d.is_block?.toString() || "0",
               forceful_login: d.forceful_login?.toString() || "1",
               status: d.status?.toString() || "1",
@@ -322,9 +344,19 @@ export default function AddEditSalesman({
     try {
       await SalesmanSchema.validate(values, { abortEarly: false });
       const formData = new FormData();
-      (Object.keys(values) as (keyof SalesmanFormValues)[]).forEach((key) => {
-        formData.append(key, values[key] ?? "");
-      });
+    (Object.keys(values) as (keyof SalesmanFormValues)[]).forEach((key) => {
+  const val = values[key];
+
+  if (Array.isArray(val)) {
+    // For arrays (like warehouse_id when multiple selected)
+    val.forEach((v) => formData.append(`${key}[]`, v));
+  } else if (val !== undefined && val !== null) {
+    // Normal string or single value
+    formData.append(key, val.toString());
+  } else {
+    formData.append(key, "");
+  }
+});
 
       let res;
       if (isEditMode) {
@@ -437,9 +469,9 @@ export default function AddEditSalesman({
                   className="text-xs text-red-500"
                 />
               </div>
-
-              <div>
-                <InputFields
+               
+               {values.type === "6"?<div>
+               <InputFields
                   required
                   label="Warehouse"
                   type="select"
@@ -447,7 +479,30 @@ export default function AddEditSalesman({
                   value={values.warehouse_id}
                   options={warehouseOptions}
                   disabled={warehouseOptions.length === 0}
-                  isSingle={!values.sub_type}
+                  isSingle={false}
+                  onChange={(e) => {
+                    console.log(values.warehouse_id,e.target.value,"selected warehouse")
+                    setFieldValue("warehouse_id", e.target.value);
+                    if (values.warehouse_id !== e.target.value) {
+                      fetchRoutes(e.target.value);
+                    }
+                  }}
+                />
+                <ErrorMessage
+                  name="warehouse_id"
+                  component="span"
+                  className="text-xs text-red-500"
+                />
+              </div>:<div>
+               <InputFields
+                  required
+                  label="Warehouse"
+                  type="select"
+                  name="warehouse_id"
+                  value={values.warehouse_id}
+                  options={warehouseOptions}
+                  disabled={warehouseOptions.length === 0}
+                  isSingle={true}
                   onChange={(e) => {
                     setFieldValue("warehouse_id", e.target.value);
                     if (values.warehouse_id !== e.target.value) {
@@ -460,7 +515,7 @@ export default function AddEditSalesman({
                   component="span"
                   className="text-xs text-red-500"
                 />
-              </div>
+              </div>}
 
               <div>
                 <InputFields
@@ -708,7 +763,7 @@ export default function AddEditSalesman({
           isSubmitting: isSubmitting,
         }) => (
           <Form>
-            <>{console.log(values)}</>
+            <>{console.log(values,"lk")}</>
             <StepperForm
               steps={steps.map((step) => ({
                 ...step,
