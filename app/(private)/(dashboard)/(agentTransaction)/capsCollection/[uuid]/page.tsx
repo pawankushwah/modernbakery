@@ -1,9 +1,8 @@
 "use client";
 
-import ContainerCard from "@/app/components/containerCard";
 import AutoSuggestion from "@/app/components/autoSuggestion";
+import ContainerCard from "@/app/components/containerCard";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import Table from "@/app/components/customTable";
 import CustomTable, { TableDataType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
@@ -13,7 +12,7 @@ import {
   createCapsCollection,
   updateCapsCollection,
 } from "@/app/services/agentTransaction";
-import { itemList } from "@/app/services/allApi";
+import { agentCustomerList, getCompanyCustomers, itemGlobalSearch, itemList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -21,7 +20,6 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import * as yup from "yup";
-import { warehouseListGlobalSearch, getCompanyCustomers, agentCustomerList, itemGlobalSearch } from "@/app/services/allApi";
 interface Uom {
   id: string;
   name?: string;
@@ -129,6 +127,7 @@ export default function AddEditCapsCollection() {
       }
       const data = Array.isArray(response?.data) ? response.data : [];
       return data.map((customer: any) => {
+        console.log(customer.name, "ab")
         // Always include contact_no in the returned option
         if (customerType === "1") {
           return {
@@ -140,8 +139,8 @@ export default function AddEditCapsCollection() {
         } else {
           return {
             value: String(customer.id),
-            label: `${customer.osa_code || ""} - ${customer.outlet_name || ""}`,
-            name: customer.outlet_name || customer.customer_name || customer.name || '',
+            label: `${customer.osa_code || ""} - ${customer.name || ""}`,
+            name: customer.name || customer.customer_name || customer.name || '',
             contact_no: customer.contact_no || "",
           };
         }

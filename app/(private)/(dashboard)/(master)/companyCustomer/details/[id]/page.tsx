@@ -240,7 +240,6 @@ export default function ViewPage() {
                     title="Tax & Accuracy"
                     data={[
                       { key: "TIN No", value: customer?.tin_no || "-" },
-                      { key: "VAT No", value: customer?.tin_no || "-" },
                     ]}
                   />
                 </ContainerCard>
