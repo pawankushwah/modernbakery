@@ -1,27 +1,26 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
     listReturnType,
-    TableDataType,
     searchReturnType,
+    TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import DeleteConfirmPopup from "@/app/components/deletePopUp";
+import StatusBtn from "@/app/components/statusBtn2";
 import {
-    routeList,
     deleteRoute,
-    routeGlobalSearch,
-    routeStatusUpdate,
     downloadFile,
     exportRoutes,
+    routeGlobalSearch,
+    routeList,
+    routeStatusUpdate,
 } from "@/app/services/allApi";
-import DeleteConfirmPopup from "@/app/components/deletePopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
-import StatusBtn from "@/app/components/statusBtn2";
 import { useLoading } from "@/app/services/loadingContext";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { i } from "framer-motion/client";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 
 export default function Route() {
@@ -35,94 +34,94 @@ export default function Route() {
     const { showSnackbar } = useSnackbar();
 
     const columns = [
-    {
-        key: "route_code, route_name",
-        label: "Route Code",
-        render: (data: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {`${data.route_code || ""} - ${data.route_name || ""}` || "-"}
-            </span>
-        ),
-    },
-    {
-        key: "getrouteType",
-        label: "Route Type",
-        render: (data: TableDataType) => {
-            const typeObj = data.getrouteType
-                ? JSON.parse(JSON.stringify(data.getrouteType))
-                : null;
-            return typeObj?.name ? typeObj.name : "-";
+        {
+            key: "route_code, route_name",
+            label: "Route Code",
+            render: (data: TableDataType) => (
+                <span className="font-semibold text-[#181D27] text-[14px]">
+                    {`${data.route_code || ""} - ${data.route_name || ""}` || "-"}
+                </span>
+            ),
         },
-        // filter: {
-        //     isFilterable: true,
-        //     render: (data: TableDataType[]) => (
-        //         <>
-        //             {" "}
-        //             {data.map((row, index) => {
-        //                 const typeObj = row.route_Type
-        //                     ? JSON.parse(JSON.stringify(row.route_Type))
-        //                     : null;
-        //                 return (
-        //                     <div
-        //                         key={index}
-        //                         className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
-        //                     >
-        //                         {" "}
-        //                         <span className="font-[500] text-[#181D27]">
-        //                             {" "}
-        //                             {typeObj?.route_type_name
-        //                                 ? typeObj.route_type_name
-        //                                 : "-"}{" "}
-        //                         </span>{" "}
-        //                     </div>
-        //                 );
-        //             })}{" "}
-        //         </>
-        //     ),
-        // },
-        width: 218,
-    },
-    {
-        key: "warehouse",
-        label: "Warehouse",
-        width: 218,
-        render: (data: TableDataType) =>
-            typeof data.warehouse === "object" && data.warehouse !== null
-                ? (data.warehouse as { code?: string }).code
-                : "-",
-        filter: {
-            isFilterable: true,
-            width: 320,
-            options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-            onSelect: (selected: string | string[]) => {
-                setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+        {
+            key: "getrouteType",
+            label: "Route Type",
+            render: (data: TableDataType) => {
+                const typeObj = data.getrouteType
+                    ? JSON.parse(JSON.stringify(data.getrouteType))
+                    : null;
+                return typeObj?.name ? typeObj.name : "-";
+            },
+            // filter: {
+            //     isFilterable: true,
+            //     render: (data: TableDataType[]) => (
+            //         <>
+            //             {" "}
+            //             {data.map((row, index) => {
+            //                 const typeObj = row.route_Type
+            //                     ? JSON.parse(JSON.stringify(row.route_Type))
+            //                     : null;
+            //                 return (
+            //                     <div
+            //                         key={index}
+            //                         className="flex items-center gap-[8px] px-[14px] py-[10px] hover:bg-[#FAFAFA] text-[14px]"
+            //                     >
+            //                         {" "}
+            //                         <span className="font-[500] text-[#181D27]">
+            //                             {" "}
+            //                             {typeObj?.route_type_name
+            //                                 ? typeObj.route_type_name
+            //                                 : "-"}{" "}
+            //                         </span>{" "}
+            //                     </div>
+            //                 );
+            //             })}{" "}
+            //         </>
+            //     ),
+            // },
+            width: 218,
+        },
+        {
+            key: "warehouse",
+            label: "Warehouse",
+            width: 218,
+            render: (data: TableDataType) =>
+                typeof data.warehouse === "object" && data.warehouse !== null
+                    ? (data.warehouse as { code?: string }).code
+                    : "-",
+            filter: {
+                isFilterable: true,
+                width: 320,
+                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                onSelect: (selected: string | string[]) => {
+                    setWarehouseId((prev) => prev === selected ? "" : (selected as string));
+                },
             },
         },
-    },
-    {
-        key: "vehicle",
-        label: "Vehicle",
-        render: (data: TableDataType) => {
-            const vehicleObj =
-                typeof data.vehicle === "string"
-                    ? JSON.parse(data.vehicle)
-                    : data.vehicle;
-            return vehicleObj?.code ? vehicleObj.code : "-";
+        {
+            key: "vehicle",
+            label: "Vehicle",
+            render: (data: TableDataType) => {
+                const vehicleObj =
+                    typeof data.vehicle === "string"
+                        ? JSON.parse(data.vehicle)
+                        : data.vehicle;
+                return vehicleObj?.code ? vehicleObj.code : "-";
+            },
         },
-    },
-    {
-        key: "status",
-        label: "Status",
-        isSortable: true,
-        render: (row: TableDataType) => (
-            <StatusBtn
-                isActive={
-                    row.status && row.status.toString() === "0" ? false : true
-                }
-            />
-        ),
-    },
-];
+        {
+            key: "status",
+            label: "Status",
+            isSortable: true,
+            render: (row: TableDataType) => (
+                <StatusBtn
+                    isActive={
+                        row.status && row.status.toString() === "0" ? false : true
+                    }
+                />
+            ),
+        },
+    ];
 
     useEffect(() => {
         setRefreshKey((k) => k + 1);
@@ -177,12 +176,12 @@ export default function Route() {
             }
             setLoading(false);
             if (result.error) throw new Error(result.data.message);
-            const pagination = result.pagination?.pagination || {};
+            const pagination = result.pagination || {};
             return {
                 data: result.data || [],
-                total: pagination.totalPages || 10,
+                total: pagination.totalPages || 1,
                 currentPage: pagination.page || 1,
-                pageSize: pagination.limit || 10,
+                pageSize: pagination.limit || 50,
             };
         },
         []

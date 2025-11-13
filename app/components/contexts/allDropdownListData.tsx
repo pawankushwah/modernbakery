@@ -862,7 +862,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         SurveyList(),
         routeList({}),
         getWarehouse({ dropdown: "true" }),
-        routeType(),
+        routeType({ dropdown: "true" }),
         getSubRegion(),
         getCompanyCustomers(),
         getCompanyCustomersType(),

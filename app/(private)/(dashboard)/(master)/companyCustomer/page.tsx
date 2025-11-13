@@ -84,31 +84,10 @@ export default function CompanyCustomers() {
     return {
       data: res.data || [],
       pageSize: res.data?.pagination?.per_page || pageSize,
-      total: res.data?.pagination?.last_page || 1,
+      total: res.data?.pagination?.last_pagelast_page || 1,
       currentPage: res.data?.pagination?.current_page || 1,
     }
   };
-
-  // const handleConfirmDelete = async () => {
-  //   if (!selectedRow) return;
-
-  //   // Optimistically remove row first
-  //   setCustomers((prev) => prev.filter((c) => c.id !== selectedRow.id));
-  //   setShowDeletePopup(false);
-
-  //   setLoading(true);
-  //   try {
-  //     await deleteCompanyCustomer(selectedRow.id.toString());
-  //     showSnackbar("Company Customer deleted successfully ✅", "success");
-  //   } catch (error) {
-  //     setCustomers((prev) => [...prev, selectedRow]);
-  //     showSnackbar("Failed to delete Customer ❌", "error");
-  //   } finally {
-  //     setSelectedRow(null);
-  //   }
-  //   setLoading(false);
-  // };
-
 
   /* ---------- Column Configuration ---------- */
   const columns = [
@@ -145,6 +124,7 @@ export default function CompanyCustomers() {
     {
       key: "status",
       label: "Status",
+      isSortable: true,
       render: (row: TableDataType) => {
         const isActive =
           String(row.status) === "1" ||

@@ -34,6 +34,7 @@ export default function User() {
         {
             key: "status",
             label: "Status",
+            isSortable: true,
             render: (row: TableDataType) => {
                 // Treat status 1 or 'active' (case-insensitive) as active
                 const isActive =
@@ -103,9 +104,9 @@ export default function User() {
     
             return {
               data: res.data || [],
-              total: res.pagination.totalPages || 2,
-              currentPage: res.pagination.page || 50,
-              pageSize: res.pagination.limit || pageSize,
+              total: res.pagination.last_page || 1,
+              currentPage: res.pagination.current_page || 1,
+              pageSize: res.pagination.per_page || pageSize,
             };
           } catch (error) {
             setLoading(false);

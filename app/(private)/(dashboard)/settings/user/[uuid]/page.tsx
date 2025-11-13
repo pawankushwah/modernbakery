@@ -316,7 +316,9 @@ export default function UserAddEdit() {
   const baseFields = {
     name: Yup.string().required("Name is required"),
     email: Yup.string().email("Invalid email").required("Email is required"),
-    username: Yup.string().required("Username is required"),
+    username: Yup.string()
+    .required("Username is required")
+    .matches(/^\S*$/, "Username cannot contain spaces"),
     contact_number: Yup.string().required("Contact number is required"),
     password: passwordField,
     password_confirmation: passwordConfirmationField,
@@ -538,69 +540,69 @@ export default function UserAddEdit() {
               />
 
               <div>
-  <InputFields
-    required
-    label="Email"
-    name="email"
-    value={values.email}
-    onChange={(e) => {
-      setFieldValue("email", e.target.value);
-      // clear previous error if user starts typing again
-      actionsRef?.current?.setFieldError("email", "");
-      setIsValidEmail(false);
-    }}
-    onBlur={async () => {
-      setFieldTouched && setFieldTouched("email", true);
-      if (values.email && !isEditMode) {
-        await checkEmail("email", values.email, (field, message) => {
-          if (message) {
-            actionsRef?.current?.setFieldError(field, message);
-            setIsValidEmail(true);
-          } else {
-            setIsValidEmail(false);
-          }
-        });
-      }
-    }}
-    error={touched.email ? (errors.email as string) : undefined}
-  />
+                <InputFields
+                  required
+                  label="Email"
+                  name="email"
+                  value={values.email}
+                  onChange={(e) => {
+                    setFieldValue("email", e.target.value);
+                    // clear previous error if user starts typing again
+                    actionsRef?.current?.setFieldError("email", "");
+                    setIsValidEmail(false);
+                  }}
+                  onBlur={async () => {
+                    setFieldTouched && setFieldTouched("email", true);
+                    if (values.email && !isEditMode) {
+                      await checkEmail("email", values.email, (field, message) => {
+                        if (message) {
+                          actionsRef?.current?.setFieldError(field, message);
+                          setIsValidEmail(true);
+                        } else {
+                          setIsValidEmail(false);
+                        }
+                      });
+                    }
+                  }}
+                  error={touched.email ? (errors.email as string) : undefined}
+                />
 
-  {isValidEmail && (
-    <p className="text-red-500 text-sm mt-1">Email already exists</p>
-  )}
-</div>
+                {isValidEmail && (
+                  <p className="text-red-500 text-sm mt-1">Email already exists</p>
+                )}
+              </div>
 
-<div>
-  <InputFields
-    required
-    label="Username"
-    name="username"
-    value={values.username}
-    onChange={(e) => {
-      setFieldValue("username", e.target.value);
-      actionsRef?.current?.setFieldError("username", "");
-      setIsValidUser(false);
-    }}
-    onBlur={async () => {
-      setFieldTouched && setFieldTouched("username", true);
-      if (values.username && !isEditMode) {
-        await checkUsername("username", values.username, (field, message) => {
-          if (message) {
-            actionsRef?.current?.setFieldError(field, message);
-            setIsValidUser(true);
-          } else {
-            setIsValidUser(false);
-          }
-        });
-      }
-    }}
-    error={touched.username ? (errors.username as string) : undefined}
-  />
+              <div>
+                <InputFields
+                  required
+                  label="Username"
+                  name="username"
+                  value={values.username}
+                  onChange={(e) => {
+                    setFieldValue("username", e.target.value);
+                    actionsRef?.current?.setFieldError("username", "");
+                    setIsValidUser(false);
+                  }}
+                  onBlur={async () => {
+                    setFieldTouched && setFieldTouched("username", true);
+                    if (values.username && !isEditMode) {
+                      await checkUsername("username", values.username, (field, message) => {
+                        if (message) {
+                          actionsRef?.current?.setFieldError(field, message);
+                          setIsValidUser(true);
+                        } else {
+                          setIsValidUser(false);
+                        }
+                      });
+                    }
+                  }}
+                  error={touched.username ? (errors.username as string) : undefined}
+                />
 
-  {isValidUser && (
-    <p className="text-red-500 text-sm mt-1">Username already exists</p>
-  )}
-</div>
+                {isValidUser && (
+                  <p className="text-red-500 text-sm mt-1">Username already exists</p>
+                )}
+              </div>
 
 
 

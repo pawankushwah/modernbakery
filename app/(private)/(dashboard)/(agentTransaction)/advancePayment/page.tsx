@@ -78,16 +78,16 @@ export default function PaymentListPage() {
         return row.cheque_date || "-";
       },
     },
-    {
-      key: "status",
-      label: "Status",
-      showByDefault: true,
-      render: (row: TableDataType) => {
-        // ✅ ADDED: Render status properly
-        const isActive = row.status == "1" || row.status === "active";
-        return <StatusBtn isActive={isActive} />;
-      },
-    },
+    // {
+    //   key: "status",
+    //   label: "Status",
+    //   showByDefault: true,
+    //   render: (row: TableDataType) => {
+    //     // ✅ ADDED: Render status properly
+    //     const isActive = row.status == "1" || row.status === "active";
+    //     return <StatusBtn isActive={isActive} />;
+    //   },
+    // },
   ];
 
   const { setLoading } = useLoading();

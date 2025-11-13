@@ -1,24 +1,24 @@
 "use client";
-import { Icon } from "@iconify-icon/react";
-import Link from "next/link";
-import { useEffect, useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
-import * as yup from "yup";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import IconButton from "@/app/components/iconButton";
 import InputFields from "@/app/components/inputFields";
-import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import Loading from "@/app/components/Loading";
 import SettingPopUp from "@/app/components/settingPopUp";
-import { useSnackbar } from "@/app/services/snackbarContext";
 import {
-  getRouteById,
   addRoutes,
-  updateRoute,
   genearateCode,
+  getRouteById,
   saveFinalCode,
+  updateRoute,
   vehicleListData,
 } from "@/app/services/allApi";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import Loading from "@/app/components/Loading";
+import { useSnackbar } from "@/app/services/snackbarContext";
+import { Icon } from "@iconify-icon/react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import * as yup from "yup";
 
 export default function AddEditRoute() {
   const { routeTypeOptions, warehouseOptions, vehicleListOptions } =
@@ -60,7 +60,7 @@ export default function AddEditRoute() {
       per_page: "10",
     });
     setSkeleton(false);
-    
+
     if (filteredOptions.error) {
       showSnackbar(
         filteredOptions.data?.message || "Failed to fetch vehicles",
@@ -104,13 +104,11 @@ export default function AddEditRoute() {
           setForm({
             routeCode: data?.route_code || "",
             routeName: data?.route_name || "",
-            routeType: data?.getrouteType?.id
-              ? String(data?.getrouteType.id)
-              : "",
+            routeType: data?.getrouteType?.id?.toString(),
             vehicleType: data?.vehicle?.id ? String(data?.vehicle.id) : "",
             warehouse: data?.warehouse?.id ? String(data?.warehouse.id) : "",
             status:
-              data?.status>0? "1" : "0",
+              data?.status > 0 ? "1" : "0",
           });
 
           // Fetch vehicles for the warehouse in edit mode
@@ -131,8 +129,8 @@ export default function AddEditRoute() {
     routeCode: yup.string().required("Route Code is required"),
     routeName: yup
       .string()
-      .required("Route Name is required") ,
-     
+      .required("Route Name is required"),
+
     routeType: yup.string().required("Route Type is required"),
     warehouse: yup.string().required("Warehouse is required"),
     status: yup.string().required("Status is required"),
@@ -259,9 +257,9 @@ export default function AddEditRoute() {
                   />
                 </>
               )}
-           
+
             </div>
-          
+
 
             {/* Route Name */}
             <div className="flex flex-col">
@@ -357,14 +355,13 @@ export default function AddEditRoute() {
       <div className="flex justify-end gap-4 mt-6 pr-0">
         <button
           type="button"
-          className={`px-6 py-2 rounded-lg border text-gray-700 hover:bg-gray-100 ${
-            submitting
+          className={`px-6 py-2 rounded-lg border text-gray-700 hover:bg-gray-100 ${submitting
               ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
               : "border-gray-300"
-          }`}
+            }`}
           onClick={() => router.push("/route")}
           disabled={submitting}
-           // disable while submitting
+        // disable while submitting
         >
           Cancel
         </button>
@@ -375,8 +372,8 @@ export default function AddEditRoute() {
                 ? "Updating..."
                 : "Submitting..."
               : isEditMode
-              ? "Update"
-              : "Submit"
+                ? "Update"
+                : "Submit"
           }
           isActive={!submitting}
           leadingIcon="mdi:check"

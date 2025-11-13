@@ -107,7 +107,7 @@ const validationSchema = Yup.object({
   area_id: Yup.string().required("Area is required."),
   payment_type: Yup.string().required("Payment Type is required."),
   creditday: Yup.string().required("Credit Day is required."),
-  tin_no: Yup.string().required("VAT No is required."),
+  tin_no: Yup.string().required("TIN No is required."),
   creditlimit: Yup.string().required("Credit Limit is required."),
   bank_guarantee_name: Yup.string().required("Guarantee Name is required."),
   bank_guarantee_amount: Yup.string().required("Guarantee Amount is required."),
