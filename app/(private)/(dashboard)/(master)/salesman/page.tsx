@@ -180,16 +180,15 @@ const SalesmanPage = () => {
   );
 
   const columns = [
-    // {
-    //   key: "osa_code",
-    //   label: "Salesman Code",
-    //   render: (row: TableDataType) => (
-    //     <span className="font-semibold text-[#181D27] text-[14px]">
-    //       {row.osa_code}
-    //     </span>
-    //   ),
-    // },
-    { key: "name", label: "Salesman Name", render: (row: TableDataType) => row.osa_code + " - " + row.name || "-" },
+    {
+      key: "osa_code",
+      label: "Salesman",
+      render: (row: TableDataType) => (
+        <span className="font-semibold text-[#181D27] text-[14px]">
+          {row.osa_code} - {row.name}
+        </span>
+      ),
+    },
     {
       key: "salesman_type",
       label: "Salesman Type",
@@ -255,6 +254,7 @@ const SalesmanPage = () => {
     {
       key: "status",
       label: "Status",
+      isSortable:true,
       render: (row: TableDataType) => (
         <StatusBtn isActive={String(row.status) === "1"} />
       ),
@@ -268,8 +268,10 @@ const SalesmanPage = () => {
       <div className="flex flex-col h-full">
         <Table
           refreshKey={refreshKey}
+     
           config={{
             api: { list: fetchSalesman, search: searchSalesman },
+            
             header: {
               title: "Salesman",
               threeDot: [

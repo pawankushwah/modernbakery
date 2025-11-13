@@ -8,15 +8,17 @@ import TabBtn from "@/app/components/tabBtn";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import Image from "next/image";
 
-import { downloadFile, getSalesmanById, getSalesmanBySalesId } from "@/app/services/allApi";
+import { downloadFile, getOrderOfSalesmen, getSalesmanById, getSalesmanBySalesId } from "@/app/services/allApi";
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 import Link from "next/link";
 // import Role from "./role/page";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
-import Table, { configType, searchReturnType, TableDataType } from "@/app/components/customTable";
+import Table, { configType, listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import KeyValueData from "@/app/components/keyValueData";
 import StatusBtn from "@/app/components/statusBtn2";
 import { exportInvoice } from "@/app/services/agentTransaction";
+import { useLoading } from "@/app/services/loadingContext";
+import Popup from "@/app/components/popUp";
 
 // import Attendance from "./attendance/page";
 
@@ -42,6 +44,10 @@ interface Salesman {
     warehouse_code?: string;
     warehouse_name?: string;
   };
+  warehouses?: {
+    warehouse_code?: string;
+    warehouse_name?: string;
+  }[];
   device_no?: string;
   username?: string;
   contact_no?: string;
@@ -63,6 +69,8 @@ export default function Page() {
   const { id, tabName } = useParams();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { setLoading: setGlobalLoading } = useLoading();
+  const [openPopup, setOpenPopup] = useState(false);
 
   const { showSnackbar } = useSnackbar();
   // const onTabClick = (index: number) => {
@@ -125,6 +133,105 @@ export default function Page() {
     { key: "total_amount", label: "Invoice Total", render: (row: TableDataType) => toInternationalNumber(row.total_amount) },
 
   ];
+ const warehouseColumns: configType["columns"] = [
+  {
+    key: "warehouse_code",
+    label: "Warehouses",
+    render: (row: TableDataType) => `${row.warehouse_code}-${row.warehouse_name}` || "-",
+  }]
+ 
+ const orderColumns: configType["columns"] = [
+  {
+    key: "delivery_date",
+    label: "Delivery Date",
+    render: (row: TableDataType) => row.delivery_date?.split("T")[0] || "-",
+  },
+  {
+    key: "order_code",
+    label: "Order Code",
+    render: (row: TableDataType) => row.order_code || "-",
+  },
+  {
+    key: "warehouse_id",
+    label: "Warehouse",
+    render: (row: TableDataType | any) =>
+      typeof row.warehouse_id === "object" &&
+      row.warehouse_id !== null &&
+      "warehouse_name" in row.warehouse_id
+        ? (row.warehouse_id as { warehouse_name?: string }).warehouse_name || "-"
+        : row.warehouse?.warehouse_name || "-",
+  },
+  {
+    key: "customer_id",
+    label: "Customer",
+    render: (row: TableDataType | any) =>
+      typeof row.customer_id === "object" &&
+      row.customer_id !== null &&
+      "name" in row.customer_id
+        ? (row.customer_id as { name?: string }).name || "-"
+        : row.customer?.name || "-",
+  },
+  {
+    key: "salesman_id",
+    label: "Salesman",
+    render: (row: TableDataType | any) =>
+      typeof row.salesman_id === "object" &&
+      row.salesman_id !== null &&
+      "name" in row.salesman_id
+        ? (row.salesman_id as { name?: string }).name || "-"
+        : row.salesman?.name || "-",
+  },
+  {
+    key: "route_id",
+    label: "Route",
+    render: (row: TableDataType) => {
+      if (
+        typeof row.route_id === "object" &&
+        row.route_id !== null &&
+        "route_name" in row.route_id
+      ) {
+        return (row.route_id as { route_name?: string }).route_name || "-";
+      }
+      return typeof row.route_id === "string" ? row.route_id : "-";
+    },
+  },
+  {
+    key: "gross_total",
+    label: "Gross Total",
+    render: (row: TableDataType) =>
+      toInternationalNumber ? toInternationalNumber(row.gross_total) : row.gross_total,
+  },
+  {
+    key: "net_amount",
+    label: "Net Amount",
+    render: (row: TableDataType) =>
+      toInternationalNumber ? toInternationalNumber(row.net_amount) : row.net_amount,
+  },
+  {
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) =>
+      row.status === "1" ? (
+        <span className="text-green-600 font-semibold">Active</span>
+      ) : (
+        <span className="text-red-600 font-semibold">Inactive</span>
+      ),
+  },
+  // Optional: download icon column
+  // {
+  //   key: "download",
+  //   label: "Download",
+  //   render: (row: TableDataType) => (
+  //     <Icon
+  //       icon="material-symbols:download"
+  //       width={24}
+  //       onClick={() => exportFile(row.uuid, "csv")}
+  //       className="cursor-pointer text-blue-600 hover:text-blue-800"
+  //     />
+  //   ),
+  // },
+];
+
 
 
   const salesBySalesman = useCallback(
@@ -132,7 +239,27 @@ export default function Page() {
       pageNo: number = 1,
       pageSize: number = 50
     ): Promise<searchReturnType> => {
-      const result = await getSalesmanBySalesId(uuid);
+      
+      const result = await getSalesmanBySalesId(uuid,{from:"",to:""});
+      if (result.error) {
+        throw new Error(result.data?.message || "Search failed");
+      }
+
+      return {
+        data: result.data || [],
+        currentPage: result?.pagination?.page || 1,
+        pageSize: result?.pagination?.limit || pageSize,
+        total: result?.pagination?.totalPages || 1,
+      };
+    },
+    []
+  );
+  const orderBySalesman = useCallback(
+    async (
+      pageNo: number = 1,
+      pageSize: number = 50
+    ): Promise<searchReturnType> => {
+      const result = await getOrderOfSalesmen(uuid,{from:"",to:""});
       if (result.error) {
         throw new Error(result.data?.message || "Search failed");
       }
@@ -169,6 +296,7 @@ export default function Page() {
     if (!uuid) return;
 
     const fetchSalesmanDetails = async () => {
+      setGlobalLoading(true);
       setLoading(true);
       try {
         const res = await getSalesmanById(uuid);
@@ -180,6 +308,8 @@ export default function Page() {
           return;
         }
         setSalesman(res.data);
+
+        setGlobalLoading(false);
       } catch (error) {
         showSnackbar("Unable to fetch Salesman Details", "error");
       } finally {
@@ -206,7 +336,75 @@ export default function Page() {
     { key: "order", label: "Order" },
   ];
 
+const filterBy = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await getOrderOfSalesmen(uuid,{from:params.start_date,to:params.end_date});
+            } finally {
+                setLoading(false);
+            }
 
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.page || result.pagination?.page || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
+
+    const filterBySalesmen = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await getSalesmanBySalesId(uuid,{from:params.start_date,to:params.end_date});
+            } finally {
+                setLoading(false);
+            }
+
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
   // useEffect(() => {
   //   if (!tabName) {
   //     setActiveTab(0); // default tab
@@ -215,6 +413,9 @@ export default function Page() {
   //     setActiveTab(foundIndex !== -1 ? foundIndex : 0);
   //   }
   // }, [tabName]);
+  const viewPopuop = () => {
+    setOpenPopup(true);
+  }
 
   return (
     <>
@@ -286,7 +487,8 @@ export default function Page() {
               { key: "Contact No", value: salesman?.contact_no || "-" },
               {
                 key: "Warehouse",
-                value: salesman?.warehouse?.warehouse_name || "-",
+                value: <span className="hover:text-red-500 cursor-pointer">View Warehouses</span>,
+                onClick: viewPopuop
               },
               {
                 key: "Route",
@@ -296,7 +498,7 @@ export default function Page() {
               {
                 key: "Forcefull Login",
                 value:
-                  salesman?.forceful_login === 1 ||
+                 
                     salesman?.forceful_login === "1"
                     ? "Yes"
                     : "No",
@@ -304,17 +506,17 @@ export default function Page() {
               {
                 key: "Is Block",
                 value:
-                  salesman?.is_block === 1 || salesman?.is_block === "1"
+                  salesman?.is_block === "1"
                     ? "Yes"
                     : "No",
               },
               { key: "Block Date From", value: salesman?.block_date_from || "-" },
               { key: "Block Date To", value: salesman?.block_date_to || "-" },
-              { key: "cashier Description Block", value: salesman?.cashier_description_block || "-" },
+              { key: "cashier Description Block", value: salesman?.cashier_description_block == "1"?"Yes":"No"},
               {
                 key: "Invoice Block",
                 value:
-                  salesman?.invoice_block === 1 ||
+                
                     salesman?.invoice_block === "1"
                     ? "Yes"
                     : "No",
@@ -343,10 +545,23 @@ export default function Page() {
               config={{
                 api: {
                   // search: searchCustomerById,
-                  list: salesBySalesman
+                  list: salesBySalesman,
+                 filterBy:filterBySalesmen
                 },
                 header: {
-                  searchBar: false
+                  searchBar: false,
+                  filterByFields: [
+                                {
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date"
+                                }
+                            ]
                 },
                 showNestedLoading: true,
                 footer: { nextPrevBtn: true, pagination: true },
@@ -372,10 +587,73 @@ export default function Page() {
       )}
 
       {activeTab === "order" && (
-        <ContainerCard className="w-full h-fit">
-          <div className="text-center">Data not found</div>
+        <ContainerCard >
+
+          <div className="flex flex-col h-full">
+            <Table
+              config={{
+                api: {
+                  // search: searchCustomerById,
+                  list: orderBySalesman,
+                  filterBy:filterBy
+                },
+                header: {
+                  searchBar: false,
+                  filterByFields: [
+                                {
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date"
+                                }
+                            ]
+                },
+                showNestedLoading: true,
+                footer: { nextPrevBtn: true, pagination: true },
+                columns: orderColumns,
+                table: {
+                  height: 500,
+                },
+                rowSelection: false,
+                rowActions: [
+                  {
+  icon: "material-symbols:download",
+  onClick: (data: TableDataType) => {
+    exportFile(data.uuid, "pdf"); // or "excel", "csv" etc.
+  },
+}
+                ],
+                pageSize: 50,
+              }}
+            />
+          </div>
+
         </ContainerCard>
       )}
+
+      <Popup isOpen={openPopup}  onClose={() => {setOpenPopup(false);}} >
+      <div className="flex flex-col h-full">
+            <Table
+                data={salesman?.warehouses || []}
+
+              config={{
+                showNestedLoading: true,
+                footer: { nextPrevBtn: true, pagination: true },
+                columns: warehouseColumns,
+                table: {
+                  height: 500,
+                },
+                rowSelection: false,
+               
+                pageSize: 50,
+              }}
+            />
+          </div>
+      </Popup>
     </>
   );
 }

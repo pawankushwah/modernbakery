@@ -1,6 +1,6 @@
 import { Icon } from "@iconify-icon/react/dist/iconify.mjs";
 
-export default function KeyValueData({ title, data }: { title?: string; data: {  icon?: string; key: string | React.ReactNode; value: string | React.ReactNode, component?: React.ReactNode; }[] }) {
+export default function KeyValueData({ title, data }: { title?: string; data: {  icon?: string; key: string | React.ReactNode; value: string | React.ReactNode, component?: React.ReactNode; onClick?: () => void }[] }) {
     return <>
         {title && <div className="text-[18px] font-semibold mb-[25px]">{title}</div>}
         <div className="space-y-[20px] text-[14px]">
@@ -10,7 +10,7 @@ export default function KeyValueData({ title, data }: { title?: string; data: { 
                         { item?.icon && <Icon icon={item?.icon || ""} width={18} />}
                         <span>{ item.key }</span>
                     </div>
-                    <div className="text-[#181D27] mb-[3px]">{item.value}{item?.component || ""}</div>
+                    <div className="text-[#181D27] mb-[3px]" onClick={item.onClick}>{item.value}{item?.component || ""}</div>
                 </div>
             ))}
         </div>        

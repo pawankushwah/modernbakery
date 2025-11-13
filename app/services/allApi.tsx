@@ -1511,7 +1511,7 @@ export const salesmanTypeList = async (params: Params) => {
     const res = await API.get("/api/settings/salesman_type/list", {
       params: params,
     });
-
+    console.log(res,"salesmenType");
     return res.data;
   } catch (error) {
     console.error("User List failed ❌", error);
@@ -1772,9 +1772,18 @@ export const getSalesmanById = async (uuid: string) => {
   }
 };
 
-export const getSalesmanBySalesId = async (uuid: string) => {
+export const getSalesmanBySalesId = async (uuid: string,query:{from:string,to:string}) => {
   try {
-    const res = await API.get(`/api/master/salesmen/salespersalesman/${uuid}`);
+    const res = await API.get(`/api/master/salesmen/salespersalesman/${uuid}?from=${query.from}&to=${query.to}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getOrderOfSalesmen= async (uuid: string,query:{from:string,to:string}) => {
+  try {
+    const res = await API.get(`/api/master/salesmen/orderpersalesman/${uuid}?from=${query.from}&to=${query.to}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
