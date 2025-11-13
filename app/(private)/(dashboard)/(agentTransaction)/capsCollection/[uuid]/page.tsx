@@ -89,84 +89,84 @@ export default function AddEditCapsCollection() {
   const [submitting, setSubmitting] = useState(false);
   const [customerContactNo, setCustomerContactNo] = useState("");
   const [itemErrors, setItemErrors] = useState<Record<number, Record<string, string>>>({});
- const [skeleton, setSkeleton] = useState({
+  const [skeleton, setSkeleton] = useState({
     route: false,
     customer: false,
     item: false,
   });
-    const [orderData, setOrderData] = useState<FormData[]>([]);
-    const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
-  
+  const [orderData, setOrderData] = useState<FormData[]>([]);
+  const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
+
   const [rowUomOptions, setRowUomOptions] = useState<
     Record<string, { value: string; label: string; price?: string }[]>
   >({});
 
 
-// AutoSuggestion search functions (same as return page)
-const handleWarehouseSearch = async (searchText: string) => {
-  try {
-    const response = await warehouseListGlobalSearch({ query: searchText });
-    const data = Array.isArray(response?.data) ? response.data : [];
-    return data.map((warehouse: Warehouse) => ({
-      value: String(warehouse.id),
-      label: `${warehouse.code || warehouse.warehouse_code || ""} - ${warehouse.name || warehouse.warehouse_name || ""}`,
-      code: warehouse.code || warehouse.warehouse_code,
-      name: warehouse.name || warehouse.warehouse_name,
-    }));
-  } catch {
-    return [];
-  }
-};
-
-const handleCustomerSearch = async (searchText: string, warehouseId: string, customerType: string) => {
-  if (!warehouseId) return [];
-  try {
-    let response;
-    if (customerType === "1") {
-      response = await getCompanyCustomers({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
-    } else {
-      response = await agentCustomerList({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
+  // AutoSuggestion search functions (same as return page)
+  const handleWarehouseSearch = async (searchText: string) => {
+    try {
+      const response = await warehouseListGlobalSearch({ query: searchText });
+      const data = Array.isArray(response?.data) ? response.data : [];
+      return data.map((warehouse: Warehouse) => ({
+        value: String(warehouse.id),
+        label: `${warehouse.code || warehouse.warehouse_code || ""} - ${warehouse.name || warehouse.warehouse_name || ""}`,
+        code: warehouse.code || warehouse.warehouse_code,
+        name: warehouse.name || warehouse.warehouse_name,
+      }));
+    } catch {
+      return [];
     }
-    const data = Array.isArray(response?.data) ? response.data : [];
-    return data.map((customer: any) => {
-      // Always include contact_no in the returned option
-      if (customerType === "1") {
-        return {
-          value: String(customer.id),
-          label: `${customer.osa_code || ""} - ${customer.business_name || ""}`.trim(),
-          name: customer.business_name || "",
-          contact_no: customer.contact_no || "",
-        };
-      } else {
-        return {
-          value: String(customer.id),
-          label: `${customer.osa_code || ""} - ${customer.outlet_name || ""}`,
-          name: customer.outlet_name || customer.customer_name || customer.name || '',
-          contact_no: customer.contact_no || "",
-        };
-      }
-    });
-  } catch {
-    return [];
-  }
-};
+  };
 
-const handleItemSearch = async (searchText: string) => {
-  if (!searchText || searchText.trim().length < 1) return [];
-  try {
-    const response = await itemGlobalSearch({ query: searchText });
-    const data = Array.isArray(response?.data) ? response.data : [];
-    return data.map((item: Item) => ({
-      value: String(item.id),
-      label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
-      code: item.item_code || item.code,
-      name: item.name,
-      uoms: item.uom || item.uoms || [],
-    }));
-  } catch {
-    return [];
-  }
-};
+  const handleCustomerSearch = async (searchText: string, warehouseId: string, customerType: string) => {
+    if (!warehouseId) return [];
+    try {
+      let response;
+      if (customerType === "1") {
+        response = await getCompanyCustomers({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
+      } else {
+        response = await agentCustomerList({ warehouse_id: warehouseId, search: searchText, per_page: "50" });
+      }
+      const data = Array.isArray(response?.data) ? response.data : [];
+      return data.map((customer: any) => {
+        // Always include contact_no in the returned option
+        if (customerType === "1") {
+          return {
+            value: String(customer.id),
+            label: `${customer.osa_code || ""} - ${customer.name || ""}`.trim(),
+            name: customer.name || "",
+            contact_no: customer.contact_no || "",
+          };
+        } else {
+          return {
+            value: String(customer.id),
+            label: `${customer.osa_code || ""} - ${customer.outlet_name || ""}`,
+            name: customer.outlet_name || customer.customer_name || customer.name || '',
+            contact_no: customer.contact_no || "",
+          };
+        }
+      });
+    } catch {
+      return [];
+    }
+  };
+
+  const handleItemSearch = async (searchText: string) => {
+    if (!searchText || searchText.trim().length < 1) return [];
+    try {
+      const response = await itemGlobalSearch({ query: searchText });
+      const data = Array.isArray(response?.data) ? response.data : [];
+      return data.map((item: Item) => ({
+        value: String(item.id),
+        label: `${item.item_code || item.code || ""} - ${item.name || ""}`,
+        code: item.item_code || item.code,
+        name: item.name,
+        uoms: item.uom || item.uoms || [],
+      }));
+    } catch {
+      return [];
+    }
+  };
 
   const [tableData, setTableData] = useState<TableDataType[]>([
     {
@@ -289,71 +289,71 @@ const handleItemSearch = async (searchText: string) => {
   };
 
   const fetchItem = async (searchTerm: string) => {
-      const res = await itemList({  name: searchTerm });
-      if (res.error) {
-        showSnackbar(res.data?.message || "Failed to fetch items", "error");
-        setSkeleton({ ...skeleton, item: false });
-        return;
-      }
-      const data = res?.data || [];
-      setOrderData(data);
-      const options = data.map((item: { id: number; name: string; }) => ({
-        value: String(item.id),
-        label: item.name
-      }));
-      setItemsOptions(options);
+    const res = await itemList({ name: searchTerm });
+    if (res.error) {
+      showSnackbar(res.data?.message || "Failed to fetch items", "error");
       setSkeleton({ ...skeleton, item: false });
-      return options;
-    };
+      return;
+    }
+    const data = res?.data || [];
+    setOrderData(data);
+    const options = data.map((item: { id: number; name: string; }) => ({
+      value: String(item.id),
+      label: item.name
+    }));
+    setItemsOptions(options);
+    setSkeleton({ ...skeleton, item: false });
+    return options;
+  };
 
 
 
-    // const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
-    //     const newData = [...itemData];
-    //     const item: ItemData = newData[index];
-    //     (item as any)[field] = value;
-    
-    //     // If user selects an item, update UI immediately and show skeletons while fetching price/UOM
-    //     if (field === "item_id") {
-    //       // keep item id and name aligned for existing logic
-    //       item.item_id = value;
-    //       item.UOM = [];
-    //       item.Price = "-";
-    //       setItemData(newData);
-    //       setItemLoading((prev) => ({ ...prev, [index]: { uom: true } }));
-    //       item.UOM = orderData.find((order: FormData) => order.id.toString() === item.item_id)?.uom?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
-    //       setItemLoading((prev) => ({ ...prev, [index]: { uom: false } }));
-    //     }
-    
-    //     // Ensure numeric calculations use the latest values
-    //     const qty = Number(item.Quantity) || 0;
-    //     const price = Number(item.Price) || 0;
-    //     const total = qty * price;
-    //     const vat = total - total / 1.18;
-    //     const net = total - vat;
-    //     const excise = 0; // Calculate excise based on your business logic
-    //     const discount = 0; // Calculate discount based on your business logic
-    //     const gross = total;
-    
-    //     // Persist any value changes for qty/uom/price
-    //     if (field === "Quantity") item.Quantity = value;
-    //     if (field === "uom_id") item.uom_id = value;
-    
-    //     item.Total = total.toFixed(2);
-    //     item.Vat = vat.toFixed(2);
-    //     item.Net = net.toFixed(2);
-    //     item.Excise = excise.toFixed(2);
-    //     item.Discount = discount.toFixed(2);
-    //     item.gross = gross.toFixed(2);
-    
-    //     setItemData(newData);
-    //     // validate this row after updating; if we just changed the item selection, skip UOM required check
-    //     if (field === "item_id") {
-    //       validateRow(index, newData[index], { skipUom: true });
-    //     } else {
-    //       validateRow(index, newData[index]);
-    //     }
-    //   };
+  // const recalculateItem = async (index: number, field: string, value: string, values?: FormikValues) => {
+  //     const newData = [...itemData];
+  //     const item: ItemData = newData[index];
+  //     (item as any)[field] = value;
+
+  //     // If user selects an item, update UI immediately and show skeletons while fetching price/UOM
+  //     if (field === "item_id") {
+  //       // keep item id and name aligned for existing logic
+  //       item.item_id = value;
+  //       item.UOM = [];
+  //       item.Price = "-";
+  //       setItemData(newData);
+  //       setItemLoading((prev) => ({ ...prev, [index]: { uom: true } }));
+  //       item.UOM = orderData.find((order: FormData) => order.id.toString() === item.item_id)?.uom?.map(uom => ({ label: uom.name, value: uom.id.toString(), price: uom.price })) || [];
+  //       setItemLoading((prev) => ({ ...prev, [index]: { uom: false } }));
+  //     }
+
+  //     // Ensure numeric calculations use the latest values
+  //     const qty = Number(item.Quantity) || 0;
+  //     const price = Number(item.Price) || 0;
+  //     const total = qty * price;
+  //     const vat = total - total / 1.18;
+  //     const net = total - vat;
+  //     const excise = 0; // Calculate excise based on your business logic
+  //     const discount = 0; // Calculate discount based on your business logic
+  //     const gross = total;
+
+  //     // Persist any value changes for qty/uom/price
+  //     if (field === "Quantity") item.Quantity = value;
+  //     if (field === "uom_id") item.uom_id = value;
+
+  //     item.Total = total.toFixed(2);
+  //     item.Vat = vat.toFixed(2);
+  //     item.Net = net.toFixed(2);
+  //     item.Excise = excise.toFixed(2);
+  //     item.Discount = discount.toFixed(2);
+  //     item.gross = gross.toFixed(2);
+
+  //     setItemData(newData);
+  //     // validate this row after updating; if we just changed the item selection, skip UOM required check
+  //     if (field === "item_id") {
+  //       validateRow(index, newData[index], { skipUom: true });
+  //     } else {
+  //       validateRow(index, newData[index]);
+  //     }
+  //   };
 
 
 
@@ -440,7 +440,7 @@ const handleItemSearch = async (searchText: string) => {
           </div>
         </div>
 
-        <hr className="mb-6" />
+        <hr className="my-6 w-full text-[#D5D7DA]" />
 
         {/* Form */}
         <h2 className="text-lg font-medium text-gray-800 mb-4">
@@ -454,7 +454,7 @@ const handleItemSearch = async (searchText: string) => {
               label="Warehouse"
               name="warehouse"
               placeholder="Search warehouse..."
-              initialValue={form.warehouse}
+              initialValue={warehouseOptions.find(o => o.value === String(form.warehouse))?.label || ""}
               onSearch={handleWarehouseSearch}
               onSelect={(option: { value: string }) => {
                 handleChange("warehouse", option.value);
@@ -475,7 +475,7 @@ const handleItemSearch = async (searchText: string) => {
               label="Customer"
               name="customer"
               placeholder="Search customer..."
-              initialValue={form.customer}
+              initialValue={agentCustomerOptions.find(o => o.value === String(form.customer))?.label || ""}
               onSearch={(searchText: string) => handleCustomerSearch(searchText, form.warehouse, "0")}
               onSelect={(option: { value: string; contact_no?: string }) => {
                 handleChange("customer", option.value);
@@ -495,7 +495,7 @@ const handleItemSearch = async (searchText: string) => {
             label="Contact No."
             value={customerContactNo}
             disabled
-            onChange={() => {}}
+            onChange={() => { }}
           />
 
           {/* <InputFields
@@ -511,7 +511,7 @@ const handleItemSearch = async (searchText: string) => {
           /> */}
         </div>
 
-        <hr className="mb-4" />
+        <hr className="my-6 w-full text-[#D5D7DA]" />
 
         {/* Table */}
         <CustomTable
@@ -525,7 +525,9 @@ const handleItemSearch = async (searchText: string) => {
                 render: (row) => (
                   <AutoSuggestion
                     placeholder="Search item..."
-                    initialValue={row.item}
+                    initialValue={
+                      itemOptions.find(o => o.value === String(row.item))?.label
+                    }
                     onSearch={handleItemSearch}
                     onSelect={(option: { value: string; uoms?: Uom[] }) => {
                       handleTableChange(row.id, "item", option.value);
@@ -771,7 +773,7 @@ const handleItemSearch = async (searchText: string) => {
           </button>
         </div>
 
-        <hr className="my-6" />
+        <hr className="my-6 w-full text-[#D5D7DA]" />
 
         {/* Buttons */}
         <div className="flex justify-end gap-4">

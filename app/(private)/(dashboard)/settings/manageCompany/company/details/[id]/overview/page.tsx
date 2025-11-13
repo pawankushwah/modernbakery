@@ -100,8 +100,8 @@ export default function ViewPage() {
               title="Company Information"
               data={[
                 { key: "Company Type", value: company?.company_type || "-" },
-                { key: "Website", value: company?.website || "-" },
-                { key: "Email", value: company?.email || "-" },
+                { key: "Website", value: <span className="lowercase">{company?.website || "-"}</span> },
+                { key: "Email", value: <span className="lowercase">{company?.email || "-"}</span> },
                 {
                   key: "Primary Contact",
                   value: company?.primary_contact || "-",

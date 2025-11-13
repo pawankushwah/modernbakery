@@ -40,27 +40,27 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "mdi:account-tie",
             iconColor: "text-green-500",
           },
-          {
-            isActive: false,
-            href: "/settings/permission",
-            label: "Permissions",
-            leadingIcon: "mdi:lock-check",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
-            href: "/settings/menu",
-            label: "Menus",
-            leadingIcon: "duo-icons:menu",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
-            href: "/settings/submenu",
-            label: "Sub Menus",
-            leadingIcon: "ci:arrow-sub-down-right",
-            iconColor: "text-green-500",
-          }
+          // {
+          //   isActive: false,
+          //   href: "/settings/permission",
+          //   label: "Permissions",
+          //   leadingIcon: "mdi:lock-check",
+          //   iconColor: "text-green-500",
+          // },
+          // {
+          //   isActive: false,
+          //   href: "/settings/menu",
+          //   label: "Menus",
+          //   leadingIcon: "duo-icons:menu",
+          //   iconColor: "text-green-500",
+          // },
+          // {
+          //   isActive: false,
+          //   href: "/settings/submenu",
+          //   label: "Sub Menus",
+          //   leadingIcon: "ci:arrow-sub-down-right",
+          //   iconColor: "text-green-500",
+          // }
         ],
       },
       {
@@ -109,11 +109,11 @@ export const initialLinkData: SidebarDataType[] = [
         trailingIcon: "mdi-light:chevron-right",
         iconColor: "text-yellow-400",
         children: [
-          {
+           {
             isActive: false,
-            href: "/settings/customer/customerType",
-            label: "Customer Type",
-            leadingIcon: "lucide:user",
+            href: "/settings/outlet-channel",
+            label: "Outlet Channel",
+            leadingIcon: "mdi:storefront",
             iconColor: "text-green-500",
           },
           {
@@ -130,13 +130,13 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "mdi:map",
             iconColor: "text-yellow-400",
           },
-          {
-            isActive: false,
-            href: "/settings/customer/discountType",
-            label: "Discount Types",
-            leadingIcon: "mdi:map",
-            iconColor: "text-yellow-400",
-          },
+          // {
+          //   isActive: false,
+          //   href: "/settings/customer/discountType",
+          //   label: "Discount Types",
+          //   leadingIcon: "mdi:map",
+          //   iconColor: "text-yellow-400",
+          // },
         ],
       },
       {
@@ -156,20 +156,6 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/settings/brand",
-            label: "Brand",
-            leadingIcon: "mdi:earth",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
-            href: "/settings/location",
-            label: "Location",
-            leadingIcon: "mdi:earth",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
             href: "/settings/region",
             label: "Region",
             leadingIcon: "mdi:map-outline",
@@ -184,19 +170,18 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/settings/routetype",
-            label: "Route Type",
-            leadingIcon: "mdi:map-marker-path",
+            href: "/settings/location",
+            label: "Location",
+            leadingIcon: "mdi:earth",
             iconColor: "text-green-500",
           },
-
-          {
-            isActive: false,
-            href: "/settings/outlet-channel",
-            label: "Outlet Channel",
-            leadingIcon: "mdi:storefront",
-            iconColor: "text-green-500",
-          },
+          // {
+          //   isActive: false,
+          //   href: "/settings/routetype",
+          //   label: "Route Type",
+          //   leadingIcon: "mdi:map-marker-path",
+          //   iconColor: "text-green-500",
+          // },
         ],
       },
       {
@@ -207,6 +192,13 @@ export const initialLinkData: SidebarDataType[] = [
         trailingIcon: "qlementine-icons:items-grid-small-24",
         iconColor: "text-yellow-400",
         children: [
+          {
+            isActive: false,
+            href: "/settings/brand",
+            label: "Brand",
+            leadingIcon: "mdi:earth",
+            iconColor: "text-green-500",
+          },
           {
             isActive: false,
             href: "/settings/item/category",

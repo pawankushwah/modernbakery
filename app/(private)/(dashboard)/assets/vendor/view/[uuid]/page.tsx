@@ -71,7 +71,7 @@ export default function ViewPage() {
                             { value: vendor?.name, key: "Name" },
                             { value: vendor?.address, key: "Address" },
                             { value: vendor?.contact, key: "Contact" },
-                            { value: vendor?.email, key: "Email" },
+                            { value: <span className="lowercase">{vendor?.email || "-"}</span>, key: "Email" },
                             { value: "", key: "Status", component: <StatusBtn isActive={!!vendor?.status} /> },
 
                         ]}

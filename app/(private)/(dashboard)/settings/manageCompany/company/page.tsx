@@ -59,8 +59,8 @@ const dropdownDataList = [
 const columns = [
     { key: "company_name", label: "Company Name", render: (row: TableDataType) => row.company_code + " - " + row.company_name || "-" },
     { key: "company_type", label: "Company Type"},
-    { key: "website", label: "Website"},
-    { key: "email", label: "Email"},
+    { key: "website", label: "Website", render: (row: TableDataType) => <span className="lowercase">{row.website || "-"}</span>},
+    { key: "email", label: "Email", render: (row: TableDataType) => <span className="lowercase">{row.email || "-"}</span>},
     { key: "toll_free_no", label: "Toll Free No"},
     { key: "primary_contact", label: "Primary Contact"},
     { key: "address", label: "Address"},

@@ -29,7 +29,7 @@ export default function User() {
             },
             showByDefault: true,
         },
-        { key: "email", label: "Email" },
+        { key: "email", label: "Email", render: (row: TableDataType) => <span className="lowercase">{row.email || "-"}</span>, showByDefault: true  },
         { key: "contact_number", label: "Contact No.",showByDefault: true  },
         {
             key: "status",

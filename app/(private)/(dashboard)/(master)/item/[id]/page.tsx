@@ -18,6 +18,7 @@ import {
   genearateCode,
   getCustomerSubCategoryById,
   customerSubCategoryList,
+  itemSubCategoryList,
 } from "@/app/services/allApi";
 import * as Yup from "yup";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
@@ -211,12 +212,12 @@ export default function AddEditItem() {
 
   const fetchSubCategory = async (categoryId: string) => {
     setSkeleton({ ...skeleton, itemSubCategory: true });
-    const res = await customerSubCategoryList({ customer_category_id: categoryId, dropdown: "true" });
+    const res = await itemSubCategoryList({ item_category_id: categoryId, dropdown: "true" });
     if (res.error) {
       showSnackbar("Failed to fetch sub categories", "error");
       throw new Error("Failed to fetch sub categories");
     }
-  const options = res.data.map((subCategory: any) => ({ label: subCategory.customer_sub_category_code + " - " + subCategory.customer_sub_category_name, value: String(subCategory.id) }));
+  const options = res.data.map((subCategory: any) => ({ label: subCategory.sub_category_code + " - " + subCategory.sub_category_name, value: String(subCategory.id) }));
     setFilteredSubCategoryOptions(options);
     setSkeleton({ ...skeleton, itemSubCategory: false });
   }
