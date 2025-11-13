@@ -156,20 +156,6 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/settings/brand",
-            label: "Brand",
-            leadingIcon: "mdi:earth",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
-            href: "/settings/location",
-            label: "Location",
-            leadingIcon: "mdi:earth",
-            iconColor: "text-green-500",
-          },
-          {
-            isActive: false,
             href: "/settings/region",
             label: "Region",
             leadingIcon: "mdi:map-outline",
@@ -184,11 +170,18 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/settings/routetype",
-            label: "Route Type",
-            leadingIcon: "mdi:map-marker-path",
+            href: "/settings/location",
+            label: "Location",
+            leadingIcon: "mdi:earth",
             iconColor: "text-green-500",
           },
+          // {
+          //   isActive: false,
+          //   href: "/settings/routetype",
+          //   label: "Route Type",
+          //   leadingIcon: "mdi:map-marker-path",
+          //   iconColor: "text-green-500",
+          // },
         ],
       },
       {
@@ -199,6 +192,13 @@ export const initialLinkData: SidebarDataType[] = [
         trailingIcon: "qlementine-icons:items-grid-small-24",
         iconColor: "text-yellow-400",
         children: [
+          {
+            isActive: false,
+            href: "/settings/brand",
+            label: "Brand",
+            leadingIcon: "mdi:earth",
+            iconColor: "text-green-500",
+          },
           {
             isActive: false,
             href: "/settings/item/category",
