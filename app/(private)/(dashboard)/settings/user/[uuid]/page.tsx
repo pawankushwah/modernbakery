@@ -18,6 +18,8 @@ import { Form, Formik, FormikErrors, FormikHelpers, FormikTouched } from "formik
 import { useParams, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import * as Yup from "yup";
+import { CustomTableSkelton } from "../../../(master)/warehouse/details/[id]/page";
+import Skeleton from "@mui/material/Skeleton";
 
 interface User {
   name: string;
@@ -44,6 +46,8 @@ interface ContactCountry {
 export default function UserAddEdit() {
   const [isValidEmail, setIsValidEmail] = useState<boolean>(false)
   const [isValidUser, setIsValidUser] = useState<boolean>(false)
+  const [isNestedDropdownValue, setIsNestedDropdownValue] = useState<boolean>(false)
+
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
   const router = useRouter();
@@ -316,9 +320,7 @@ export default function UserAddEdit() {
   const baseFields = {
     name: Yup.string().required("Name is required"),
     email: Yup.string().email("Invalid email").required("Email is required"),
-    username: Yup.string()
-    .required("Username is required")
-    .matches(/^\S*$/, "Username cannot contain spaces"),
+    username: Yup.string().required("Username is required"),
     contact_number: Yup.string().required("Contact number is required"),
     password: passwordField,
     password_confirmation: passwordConfirmationField,
@@ -434,7 +436,13 @@ export default function UserAddEdit() {
 
       await stepSchema.validate(normalized, { abortEarly: false });
       markStepCompleted(currentStep);
+      if(!isValidEmail)
+      { 
+        if(!isValidUser)
+        {
       nextStep();
+        }
+      }
     } catch (err) {
       if (err instanceof Yup.ValidationError) {
         const errors = err.inner.reduce((acc: Record<string, string>, curr: Yup.ValidationError) => {
@@ -540,69 +548,71 @@ export default function UserAddEdit() {
               />
 
               <div>
-                <InputFields
-                  required
-                  label="Email"
-                  name="email"
-                  value={values.email}
-                  onChange={(e) => {
-                    setFieldValue("email", e.target.value);
-                    // clear previous error if user starts typing again
-                    actionsRef?.current?.setFieldError("email", "");
-                    setIsValidEmail(false);
-                  }}
-                  onBlur={async () => {
-                    setFieldTouched && setFieldTouched("email", true);
-                    if (values.email && !isEditMode) {
-                      await checkEmail("email", values.email, (field, message) => {
-                        if (message) {
-                          actionsRef?.current?.setFieldError(field, message);
-                          setIsValidEmail(true);
-                        } else {
-                          setIsValidEmail(false);
-                        }
-                      });
-                    }
-                  }}
-                  error={touched.email ? (errors.email as string) : undefined}
-                />
+  <InputFields
+    required
+    label="Email"
+    name="email"
+    // autoComplete={false}
 
-                {isValidEmail && (
-                  <p className="text-red-500 text-sm mt-1">Email already exists</p>
-                )}
-              </div>
+    value={values.email}
+    onChange={(e) => {
+      setFieldValue("email", e.target.value);
+      // clear previous error if user starts typing again
+      actionsRef?.current?.setFieldError("email", "");
+      setIsValidEmail(false);
+    }}
+    onBlur={async () => {
+      setFieldTouched && setFieldTouched("email", true);
+      if (values.email && !isEditMode) {
+        await checkEmail("email", values.email, (field, message) => {
+          if (message) {
+            actionsRef?.current?.setFieldError(field, message);
+            setIsValidEmail(true);
+          } else {
+            setIsValidEmail(false);
+          }
+        });
+      }
+    }}
+    error={touched.email ? (errors.email as string) : undefined}
+  />
 
-              <div>
-                <InputFields
-                  required
-                  label="Username"
-                  name="username"
-                  value={values.username}
-                  onChange={(e) => {
-                    setFieldValue("username", e.target.value);
-                    actionsRef?.current?.setFieldError("username", "");
-                    setIsValidUser(false);
-                  }}
-                  onBlur={async () => {
-                    setFieldTouched && setFieldTouched("username", true);
-                    if (values.username && !isEditMode) {
-                      await checkUsername("username", values.username, (field, message) => {
-                        if (message) {
-                          actionsRef?.current?.setFieldError(field, message);
-                          setIsValidUser(true);
-                        } else {
-                          setIsValidUser(false);
-                        }
-                      });
-                    }
-                  }}
-                  error={touched.username ? (errors.username as string) : undefined}
-                />
+  {isValidEmail && (
+    <p className="text-red-500 text-sm mt-1">Email already exists</p>
+  )}
+</div>
 
-                {isValidUser && (
-                  <p className="text-red-500 text-sm mt-1">Username already exists</p>
-                )}
-              </div>
+<div>
+  <InputFields
+    required
+    label="Username"
+    name="username"
+    value={values.username}
+    onChange={(e) => {
+      setFieldValue("username", e.target.value);
+      actionsRef?.current?.setFieldError("username", "");
+      setIsValidUser(false);
+    }}
+    onBlur={async () => {
+      setFieldTouched && setFieldTouched("username", true);
+      if (values.username && !isEditMode) {
+        await checkUsername("username", values.username, (field, message) => {
+          if (message) {
+            actionsRef?.current?.setFieldError(field, message);
+            setIsValidUser(true);
+          } else {
+            setIsValidUser(false);
+          }
+        });
+      }
+    }}
+    error={touched.username ? (errors.username as string) : undefined}
+  />
+
+  {isValidUser && (
+    <p className="text-red-500 text-sm mt-1">Username already exists</p>
+  )}
+</div>
 
 
 
@@ -658,14 +668,18 @@ export default function UserAddEdit() {
                 value={values.role}
                 options={roleOptions}
                 onChange={async (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+setIsNestedDropdownValue(true);
+
                   const val = e?.target?.value;
                   setFieldValue("role", val);
                   await fetchLabelsForRoles(val);
+
+setIsNestedDropdownValue(false);
                 }}
                 onBlur={() => setFieldTouched && setFieldTouched('role', true)}
                 error={touched.role ? (errors.role as string) : undefined}
               />
-
+      {!isNestedDropdownValue? <>
               {visibleLabels.includes("company") && (
                 <InputFields
                   required
@@ -930,6 +944,7 @@ export default function UserAddEdit() {
                   error={touched.salesman ? (errors.salesman as string) : undefined}
                 />
               )}
+          </>:<div style={{display:"flex",flexDirection:"column", justifyContent:"center"}}> <Skeleton height={12}/><Skeleton height={12}/><Skeleton height={12}/><Skeleton height={12}/></div>}
             </div>
           </div>
         );
@@ -957,7 +972,7 @@ export default function UserAddEdit() {
         onSubmit={handleSubmit}
       >
         {({ values, setFieldValue, errors, touched, setErrors, setTouched, setFieldTouched, isSubmitting }) => (
-          <Form>
+          <Form autoComplete="off">
             <StepperForm
               steps={steps.map((step) => ({
                 ...step,
