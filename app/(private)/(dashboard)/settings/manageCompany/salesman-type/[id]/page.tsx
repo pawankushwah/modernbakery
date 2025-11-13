@@ -218,9 +218,7 @@ export default function AddOrEditSalesmanType() {
                   formik.errors.salesman_type_name
                 }
               />
-              <div className="text-sm text-red-600">
-                {formik.touched.salesman_type_name && formik.errors.salesman_type_name}
-              </div>
+            
              </div>
 
               {/* Status */}

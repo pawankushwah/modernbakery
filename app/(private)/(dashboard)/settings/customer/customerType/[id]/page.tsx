@@ -22,7 +22,7 @@ import {
 import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface CustomerTypeFormValues {
-  customer_type_code: string;
+  code: string;
   name: string;
   status: string; // "active" | "inactive"
 }
@@ -40,19 +40,19 @@ export default function AddCustomerTypePage() {
   // ✅ Formik setup
   const formik = useFormik<CustomerTypeFormValues>({
     initialValues: {
-      customer_type_code: "",
+      code: "",
       name: "",
       status: "active",
     },
     validationSchema: Yup.object({
-      customer_type_code: Yup.string().required("Customer Type Code is required"),
+      code: Yup.string().required("Customer Type Code is required"),
       name: Yup.string().required("Name is required"),
       status: Yup.string().required("Status is required"),
     }),
     onSubmit: async (values, { setSubmitting }) => {
       try {
         const payload = {
-          customer_type_code: values.customer_type_code,
+          code: values.code,
           name: values.name,
           status: values.status === "active" ? 1 : 0,
         };
@@ -77,7 +77,7 @@ export default function AddCustomerTypePage() {
           // Finalize the reserved code only after successful add
           if (!isEditMode || params?.id === "add") {
             try {
-              await saveFinalCode({ reserved_code: values.customer_type_code, model_name: "customer_types" });
+              await saveFinalCode({ reserved_code: values.code, model_name: "customer_types" });
             } catch (e) {}
           }
           router.push("/settings/customer/customerType");
@@ -100,7 +100,7 @@ export default function AddCustomerTypePage() {
           const res = await getCustomerTypeById(String(params.id));
           if (res?.data) {
             formik.setValues({
-              customer_type_code: res.data.code || "",
+              code: res.data.code || "",
               name: res.data.name || "",
               status: res.data.status === 1 ? "active" : "inactive",
             });
@@ -116,7 +116,7 @@ export default function AddCustomerTypePage() {
       (async () => {
         const res = await genearateCode({ model_name: "customer_types" });
         if (res?.code) {
-          formik.setFieldValue("customer_type_code", res.code);
+          formik.setFieldValue("code", res.code);
         }
       })();
     }
@@ -151,11 +151,11 @@ export default function AddCustomerTypePage() {
               <div className="flex items-start gap-2 max-w-[406px]">
                 <InputFields
                   label="Customer Type Code"
-                  name="customer_type_code"
-                  value={formik.values.customer_type_code}
+                  name="code"
+                  value={formik.values.code}
                   onChange={formik.handleChange}
                   disabled
-                  error={formik.touched.customer_type_code && formik.errors.customer_type_code}
+                  error={formik.touched.code && formik.errors.code}
                 />
                 {!isEditMode && (
                   <>    
