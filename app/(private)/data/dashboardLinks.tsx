@@ -16,19 +16,6 @@ export type LinkDataType = {
 };
 
 export const initialLinkData: SidebarDataType[] = [
-  // {
-  //     name: "Main Menu",
-  //     data: [
-  //         {
-  //             isActive: true,
-  //             href: "/",
-  //             label: "",
-  //             leadingIcon: "hugeicons:home-01",
-  //             iconColor: "text-blue-500"
-  //         },
-  //
-  //     ],
-  // },
   {
     data: [
       {
