@@ -268,6 +268,7 @@ export default function AddEditWarehouse() {
             const base = {
                 ...values,
                 warehouse_type: values.warehouse_type,
+                agreed_stock_capital: Number(values.agreed_stock_capital),
                 is_branch: isBranchPayload,
             } as Record<string, unknown>;
 
