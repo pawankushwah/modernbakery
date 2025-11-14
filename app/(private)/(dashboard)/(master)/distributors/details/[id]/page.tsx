@@ -58,8 +58,8 @@ interface Item {
     status: number | string;
 }
 
-const title = "Warehouse Details";
-const backBtnUrl = "/warehouse";
+const title = "Distributors Details";
+const backBtnUrl = "/distributors";
 
 
 
@@ -148,13 +148,13 @@ export default function ViewPage() {
     const [activeTab, setActiveTab] = useState("overview");
     const tabList = [
         { key: "overview", label: "Overview" },
-        { key: "warehouseCustomer", label: "Warehouse Customers" },
-        { key: "warehouseStock", label: "Warehouse Stock" },
+        { key: "warehouseCustomer", label: "Distributor Customers" },
+        { key: "warehouseStock", label: "Distributor Stock" },
         { key: "route", label: "Route" },
         // { key: "vehicle", label: "Vehicle" },
-        { key: "salesman", label: "Salesman" },
+        { key: "salesman", label: "Sales Team" },
         { key: "sales", label: "Sales" },
-        { key: "return", label: "Return" },
+        { key: "return", label: "Market Return" },
     ];
 
     useEffect(() => {
@@ -164,10 +164,10 @@ export default function ViewPage() {
             setLoading(false);
             if (res.error) {
                 showSnackbar(
-                    res.data.message || "Unable to fetch Warehouse Details",
+                    res.data.message || "Unable to fetch Distributor Details",
                     "error"
                 );
-                throw new Error("Unable to fetch Warehouse Details");
+                throw new Error("Unable to fetch Distributor Details");
             } else {
                 setItem(res.data);
 
@@ -306,7 +306,7 @@ export default function ViewPage() {
         },
         {
             key: "salesman_code",
-            label: "Salesman",
+            label: "Sales Team",
              render: (row: TableDataType) => {
             const code = row.salesman_code || "-";
             const name = row.salesman_name || "-";
@@ -393,7 +393,7 @@ export default function ViewPage() {
         },
         {
             key: "salesman_code",
-            label: "Salesman",
+            label: "Sales Team",
              render: (row: TableDataType) => {
             const code = row.salesman_code || "-";
             const name = row.salesman_name || "-";
@@ -466,7 +466,7 @@ export default function ViewPage() {
     const salesmanColumns: configType["columns"] = [
         {
             key: "osa_code",
-            label: "Salesman",
+            label: "Sales Team",
             render: (row: TableDataType) => (
                 <span className="font-semibold text-[#181D27] text-[14px]">
                     {row.osa_code} - {row.name }
@@ -476,7 +476,7 @@ export default function ViewPage() {
         },
          {
             key: "salesman_type",
-            label: "Salesman Type",
+            label: "Sales Team Type",
             render: (row: TableDataType) => {
                 const obj =
                     typeof row.salesman_type === "string"
@@ -1094,10 +1094,10 @@ function getRandomNumber(count:number) {
                             <div className="flex-1 w-full">
                                 <ContainerCard className="w-full h-full">
                                     <KeyValueData
-                                        title="Warehouse Info"
+                                        title="Distributor Info"
                                         data={[
                                             {
-                                                key: "Warehouse Type",
+                                                key: "Distributor Type",
                                                 value: item?.warehouse_type || "Not available"
                                             },
                                             { key: "TIN No.", value: item?.tin_no || '-' },
@@ -1109,7 +1109,7 @@ function getRandomNumber(count:number) {
                                                 key: "Company",
                                                 value: `${item?.get_company?.company_code || "-"} - ${item?.get_company?.company_name || "-"}`
                                             },
-                                            { key: "Warehouse Manager Name", value: item?.warehouse_manager || '-' },
+                                            { key: "Distributor Manager Name", value: item?.warehouse_manager || '-' },
 
                                         ]}
                                     />
@@ -1196,7 +1196,7 @@ function getRandomNumber(count:number) {
                                         ]}
                                     />
                                     {item?.latitude && item?.longitude && (
-                                        <Map latitude={item.latitude} longitude={item.longitude} title="Warehouse Location" />
+                                        <Map latitude={item.latitude} longitude={item.longitude} title="Distributor Location" />
                                     )}
                                 </ContainerCard>
                             </div>
