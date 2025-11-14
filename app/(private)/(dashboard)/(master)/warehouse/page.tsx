@@ -173,13 +173,13 @@ export default function Warehouse() {
                  pageSize: number = 50
              ): Promise<listReturnType> => {
                  try {
-                   setLoading(true);
+                  //  setLoading(true);
                      const listRes = await getWarehouse({
                         //  limit: pageSize.toString(),
                          page: page.toString(),
                          per_page: pageSize.toString(),
                      });
-                     setLoading(false);
+                    //  setLoading(false);
                      return {
                          data: listRes.data || [],
                          total: listRes?.pagination?.last_page || listRes?.pagination?.pagination?.last_page || 1,
@@ -203,13 +203,13 @@ export default function Warehouse() {
                  page: number = 1
              ): Promise<listReturnType> => {
                  try {
-                   setLoading(true);
+                  //  setLoading(true);
                      const listRes = await warehouseListGlobalSearch({
                          query,
                          per_page: pageSize.toString(),
                          page: page.toString(),
                      });
-                     setLoading(false);
+                    //  setLoading(false);
                      return {
                          data: listRes.data || [],
                          total: listRes.pagination.last_page || 1,
@@ -279,9 +279,9 @@ export default function Warehouse() {
         setSelectedRow(null);
       }
     };
-    useEffect(() => {
-      setLoading(true);
-    }, []);
+    // useEffect(() => {
+    //   setLoading(true);
+    // }, []);
   return (
     <>
 

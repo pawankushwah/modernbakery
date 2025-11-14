@@ -265,7 +265,7 @@ export default function Page() {
                       }
                       return {
                         data: res.data || [],
-                        total: res.pagination?.totalPages || 0,
+                        total: res.pagination?.totalPages || 1,
                         currentPage: res.pagination?.currentPage || 1,
                         pageSize: res.pagination?.pageSize || pageSize,
                       };
@@ -298,7 +298,7 @@ export default function Page() {
                       }
                       return {
                         data: res.data || [],
-                        total: res.pagination?.totalPages || 0,
+                        total: res.pagination?.totalPages || 1,
                         currentPage: res.pagination?.currentPage || 1,
                         pageSize: res.pagination?.pageSize || pageSize,
                       };

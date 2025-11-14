@@ -131,12 +131,12 @@ export default function VehiclePage() {
       pageSize: number = 50
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
+        // setLoading(true);
         const listRes = await vehicleListData({
           limit: pageSize.toString(),
           page: page.toString(),
         });
-        setLoading(false);
+        // setLoading(false);
         return {
           data: listRes.data || [],
           total: listRes.pagination.totalPages,
@@ -159,13 +159,13 @@ export default function VehiclePage() {
       columnName?: string,
       page: number = 1
     ): Promise<searchReturnType> => {
-      setLoading(true);
+      // setLoading(true);
       const result = await vehicleGlobalSearch({
         search: searchQuery,
         per_page: pageSize.toString(),
         page: page.toString(),
       });
-      setLoading(false);
+      // setLoading(false);
       if (result.error) throw new Error(result.data.message);
       const pagination = result.pagination || result.pagination.pagination || {};
       return {

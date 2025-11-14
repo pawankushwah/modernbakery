@@ -115,7 +115,7 @@ const SalesmanPage = () => {
       console.error("Export error:", error);
       showSnackbar("Failed to export salesman data", "error");
     } finally {
-      setLoading(false);
+      // setLoading(false);
       setShowExportDropdown(false);
     }
   };
@@ -128,9 +128,9 @@ const SalesmanPage = () => {
       page: number = 1,
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
+        // setLoading(true);
         const res = await SalesmanListGlobalSearch({ query: query, per_page: pageSize.toString(), page: page.toString() });
-        setLoading(false);
+        // setLoading(false);
 
         return {
           data: res.data || [],
@@ -153,11 +153,11 @@ const SalesmanPage = () => {
       pageSize: number = 50
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
+        // setLoading(true);
         const listRes = await salesmanList({
           page: page.toString(),
         });
-        setLoading(false);
+        // setLoading(false);
         return {
           data: listRes.data || [],
           total: listRes.pagination.totalPages || 1,

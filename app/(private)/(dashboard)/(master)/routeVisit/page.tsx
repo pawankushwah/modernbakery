@@ -6,7 +6,7 @@ import Table, {
   TableDataType,
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
-import { getRouteVisitList,downloadFile ,exportRouteVisit} from "@/app/services/allApi"; // Adjust import path
+import { getRouteVisitList, downloadFile, exportRouteVisit } from "@/app/services/allApi"; // Adjust import path
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
@@ -19,12 +19,12 @@ const columns = [
   { key: "to_date", label: "To Date" },
   { key: "customer_type", label: "Customer Type" },
   {
-      key: "status",
-      label: "Status",
-      render: (row: TableDataType) => (
-        <StatusBtn isActive={String(row.status) === "1"} />
-      ),
-    },
+    key: "status",
+    label: "Status",
+    render: (row: TableDataType) => (
+      <StatusBtn isActive={String(row.status) === "1"} />
+    ),
+  },
 ];
 
 export default function RouteVisits() {
@@ -49,15 +49,15 @@ export default function RouteVisits() {
   const { showSnackbar } = useSnackbar();
   type TableRow = TableDataType & { uuid?: string };
 
-           
-         
+
+
   const fetchRouteVisits = useCallback(
     async (
       page: number = 1,
       pageSize: number = 50
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
+        // setLoading(true);
 
         // Prepare params for the API call
         const params = {
@@ -68,9 +68,9 @@ export default function RouteVisits() {
         };
 
         const listRes = await getRouteVisitList(params);
-        console.log("Route Visits", listRes);
+        // console.log("Route Visits", listRes);
 
-        setLoading(false);
+        // setLoading(false);
 
         // ✅ Added: transform customer_type names only
         const transformedData = (listRes.data || []).map((item: any) => ({
@@ -107,7 +107,7 @@ export default function RouteVisits() {
       pageSize: number
     ): Promise<searchReturnType> => {
       try {
-        setLoading(true);
+        // setLoading(true);
 
         // For search, you might want to adjust the params
         // or use a different search endpoint if available
@@ -121,7 +121,7 @@ export default function RouteVisits() {
         };
 
         const result = await getRouteVisitList(params);
-        setLoading(false);
+        // setLoading(false);
 
         // ✅ Added: transform customer_type names only
         const transformedData = (result.data || []).map((item: any) => ({
@@ -150,20 +150,20 @@ export default function RouteVisits() {
     },
     [filters, setLoading, showSnackbar]
   );
-const exportFile = async (format: string) => {
-           try {
-             const response = await exportRouteVisit({ format }); 
-             if (response && typeof response === 'object' && response.file_url) {
-              await downloadFile(response.file_url);
-               showSnackbar("File downloaded successfully ", "success");
-             } else {
-               showSnackbar("Failed to get download URL", "error");
-             }
-           } catch (error) {
-             showSnackbar("Failed to download route visit data", "error");
-           } finally {
-           }
-         };
+  const exportFile = async (format: string) => {
+    try {
+      const response = await exportRouteVisit({ format });
+      if (response && typeof response === 'object' && response.file_url) {
+        await downloadFile(response.file_url);
+        showSnackbar("File downloaded successfully ", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
+      }
+    } catch (error) {
+      showSnackbar("Failed to download route visit data", "error");
+    } finally {
+    }
+  };
   // Refresh table when filters change
   useEffect(() => {
     setRefreshKey((prev) => prev + 1);

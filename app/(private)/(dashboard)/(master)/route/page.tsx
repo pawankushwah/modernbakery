@@ -132,7 +132,7 @@ export default function Route() {
         pageNo: number = 1,
         pageSize: number = 10
     ): Promise<listReturnType> => {
-        setLoading(true);
+        // setLoading(true);
         try {
             const params: any = {
                 page: pageNo.toString(),
@@ -152,7 +152,7 @@ export default function Route() {
             console.error("API Error:", error);
             throw error;
         } finally {
-            setLoading(false);
+            // setLoading(false);
         }
     };
 
@@ -163,7 +163,7 @@ export default function Route() {
             columnName?: string,
             page: number = 1
         ): Promise<searchReturnType> => {
-            setLoading(true);
+            // setLoading(true);
             let result;
             if (columnName && columnName !== "") {
                 result = await routeList({
@@ -178,7 +178,7 @@ export default function Route() {
                     page: page.toString(),
                 });
             }
-            setLoading(false);
+            // setLoading(false);
             if (result.error) throw new Error(result.data.message);
             const pagination = result?.pagination || result?.pagination?.pagination || {};
             return {
@@ -209,9 +209,9 @@ export default function Route() {
         return res;
     }
 
-    useEffect(() => {
-        setLoading(true);
-    }, []);
+    // useEffect(() => {
+    //     setLoading(true);
+    // }, []);
 
     const handleConfirmDelete = async () => {
         if (!selectedRowId) return;

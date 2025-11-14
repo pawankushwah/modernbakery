@@ -185,7 +185,7 @@ export default function AgentCustomer() {
             pageSize: number = 5
         ): Promise<listReturnType> => {
             try {
-                setLoading(true);
+                // setLoading(true);
                 const params: Record<string, string> = {
                     page: page.toString(),
                 };
@@ -202,7 +202,7 @@ export default function AgentCustomer() {
                     params.route_id = String(routeId);
                 }
                 const listRes = await agentCustomerList(params);
-                setLoading(false);
+                // setLoading(false);
                 return {
                     data: Array.isArray(listRes.data) ? listRes.data : [],
                     total: listRes?.pagination?.totalPages || 1,
@@ -210,7 +210,7 @@ export default function AgentCustomer() {
                     pageSize: listRes?.pagination?.limit || pageSize,
                 };
             } catch (error: unknown) {
-                setLoading(false);
+                // setLoading(false);
                 return {
                     data: [],
                     total: 1,
@@ -263,7 +263,7 @@ export default function AgentCustomer() {
             page: number = 1
         ): Promise<listReturnType> => {
             let result;
-            setLoading(true);
+            // setLoading(true);
             if (columnName) {
                 result = await agentCustomerList({
                     per_page: pageSize.toString(),
@@ -278,7 +278,7 @@ export default function AgentCustomer() {
                     page: page.toString(),
                 });
             }
-            setLoading(false);
+            // setLoading(false);
             if (result.error) throw new Error(result.data.message);
             // if (columnName) {
             //     return {

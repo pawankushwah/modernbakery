@@ -96,11 +96,9 @@ const columns = [
 
 export default function Item() {
   const { setLoading } = useLoading();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<LocalTableDataType | null>(
-    null
-  );
+  // const [showDropdown, setShowDropdown] = useState(false);
+  // const [showDeletePopup, setShowDeletePopup] = useState(false);
+  // const [selectedRow, setSelectedRow] = useState<LocalTableDataType | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -111,9 +109,9 @@ export default function Item() {
       pageSize: number = 50
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
+        // setLoading(true);
         const res = await itemList({ page: page.toString() });
-        setLoading(false);
+        // setLoading(false);
         const data = res.data.map((item: LocalTableDataType) => ({
           ...item,
         }));
@@ -142,9 +140,9 @@ export default function Item() {
       page: number = 1,
     ): Promise<listReturnType> => {
       try {
-        setLoading(true);
+        // setLoading(true);
         const res = await itemGlobalSearch({ query: query, page: page.toString() });
-        setLoading(false);
+        // setLoading(false);
         const data = res.data.map((item: LocalTableDataType) => ({
           ...item,
         }));
@@ -174,16 +172,16 @@ export default function Item() {
       return;
     }
 
-    const selectedItem = data.filter((_, index) =>
-      selectedRow.includes(index)
-    );
+    // const selectedItem = data.filter((_, index) =>
+    //   selectedRow.includes(index)
+    // );
     // console.log(data, selectedRow)
 
     const failedUpdates: string[] = [];
 
     const selectedRowsData: string[] = data.filter((value, index) => selectedRow?.includes(index)).map((item) => item.id);
     try {
-      setLoading(true);
+      // setLoading(true);
 
       const res = await updateItemStatus({ item_ids: selectedRowsData, status });
 
@@ -202,8 +200,8 @@ export default function Item() {
       console.error("Status update error:", error);
       showSnackbar("An error occurred while updating status", "error");
     } finally {
-      setLoading(false);
-      setShowDropdown(false);
+      // setLoading(false);
+      // setShowDropdown(false);
     }
   };
 
@@ -221,9 +219,9 @@ export default function Item() {
     }
   }
 
-  useEffect(() => {
-    setLoading(true);
-  }, []);
+  // useEffect(() => {
+  //   setLoading(true);
+  // }, []);
 
   return (
     <>

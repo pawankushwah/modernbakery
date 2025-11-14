@@ -244,6 +244,8 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
 
         // if api is passed, use default values
         else if (config.api?.list) {
+            const MIN_LOADING_MS = 1000; // ensure nested loading lasts at least 1s
+            const start = Date.now();
             try {
                 setNestedLoading(true);
                 const result = await config.api.list(
@@ -261,6 +263,12 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
                 });
                 setDisplayedData(data);
             } finally {
+                // guarantee minimum display time for nested loading
+                const elapsed = Date.now() - start;
+                const wait = Math.max(0, MIN_LOADING_MS - elapsed);
+                if (wait > 0) {
+                    await new Promise((res) => setTimeout(res, wait));
+                }
                 setNestedLoading(false);
             }
         }
@@ -601,16 +609,14 @@ function TableBody({ orderedColumns, setColumnOrder }: { orderedColumns: configT
     const isIndeterminate = selectedRow.length > 0 && !isAllSelected;
 
     useEffect(() => {
-        (async () => {
-            setNestedLoading(true);
-            if (!api?.list) {
-                setDisplayedData(tableData.slice(startIndex, endIndex));
-                setTimeout(() => setNestedLoading(false), 2000);
-            } else {
-                setDisplayedData(tableData);
-                setTimeout(() => setNestedLoading(false), 2000);
-            }
-        })();
+        // Update displayedData whenever tableDetails changes. Do not
+        // toggle nestedLoading here — TableContainer owns nestedLoading for
+        // API-driven loads. This prevents premature hiding of the loader.
+        if (!api?.list) {
+            setDisplayedData(tableData.slice(startIndex, endIndex));
+        } else {
+            setDisplayedData(tableData);
+        }
     }, [tableDetails]);
 
     // If no sort column is set yet, initialize tableOrder to the first sortable column

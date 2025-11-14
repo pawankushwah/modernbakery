@@ -47,19 +47,19 @@ interface CustomerItem {
 }
 
 export default function CompanyCustomers() {
-  const [customers, setCustomers] = useState<CustomerItem[]>([]);
+  // const [customers, setCustomers] = useState<CustomerItem[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
   const { setLoading } = useLoading();
-  const [showDeletePopup, setShowDeletePopup] = useState(false);
-  const [selectedRow, setSelectedRow] = useState<CustomerItem | null>(null);
+  // const [showDeletePopup, setShowDeletePopup] = useState(false);
+  // const [selectedRow, setSelectedRow] = useState<CustomerItem | null>(null);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 
   const fetchCompanyCustomers = async (pageNo: number = 1, pageSize: number = 50): Promise<listReturnType> => {
-    setLoading(true);
+    // setLoading(true);
     const res = await getCompanyCustomers({ page: pageNo.toString(), pageSize: pageSize.toString() });
-    setLoading(false);
+    // setLoading(false);
     if (res.error) {
       showSnackbar(res.data.message || "Failed to fetch Company Customers", "error");
       throw new Error(res.data.message);
@@ -74,9 +74,9 @@ export default function CompanyCustomers() {
 
   const search = async (searchQuery: string, pageSize: number, columnName?: string, page: number = 1): Promise<searchReturnType> => {
     // if (!columnName) throw new Error("Column name is required for search");
-    setLoading(true);
+    // setLoading(true);
     const res = await companyCustomersGlobalSearch({ query: searchQuery, pageSize: pageSize.toString(), page: page.toString() });
-    setLoading(false);
+    // setLoading(false);
     if (res.error) {
       showSnackbar(res.data.message || "Failed to fetch search results", "error");
       throw new Error(res.data.message);
