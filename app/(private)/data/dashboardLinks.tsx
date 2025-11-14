@@ -69,7 +69,7 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/filedCustomer",
+            href: "/fieldCustomer",
             label: "Field Customers",
             leadingIcon: "carbon:customer",
             iconColor: "text-cyan-500",
