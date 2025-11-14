@@ -185,7 +185,7 @@ export default function AgentCustomer() {
             pageSize: number = 5
         ): Promise<listReturnType> => {
             try {
-                setLoading(true);
+                // setLoading(true);
                 const params: Record<string, string> = {
                     page: page.toString(),
                 };
@@ -202,7 +202,7 @@ export default function AgentCustomer() {
                     params.route_id = String(routeId);
                 }
                 const listRes = await agentCustomerList(params);
-                setLoading(false);
+                // setLoading(false);
                 return {
                     data: Array.isArray(listRes.data) ? listRes.data : [],
                     total: listRes?.pagination?.totalPages || 1,
@@ -210,7 +210,7 @@ export default function AgentCustomer() {
                     pageSize: listRes?.pagination?.limit || pageSize,
                 };
             } catch (error: unknown) {
-                setLoading(false);
+                // setLoading(false);
                 return {
                     data: [],
                     total: 1,
@@ -259,29 +259,32 @@ export default function AgentCustomer() {
         async (
             searchQuery: string,
             pageSize: number,
-            columnName?: string
+            columnName?: string,
+            page: number = 1
         ): Promise<listReturnType> => {
             let result;
-            setLoading(true);
+            // setLoading(true);
             if (columnName) {
                 result = await agentCustomerList({
                     per_page: pageSize.toString(),
-                    [columnName]: searchQuery
+                    [columnName]: searchQuery,
+                    page: page.toString(),
                 });
             }
             else {
                 result = await agentCustomerGlobalSearch({
                     per_page: pageSize.toString(),
-                    query: searchQuery
+                    query: searchQuery,
+                    page: page.toString(),
                 });
             }
-            setLoading(false);
+            // setLoading(false);
             if (result.error) throw new Error(result.data.message);
             return {
-                data: result.data || [],
-                total: result.pagination?.totalPages || 1,
-                currentPage: result.pagination?.page || 1,
-                pageSize: result.pagination?.limit || pageSize,
+                data: result?.data || [],
+                total: result?.pagination?.totalPages || 1,
+                currentPage: result?.pagination?.page || 1,
+                pageSize: result?.pagination?.limit || pageSize,
             };
         },
         []

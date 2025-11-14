@@ -1,4 +1,5 @@
 import { IconifyIcon } from "@iconify-icon/react/dist/iconify.mjs";
+import { env } from "process";
 
 export type SidebarDataType = {
   name?: string;
@@ -40,27 +41,27 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "mdi:account-tie",
             iconColor: "text-green-500",
           },
-          // {
-          //   isActive: false,
-          //   href: "/settings/permission",
-          //   label: "Permissions",
-          //   leadingIcon: "mdi:lock-check",
-          //   iconColor: "text-green-500",
-          // },
-          // {
-          //   isActive: false,
-          //   href: "/settings/menu",
-          //   label: "Menus",
-          //   leadingIcon: "duo-icons:menu",
-          //   iconColor: "text-green-500",
-          // },
-          // {
-          //   isActive: false,
-          //   href: "/settings/submenu",
-          //   label: "Sub Menus",
-          //   leadingIcon: "ci:arrow-sub-down-right",
-          //   iconColor: "text-green-500",
-          // }
+          ...(env.NODE_ENV === "development" ? [{
+            isActive: false,
+            href: "/settings/permission",
+            label: "Permissions",
+            leadingIcon: "mdi:lock-check",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/menu",
+            label: "Menus",
+            leadingIcon: "duo-icons:menu",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/submenu",
+            label: "Sub Menus",
+            leadingIcon: "ci:arrow-sub-down-right",
+            iconColor: "text-green-500",
+          }] : []),
         ],
       },
       {
@@ -109,7 +110,7 @@ export const initialLinkData: SidebarDataType[] = [
         trailingIcon: "mdi-light:chevron-right",
         iconColor: "text-yellow-400",
         children: [
-           {
+          {
             isActive: false,
             href: "/settings/outlet-channel",
             label: "Outlet Channel",
