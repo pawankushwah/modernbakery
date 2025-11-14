@@ -763,7 +763,7 @@ const stepSchemas = [
           isSubmitting: isSubmitting,
         }) => (
           <Form>
-            <>{console.log(values,"lk")}</>
+           
             <StepperForm
               steps={steps.map((step) => ({
                 ...step,
