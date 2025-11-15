@@ -1119,7 +1119,7 @@ export default function ViewPage() {
                                 className="text-[#EA0A2A] mr-[5px]"
                             />
                             <span>
-                                {item?.location_relation?.name || "-"}
+                                {item?.location || "-"}
                             </span>
                             {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                                     <StatusBtn status="active" />

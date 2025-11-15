@@ -1,8 +1,11 @@
 "use client";
 
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, { TableDataType, listReturnType, searchReturnType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import StatusBtn from "@/app/components/statusBtn2";
+import { downloadFile, exportVehicleData, vehicleGlobalSearch, vehicleListData, vehicleStatusUpdate } from "@/app/services/allApi";
 import StatusBtn from "@/app/components/statusBtn2";
 import { downloadFile, exportVehicleData, vehicleGlobalSearch, vehicleListData, vehicleStatusUpdate } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
@@ -46,6 +49,54 @@ const dropdownDataList: DropdownItem[] = [
 ];
 
 // 🔹 Table columns
+
+
+export default function VehiclePage() {
+  const { setLoading } = useLoading();
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [warehouseId, setWarehouseId] = useState<string>("");
+  const { showSnackbar } = useSnackbar();
+  const router = useRouter();
+  const { warehouseOptions } = useAllDropdownListData();
+
+
+
+
+  const columns = [
+    { key: "vehicle_code", label: "Vehicle Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.vehicle_code || "-"}</span>) },
+    { key: "number_plat", label: "Number Plate", render: (row: TableDataType) => row.number_plat || "-" },
+    { key: "vehicle_chesis_no", label: "Chassis Number", render: (row: TableDataType) => row.vehicle_chesis_no || "-" },
+    { key: "vehicle_brand", label: "Brand", render: (row: TableDataType) => row.vehicle_brand || "-" },
+    { key: "opening_odometer", label: "Odo Meter", render: (row: TableDataType) => row.opening_odometer || "-" },
+    {
+      key: "vehicle_type",
+      label: "Vehicle Type",
+      render: (row: TableDataType) => {
+        const value = row.vehicle_type;
+        if (value == null || value === "") return "-";
+        const strValue = String(value);
+        if (strValue === "1") return "Truck";
+        if (strValue === "2") return "Van";
+        if (strValue === "3") return "Bike";
+        if (strValue === "4") return "Tuktuk";
+        return strValue;
+      },
+    },
+    { key: "capacity", label: "Capacity", render: (row: TableDataType) => row.capacity || "-" },
+    {
+      key: "owner_type",
+      label: "Owner Type",
+      render: (row: TableDataType) => {
+        const value = row.owner_type;
+        if (value == null || value === "") return "-";
+        const strValue = String(value);
+        if (strValue === "0") return "Company Owned";
+        if (strValue === "1") return "Contractor";
+        return strValue;
+      },
+    },
+    {
+      key: "warehouse", label: "Warehouse", render: (row: TableDataType) => {
 
 
 export default function VehiclePage() {
