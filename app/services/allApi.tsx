@@ -1783,9 +1783,9 @@ export const getSalesmanById = async (uuid: string) => {
   }
 };
 
-export const getSalesmanBySalesId = async (uuid: string,query:{from:string,to:string}) => {
+export const getSalesmanBySalesId = async (uuid: string,query:{from:string,to:string,page:string}) => {
   try {
-    const res = await API.get(`/api/master/salesmen/salespersalesman/${uuid}?from=${query.from}&to=${query.to}`);
+    const res = await API.get(`/api/master/salesmen/salespersalesman/${uuid}?from=${query.from}&to=${query.to}&page=${query.page}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

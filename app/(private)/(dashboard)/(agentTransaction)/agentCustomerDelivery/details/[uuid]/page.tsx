@@ -285,8 +285,8 @@ export default function OrderDetailPage() {
                 <span>From (Seller)</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">
-                    {deliveryData?.warehouse?.code && deliveryData?.warehouse?.name
-                      ? `${deliveryData?.warehouse?.code} - ${deliveryData?.warehouse?.name}`
+                    {hasValue(deliveryData?.warehouse?.code) && hasValue(deliveryData?.warehouse?.name)
+                      ? `${ deliveryData?.warehouse?.code} - ${deliveryData?.warehouse?.name}`
                       : "-"}
                   </span>
                   {hasValue(deliveryData?.warehouse?.address) && (
@@ -313,26 +313,34 @@ export default function OrderDetailPage() {
                 <span>To (Customer)</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">
-                    {deliveryData?.customer?.code ? deliveryData?.customer?.code : ""}
-                    {deliveryData?.customer?.code && deliveryData?.customer?.name ? " - " : ""}
-                    {deliveryData?.customer?.name ? `${deliveryData?.customer?.name}` : ""}
+                    {hasValue(deliveryData?.customer?.code) && hasValue(deliveryData?.customer?.name)
+                      ? `${deliveryData?.customer?.code} - ${deliveryData?.customer?.name}`
+                      : hasValue(deliveryData?.customer?.code)
+                      ? deliveryData?.customer?.code
+                      : hasValue(deliveryData?.customer?.name)
+                      ? deliveryData?.customer?.name
+                      : "-"}
                   </span>
-                  <span>
-                    {deliveryData?.customer?.town ? deliveryData?.customer?.town : ""}
-                    {deliveryData?.customer?.landmark && deliveryData?.customer?.town ? ", " : ""}
-                    {deliveryData?.customer?.landmark ? deliveryData?.customer?.landmark : ""}
-                    {deliveryData?.customer?.district ? deliveryData?.customer?.district : ""}
-                  </span>
-                  {
+                  {(hasValue(deliveryData?.customer?.town) || hasValue(deliveryData?.customer?.landmark) || hasValue(deliveryData?.customer?.district)) && (
                     <span>
-                      {deliveryData?.customer?.contact_no && (
+                      {hasValue(deliveryData?.customer?.town) && deliveryData?.customer?.town}
+                      {hasValue(deliveryData?.customer?.town) && hasValue(deliveryData?.customer?.landmark) && ", "}
+                      {hasValue(deliveryData?.customer?.landmark) && deliveryData?.customer?.landmark}
+                      {(hasValue(deliveryData?.customer?.town) || hasValue(deliveryData?.customer?.landmark)) && hasValue(deliveryData?.customer?.district) && ", "}
+                      {hasValue(deliveryData?.customer?.district) && deliveryData?.customer?.district}
+                    </span>
+                  )}
+                  {(hasValue(deliveryData?.customer?.contact_no) || hasValue(deliveryData?.customer?.email)) && (
+                    <span>
+                      {hasValue(deliveryData?.customer?.contact_no) && (
                         <>Phone: {deliveryData?.customer?.contact_no}</>
                       )}
-                      {deliveryData?.customer?.email && (
-                        <>Phone: {deliveryData?.customer?.email}</>
+                      {hasValue(deliveryData?.customer?.contact_no) && hasValue(deliveryData?.customer?.email) && <br />}
+                      {hasValue(deliveryData?.customer?.email) && (
+                        <>Email: {deliveryData?.customer?.email}</>
                       )}
                     </span>
-                  }
+                  )}
                 </div>
               </div>
             </div>

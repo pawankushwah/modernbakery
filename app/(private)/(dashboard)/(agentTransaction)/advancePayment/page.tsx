@@ -1,5 +1,6 @@
 "use client";
 
+import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
   configType,
   listReturnType,
@@ -37,6 +38,8 @@ interface Payment {
 
 export default function PaymentListPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>("");
+      const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions } = useAllDropdownListData();
+  
   const columns: configType["columns"] = [
     { key: "osa_code", label: "OSA Code", showByDefault: true },
     { key: "payment_type_text", label: "Payment Type", showByDefault: true },
@@ -94,6 +97,7 @@ export default function PaymentListPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
+  const [isExporting, setIsExporting] = useState(false);
   type TableRow = TableDataType & { uuid?: string };
 
   const fetchPayments = useCallback(
@@ -160,18 +164,29 @@ export default function PaymentListPage() {
   };
 
   const exportfile = async (format: string) => {
-          try {
-              const response = await advancePaymentExport({ format });
-              if (response && typeof response === 'object' && response.download_url) {
-                  await downloadFile(response.download_url);
-                  showSnackbar("File downloaded successfully ", "success");
-              } else {
-                  showSnackbar("Failed to get download URL", "error");
-              }
-          } catch (error) {
-              showSnackbar("Failed to download warehouse data", "error");
-          }
+    if (isExporting) return; // Prevent multiple clicks
+    
+    setIsExporting(true);
+    setLoading(true);
+    try {
+      const response = await advancePaymentExport({ format });
+      if (response && typeof response === 'object' && response.download_url) {
+        await downloadFile(response.download_url);
+        showSnackbar("File downloaded successfully", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
       }
+    } catch (error) {
+      showSnackbar("Failed to download payment data", "error");
+    } finally {
+      setIsExporting(false);
+      setLoading(false);
+    }
+  }
+
+      useEffect(() => {
+        setRefreshKey(k => k+1);
+    }, [companyOptions, regionOptions, areaOptions, warehouseOptions, routeOptions, salesmanOptions]);
 
   return (
     <>
@@ -182,11 +197,67 @@ export default function PaymentListPage() {
             api: { list: fetchPayments },
             header: {
               title: "Advance Payments",
+              filterByFields: [
+                                {
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date"
+                                },
+                                {
+                                    key: "company",
+                                    label: "Company",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(companyOptions) ? companyOptions : [],
+                                },
+                                {
+                                    key: "region",
+                                    label: "Region",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(regionOptions) ? regionOptions : [],
+                                },
+                                {
+                                    key: "area",
+                                    label: "Area",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(areaOptions) ? areaOptions : [],
+                                },
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+                                 {
+                                    key: "salesman",
+                                    label: "Salesman",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                },
+                                
+                            ],
               threeDot: [
                 {
                   icon: "gala:file-document",
-                  label: "Export CSV",
+                  label: isExporting ? "Exporting..." : "Export CSV",
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (isExporting) return;
                     const ids = selectedRow?.map((id) => {
                       return data[id].id;
                     })
@@ -195,8 +266,9 @@ export default function PaymentListPage() {
                 },
                 {
                   icon: "gala:file-document",
-                  label: "Export Excel",
+                  label: isExporting ? "Exporting..." : "Export Excel",
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
+                    if (isExporting) return;
                     const ids = selectedRow?.map((id) => {
                       return data[id].id;
                     })

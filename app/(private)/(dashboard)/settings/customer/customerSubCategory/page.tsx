@@ -81,7 +81,7 @@ export default function CustomerSubCategoryPage() {
           Customer Sub-Category
         </h1>
 
-        <div className="flex gap-[12px] relative">
+        {/* <div className="flex gap-[12px] relative">
           <BorderIconButton icon="gala:file-document" label="Export CSV" />
           <BorderIconButton icon="mage:upload" />
 
@@ -112,7 +112,7 @@ export default function CustomerSubCategoryPage() {
               </div>
             }
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Table */}

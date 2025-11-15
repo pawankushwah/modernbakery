@@ -108,19 +108,15 @@ const columns = [
   // { key: "total_gross", label: "Gross", render: (value: TableDataType) => <>{toInternationalNumber(value.total_gross) || '0.00'}</> },
   { key: "Total", label: "Total", render: (value: TableDataType) => <>{toInternationalNumber(value.Total) || '0.00'}</> },
 ];
-
 export default function OrderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
-
   // const [showDropdown, setShowDropdown] = useState(false);
   const [deliveryData, setDeliveryData] = useState<InvoiceData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
-
   const uuid = params?.uuid as string;
-
   useEffect(() => {
     if (uuid) {
       (async () => {
@@ -169,6 +165,17 @@ export default function OrderDetailPage() {
   ];
   const targetRef = useRef<HTMLDivElement | null>(null);
 
+const hasValue = (value: any) => {
+    if (value === null || value === undefined) return false;
+    if (typeof value === "string") {
+      const v = value.trim().toLowerCase();
+      return v !== "" && v !== "0" && v !== "0.00" && v !== "null" && v !== "undefined";
+    }
+    if (typeof value === "number") {
+      return !isNaN(value);
+    }
+    return true;
+  };   
 
   return (
     <>
@@ -244,12 +251,16 @@ export default function OrderDetailPage() {
             {/* From (Seller) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-                <span>From (Seller)</span>
+                <span>Seller</span>
                 <div className="flex flex-col space-y-[10px]">
-                  {/* <span className="font-semibold">{deliveryData?.warehouse_code } - {deliveryData?.warehouse_name}</span> */}
-                  <span>{deliveryData?.warehouse_code ?? ""} {deliveryData?.warehouse_name && ", "}</span>
-                  <span>
-                    {/* {deliveryData?.warehouse_contact && <>Phone: {deliveryData?.warehouse_contact}</>} <br /> {data?.warehouse_email && <>Email: {data?.warehouse_email}</>} */}
+                  <span className="font-semibold">
+                    {hasValue(deliveryData?.warehouse_code) && hasValue(deliveryData?.warehouse_name)
+                      ? `${deliveryData?.warehouse_code} - ${deliveryData?.warehouse_name}`
+                      : hasValue(deliveryData?.warehouse_code)
+                      ? deliveryData?.warehouse_code
+                      : hasValue(deliveryData?.warehouse_name)
+                      ? deliveryData?.warehouse_name
+                      : "-"}
                   </span>
                 </div>
               </div>
@@ -258,13 +269,16 @@ export default function OrderDetailPage() {
             {/* To (Customer) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>To (Customer)</span>
+                <span>Customer</span>
                 <div className="flex flex-col space-y-[10px]">
-                  <span className="font-semibold">{deliveryData?.customer_code } - {deliveryData?.customer_name}</span>
-                  {/* <span>{deliveryData?.customer_address && deliveryData?.customer_address}</span> */}
-                  <span>
-                    {/* {deliveryData?.customer_phone && <>Phone: {deliveryData?.customer_phone || "-"}</>} <br /> */}
-                    {/* {deliveryData?.customer_email && <>Email: {deliveryData?.customer_email || "-"}</>} <br /> */}
+                  <span className="font-semibold">
+                    {hasValue(deliveryData?.customer_code) && hasValue(deliveryData?.customer_name)
+                      ? `${deliveryData?.customer_code} - ${deliveryData?.customer_name}`
+                      : hasValue(deliveryData?.customer_code)
+                      ? deliveryData?.customer_code
+                      : hasValue(deliveryData?.customer_name)
+                      ? deliveryData?.customer_name
+                      : "-"}
                   </span>
                 </div>
               </div>
@@ -273,15 +287,30 @@ export default function OrderDetailPage() {
             {/* Dates / meta - right column */}
             <div className="flex md:justify-end">
               <div className="text-primary-bold text-[14px] md:text-right">
-                <div>
-                  Invoice Date: <span className="font-bold">{deliveryData?.invoice_date ? new Date(deliveryData.invoice_date).toLocaleDateString() : "-"}</span>
-                </div>
-                <div className="mt-2">
-                  Route: <span className="font-bold">{deliveryData?.route_code || "-"} - {deliveryData?.route_name || "-"}</span>
-                </div>
-                <div className="mt-2">
-                  Salesman: <span className="font-bold">{deliveryData?.salesman_name || "-"}</span>
-                </div>
+                {hasValue(deliveryData?.invoice_date) && deliveryData?.invoice_date && (
+                  <div>
+                    Invoice Date: <span className="font-bold">
+                      {(() => {
+                        const date = new Date(deliveryData.invoice_date);
+                        return !isNaN(date.getTime()) ? date.toLocaleDateString('en-GB') : deliveryData.invoice_date;
+                      })()}
+                    </span>
+                  </div>
+                )}
+                {(hasValue(deliveryData?.route_code) || hasValue(deliveryData?.route_name)) && (
+                  <div className="mt-2">
+                    Route: <span className="font-bold">
+                      {deliveryData?.route_code && deliveryData?.route_name
+                        ? `${deliveryData.route_code} - ${deliveryData.route_name}`
+                        : deliveryData?.route_code || deliveryData?.route_name}
+                    </span>
+                  </div>
+                )}
+                {hasValue(deliveryData?.salesman_name) && (
+                  <div className="mt-2">
+                    Salesman: <span className="font-bold">{deliveryData?.salesman_name}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
