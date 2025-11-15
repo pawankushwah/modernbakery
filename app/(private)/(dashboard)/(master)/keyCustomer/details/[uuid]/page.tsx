@@ -12,6 +12,7 @@ import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { formatDate } from "../../../salesTeam/details/[uuid]/page";
 
 interface CustomerItem {
   id: number;
@@ -264,8 +265,19 @@ export default function ViewPage() {
                 data={[
                   { key: "Guarantee Name", value: customer?.bank_guarantee_name || "-" },
                   { key: "Guarantee Amount", value: customer?.bank_guarantee_amount?.toString() || "-" },
-                  { key: "Guarantee From", value: customer?.bank_guarantee_from || "-" },
-                  { key: "Guarantee To", value: customer?.bank_guarantee_to || "-" },
+                  {
+                    key: "Guarantee From",
+                    value: customer?.bank_guarantee_from
+                      ? formatDate(customer.bank_guarantee_from)
+                      : "-"
+                  },
+                  {
+                    key: "Guarantee To",
+                    value: customer?.bank_guarantee_to
+                      ? formatDate(customer.bank_guarantee_to)
+                      : "-"
+                  },
+
                 ]}
               />
             </ContainerCard>
