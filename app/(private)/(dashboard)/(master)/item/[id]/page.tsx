@@ -93,7 +93,7 @@ const ItemSchema = Yup.object().shape({
     )
     .min(1, "At least one UOM must be added"),
   commodity_goods_code: Yup.string().required("Commodity Goods Code is required"),
-  excise_duty_code: Yup.string().required("Excise Duty Code is required"),
+  excise_duty_code: Yup.string(),
 });
 
 const StepSchemas = [
@@ -116,7 +116,6 @@ const StepSchemas = [
     "is_tax_applicable",
     "status",
     "commodity_goods_code",
-    "excise_duty_code"
   ]),
   ItemSchema.pick([
     "uoms"
@@ -217,10 +216,75 @@ export default function AddEditItem() {
       showSnackbar("Failed to fetch sub categories", "error");
       throw new Error("Failed to fetch sub categories");
     }
-  const options = res.data.map((subCategory: any) => ({ label: subCategory.sub_category_code + " - " + subCategory.sub_category_name, value: String(subCategory.id) }));
+    const options = res.data.map((subCategory: any) => ({ label: subCategory.sub_category_name, value: String(subCategory.id) }));
     setFilteredSubCategoryOptions(options);
     setSkeleton({ ...skeleton, itemSubCategory: false });
   }
+  interface UomRow {
+    uom: string;
+    uomType: string;
+    upc: string;
+    price: string;
+    isStockKeepingUnit: string;
+    quantity?: string;
+    enableFor: string;
+  }
+
+  const [uomList, setUomList] = useState<UomRow[]>([]);
+  const [uomData, setUomData] = useState<UomRow>({
+    uom: "",
+    uomType: "",
+    upc: "",
+    price: "",
+    isStockKeepingUnit: "no",
+    quantity: "",
+    enableFor: "",
+  });
+
+  const handleUomChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setUomData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddUom = () => {
+    if (editingIndex !== null) {
+      // Update existing UOM
+      setUomList((prev) => {
+        const updated = [...prev];
+        updated[editingIndex] = uomData;
+        return updated;
+      });
+      setEditingIndex(null); // Reset editing
+      showSnackbar("UOM updated successfully", "success");
+    } else {
+      // Add new UOM
+      setUomList((prev) => [...prev, uomData]);
+      showSnackbar("UOM added successfully", "success");
+    }
+
+    // Reset input fields
+    setUomData({
+      uom: "",
+      uomType: "",
+      upc: "",
+      price: "",
+      isStockKeepingUnit: "no",
+      quantity: "",
+      enableFor: "",
+    });
+  };
+
+  const handleEditUom = (index: number) => {
+    const u = uomList[index];
+    setUomData(u);
+    setEditingIndex(index);
+  };
+
+  const handleDeleteUom = (index: number) => {
+    setUomList((prev) => prev.filter((_, i) => i !== index));
+    if (editingIndex === index) setEditingIndex(null); // Reset if deleting the one being edited
+    showSnackbar("UOM deleted successfully", "success");
+  };
 
   useEffect(() => {
     fetchBrandOptions("");
@@ -245,7 +309,7 @@ export default function AddEditItem() {
           const firstUomPrice = firstUom ? ((firstUom.price ?? firstUom.uom_price ?? firstUom.uomPrice) !== undefined ? String(firstUom.price ?? firstUom.uom_price ?? firstUom.uomPrice) : "") : "";
           const firstUomQty = firstUom ? (firstUom.keeping_quantity ?? firstUom.keepingQuantity ?? "") : "";
           const firstUomIsStock = firstUom ? (firstUom.is_stock_keeping === true || firstUom.is_stock_keeping === 1 || firstUom.isStockKeeping === true || firstUom.is_stock_keeping === '1') : false;
-          const firstUomEnableFor = firstUom ? (typeof firstUom.enable_for === 'string' ? firstUom.enable_for : Array.isArray(firstUom.enable_for) ? firstUom.enable_for.join(',') : (firstUom.enableFor && (Array.isArray(firstUom.enableFor) ? firstUom.enableFor.join(',') : String(firstUom.enableFor))) ) : "";
+          const firstUomEnableFor = firstUom ? (typeof firstUom.enable_for === 'string' ? firstUom.enable_for : Array.isArray(firstUom.enable_for) ? firstUom.enable_for.join(',') : (firstUom.enableFor && (Array.isArray(firstUom.enableFor) ? firstUom.enableFor.join(',') : String(firstUom.enableFor)))) : "";
 
           setForm({
             itemCode: data.item_code || "",
@@ -305,17 +369,16 @@ export default function AddEditItem() {
           if (Array.isArray(uomSource) && uomSource.length > 0) {
             setUomList(
               uomSource.map((u: any) => ({
-                uom: (u.uom ?? u.name ?? u.uom_name ?? "") as string,
+                uom: String(u.uom ?? u.name ?? u.uom_name ?? ""),
                 uomType: (u.uom_type ?? u.uomType ?? "primary") as string,
                 upc: (u.upc ?? u.upc_code ?? "") as string,
+                quantity: (u.keeping_quantity !== undefined ? String(u.keeping_quantity) : (u.keepingQuantity !== undefined ? String(u.keepingQuantity) : "")) as string,
                 price: (u.price ?? u.uom_price ?? u.uomPrice) !== undefined ? String(u.price ?? u.uom_price ?? u.uomPrice) : "",
                 isStockKeepingUnit: (u.is_stock_keeping === true || u.is_stock_keeping === 1 || u.isStockKeeping === true) ? "yes" : "no",
-                enableFor: typeof u.enable_for === 'string' ? u.enable_for : (Array.isArray(u.enable_for) ? u.enable_for.join(',') : (u.enableFor && (Array.isArray(u.enableFor) ? u.enableFor.join(',') : String(u.enableFor))) )
+                enableFor: typeof u.enable_for === 'string' ? u.enable_for : (Array.isArray(u.enable_for) ? u.enable_for.join(',') : (u.enableFor && (Array.isArray(u.enableFor) ? u.enableFor.join(',') : String(u.enableFor))))
               }))
             );
           }
-
-
         }
         setLoading(false);
       })();
@@ -328,73 +391,7 @@ export default function AddEditItem() {
       })();
     }
   }, [isEditMode, itemId]);
-
-  interface UomRow {
-    uom: string;
-    uomType: string;
-    upc: string;
-    price: string;
-    isStockKeepingUnit: string;
-    quantity?: string;
-    enableFor: string;
-  }
-
-  const [uomList, setUomList] = useState<UomRow[]>([]);
-  const [uomData, setUomData] = useState<UomRow>({
-    uom: "",
-    uomType: "",
-    upc: "",
-    price: "",
-    isStockKeepingUnit: "no",
-    quantity: "",
-    enableFor: "",
-  });
-
-  const handleUomChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setUomData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddUom = () => {
-    if (editingIndex !== null) {
-      // Update existing UOM
-      setUomList((prev) => {
-        const updated = [...prev];
-        updated[editingIndex] = uomData;
-        return updated;
-      });
-      setEditingIndex(null); // Reset editing
-      showSnackbar("UOM updated successfully", "success");
-    } else {
-      // Add new UOM
-      setUomList((prev) => [...prev, uomData]);
-      showSnackbar("UOM added successfully", "success");
-    }
-
-    // Reset input fields
-    setUomData({
-      uom: "",
-      uomType: "",
-      upc: "",
-      price: "",
-      isStockKeepingUnit: "no",
-      quantity: "",
-      enableFor: "",
-    });
-  };
-
-  const handleEditUom = (index: number) => {
-    const u = uomList[index];
-    console.log(u,"uomedit")
-    setUomData(u);
-    setEditingIndex(index);
-  };
-
-  const handleDeleteUom = (index: number) => {
-    setUomList((prev) => prev.filter((_, i) => i !== index));
-    if (editingIndex === index) setEditingIndex(null); // Reset if deleting the one being edited
-    showSnackbar("UOM deleted successfully", "success");
-  };
+  // console.log(uomList, "uomlist")
 
   const validateCurrentStep = async (step: number) => {
     try {
@@ -482,7 +479,7 @@ export default function AddEditItem() {
       const itemId = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
 
       const reqType: "json" | "form-data" = values.itemImage instanceof File ? "form-data" : "json";
-      console.log("Submitting payload with request type:", reqType);
+      // console.log("Submitting payload with request type:", reqType);
       const res = isEditMode
         ? await editItem(itemId, payload, reqType)
         : await addItem(payload, reqType);
@@ -833,7 +830,6 @@ export default function AddEditItem() {
                 </div>
                 <div>
                   <InputFields
-                    required
                     label="Excise Duty Code"
                     name="excise_duty_code"
                     value={values.excise_duty_code}
@@ -921,6 +917,8 @@ export default function AddEditItem() {
                         type="number"
                         label="Quantity"
                         name="quantity"
+                        min={0}
+                        integerOnly={true}
                         value={uomData.quantity || ""}
                         onChange={handleUomChange}
                         error={touched.quantity && errors.quantity}
@@ -965,21 +963,22 @@ export default function AddEditItem() {
             <div className="w-full xl:w-7/12 p-6">
               <h2 className="text-xl font-bold mb-4">UOM List</h2>
               <Table
-                data={uomList.map((row, idx) =>{ console.log(row,"row") 
-                  return({ ...row, idx: idx.toString() })})}
+                data={uomList.map((row, idx) => {
+                  // console.log(row, "row")
+                  return ({ ...row, idx: idx.toString() })
+                })}
                 config={{
                   showNestedLoading: false,
                   columns: [
-                    { key: "uom", label: "UOM",render:(row)=>{
-                    
-                    
-                      
-                    
-                    return(<span>{uomOptions.map((uom, index)=>{
-                        if(uom.value==row.uom){
-                          return(<span key={index}>{uom.label.split("-")[1]}</span>)
-                        }
-                      }) }</span>) }},
+                    {
+                      key: "uom", label: "UOM", render: (row) => {
+                        return (<span>{uomOptions.map((uom, index) => {
+                          if (uom.value == row.uom) {
+                            return (<span key={index}>{uom.label}</span>)
+                          }
+                        })}</span>)
+                      }
+                    },
                     { key: "uomType", label: "UOM Type" },
                     { key: "upc", label: "UPC" },
                     { key: "price", label: "Price", width: 80 },
@@ -1051,8 +1050,8 @@ export default function AddEditItem() {
             submitCount,
           }) => {
             // console.log("Formik errors:", errors);
-            console.log("Formik Values:", values);
-            console.log("Formik Values:", errors);
+            // console.log("Formik Values:", values);
+            // console.log("Formik Values:", errors);
             const handleNextStep = async () => {
               try {
                 const schema = StepSchemas[currentStep - 1];
@@ -1121,20 +1120,20 @@ export default function AddEditItem() {
                   showNextButton={!isLastStep}
                   showSubmitButton={isLastStep}
                   nextButtonText="Next"
-                  submitButtonText={isEditMode ? ( isSubmitting ? "Updating..." : "Update") : (isSubmitting ? "Submitting..." : "Submit")}
+                  submitButtonText={isEditMode ? (isSubmitting ? "Updating..." : "Update") : (isSubmitting ? "Submitting..." : "Submit")}
                 >
                   {renderStepContent(values, setFieldValue, errors, touched, submitCount)}
                 </StepperForm>
                 <ImagePreviewModal
-          images={imagePreview ? [imagePreview] : []}
-          isOpen={isImageModalOpen}
-          onClose={() => setIsImageModalOpen(false)}
-        />
+                  images={imagePreview ? [imagePreview] : []}
+                  isOpen={isImageModalOpen}
+                  onClose={() => setIsImageModalOpen(false)}
+                />
               </>
             )
           }}
         </Formik>
-        
+
       </div>
     </>
   );

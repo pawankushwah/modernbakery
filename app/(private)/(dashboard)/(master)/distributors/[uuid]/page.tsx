@@ -43,8 +43,8 @@ type FormValues = {
     warehouse_manager_contact: string;
     location: string;
     city: string;
-    // region_id: string;
-    // area_id: string;
+    region_id: string;
+    area_id: string;
     town_village: string;
     street: string;
     landmark: string;
@@ -63,7 +63,7 @@ const validationSchema = Yup.object({
     warehouse_name: Yup.string().required('Warehouse Name is required'),
     owner_name: Yup.string().required('Owner Name is required'),
     company: Yup.string().required('Company is required'),
-    agreed_stock_capital: Yup.number().required('Agreed Stock Capital is required'),
+    agreed_stock_capital: Yup.string(),
     agent_customer: Yup.string().required('Agent Customer is required'),
     warehouse_manager: Yup.string().required('Warehouse Manager is required'),
     location: Yup.string().required('Location is required'),
@@ -95,7 +95,6 @@ const stepSchemas = [
         company: validationSchema.fields.company,
         agent_customer: validationSchema.fields.agent_customer,
         warehouse_manager: validationSchema.fields.warehouse_manager,
-        agreed_stock_capital: validationSchema.fields.agreed_stock_capital,
     }),
 
     // Step 2: Warehouse Contact (no required validations here so user can proceed)
@@ -120,7 +119,7 @@ const stepSchemas = [
 
 export default function AddEditWarehouse() {
     const params = useParams();
-    const warehouseId = params.id as string | undefined;
+    const warehouseId = params.uuid as string | undefined;
     const isEditMode = warehouseId !== undefined && warehouseId !== "add";
     const steps: StepperStep[] = [
         { id: 1, label: "Distributor Details" },
@@ -156,7 +155,7 @@ export default function AddEditWarehouse() {
         warehouse_name: "",
         owner_name: "",
         company: "",
-        agreed_stock_capital: "",
+        agreed_stock_capital:"",
         password: "",
         tin_no: "",
         agent_customer: "",
@@ -175,6 +174,8 @@ export default function AddEditWarehouse() {
         longitude: "",
         p12_file: "",
         is_efris: "0",
+        region_id: "",
+        area_id: "",
         is_branch: "",
         status: "1",
     });
@@ -193,7 +194,7 @@ export default function AddEditWarehouse() {
                         warehouse_name: data?.warehouse_name || '',
                         owner_name: data?.owner_name || '',
                         company: String(data?.get_company?.id || ''),
-                        agreed_stock_capital: String(data?.agreed_stock_capital || ''),
+                        agreed_stock_capital: data?.agreed_stock_capital ? data.agreed_stock_capital : undefined,
                         tin_no: String(data?.tin_no || ''),
                         agent_customer: String(data?.get_company_customer?.id) || '',
                         warehouse_manager: data?.warehouse_manager || '',
@@ -202,10 +203,10 @@ export default function AddEditWarehouse() {
                         managerContactCountry: data?.managerContactCountry || '',
                         warehouse_manager_contact: data?.warehouse_manager_contact || '',
                         owner_email: data?.owner_email || '',
-                        location: data?.location || '',
+                        location: String(data?.location_relation?.id) || '',
                         city: data?.city || '',
-                        // region_id: String(data?.region_id || ''),
-                        // area_id: String(data?.area_id || ''),
+                        region_id: String(data?.region_id || ''),
+                        area_id: String(data?.area_id || ''),
                         town_village: String(data?.town_village || ''),
                         street: String(data?.street || ''),
                         landmark: data?.landmark || '',
@@ -268,7 +269,7 @@ export default function AddEditWarehouse() {
             const base = {
                 ...values,
                 warehouse_type: values.warehouse_type,
-                agreed_stock_capital: Number(values.agreed_stock_capital),
+                agreed_stock_capital: String(values.agreed_stock_capital),
                 is_branch: isBranchPayload,
             } as Record<string, unknown>;
 
@@ -315,7 +316,8 @@ export default function AddEditWarehouse() {
                 showSnackbar(res.message || (isEditMode ? "Distributor updated successfully" : "Distributor added successfully"), "success");
                 router.push("/distributors");
             }
-        } catch {
+        } catch(error) {
+            console.log("Submission Error:", error);
             showSnackbar("Add/Update Distributor failed ❌", "error");
         }
     };

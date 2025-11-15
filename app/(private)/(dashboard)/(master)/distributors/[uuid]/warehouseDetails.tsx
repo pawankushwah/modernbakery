@@ -27,6 +27,8 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
     const [isOpen, setIsOpen] = React.useState(false);
     const [codeMode, setCodeMode] = React.useState<'auto'|'manual'>('auto');
     const [prefix, setPrefix] = React.useState('');
+    console.log("Values",values);
+    console.log("Values",values.warehouse_name);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -89,7 +91,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                         }
                     }}
                     options={[
-                        { value: "Distributor", label: "Agent Distributor" },
+                        { value: "Distributor", label: "Distributor" },
                         { value: "Company Outlet", label: "Company Outlet" },
                     ]}
                     error={errors?.warehouse_type && touched?.warehouse_type ? errors.warehouse_type : false}
@@ -98,18 +100,22 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             <div className="flex flex-col gap-2">
                 <InputFields
                     required
-                    label="Select Distributor"
+                    label={values.warehouse_type === "Company Outlet" ? "Select Company Customer" : "Select Distributor"}
                     name="agent_customer"
                     value={values.agent_customer}
                     options={companyCustomersOptions}
                     onChange={async(e) => {
                         const val = (e.target as HTMLSelectElement).value;
                         handleChange(e);
+                        const name = companyCustomersOptions.filter((option:{label:string,value:string}) => {
+                            return option.value === e.target.value  
+                        })[0].label;
+                        setFieldValue("warehouse_name", name);
                         await getCompanyCustomerById(val).then((res) => {
                             if (res) {
-                                const customer = res;
-                                // setFieldValue('region_id', String(customer.region_id) || '');
-                                // setFieldValue('area_id', String(customer.area_id) || '');
+                                const customer = res.data;
+                                setFieldValue('region_id', String(customer.get_region.id) || '');
+                                setFieldValue('area_id', String(customer.get_area.id) || '');
                                 
                             }
                         });
@@ -118,7 +124,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                 />
             </div>
             {/* )} */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 hidden">
                 <InputFields
                     required
                     label="Distributor Name"
@@ -151,6 +157,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
+                type='number'
                     name="tin_no"
                     label="TIN NO."
                     value={values.tin_no}
@@ -177,7 +184,6 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     // error={errors?.warehouse_manager && touched?.warehouse_manager ? errors.warehouse_manager : false}
                 /> */}
                 <InputFields
-                    required
                     type="number"
                     min={0}
                     integerOnly={true}

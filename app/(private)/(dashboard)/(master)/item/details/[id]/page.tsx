@@ -20,7 +20,7 @@ interface Item {
   item_code?: string;
   name?: string;
   description?: string;
-  brand?: {name: string};
+  brand?: { name: string };
   image?: string;
   shelf_life?: string;
   commodity_goods_code?: string;
@@ -70,7 +70,7 @@ export const tabList = [
   { name: "Overview", key: "overview" },
   { name: "UOM", key: "uom" },
   { name: "Sales", key: "sales" },
-  { name: "Return", key: "return" },
+  { name: "Market Return", key: "return" }
 ];
 
 export default function Page() {
@@ -130,9 +130,35 @@ export default function Page() {
       </div>
 
       {/* Main Layout */}
+      <ContainerCard className="w-full flex flex-col sm:flex-row items-center justify-between gap-[10px] md:gap-0">
+        <div className="flex flex-col sm:flex-row items-center gap-[20px]">
+          <div className="w-[80px] h-[80px] flex justify-center items-center rounded-full bg-[#E9EAEB] overflow-hidden">
+            <img
+              src={item?.image ? item.image : "/no-image.png"}
+              alt={item?.name || "item"}
+              // width={40}
+              // height={40}
+              className="w-full object-cover rounded-full border border-[#E4E4E4] bg-[#E9EAEB] scale-[1.5]"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = "/no-image.png";
+              }}
+            />
+          </div>
+          <div className="text-center sm:text-left">
+            <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
+              {item?.erp_code || "-"} - {item?.name || "-"}
+            </h2>
+            <span className="flex items-center text-[#414651] text-[16px]">
+            </span>
+          </div>
+        </div>
+        <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
+          <StatusBtn isActive={String(item?.status) > "0"} />
+        </span>
+      </ContainerCard>
       <div className="flex flex-col md:flex-row gap-6">
         {/* Left Side - Image Section */}
-        <div className="md:w-[350px] flex-shrink-0">
+        {/* <div className="md:w-[350px] flex-shrink-0">
             <ContainerCard className="p-[20px] flex flex-col gap-y-[20px]">
             <img
               src={item?.image ? item.image : "/no-image.png"}
@@ -149,18 +175,18 @@ export default function Page() {
               <StatusBtn isActive={item?.status === 1} />
             </div>
             </ContainerCard>
-        </div>
+        </div> */}
 
         {/* Right Side - Description, Tabs, and Tab Content */}
         <div className="flex-1 flex flex-col gap-y-[5px]">
-          {item?.description && (
+          {/* {item?.description && (
             <ContainerCard className="w-full">
               <h3 className="text-lg font-semibold mb-3">Description</h3>
               <p className="text-gray-700 text-sm leading-relaxed">
                 {item.description}
               </p>
             </ContainerCard>
-          )}
+          )} */}
 
           {/* Tabs */}
           <ContainerCard className="w-full flex gap-[4px] overflow-x-auto" padding="5px">
@@ -222,10 +248,7 @@ export default function Page() {
           {activeTab === "uom" && (
             item?.item_uoms.map((singleItem, index) => {
 
-
               return (<ContainerCard key={index} className="w-full p-5">
-
-
 
                 <h3 className="text-md font-semibold text-gray-800 mb-2">
                   {singleItem?.uom_type || "UOM"}
@@ -254,73 +277,72 @@ export default function Page() {
             })
           )}
           {activeTab === "sales" && (
-              <Table
-                config={{
-                  api: {
-                    list: async (page: number = 1, pageSize: number = 50) => {
-                      const res = await itemSales(String(item?.id), { page: page.toString(), per_page: pageSize.toString() });
-                      if (res.error) {
-                        // showSnackbar(res.data?.message || "Unable to fetch sales data", "error");
-                        throw new Error(res.data?.message || "Unable to fetch sales data");
-                      }
-                      return {
-                        data: res.data || [],
-                        total: res.pagination?.totalPages || 1,
-                        currentPage: res.pagination?.page || 1,
-                        pageSize: res.pagination?.pageSize || pageSize,
-                      };
+            <Table
+              config={{
+                api: {
+                  list: async (page: number = 1, pageSize: number = 50) => {
+                    const res = await itemSales(String(item?.id), { page: page.toString(), per_page: pageSize.toString() });
+                    if (res.error) {
+                      // showSnackbar(res.data?.message || "Unable to fetch sales data", "error");
+                      throw new Error(res.data?.message || "Unable to fetch sales data");
                     }
-                  },
-                  footer: { nextPrevBtn: true, pagination: true },
-                  table: {
-                    height: "400px"
-                  },
-                  columns: [
-                    { key: "invoice_code", label: "Invoice Code" },
-                    { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</>},
-                    { key: "uom", label: "UOM", render: (row: TableDataType) => <>{ (typeof row?.uom === "object" && (row?.uom as {name: string})?.name) ?? row?.uom ?? row.uom_id}</>},
-                    { key: "quantity", label: "Quantity" },
-                    { key: "itemvalue", label: "Price" }
-                  ],
-                  pageSize: 50
-                }}
-              />
+                    return {
+                      data: res.data || [],
+                      total: res.pagination?.totalPages || 1,
+                      currentPage: res.pagination?.page || 1,
+                      pageSize: res.pagination?.pageSize || pageSize,
+                    };
+                  }
+                },
+                footer: { nextPrevBtn: true, pagination: true },
+                table: {
+                  height: "400px"
+                },
+                columns: [
+                  { key: "invoice_code", label: "Invoice Code" },
+                  { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</> },
+                  { key: "name", label: "UOM", render: (row: TableDataType) => <>{(typeof row?.name === "object" && (row?.name as { name: string })?.name) ?? row?.name ?? row.uom_id}</> },
+                  { key: "quantity", label: "Quantity" },
+                  { key: "itemvalue", label: "Price" }
+                ],
+                pageSize: 50
+              }}
+            />
           )}
           {activeTab === "return" && (
-              <Table
-                config={{
-                  api: {
-                    list: async (page: number = 1, pageSize: number = 50) => {
-                      const res = await itemReturn(String(item?.id), { page: page.toString(), per_page: pageSize.toString() });
-                      if (res.error) {
-                        // showSnackbar(res.data?.message || "Unable to fetch Return data", "error");
-                        throw new Error(res.data?.message || "Unable to fetch Return data");
-                      }
-                      return {
-                        data: res.data || [],
-                        total: res.pagination?.totalPages || 1,
-                        currentPage: res.pagination?.page || 1,
-                        pageSize: res.pagination?.pageSize || pageSize,
-                      };
+            <Table
+              config={{
+                api: {
+                  list: async (page: number = 1, pageSize: number = 50) => {
+                    const res = await itemReturn(String(item?.id), { page: page.toString(), per_page: pageSize.toString() });
+                    if (res.error) {
+                      // showSnackbar(res.data?.message || "Unable to fetch Return data", "error");
+                      throw new Error(res.data?.message || "Unable to fetch Return data");
                     }
-                  },
-                  footer: { nextPrevBtn: true, pagination: true },
-                  table: {
-                    height: "400px"
-                  },
-                  columns: [
-                    { key: "header_code", label: "Return Code" },
-                    { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</>},
-                    // { key: "uom_id", label: "UOM", render: (row: TableDataType) => <>{ (typeof row?.uom_id === "object" && (row?.uom_id as {name: string})?.name) ?? row?.uom ?? row.uom_id}</>},
-                    { key: "name", label: "UOM"},
-                    { key: "item_quantity", label: "Quantity" },
-                    { key: "item_price", label: "Price" }
-                  ],
-                  pageSize: 50
-                }}
-              />
+                    return {
+                      data: res.data || [],
+                      total: res.pagination?.totalPages || 1,
+                      currentPage: res.pagination?.page || 1,
+                      pageSize: res.pagination?.pageSize || pageSize,
+                    };
+                  }
+                },
+                footer: { nextPrevBtn: true, pagination: true },
+                table: {
+                  height: "400px"
+                },
+                columns: [
+                  { key: "header_code", label: "Return Code" },
+                  { key: "item_name", label: "Item Name", render: (row: TableDataType) => <>{row.item_code ? row.item_code : ""}{row.item_code && row.item_name ? " - " : ""}{row.item_name ? row.item_name : ""}</> },
+                  // { key: "uom_id", label: "UOM", render: (row: TableDataType) => <>{ (typeof row?.uom_id === "object" && (row?.uom_id as {name: string})?.name) ?? row?.uom ?? row.uom_id}</>},
+                  { key: "name", label: "UOM" },
+                  { key: "item_quantity", label: "Quantity" },
+                  { key: "item_price", label: "Price" }
+                ],
+                pageSize: 50
+              }}
+            />
           )}
-
         </div>
       </div>
     </>

@@ -112,7 +112,6 @@ export default function Route() {
         {
             key: "status",
             label: "Status",
-            isSortable: true,
             render: (row: TableDataType) => (
                 <StatusBtn
                     isActive={

@@ -2060,10 +2060,10 @@ export const itemById = async (id: string) => {
 export const editItem = async (id: string, payload: object, type: "json" | "form-data" = "json") => {
   try {
     if(type === "json") {
-      const res = await API.put(`/api/master/items/update/${id}`, payload);
+      const res = await API.post(`/api/master/items/update/${id}`, payload);
       return res.data;
     }
-    const res = await APIFormData.put(`/api/master/items/update/${id}`, payload);
+    const res = await APIFormData.post(`/api/master/items/update/${id}`, payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

@@ -33,14 +33,9 @@ interface LocalTableDataType {
   status?: number | string;
 }
 
-const dropdownDataList: DropdownItem[] = [
-  { icon: "lucide:radio", label: "Inactive", iconWidth: 20, status: "inactive" },
-  // { icon: "lucide:delete", label: "Delete", iconWidth: 20 },
-];
-
 const columns = [
-  { key: "erp_code", label: "ERP Code", render: (row: LocalTableDataType) => row.erp_code || "-" },
-  { key: "name", label: "Name", render: (row: LocalTableDataType) => row.code + " - " + row.name || "-" },
+  // { key: "erp_code", label: "ERP Code", render: (row: LocalTableDataType) => row.erp_code || "-" },
+  { key: "name", label: "Name", render: (row: LocalTableDataType) => row.erp_code + " - " + row.name || "-" },
   {
     key: "item_category",
     label: "Category",
@@ -81,7 +76,7 @@ const columns = [
   {
     key: "status",
     label: "Status",
-    isSortable: true,
+    // isSortable: true,
     showByDefault: true,
     render: (row: LocalTableDataType) => {
       const isActive =
@@ -129,8 +124,6 @@ export default function Item() {
     },
     []
   );
-
-
 
   const searchItems = useCallback(
     async (

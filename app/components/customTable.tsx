@@ -1408,8 +1408,8 @@ function FilterBy() {
         if (Array.isArray(v)) return acc + (v.length > 0 ? 1 : 0);
         return acc + (String(v ?? '').trim().length > 0 ? 1 : 0);
     }, 0);
-
     const applyFilter = async () => {
+        if (activeFilterCount === 0) return;
         // call API if provided
         if (config.api?.filterBy) {
             try {
@@ -1479,6 +1479,7 @@ function FilterBy() {
     };
 
     const clearAll = async () => {
+        if (activeFilterCount === 0) return;
         // build cleared state matching initialization (arrays for multi-selects)
         const cleared: Record<string, string | string[]> = {};
         (config.header?.filterByFields || []).forEach((f: FilterField) => {
@@ -1626,13 +1627,15 @@ function FilterBy() {
                                 onClick={() => clearAll()}
                                 label="Clear All"
                                 buttonTw="px-3 py-2 h-9"
+                                disabled={activeFilterCount === 0}
                                 className="text-sm"
                             />
                             <SidebarBtn
                                 isActive={true}
                                 onClick={() => applyFilter()}
                                 label="Apply Filter"
-                                buttonTw="px-4 py-2 h-9"
+                                buttonTw={`px-4 py-2 h-9`}
+                                disabled={activeFilterCount === 0}
                                 className="text-sm"
                             />
                         </div>

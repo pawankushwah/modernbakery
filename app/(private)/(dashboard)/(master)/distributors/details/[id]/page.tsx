@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from "react";
 import StatusBtn from "@/app/components/statusBtn2";
 import TabBtn from "@/app/components/tabBtn";
 import Map from "@/app/components/map";
+import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/utils/formatNumber";
 import Table, { configType, listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
@@ -30,6 +31,10 @@ interface Item {
     warehouse_type: string;
     city: string;
     location: string;
+    location_relation: {
+        code: string;
+        name: string;
+    }
     get_company: {
         company_code: string;
         company_name: string;
@@ -63,15 +68,7 @@ const backBtnUrl = "/distributors";
 
 export default function ViewPage() {
     const { customerSubCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
-    const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
-    const [warehouseId, setWarehouseId] = useState<string>("");
-    const [channelId, setChannelId] = useState<string>("");
     const [routeId, setRouteId] = useState<string>("");
-    const [warehouseRoutes, setWarehouseRoutes] = useState<TableDataType[]>([]);
-    const [warehouseVehicle, setWarehouseVehicle] = useState<TableDataType[]>([]);
-    const [warehouseSalesman, setWarehouseSalesman] = useState<TableDataType[]>([]);
-    const [warehouseCustomer, setWarehouseCustomer] = useState<TableDataType[]>([]);
-    const [nestedLoading, setNestedLoading] = useState<boolean>(false);
     const [refreshKey, setRefreshKey] = useState(0)
 
     const params = useParams();
@@ -87,6 +84,7 @@ export default function ViewPage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const [item, setItem] = useState<Item | null>(null);
+    const [warehouseId, setWarehouseId] = useState("");
     const onTabClick = async (idx: number) => {
         // ensure index is within range and set the corresponding tab key
         if (typeof idx !== "number") return;
@@ -159,6 +157,8 @@ export default function ViewPage() {
                 throw new Error("Unable to fetch Distributor Details");
             } else {
                 setItem(res.data);
+                // store id as a string so it can be passed to APIs that expect string identifiers
+                setWarehouseId(String(res.data.id));
 
             }
         };
@@ -232,7 +232,6 @@ export default function ViewPage() {
                 <StatusBtn isActive={row.status && row.status.toString() === "0" ? false : true} />
             ),
             showByDefault: true,
-            isSortable: true
         },
     ];
 
@@ -307,7 +306,13 @@ export default function ViewPage() {
         {
             key: "total_amount",
             label: "Amount",
-            render: (data: TableDataType) => (data.total_amount ? data.total_amount : "-"),
+             render: (row: TableDataType) => {
+                        // row.total_amount may be string or number; toInternationalNumber handles both
+                        return toInternationalNumber(row.total_amount, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                        } as FormatNumberOptions);
+                    },
 
             showByDefault: true,
         },
@@ -319,7 +324,6 @@ export default function ViewPage() {
                 <StatusBtn isActive={row.status && row.status.toString() === "0" ? false : true} />
             ),
             showByDefault: true,
-            isSortable: true
         },
     ];
     const returnColumns: configType["columns"] = [
@@ -394,7 +398,13 @@ export default function ViewPage() {
         {
             key: "total",
             label: "Amount",
-            render: (data: TableDataType) => (data.total_amount ? data.total_amount : "-"),
+           render: (row: TableDataType) => {
+                        // row.total_amount may be string or number; toInternationalNumber handles both
+                        return toInternationalNumber(row.total, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                        } as FormatNumberOptions);
+                    },
 
             showByDefault: true,
         },
@@ -450,7 +460,6 @@ export default function ViewPage() {
             render: (row: TableDataType) => (
                 <StatusBtn isActive={String(row.status) === "1"} />
             ),
-            isSortable: true
         },
     ];
     const salesmanColumns: configType["columns"] = [
@@ -482,24 +491,15 @@ export default function ViewPage() {
             key: "route",
             label: "Route",
             render: (row: TableDataType) => {
-                if (
-                    typeof row.route === "object" &&
-                    row.route !== null &&
-                    "route_name" in row.route
-                ) {
-                    return (row.route as { route_name?: string }).route_name || "-";
+                const route = row.route;
+                if (typeof route === "object" && route !== null) {
+                    const code = (route as any).route_code || "-";
+                    const name = (route as any).route_name || "-";
+                    return `${code}${code && name ? " - " : "-"}${name}`;
                 }
-                return typeof row.route === 'string' ? row.route : "-";
+                return typeof route === "string" && route ? route : "-";
             },
-            filter: {
-                isFilterable: true,
-                width: 320,
-                options: Array.isArray(routeOptions) ? routeOptions : [],
-                onSelect: (selected: string | string[]) => {
-                    setRouteId((prev) => prev === selected ? "" : (selected as string));
-                },
-                selectedValue: routeId,
-            },
+           
             showByDefault: true,
         },
         { key: "contact_no", label: "Contact No", showByDefault: true, },
@@ -511,7 +511,6 @@ export default function ViewPage() {
                 <StatusBtn isActive={String(row.status) === "1"} />
             ),
             showByDefault: true,
-            isSortable: true
         },
     ];
 
@@ -656,7 +655,6 @@ export default function ViewPage() {
             showByDefault: true,
         },
         { key: "owner_name", label: "Owner Name", showByDefault: true },
-        { key: "owner_name", label: "Owner Name" },
         {
             key: "customer_type",
             label: "Customer Type",
@@ -708,15 +706,15 @@ export default function ViewPage() {
             key: "route",
             label: "Route",
             render: (row: TableDataType) => {
-                if (
-                    typeof row.route === "object" &&
-                    row.route !== null &&
-                    "route_name" in row.route
-                ) {
-                    return (row.route as { route_name?: string }).route_name || "-";
+                const route = row.route;
+                if (typeof route === "object" && route !== null) {
+                    const code = (route as any).route_code || "-";
+                    const name = (route as any).route_name || "-";
+                    return `${code}${code && name ? " - " : "-"}${name}`;
                 }
-                return typeof row.route === 'string' ? row.route : "-";
+                return typeof route === "string" && route ? route : "-";
             },
+           
             isSortable: true,
 
             showByDefault: true,
@@ -737,7 +735,6 @@ export default function ViewPage() {
                 return <StatusBtn isActive={isActive} />;
             },
             showByDefault: true,
-            isSortable: true,
         },
     ];
 
@@ -756,7 +753,7 @@ export default function ViewPage() {
                         params[k] = String(v);
                     }
                 });
-                result = await warehouseSales(id, params);
+                result = await warehouseSales(warehouseId, params);
             } finally {
                 setLoading(false);
             }
@@ -773,7 +770,7 @@ export default function ViewPage() {
                 };
             }
         },
-        [setLoading]
+        [setLoading, warehouseId]
     );
 
     const filterByListReturn = useCallback(
@@ -791,7 +788,7 @@ export default function ViewPage() {
                         params[k] = String(v);
                     }
                 });
-                result = await warehouseReturn(id, params);
+                result = await warehouseReturn(warehouseId, params);
             } finally {
                 setLoading(false);
             }
@@ -808,7 +805,7 @@ export default function ViewPage() {
                 };
             }
         },
-        [setLoading]
+        [setLoading, warehouseId]
     );
 
     const searchCustomerById = useCallback(
@@ -817,7 +814,7 @@ export default function ViewPage() {
             pageSize: number = 5,
             columnName?: string
         ): Promise<searchReturnType> => {
-            const result = await getCustomerInWarehouse(id, {
+            const result = await getCustomerInWarehouse(warehouseId, {
                 query: searchQuery,
                 pageSize: pageSize.toString()
             });
@@ -833,7 +830,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
 
     const listCustomerById = useCallback(
@@ -841,7 +838,7 @@ export default function ViewPage() {
             pageNo: number = 1,
             pageSize: number = 50
         ): Promise<searchReturnType> => {
-            const result = await getCustomerInWarehouse(id, {
+            const result = await getCustomerInWarehouse(warehouseId, {
                 page: pageNo.toString(),
                 pageSize: pageSize.toString()
             });
@@ -856,7 +853,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
 
     const searchRouteByWarehouse = useCallback(
@@ -865,7 +862,7 @@ export default function ViewPage() {
             pageSize: number = 5,
             columnName?: string
         ): Promise<searchReturnType> => {
-            const result = await getRouteInWarehouse(id, {
+            const result = await getRouteInWarehouse(warehouseId, {
                 query: searchQuery,
             });
             if (result.error) {
@@ -879,7 +876,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
 
     const listRouteByWarehouse = useCallback(
@@ -887,7 +884,7 @@ export default function ViewPage() {
             pageNo: number = 1,
             pageSize: number = 5,
         ): Promise<searchReturnType> => {
-            const result = await getRouteInWarehouse(id, {
+            const result = await getRouteInWarehouse(warehouseId, {
                 page: pageNo.toString(),
                 pageSize: pageSize.toString()
             });
@@ -903,15 +900,14 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
     const listReturnByWarehouse = useCallback(
         async (
             pageNo: number = 1,
             pageSize: number = 50,
         ): Promise<searchReturnType> => {
-            const result = await warehouseReturn(id, {
-                warehouse_id: id,
+            const result = await warehouseReturn(warehouseId, {
                 per_page: pageSize.toString()
             });
 
@@ -926,15 +922,14 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
     const listSalesByWarehouse = useCallback(
         async (
             pageNo: number = 1,
             pageSize: number = 50,
         ): Promise<searchReturnType> => {
-            const result = await warehouseSales(id, {
-                warehouse_id: id,
+            const result = await warehouseSales(warehouseId, {
                 per_page: pageSize.toString()
             });
 
@@ -949,7 +944,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
 
     const listStockByWarehouse = useCallback(
@@ -957,7 +952,7 @@ export default function ViewPage() {
             pageNo: number = 1,
             pageSize: number = 50,
         ): Promise<searchReturnType> => {
-            const result = await getStockOfWarehouse(id, {
+            const result = await getStockOfWarehouse(warehouseId, {
                 page: pageNo.toString(),
                 pageSize: pageSize.toString()
             });
@@ -973,7 +968,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
 
     const searchSalesmanByWarehouse = useCallback(
@@ -982,7 +977,7 @@ export default function ViewPage() {
             pageSize: number = 5,
             columnName?: string
         ): Promise<searchReturnType> => {
-            const result = await getSalesmanInWarehouse(id, {
+            const result = await getSalesmanInWarehouse(warehouseId, {
                 query: searchQuery,
             });
 
@@ -997,7 +992,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
     const searchReturnByWarehouse = useCallback(
         async (
@@ -1005,8 +1000,8 @@ export default function ViewPage() {
             pageSize: number = 5,
             columnName?: string
         ): Promise<searchReturnType> => {
-            const result = await warehouseReturn(id, {
-                warehouse_id: id,
+            const result = await warehouseReturn(warehouseId, {
+                warehouse_id: warehouseId,
                 query: searchQuery,
             });
 
@@ -1021,7 +1016,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
     const searchSalesByWarehouse = useCallback(
         async (
@@ -1029,8 +1024,8 @@ export default function ViewPage() {
             pageSize: number = 5,
             columnName?: string
         ): Promise<searchReturnType> => {
-            const result = await warehouseSales(id, {
-                warehouse_id: id,
+            const result = await warehouseSales(warehouseId, {
+                warehouse_id: warehouseId,
                 query: searchQuery,
             });
 
@@ -1045,7 +1040,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
 
     const searchStockByWarehouse = useCallback(
@@ -1054,7 +1049,7 @@ export default function ViewPage() {
             pageSize: number = 5,
             columnName?: string
         ): Promise<searchReturnType> => {
-            const result = await getStockOfWarehouse(id, {
+            const result = await getStockOfWarehouse(warehouseId, {
                 query: searchQuery,
             });
 
@@ -1069,7 +1064,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
 
     const listSalesmanByWarehouse = useCallback(
@@ -1077,7 +1072,7 @@ export default function ViewPage() {
             pageNo: number = 1,
             pageSize: number = 5,
         ): Promise<searchReturnType> => {
-            const result = await getSalesmanInWarehouse(id, {
+            const result = await getSalesmanInWarehouse(warehouseId, {
                 page: pageNo.toString(),
                 pageSize: pageSize.toString()
             });
@@ -1093,7 +1088,7 @@ export default function ViewPage() {
                 total: result?.pagination?.last_page || 1,
             };
         },
-        []
+        [warehouseId]
     );
 
     return (
@@ -1124,7 +1119,7 @@ export default function ViewPage() {
                                 className="text-[#EA0A2A] mr-[5px]"
                             />
                             <span>
-                                {item?.location || "-"}
+                                {item?.location_relation?.name || "-"}
                             </span>
                             {/* <span className="flex justify-center p-[10px] sm:p-0 sm:inline-block mt-[10px] sm:mt-0 sm:ml-[10px]">
                                     <StatusBtn status="active" />
