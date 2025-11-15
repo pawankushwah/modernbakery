@@ -199,11 +199,11 @@ export default function OrderDetailPage() {
   const keyValueData = [
     { key: "Gross Total", value: `${CURRENCY} ${toInternationalNumber(grossTotal)}` },
     { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(vatTotal)}` },
-    { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(computedPreVat)}` },
-    (deliveryData?.delivery_charges) && {
-      key: "Delivery Charges",
-      value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.delivery_charges ?? 0))}`,
-    },
+    // { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(computedPreVat)}` },
+    // (deliveryData?.delivery_charges) && {
+    //   key: "Delivery Charges",
+    //   value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.delivery_charges ?? 0))}`,
+    // },
   ].filter(Boolean) as Array<{ key: string; value: string }>;
 
   const exportFile = async () => {
