@@ -158,7 +158,6 @@ export default function CustomerInvoicePage() {
         setRefreshKey((k) => k + 1);
     }, [customerSubCategoryOptions, routeOptions, warehouseOptions, channelOptions]);
 
-
     return (
         <>
             <div className="flex flex-col h-full">

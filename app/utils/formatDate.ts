@@ -3,7 +3,7 @@
 
 export type DateInput = string | number | Date | null | undefined;
 
-function isValidDate(d: Date | null): d is Date {
+export function isValidDate(d: Date | null): d is Date {
     return !!d && !isNaN(d.getTime());
 }
 
@@ -71,6 +71,8 @@ function pad(n: number, len = 2) {
 }
 
 export function formatWithPattern(d: Date, pattern: string, locale?: string): string {
+    // protect against invalid Date objects (Intl.format will throw RangeError)
+    if (!isValidDate(d)) return "";
     // safe values
     const year = d.getFullYear();
     const month = d.getMonth() + 1;
@@ -100,12 +102,14 @@ export function formatWithPattern(d: Date, pattern: string, locale?: string): st
         "A": ampm,
     };
 
-    // Replace tokens (longer tokens first)
+    // Replace tokens using a single regex pass on the original pattern.
+    // This avoids replacing letters that appear inside replacement values
+    // (e.g. the 'D' in 'Dec') which would happen if we do iterative string replaces.
     const tokens = Object.keys(replacements).sort((a, b) => b.length - a.length);
-    let out = pattern;
-    for (const t of tokens) {
-        out = out.split(t).join(replacements[t]);
-    }
+    // escape tokens for regex (they are letters but keep safe)
+    const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(tokens.map(esc).join("|"), "g");
+    const out = pattern.replace(re, (match) => replacements[match] ?? match);
     return out;
 }
 

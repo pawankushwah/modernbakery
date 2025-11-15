@@ -15,6 +15,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import PrintButton from "@/app/components/printButton";
 import { downloadFile } from "@/app/services/allApi";
+import { formatWithPattern, isValidDate } from "@/app/utils/formatDate";
 
 interface DeliveryDetail {
   id: number;
@@ -63,6 +64,8 @@ interface DeliveryData {
     owner_number?: string;
     owner_email?: string;
   };
+  previous_uuid?: string;
+  next_uuid?: string;
   details?: DeliveryDetail[];
   gross_total?: string;
   discount?: string;
@@ -115,11 +118,12 @@ export default function OrderDetailPage() {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
 
-  const [showDropdown, setShowDropdown] = useState(false);
   const [deliveryData, setDeliveryData] = useState<DeliveryData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
-
+  const [loading, setLoadingState] = useState<boolean>(false);
   const uuid = params?.uuid as string;
+  const CURRENCY = localStorage.getItem("country") || "";
+  const PATH = `/agentCustomerDelivery/details/`;
 
   useEffect(() => {
     if (uuid) {
@@ -157,19 +161,6 @@ export default function OrderDetailPage() {
     }
   }, [uuid, setLoading, showSnackbar]);
 
-  // Helper function to check if value exists and is not null/empty
-  const hasValue = (value: any) => {
-    if (value === null || value === undefined) return false;
-    if (typeof value === "string") {
-      const v = value.trim().toLowerCase();
-      return v !== "" && v !== "0" && v !== "0.00" && v !== "null" && v !== "undefined";
-    }
-    if (typeof value === "number") {
-      return !isNaN(value);
-    }
-    return true;
-  };
-
   // Calculate totals from details if API doesn't provide them
   const calculatedGrossTotal = deliveryData?.details?.reduce(
     (sum, item) => sum + Number(item.net_total ?? item.total ?? 0),
@@ -200,25 +191,24 @@ export default function OrderDetailPage() {
     if (netTotal > 0 && vatTotal > 0) {
       return netTotal - vatTotal;
     }
-    
+
     return 0;
   })();
 
   // Always show these fields (not conditionally hidden)
   const keyValueData = [
-    { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
-    { key: "VAT", value: `AED ${toInternationalNumber(vatTotal)}` },
-    { key: "Pre VAT", value: `AED ${toInternationalNumber(computedPreVat)}` },
+    { key: "Gross Total", value: `${CURRENCY} ${toInternationalNumber(grossTotal)}` },
+    { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(vatTotal)}` },
+    { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(computedPreVat)}` },
     (deliveryData?.delivery_charges) && {
       key: "Delivery Charges",
-      value: `AED ${toInternationalNumber(Number(deliveryData?.delivery_charges ?? 0))}`,
+      value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.delivery_charges ?? 0))}`,
     },
   ].filter(Boolean) as Array<{ key: string; value: string }>;
 
-  const targetRef = useRef<HTMLDivElement | null>(null);
-
   const exportFile = async () => {
     try {
+      setLoadingState(true);
       const response = await agentDeliveryExport({ uuid: uuid, format: "csv" });
       if (response && typeof response === 'object' && response.download_url) {
         await downloadFile(response.download_url);
@@ -229,6 +219,7 @@ export default function OrderDetailPage() {
     } catch (error) {
       showSnackbar("Failed to download warehouse data", "error");
     } finally {
+      setLoadingState(false);
     }
   };
 
@@ -245,9 +236,11 @@ export default function OrderDetailPage() {
             onClick={() => router.back()}
             className="cursor-pointer"
           />
-          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[4px]">
+          <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
             Delivery Details
           </h1>
+          <BorderIconButton disabled={!deliveryData?.previous_uuid} onClick={deliveryData?.previous_uuid ? () => router.push(`${PATH}${deliveryData.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
+          <BorderIconButton disabled={!deliveryData?.next_uuid} onClick={deliveryData?.next_uuid ? () => router.push(`${PATH}${deliveryData.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
         </div>
 
         {/* Action Buttons */}
@@ -282,27 +275,25 @@ export default function OrderDetailPage() {
             {/* From (Seller) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-                <span>From (Seller)</span>
+                <span>Seller</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">
-                    {deliveryData?.warehouse?.code && deliveryData?.warehouse?.name
-                      ? `${deliveryData?.warehouse?.code} - ${deliveryData?.warehouse?.name}`
-                      : "-"}
+                    {deliveryData?.warehouse?.code ? deliveryData?.warehouse?.code : ""}
+                    {deliveryData?.warehouse?.code && deliveryData?.warehouse?.name ? " - " : ""}
+                    {deliveryData?.warehouse?.name ? `${deliveryData?.warehouse?.name}` : ""}
                   </span>
-                  {hasValue(deliveryData?.warehouse?.address) && (
+                  {deliveryData?.warehouse?.address && (
                     <span>Address: {deliveryData?.warehouse?.address}</span>
                   )}
-                  {(hasValue(deliveryData?.warehouse?.owner_number) || hasValue(deliveryData?.warehouse?.owner_email)) && (
-                    <span>
-                      {hasValue(deliveryData?.warehouse?.owner_number) && (
-                        <>Phone: {deliveryData?.warehouse?.owner_number}</>
-                      )}
-                      {hasValue(deliveryData?.warehouse?.owner_number) && hasValue(deliveryData?.warehouse?.owner_email) && <br />}
-                      {hasValue(deliveryData?.warehouse?.owner_email) && (
-                        <>Email: {deliveryData?.warehouse?.owner_email}</>
-                      )}
-                    </span>
-                  )}
+                  <span>
+                    {deliveryData?.warehouse?.owner_number && (
+                      <>Phone: {deliveryData?.warehouse?.owner_number}</>
+                    )}
+                    {deliveryData?.warehouse?.owner_number && deliveryData?.warehouse?.owner_email && <br />}
+                    {deliveryData?.warehouse?.owner_email && (
+                      <>Email: {deliveryData?.warehouse?.owner_email}</>
+                    )}
+                  </span>
                 </div>
               </div>
             </div>
@@ -310,7 +301,7 @@ export default function OrderDetailPage() {
             {/* To (Customer) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>To (Customer)</span>
+                <span>Customer</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">
                     {deliveryData?.customer?.code ? deliveryData?.customer?.code : ""}
@@ -329,7 +320,7 @@ export default function OrderDetailPage() {
                         <>Phone: {deliveryData?.customer?.contact_no}</>
                       )}
                       {deliveryData?.customer?.email && (
-                        <>Phone: {deliveryData?.customer?.email}</>
+                        <>Email: {deliveryData?.customer?.email}</>
                       )}
                     </span>
                   }
@@ -340,15 +331,15 @@ export default function OrderDetailPage() {
             {/* Dates / meta - right column */}
             <div className="flex md:justify-end">
               <div className="text-primary-bold text-[14px] md:text-right">
-                {hasValue(deliveryData?.delivery_date) && deliveryData?.delivery_date && (
+                {deliveryData?.delivery_date && isValidDate(new Date(deliveryData.delivery_date)) && (
                   <div>
                     Delivery Date:{" "}
                     <span className="font-bold">
-                      {new Date(deliveryData.delivery_date).toLocaleDateString('en-GB')}
+                      {formatWithPattern(new Date(deliveryData.delivery_date), "DD MMM YYYY", "en-GB").toLowerCase()}
                     </span>
                   </div>
                 )}
-                {(hasValue(deliveryData?.route?.code) || hasValue(deliveryData?.route?.name)) && (
+                {(deliveryData?.route?.code || deliveryData?.route?.name) && (
                   <div className="mt-2">
                     Route:{" "}
                     <span className="font-bold">
@@ -358,7 +349,7 @@ export default function OrderDetailPage() {
                     </span>
                   </div>
                 )}
-                {(hasValue(deliveryData?.salesman?.code) || hasValue(deliveryData?.salesman?.name)) && (
+                {(deliveryData?.salesman?.code || deliveryData?.salesman?.name) && (
                   <div className="mt-2">
                     Salesman:{" "}
                     <span className="font-bold">
@@ -412,7 +403,7 @@ export default function OrderDetailPage() {
                 ))}
                 <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
                   <span>Total</span>
-                  <span>AED {toInternationalNumber(finalTotal)}</span>
+                  <span>{CURRENCY} {toInternationalNumber(finalTotal)}</span>
                 </div>
               </div>
 
@@ -439,7 +430,7 @@ export default function OrderDetailPage() {
           {/* ---------- Footer Buttons ---------- */}
           <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
             <SidebarBtn
-              leadingIcon={"lucide:download"}
+              leadingIcon={loading ? "eos-icons:three-dots-loading" : "lucide:download"}
               leadingIconSize={20}
               label="Download"
               onClick={exportFile}

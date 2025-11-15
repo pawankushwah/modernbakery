@@ -14,12 +14,17 @@ export default function Home() {
     useEffect(() => {
         async function verifyUser() {
             const res = await isVerify();
-            if(res.error) {
+            if (res.error) {
                 localStorage.removeItem("token");
                 showSnackbar(res.data.message, "error");
                 setIsLoading(false);
             }
-            if(res.code === 200) router.push("/distributors");
+            if (res.code === 200) {
+                localStorage.setItem("token", res.data.access_token);
+                localStorage.setItem("role", res?.data?.user?.role?.id);
+                localStorage.setItem("country", res?.data?.companies[0]?.selling_currency);
+                router.push("/distributors");
+            }
         }
         if (localStorage.getItem("token")) verifyUser();
         else setIsLoading(false);

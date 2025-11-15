@@ -15,7 +15,7 @@ import KeyValueData from "@/app/components/keyValueData";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import PrintButton from "@/app/components/printButton";
 import { agentOrderExport } from "@/app/services/agentTransaction";
-import { format } from "path/win32";
+import BorderIconButton from "@/app/components/borderIconButton";
 
 const columns = [
   { key: "index", label: "#" },
@@ -54,6 +54,8 @@ interface OrderData {
   order_source: string,
   payment_method: string,
   status: string,
+  previous_uuid?: string,
+  next_uuid?: string,
   details: [
     {
       id: number,
@@ -81,8 +83,11 @@ export default function OrderDetailPage() {
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const [data, setData] = useState<OrderData | null>(null);
+  const [loading, setLoadingState] = useState<boolean>(false);
   const params = useParams();
   const UUID = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
+  const CURRENCY = localStorage.getItem("country") || "";
+  const PATH = `/agentOrder/details/`;
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -132,6 +137,7 @@ export default function OrderDetailPage() {
 
   const exportFile = async () => {
     try {
+      setLoadingState(true);
       const response = await agentOrderExport({ uuid: UUID, format: "csv" });
       if (response && typeof response === 'object' && response.download_url) {
         await downloadFile(response.download_url);
@@ -142,6 +148,7 @@ export default function OrderDetailPage() {
     } catch (error) {
       showSnackbar("Failed to download warehouse data", "error");
     } finally {
+      setLoadingState(false);
     }
   };
 
@@ -161,6 +168,8 @@ export default function OrderDetailPage() {
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
             Order #{data?.order_code || "-"}
           </h1>
+          <BorderIconButton disabled={!data?.previous_uuid} onClick={data?.previous_uuid ? () => router.push(`/agentOrder/details/${data.previous_uuid}`) : undefined} icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
+          <BorderIconButton disabled={!data?.next_uuid} onClick={data?.next_uuid ? () => router.push(`/agentOrder/details/${data.next_uuid}`) : undefined} trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
         </div>
 
         {/* Action Buttons */}
@@ -208,7 +217,7 @@ export default function OrderDetailPage() {
             {/* From (Seller) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-                <span>From (Seller)</span>
+                <span>Seller</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">
                     {data?.warehouse_code ? data?.warehouse_code : ""}
@@ -226,7 +235,7 @@ export default function OrderDetailPage() {
             {/* To (Customer) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>To (Customer)</span>
+                <span>Customer</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">{data?.customer_code && data?.customer_name ? `${data?.customer_code} - ${data?.customer_name}` : "-"}</span>
                   <span>{data?.customer_street && ` ${data?.customer_street}`}</span>
@@ -296,7 +305,7 @@ export default function OrderDetailPage() {
                 <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                   <span>Total</span>
                   {/* <span>AED {toInternationalNumber(finalTotal) || 0}</span> */}
-                  <span>AED {toInternationalNumber(finalTotal) || 0}</span>
+                  <span>{CURRENCY} {toInternationalNumber(finalTotal) || 0}</span>
                 </div>
               </div>
 
@@ -327,7 +336,7 @@ export default function OrderDetailPage() {
           {/* ---------- Footer Buttons ---------- */}
           <div className="flex flex-wrap justify-end gap-[20px] print:hidden">
             <SidebarBtn
-              leadingIcon={"lucide:download"}
+              leadingIcon={loading ? "eos-icons:three-dots-loading" : "lucide:download"}
               leadingIconSize={20}
               label="Download"
               onClick={exportFile}

@@ -16,6 +16,8 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import PrintButton from "@/app/components/printButton";
 import KeyValueData from "@/app/components/keyValueData";
+import { formatWithPattern } from "@/app/(private)/utils/date";
+import { isValidDate } from "@/app/utils/formatDate";
 
 interface DeliveryDetail {
   id: number;
@@ -120,6 +122,7 @@ export default function OrderDetailPage() {
   const [tableData, setTableData] = useState<TableRow[]>([]);
 
   const uuid = params?.uuid as string;
+  const CURRENCY = localStorage.getItem("country") || "";
 
   useEffect(() => {
     if (uuid) {
@@ -161,14 +164,13 @@ export default function OrderDetailPage() {
   const keyValueData = [
     // { key: "Gross Total", value: `AED ${deliveryData?.gross_total || "0.00"}` },
     // { key: "Discount", value: `AED ${deliveryData?.discount || "0.00"}` },
-    { key: "Net Total", value: `AED ${toInternationalNumber(Number(deliveryData?.gross_total || 0)) || "0.00"}` },
+    { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.gross_total || 0)) || "0.00"}` },
     // { key: "Excise", value: `AED ${deliveryData?.excise || "0.00"}` },
-    { key: "VAT", value: `AED ${toInternationalNumber(Number(deliveryData?.vat || 0)) || "0.00"}` },
-    { key: "Pre VAT", value: `AED ${toInternationalNumber(Number(deliveryData?.pre_vat || 0)) || "0.00"}` },
+    { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.vat || 0)) || "0.00"}` },
+    { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(Number(deliveryData?.pre_vat || 0)) || "0.00"}` },
     // { key: "Delivery Charges", value: `AED ${deliveryData?.delivery_charges || "0.00"}` },
   ];
   const targetRef = useRef<HTMLDivElement | null>(null);
-
 
   return (
     <>
@@ -184,6 +186,8 @@ export default function OrderDetailPage() {
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
             Invoice Details
           </h1>
+          <BorderIconButton icon="lucide:chevron-left" label={"Prev"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pr-[10px]" />
+          <BorderIconButton trailingIcon="lucide:chevron-right" label={"Next"} labelTw="font-medium text-[12px]" className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]" />
         </div>
 
         {/* Action Buttons */}
@@ -233,7 +237,6 @@ export default function OrderDetailPage() {
               <span className="text-primary text-[14px] tracking-[10px] mb-3">
                 #{deliveryData?.invoice_code || ""}
               </span>
-
             </div>
           </div>
 
@@ -244,10 +247,14 @@ export default function OrderDetailPage() {
             {/* From (Seller) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px] border-b md:border-b-0 pb-4 md:pb-0">
-                <span>From (Seller)</span>
+                <span>Seller</span>
                 <div className="flex flex-col space-y-[10px]">
                   {/* <span className="font-semibold">{deliveryData?.warehouse_code } - {deliveryData?.warehouse_name}</span> */}
-                  <span>{deliveryData?.warehouse_code ?? ""} {deliveryData?.warehouse_name && ", "}</span>
+                  <span className="font-semibold">
+                    {deliveryData?.warehouse_code ? deliveryData.warehouse_code : ""}
+                    {deliveryData?.warehouse_code && deliveryData?.warehouse_name ? " - " : ""}
+                    {deliveryData?.warehouse_name ? deliveryData.warehouse_name : ""}
+                  </span>
                   <span>
                     {/* {deliveryData?.warehouse_contact && <>Phone: {deliveryData?.warehouse_contact}</>} <br /> {data?.warehouse_email && <>Email: {data?.warehouse_email}</>} */}
                   </span>
@@ -258,9 +265,9 @@ export default function OrderDetailPage() {
             {/* To (Customer) */}
             <div>
               <div className="flex flex-col space-y-[12px] text-primary-bold text-[14px]">
-                <span>To (Customer)</span>
+                <span>Customer</span>
                 <div className="flex flex-col space-y-[10px]">
-                  <span className="font-semibold">{deliveryData?.customer_code } - {deliveryData?.customer_name}</span>
+                  <span className="font-semibold">{deliveryData?.customer_code ? deliveryData.customer_code : ""} {deliveryData?.customer_code && deliveryData?.customer_name ? " - " : ""} {deliveryData?.customer_name}</span>
                   {/* <span>{deliveryData?.customer_address && deliveryData?.customer_address}</span> */}
                   <span>
                     {/* {deliveryData?.customer_phone && <>Phone: {deliveryData?.customer_phone || "-"}</>} <br /> */}
@@ -273,15 +280,15 @@ export default function OrderDetailPage() {
             {/* Dates / meta - right column */}
             <div className="flex md:justify-end">
               <div className="text-primary-bold text-[14px] md:text-right">
-                <div>
-                  Invoice Date: <span className="font-bold">{deliveryData?.invoice_date ? new Date(deliveryData.invoice_date).toLocaleDateString() : "-"}</span>
-                </div>
-                <div className="mt-2">
-                  Route: <span className="font-bold">{deliveryData?.route_code || "-"} - {deliveryData?.route_name || "-"}</span>
-                </div>
-                <div className="mt-2">
-                  Salesman: <span className="font-bold">{deliveryData?.salesman_name || "-"}</span>
-                </div>
+                {deliveryData?.invoice_date && isValidDate(new Date(deliveryData.invoice_date)) && <div>
+                  Invoice Date: <span className="font-bold">{formatWithPattern(new Date(deliveryData.invoice_date) || "", 'DD MMM YYYY', 'en-GB').toLowerCase()}</span>
+                </div>}
+                {(deliveryData?.route_code || deliveryData?.route_name) && <div className="mt-2">
+                  Route: <span className="font-bold">{deliveryData?.route_code ? deliveryData.route_code : ""} {deliveryData?.route_code && deliveryData?.route_name ? " - " : ""} {deliveryData?.route_name ? deliveryData.route_name : ""}</span>
+                </div>}
+                {deliveryData?.salesman_name && <div className="mt-2">
+                  Salesman: <span className="font-bold">{deliveryData?.salesman_name}</span>
+                </div>}
               </div>
             </div>
           </div>
@@ -324,7 +331,7 @@ export default function OrderDetailPage() {
                 {/* <hr className="text-[#D5D7DA]" /> */}
                 <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
                   <span>Total</span>
-                  <span>AED {toInternationalNumber(deliveryData?.net_total) || "0.00"}</span>
+                  <span>{CURRENCY} {toInternationalNumber(deliveryData?.net_total) || "0.00"}</span>
                 </div>
               </div>
 
