@@ -235,6 +235,8 @@ export default function ViewPage() {
         },
     ];
 
+    
+    
     const salesColumns: configType["columns"] = [
         {
             key: "invoice_code",
