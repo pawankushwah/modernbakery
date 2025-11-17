@@ -14,7 +14,6 @@ import OrderStatus from "@/app/components/orderStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/utils/formatDate";
-// import { useLoading } from "@/app/services/loadingContext";
 
 const columns = [
     { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
@@ -30,7 +29,7 @@ const columns = [
             return `${code}${code && name ? " - " : ""}${name}`;
         },
     },
-
+    
     {
         key: "customer_name",
         label: "Customer Name",
@@ -75,13 +74,10 @@ const columns = [
 
 export default function CustomerInvoicePage() {
     const { setLoading } = useLoading();
-    // const { setLoading } = useLoading();
-
     const { customerSubCategoryOptions, companyOptions, salesmanOptions, agentCustomerOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions } = useAllDropdownListData();
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
     const [refreshKey, setRefreshKey] = useState(0);
-    const [isExporting, setIsExporting] = useState(false);
     const [threeDotLoading, setThreeDotLoading] = useState({
         csv: false,
         xlsx: false,
@@ -132,9 +128,9 @@ export default function CustomerInvoicePage() {
                 const pagination = result.pagination?.pagination || result.pagination || {};
                 return {
                     data: result.data || [],
-                    total: pagination.totalPages || result.pagination?.totalPages || 1,
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
                     totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-                    currentPage: pagination.page || result.pagination?.page || 1,
+                    currentPage: pagination.current_page || result.pagination?.currentPage || 0,
                     pageSize: pagination.limit || pageSize,
                 };
             }
@@ -143,10 +139,6 @@ export default function CustomerInvoicePage() {
     );
 
     const exportFile = async (format: "csv" | "xlsx" = "csv") => {
-        if (isExporting) return; // Prevent multiple clicks
-        setIsExporting(true);
-        // isLoading(true);
-        setLoading(true);
         try {
             setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
             const response = await agentOrderExport({ format });
@@ -161,8 +153,6 @@ export default function CustomerInvoicePage() {
             showSnackbar("Failed to download warehouse data", "error");
             setThreeDotLoading((prev) => ({ ...prev, [format]: false }));
         } finally {
-            setIsExporting(false);
-            setLoading(false);
         }
     };
 
@@ -181,42 +171,30 @@ export default function CustomerInvoicePage() {
                             title: "Customer Orders",
                             searchBar: false,
                             columnFilter: true,
-                             threeDot: [
-                {
-                  icon: "gala:file-document",
-                  label: isExporting ? "Exporting..." : "Export CSV",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    if (isExporting) return;
-                    const ids = selectedRow?.map((id) => {
-                      return data[id].id;
-                    })
-                    exportFile("csv");
-                  }
-                },
-                {
-                  icon: "gala:file-document",
-                  label: isExporting ? "Exporting..." : "Export Excel",
-                  onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                    if (isExporting) return;
-                    const ids = selectedRow?.map((id) => {
-                      return data[id].id;
-                    })
-                    exportFile("xlsx");
-                  }
-                },
-              ],
+                            threeDot: [
+                                {
+                                    icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
+                                    label: "Export CSV",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => !threeDotLoading.csv && exportFile("csv"),
+                                },
+                                {
+                                    icon: threeDotLoading.xlsx ? "eos-icons:three-dots-loading" : "gala:file-document",
+                                    label: "Export Excel",
+                                    labelTw: "text-[12px] hidden sm:block",
+                                    onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
+                                },
+                            ],
                             filterByFields: [
                                 {
                                     key: "start_date",
                                     label: "Start Date",
-                                    type: "date",
-                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
+                                    type: "date"
                                 },
                                 {
                                     key: "end_date",
                                     label: "End Date",
-                                    type: "date",
-                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
+                                    type: "date"
                                 },
                                 {
                                     key: "company_id",

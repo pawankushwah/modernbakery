@@ -35,7 +35,7 @@ const columns = [
             const date = new Date(row.delivery_date as string);
             return formatWithPattern(new Date(row.delivery_date), "DD MMM YYYY", "en-GB").toLowerCase() || "-";
         }
-    },
+    },  
     { key: "delivery_code", label: "Delivery Code", showByDefault: true },
     // { key: "order_code", label: "Order Code",showByDefault: true },
     {
@@ -249,14 +249,12 @@ export default function CustomerInvoicePage() {
                             {
                                 key: "start_date",
                                 label: "Start Date",
-                                type: "date",
-                                applyWhen: (filters) => !!filters.start_date && !!filters.end_date
+                                type: "date"
                             },
                             {
                                 key: "end_date",
                                 label: "End Date",
-                                type: "date",
-                                applyWhen: (filters) => !!filters.start_date && !!filters.end_date
+                                type: "date"
                             },
                             {
                                 key: "company_id",

@@ -405,7 +405,7 @@ export default function CustomerInvoicePage() {
                         actions: [
                             <SidebarBtn
                                 key={1}
-                                href="/invoice/add"
+                                href="/agentInvoice/add"
                                 isActive
                                 leadingIcon="mdi:plus"
                                 label="Add"
@@ -422,7 +422,7 @@ export default function CustomerInvoicePage() {
                             icon: "lucide:eye",
                             onClick: (row: TableDataType) =>
                                 router.push(
-                                    `/invoice/details/${row.uuid}`
+                                    `/agentInvoice/details/${row.uuid}`
                                 ),
                         },
                     ],
