@@ -117,47 +117,47 @@ export default function CustomerDetails() {
             mounted = false;
         };
     }, []);
-const IconComponentData2 = ({row}:{row:TableDataType})=>{
-  const [smallLoading, setSmallLoading] = useState(false)
-  const { showSnackbar } = useSnackbar();
+    const IconComponentData2 = ({ row }: { row: TableDataType }) => {
+        const [smallLoading, setSmallLoading] = useState(false)
+        const { showSnackbar } = useSnackbar();
 
-  const exportOrderFile = async (uuid: string, format: string) => {
-    try {
-      setSmallLoading(true)
-      const response = await exportInvoice({ uuid, format }); // send proper body object
+        const exportOrderFile = async (uuid: string, format: string) => {
+            try {
+                setSmallLoading(true)
+                const response = await exportInvoice({ uuid, format }); // send proper body object
 
-      if (response && typeof response === "object" && response.download_url) {
-        await downloadFile(response.download_url);
-        showSnackbar("File downloaded successfully", "success");
-      setSmallLoading(false)
+                if (response && typeof response === "object" && response.download_url) {
+                    await downloadFile(response.download_url);
+                    showSnackbar("File downloaded successfully", "success");
+                    setSmallLoading(false)
 
 
-      } else {
-        showSnackbar("Failed to get download URL", "error");
-      setSmallLoading(false)
+                } else {
+                    showSnackbar("Failed to get download URL", "error");
+                    setSmallLoading(false)
 
-      }
-    } catch (error) {
-      console.error(error);
-      showSnackbar("Failed to download data", "error");
-      setSmallLoading(false)
+                }
+            } catch (error) {
+                console.error(error);
+                showSnackbar("Failed to download data", "error");
+                setSmallLoading(false)
 
+            }
+        };
+
+        return (smallLoading ? <Skeleton /> : <div className="cursor-pointer" onClick={() => {
+            exportOrderFile(row.uuid, "pdf"); // or "excel", "csv" etc.
+
+        }}><Icon icon="material-symbols:download" /></div>)
     }
-  };
+    function convertDate(input: string) {
+        const [dd, mm, yy] = input.split("-");
 
-  return(smallLoading?<Skeleton/>:<div className="cursor-pointer" onClick={()=>{
-                      exportOrderFile(row.uuid, "pdf"); // or "excel", "csv" etc.
+        // If year is two-digit, convert to 20xx or 19xx as needed
+        const fullYear = yy.length === 2 ? "20" + yy : yy;
 
-      }}><Icon  icon="material-symbols:download"/></div>)
-}
-    function convertDate(input:string) {
-  const [dd, mm, yy] = input.split("-");
-
-  // If year is two-digit, convert to 20xx or 19xx as needed
-  const fullYear = yy.length === 2 ? "20" + yy : yy;
-
-  return `${fullYear}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
-}
+        return `${fullYear}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+    }
 
     const columns: configType["columns"] = [
         { key: "invoice_date", label: "Date", render: (row: TableDataType) => formatDate(row.invoice_date) },
@@ -179,11 +179,13 @@ const IconComponentData2 = ({row}:{row:TableDataType})=>{
             label: "Route"
         },
         { key: "total_amount", label: "Invoice Total", render: (row: TableDataType) => toInternationalNumber(row.total_amount) },
- { key: "action", label: "Action",sticky:"right", render: (row: TableDataType) => {
-                     
+        {
+            key: "action", label: "Action", sticky: "right", render: (row: TableDataType) => {
 
-      return(<IconComponentData2 row={row} />)
-    } }
+
+                return (<IconComponentData2 row={row} />)
+            }
+        }
 
     ];
 
@@ -261,7 +263,7 @@ const IconComponentData2 = ({row}:{row:TableDataType})=>{
                         params[k] = String(v);
                     }
                 });
-                result = await  getAgentCustomerByReturnId(uuid, { from_date: "", to_date: "" });
+                result = await getAgentCustomerByReturnId(uuid, { from_date: "", to_date: "" });
             } finally {
                 setLoading(false);
             }
@@ -349,74 +351,74 @@ const IconComponentData2 = ({row}:{row:TableDataType})=>{
     };
 
     const filterBySales = useCallback(
-    async (
-      payload: Record<string, string | number | null>,
-      pageSize: number
-    ): Promise<listReturnType> => {
-      let result;
-      setLoading(true);
-      try {
-        const params: Record<string, string> = { per_page: pageSize.toString() };
-        Object.keys(payload || {}).forEach((k) => {
-          const v = payload[k as keyof typeof payload];
-          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-            params[k] = String(v);
-          }
-        });
-        result = await getAgentCustomerBySalesId(uuid, { from_date: params.start_date, to_date: params.end_date });
-      } finally {
-        setLoading(false);
-      }
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await getAgentCustomerBySalesId(uuid, { from_date: params.start_date, to_date: params.end_date });
+            } finally {
+                setLoading(false);
+            }
 
-      if (result?.error) throw new Error(result.data?.message || "Filter failed");
-      else {
-        const pagination = result.pagination?.pagination || result.pagination || {};
-        return {
-          data: result.data || [],
-          total: pagination.totalPages || result.pagination?.totalPages || 0,
-          totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-          currentPage: pagination.page || result.pagination?.currentPage || 0,
-          pageSize: pagination.limit || pageSize,
-        };
-      }
-    },
-    [setLoading]
-  );
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
 
-const filterByReturn = useCallback(
-    async (
-      payload: Record<string, string | number | null>,
-      pageSize: number
-    ): Promise<listReturnType> => {
-      let result;
-      setLoading(true);
-      try {
-        const params: Record<string, string> = { per_page: pageSize.toString() };
-        Object.keys(payload || {}).forEach((k) => {
-          const v = payload[k as keyof typeof payload];
-          if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-            params[k] = String(v);
-          }
-        });
-        result = await getAgentCustomerByReturnId(uuid, { from_date: params.start_date, to_date: params.end_date });
-      } finally {
-        setLoading(false);
-      }
+    const filterByReturn = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await getAgentCustomerByReturnId(uuid, { from_date: params.start_date, to_date: params.end_date });
+            } finally {
+                setLoading(false);
+            }
 
-      if (result?.error) throw new Error(result.data?.message || "Filter failed");
-      else {
-        const pagination = result.pagination?.pagination || result.pagination || {};
-        return {
-          data: result.data || [],
-          total: pagination.totalPages || result.pagination?.totalPages || 0,
-          totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
-          currentPage: pagination.page || result.pagination?.currentPage || 0,
-          pageSize: pagination.limit || pageSize,
-        };
-      }
-    },
-    [setLoading]
-  );
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
     return (
         <>
             {/* header */}
@@ -509,7 +511,7 @@ const filterByReturn = useCallback(
                                 api: {
 
                                     list: salesByAgentCustomer,
-                                    filterBy:filterBySales
+                                    filterBy: filterBySales
                                 },
                                 header: {
                                     filterByFields: [
@@ -550,9 +552,9 @@ const filterByReturn = useCallback(
 
                 </ContainerCard>
 
-            ) :""}
-            
-            
+            ) : ""}
+
+
             {activeTab === "Market Return" ? (<ContainerCard >
 
                 <div className="flex flex-col h-full">
@@ -561,8 +563,8 @@ const filterByReturn = useCallback(
                             api: {
 
                                 list: returnByAgentCustomer,
-                                filterBy:filterByReturn
-                                
+                                filterBy: filterByReturn
+
                             },
                             header: {
                                 filterByFields: [
@@ -592,7 +594,7 @@ const filterByReturn = useCallback(
                                 {
                                     icon: "material-symbols:download",
                                     onClick: (data: TableDataType) => {
-                                        return(<IconComponentData2 row={data} />)
+                                        return (<IconComponentData2 row={data} />)
                                         // exportReturnFile(uuid, "excel"); // or "excel", "csv" etc.
                                     },
                                 }

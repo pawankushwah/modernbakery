@@ -35,6 +35,9 @@ export type FilterField = {
     // Example for a date-range start field:
     // applyWhen: (filters) => Boolean(filters.startDate && filters.endDate)
     applyWhen?: (filters: Record<string, any>) => boolean;
+    // arbitrary props to forward directly to the `InputFields` component
+    // useful for passing attributes like `inputProps`, `disabled`, `max`, etc.
+    inputProps?: Record<string, any>;
 };
 
 export type configType = {
@@ -248,6 +251,8 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     async function checkForData() {
         // if data is passed, use default values
         if (data) {
+            const date = new Date();
+            setNestedLoading(true);
             setTableDetails({
                 data,
                 total: Math.ceil(
@@ -269,6 +274,7 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
             } catch (err) {
                 /* ignore */
             }
+            setTimeout(() => setNestedLoading(false), Math.max(0, 1000 - (new Date().getTime() - date.getTime())));
         }
 
         // if api is passed, use default values
@@ -1197,14 +1203,11 @@ function TableFooter() {
 
     async function handlePageChange(pageNo: number) {
         if (pageNo < 0 || pageNo > totalPages - 1) return;
-        // notify any filter UI to clear its local state when page changes
-        try {
-            if (typeof window !== "undefined") {
-                window.dispatchEvent(new CustomEvent("customTable:clearFilters"));
-            }
-        } catch (err) {
-            // ignore if event dispatch fails in unusual environments
-        }
+        // NOTE: previously we dispatched a global "customTable:clearFilters"
+        // event here which caused filter UI to reset when changing pages.
+        // That cleared the applied filters and active filter count unexpectedly
+        // when paginating. Do not clear filters on page change — pagination
+        // should respect the currently applied filters (see filterState).
 
         const MIN_LOADING_MS = 1000;
         const start = Date.now();
@@ -1432,7 +1435,7 @@ export function FilterOptionList({
 
 function FilterBy() {
     const { config } = useContext(Config);
-    const { tableDetails, setTableDetails, setNestedLoading, setFilterState } = useContext(TableDetails);
+    const { tableDetails, setTableDetails, setNestedLoading, setFilterState, initialTableData } = useContext(TableDetails);
     const [showDropdown, setShowDropdown] = useState(false);
     const buttonRef = useRef<HTMLDivElement | null>(null);
     const [searchBarValue, setSearchBarValue] = useState("");
@@ -1465,6 +1468,7 @@ function FilterBy() {
     }, 0);
     const applyFilter = async () => {
         if (activeFilterCount === 0) return;
+        setShowDropdown(false);
         // call API if provided
         if (config.api?.filterBy) {
             try {
@@ -1563,7 +1567,7 @@ function FilterBy() {
 
     const clearAll = async () => {
         if (activeFilterCount === 0) return;
-        
+
         // build cleared state matching initialization (arrays for multi-selects)
         const cleared: Record<string, string | string[]> = {};
         (config.header?.filterByFields || []).forEach((f: FilterField) => {
@@ -1572,34 +1576,35 @@ function FilterBy() {
         setFilters(cleared);
         setAppliedFilters(false);
 
-        // If API exists, call it with cleared payload to refresh table
-        if (config.api?.filterBy) {
+        // clear global applied filter flag via context so pagination uses list API
+        try { setFilterState({ applied: false, payload: {} }); } catch (err) { }
+
+        // If list API exists, reload the default (unfiltered) first page using it.
+        if (config.api?.list) {
+            const pageSize = config.pageSize || defaultPageSize;
             try {
                 setNestedLoading(true);
-                const payloadForApi: Record<string, string | number | null> = {};
-                Object.keys(cleared).forEach((k) => {
-                    const v = cleared[k];
-                    if (Array.isArray(v)) {
-                        payloadForApi[k] = v.length > 0 ? v.join(',') : "";
-                    } else {
-                        payloadForApi[k] = v as string;
-                    }
-                });
-                // clear global applied filter flag via context
-                try { setFilterState({ applied: false, payload: {} }); } catch (err) { }
-
-                const res = await config.api.filterBy(payloadForApi, config.pageSize || defaultPageSize);
-                const resolved = res instanceof Promise ? await res : res;
+                const result = await config.api.list(1, pageSize);
+                const resolved = result instanceof Promise ? await result : result;
+                const { data, total, currentPage, pageSize: resPageSize, totalRecords } = resolved as any;
                 setTableDetails({
-                    data: resolved.data || [],
-                    total: resolved.total || 1,
-                    currentPage: resolved.currentPage ?? 0,
-                    pageSize: resolved.pageSize || config.pageSize || defaultPageSize,
+                    data: data || [],
+                    total: total || 1,
+                    totalRecords: totalRecords,
+                    currentPage: (currentPage ? currentPage - 1 : 0),
+                    pageSize: resPageSize || pageSize,
                 });
             } catch (err) {
-                console.error("Filter API error", err);
+                console.error("List API error while clearing filters", err);
             } finally {
                 setNestedLoading(false);
+            }
+        } else if (initialTableData) {
+            // Fallback: restore initial snapshot if available (client-side mode)
+            try {
+                setTableDetails(initialTableData as any);
+            } catch (err) {
+                // ignore
             }
         }
     };
@@ -1701,6 +1706,8 @@ function FilterBy() {
                                         width="w-full"
                                         isSingle={typeof f.isSingle === 'boolean' ? f.isSingle : true}
                                         multiSelectChips={!!f.multiSelectChips}
+                                        filters={filters}
+                                        {...(f.inputProps || {})}
                                     />
                                 </div>
                             ))}
@@ -1708,6 +1715,7 @@ function FilterBy() {
                         <div className="p-4 flex items-center justify-end gap-4">
                             <SidebarBtn
                                 isActive={false}
+                                type="button"
                                 onClick={() => appliedFilters === false ? resetLocalFilters() : clearAll()}
                                 label="Clear All"
                                 buttonTw="px-3 py-2 h-9"
@@ -1716,6 +1724,7 @@ function FilterBy() {
                             />
                             <SidebarBtn
                                 isActive={true}
+                                type="button"
                                 onClick={() => applyFilter()}
                                 label="Apply Filter"
                                 buttonTw={`px-4 py-2 h-9`}

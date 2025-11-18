@@ -88,20 +88,20 @@ export default function CustomerInvoicePage() {
             page: number = 1,
             pageSize: number = 5
         ): Promise<listReturnType> => {
-            setLoading(true);
+            // setLoading(true);
             const params: Record<string, string> = {
                 page: page.toString(),
                 pageSize: pageSize.toString()
             };
             const listRes = await agentOrderList(params);
-            setLoading(false);
+            // setLoading(false);
             return {
                 data: Array.isArray(listRes.data) ? listRes.data : [],
                 total: listRes?.pagination?.totalPages || 1,
                 currentPage: listRes?.pagination?.page || 1,
                 pageSize: listRes?.pagination?.limit || pageSize,
             };
-        }, [setLoading, showSnackbar]);
+        }, [showSnackbar]);
 
     const filterBy = useCallback(
         async (
@@ -109,7 +109,7 @@ export default function CustomerInvoicePage() {
             pageSize: number
         ): Promise<listReturnType> => {
             let result;
-            setLoading(true);
+            // setLoading(true);
             try {
                 const params: Record<string, string> = { per_page: pageSize.toString() };
                 Object.keys(payload || {}).forEach((k) => {
@@ -120,7 +120,7 @@ export default function CustomerInvoicePage() {
                 });
                 result = await agentOrderList(params);
             } finally {
-                setLoading(false);
+                // setLoading(false);
             }
 
             if (result?.error) throw new Error(result.data?.message || "Filter failed");
@@ -135,7 +135,7 @@ export default function CustomerInvoicePage() {
                 };
             }
         },
-        [setLoading]
+        []
     );
 
     const exportFile = async (format: "csv" | "xlsx" = "csv") => {
