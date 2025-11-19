@@ -14,7 +14,8 @@ import { Icon } from "@iconify-icon/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState,RefObject,useRef } from "react";
+import PrintButton from "@/app/components/printButton";
 
 interface CustomerItem {
   id: number;
@@ -129,6 +130,7 @@ const backBtnUrl = "/salesmanUnload";
 
     fetchDetails();
   }, [uuid, setLoading, showSnackbar]);
+  const targetRef = useRef<HTMLDivElement | null>(null);
 
   return (
     <>
@@ -141,6 +143,7 @@ const backBtnUrl = "/salesmanUnload";
       </div>
 
       {/* ---------- Main Card ---------- */}
+      <div ref={targetRef}>
             <ContainerCard className="rounded-xl shadow-sm space-y-8 bg-white p-6">
               {/* Top Section */}
               <div className="flex justify-between flex-wrap gap-6 items-start">
@@ -225,10 +228,13 @@ const backBtnUrl = "/salesmanUnload";
                   label="Print Now"
                   // onClick={handlePrint}
                 />
+            <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
+
+
               </div>
       
             </ContainerCard>
-
+</div>
 
     </>
   );

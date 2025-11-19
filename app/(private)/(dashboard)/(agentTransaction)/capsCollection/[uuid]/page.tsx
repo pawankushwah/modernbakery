@@ -148,7 +148,7 @@ const handleCustomerSearch = async (searchText: string, warehouseId: string, cus
       if (customerType === "1") {
         const businessName = String(customer['business_name'] ?? "");
         return {
-          value: id,
+          value: id, 
           label: `${osa || ""} - ${businessName || ""}`.trim(),
           name: businessName,
           contact_no: contactNo,

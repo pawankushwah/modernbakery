@@ -3,7 +3,7 @@
 import KeyValueData from "@/app/components/keyValueData";
 import ContainerCard from "@/app/components/containerCard";
 import { useLoading } from "@/app/services/loadingContext";
-import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse, getStockOfWarehouse, warehouseReturn, warehouseSales } from "@/app/services/allApi";
+import { getWarehouseById, getCustomerInWarehouse, getRouteInWarehouse, getVehicleInWarehouse, getSalesmanInWarehouse, getStockOfWarehouse, warehouseReturn, warehouseSales, downloadFile } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -16,6 +16,9 @@ import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/util
 import Table, { configType, listReturnType, searchReturnType, TableDataType } from "@/app/components/customTable";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { formatWithPattern } from "@/app/utils/formatDate";
+import Drawer from "@mui/material/Drawer";
+import { exportInvoice, getAgentCustomerBySalesId } from "@/app/services/agentTransaction";
+import Skeleton from "@mui/material/Skeleton";
 interface Item {
     id: string;
     sap_id: string;
@@ -69,7 +72,9 @@ const backBtnUrl = "/distributors";
 export default function ViewPage() {
     const { customerSubCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
     const [routeId, setRouteId] = useState<string>("");
-    const [refreshKey, setRefreshKey] = useState(0)
+    const [refreshKey, setRefreshKey] = useState(0);
+    const [open, setOpen] = useState(false);
+    const [UUIDAgentCustomer, setUUIDAgentCustomer] = useState<string>("");
 
     const params = useParams();
     let id: string = "";
@@ -180,7 +185,7 @@ export default function ViewPage() {
         {
             key: "route_name",
             label: "Route Name",
-            isSortable: true,
+            // isSortable: true,
             render: (data: TableDataType) => (data.route_name ? data.route_name : "-"),
             showByDefault: true,
         },
@@ -251,14 +256,14 @@ export default function ViewPage() {
         {
             key: "invoice_date",
             label: "Invoice Date",
-            isSortable: true,
-            render: (data: TableDataType) => data.invoice_date?formatWithPattern(new Date(data.invoice_date),"DD MMM YYYY",'en-GB').toLowerCase() :"-" ,
+            // isSortable: true,
+            render: (data: TableDataType) => data.invoice_date ? formatWithPattern(new Date(data.invoice_date), "DD MMM YYYY", 'en-GB').toLowerCase() : "-",
             showByDefault: true,
         },
         {
             key: "invoice_time",
             label: "Invoice Time",
-            isSortable: true,
+            // isSortable: true,
             render: (data: TableDataType) => (data.invoice_time ? data.invoice_time : "-"),
             showByDefault: true,
         },
@@ -296,18 +301,18 @@ export default function ViewPage() {
         {
             key: "total_amount",
             label: "Amount",
-             render: (row: TableDataType) => {
-                        // row.total_amount may be string or number; toInternationalNumber handles both
-                        return toInternationalNumber(row.total_amount, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                        } as FormatNumberOptions);
-                    },
+            render: (row: TableDataType) => {
+                // row.total_amount may be string or number; toInternationalNumber handles both
+                return toInternationalNumber(row.total_amount, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                } as FormatNumberOptions);
+            },
 
             showByDefault: true,
         },
 
-       
+
     ];
     const returnColumns: configType["columns"] = [
         {
@@ -323,7 +328,7 @@ export default function ViewPage() {
         {
             key: "return_date",
             label: "Return Date",
-            isSortable: true,
+            // isSortable: true,
             render: (data: TableDataType) => (data.return_date ? data.return_date : "-"),
             showByDefault: true,
         },
@@ -381,13 +386,13 @@ export default function ViewPage() {
         {
             key: "total",
             label: "Amount",
-           render: (row: TableDataType) => {
-                        // row.total_amount may be string or number; toInternationalNumber handles both
-                        return toInternationalNumber(row.total, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                        } as FormatNumberOptions);
-                    },
+            render: (row: TableDataType) => {
+                // row.total_amount may be string or number; toInternationalNumber handles both
+                return toInternationalNumber(row.total, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                } as FormatNumberOptions);
+            },
 
             showByDefault: true,
         },
@@ -482,7 +487,7 @@ export default function ViewPage() {
                 }
                 return typeof route === "string" && route ? route : "-";
             },
-           
+
             showByDefault: true,
         },
         { key: "contact_no", label: "Contact No", showByDefault: true, },
@@ -521,7 +526,7 @@ export default function ViewPage() {
                     return (
                         <div>
                             <div className="font-medium text-[#181D27] text-[14px]">
-                                {item.code} - {item.name || "-"}
+                                {item.code} {item.code && item.name ? " - " : ""} {item.name || "-"}
                             </div>
                             {/* <div className="text-xs text-gray-500">{item.code || ""}</div> */}
                         </div>
@@ -533,49 +538,48 @@ export default function ViewPage() {
         },
         {
             key: "qty",
-            label: `Current Qty 
-        (2000)`,
+            label: `Current Qty`,
             render: (row: TableDataType) => (
-                <span className="font-semibold text-[#181D27] text-[14px]">
-                    {row.qty ?? "-"}
+                <span className="text-[14px]">
+                    {toInternationalNumber(row.qty, { maximumFractionDigits: 0 }) ?? "-"}
                 </span>
             ),
             showByDefault: true,
-            isSortable: true,
+            // isSortable: true,
         },
         {
             key: "incoming",
             label: "Incoming",
             render: (row: TableDataType) => (
-                <span className="font-semibold text-[#181D27] text-[14px]">
+                <span className="text-[14px]">
                     {getRandomNumber(100) ?? "-"}
                 </span>
             ),
             showByDefault: true,
-            isSortable: true,
+            // isSortable: true,
         },
         {
             key: "usage",
             label: "Usage",
             render: (row: TableDataType) => (
-                <span className="font-semibold text-[#181D27] text-[14px]">
+                <span className="text-[14px]">
                     {getRandomNumber(30) ?? "-"}
                 </span>
             ),
             showByDefault: true,
-            isSortable: true,
+            // isSortable: true,
         },
 
         {
             key: "ordersBy",
             label: "Orders By",
             render: (row: TableDataType) => (
-                <span className="font-semibold text-[#181D27] text-[14px]">
+                <span className="text-[14px]">
                     {getRandomDateFromLastMonth() ?? "-"}
                 </span>
             ),
             showByDefault: true,
-            isSortable: true,
+            // isSortable: true,
         }
     ];
 
@@ -637,7 +641,7 @@ export default function ViewPage() {
             ),
             showByDefault: true,
         },
-        { key: "owner_name", label: "Owner Name", showByDefault: true },
+        { key: "owner_name", label: "Owner Name", showByDefault: true, render: (row: TableDataType) => (<span className="hover:text-[#ea0a2a] cursor-pointer" onClick={() => { setOpen(true); setUUIDAgentCustomer(row.uuid || ""); }}>{row.owner_name || "-"}</span>) },
         {
             key: "customer_type",
             label: "Customer Type",
@@ -663,8 +667,7 @@ export default function ViewPage() {
                     ? (row.outlet_channel as { outlet_channel?: string })
                         .outlet_channel || "-"
                     : "-",
-            isSortable: true,
-
+            // isSortable: true,
             showByDefault: true,
         },
         {
@@ -697,9 +700,7 @@ export default function ViewPage() {
                 }
                 return typeof route === "string" && route ? route : "-";
             },
-           
-            isSortable: true,
-
+            // isSortable: true,
             showByDefault: true,
         },
         { key: "contact_no", label: "Contact No.", showByDefault: true, },
@@ -913,6 +914,7 @@ export default function ViewPage() {
             pageSize: number = 50,
         ): Promise<searchReturnType> => {
             const result = await warehouseSales(warehouseId, {
+                page: pageNo.toString(),
                 per_page: pageSize.toString()
             });
 
@@ -1005,11 +1007,13 @@ export default function ViewPage() {
         async (
             searchQuery: string,
             pageSize: number = 5,
-            columnName?: string
+            columnName?: string,
+            page: number = 1
         ): Promise<searchReturnType> => {
             const result = await warehouseSales(warehouseId, {
                 warehouse_id: warehouseId,
                 query: searchQuery,
+                page: page.toString()
             });
 
             if (result.error) {
@@ -1074,6 +1078,126 @@ export default function ViewPage() {
         [warehouseId]
     );
 
+    const salesByAgentCustomer = useCallback(
+        async (
+            pageNo: number = 1,
+            pageSize: number = 50,
+            uuid: string
+        ): Promise<searchReturnType> => {
+            const result = await getAgentCustomerBySalesId(uuid, { from_date: "", to_date: "" });
+            if (result.error) {
+                throw new Error(result.data?.message || "Search failed");
+            }
+
+            return {
+                data: result.data || [],
+                currentPage: result?.pagination?.page || 1,
+                pageSize: result?.pagination?.limit || pageSize,
+                total: result?.pagination?.totalPages || 1,
+            };
+        },
+        []
+    );
+
+    const filterBySales = useCallback(
+        async (
+            payload: Record<string, string | number | null>,
+            pageSize: number,
+            uuid: string
+        ): Promise<listReturnType> => {
+            let result;
+            setLoading(true);
+            try {
+                const params: Record<string, string> = { per_page: pageSize.toString() };
+                Object.keys(payload || {}).forEach((k) => {
+                    const v = payload[k as keyof typeof payload];
+                    if (v !== null && typeof v !== "undefined" && String(v) !== "") {
+                        params[k] = String(v);
+                    }
+                });
+                result = await getAgentCustomerBySalesId(uuid, { from_date: params.start_date, to_date: params.end_date });
+            } finally {
+                setLoading(false);
+            }
+
+            if (result?.error) throw new Error(result.data?.message || "Filter failed");
+            else {
+                const pagination = result.pagination?.pagination || result.pagination || {};
+                return {
+                    data: result.data || [],
+                    total: pagination.totalPages || result.pagination?.totalPages || 0,
+                    totalRecords: pagination.totalRecords || result.pagination?.totalRecords || 0,
+                    currentPage: pagination.page || result.pagination?.currentPage || 0,
+                    pageSize: pagination.limit || pageSize,
+                };
+            }
+        },
+        [setLoading]
+    );
+
+    const AgentCustomerSalesColumns: configType["columns"] = [
+        { key: "invoice_date", label: "Date", render: (row: TableDataType) => formatWithPattern(new Date(row.invoice_date), "DD MMM YYYY", "en-GB") },
+        { key: "invoice_time", label: "Time" },
+        {
+            key: "invoice_code",
+            label: "Invoice Number"
+        },
+        {
+            key: "salesman_name",
+            label: "Salesman"
+        },
+        {
+            key: "warehouse_name",
+            label: "Warehouse"
+        },
+        {
+            key: "route_name",
+            label: "Route"
+        },
+        { key: "total_amount", label: "Invoice Total", render: (row: TableDataType) => toInternationalNumber(row.total_amount) },
+        {
+            key: "action", label: "Action", sticky: "right", render: (row: TableDataType) => {
+
+
+                return (<IconComponentData2 row={row} />)
+            }
+        }
+
+    ];
+
+    const IconComponentData2 = ({ row }: { row: TableDataType }) => {
+        const [smallLoading, setSmallLoading] = useState(false)
+        const { showSnackbar } = useSnackbar();
+
+        const exportOrderFile = async (uuid: string, format: string) => {
+            try {
+                setSmallLoading(true)
+                const response = await exportInvoice({ uuid, format }); // send proper body object
+
+                if (response && typeof response === "object" && response.download_url) {
+                    await downloadFile(response.download_url);
+                    showSnackbar("File downloaded successfully", "success");
+                    setSmallLoading(false)
+
+
+                } else {
+                    showSnackbar("Failed to get download URL", "error");
+                    setSmallLoading(false)
+
+                }
+            } catch (error) {
+                console.error(error);
+                showSnackbar("Failed to download data", "error");
+                setSmallLoading(false)
+
+            }
+        };
+        return (smallLoading ? <Skeleton /> : <div className="cursor-pointer" onClick={() => {
+            exportOrderFile(row.uuid, "pdf"); // or "excel", "csv" etc.
+
+        }}><Icon icon="material-symbols:download" /></div>)
+    }
+
     return (
         <>
             <div className="flex items-center gap-4 mb-6">
@@ -1093,9 +1217,9 @@ export default function ViewPage() {
                     </div>
                     <div className="text-center sm:text-left">
                         <h2 className="text-[20px] font-semibold text-[#181D27] mb-[10px]">
-                            {item?.warehouse_code || "-"} - {item?.warehouse_name}
+                            {item?.warehouse_code || "-"} {item?.warehouse_code && item?.warehouse_name ? " - " : ""} {item?.warehouse_name}
                         </h2>
-                        <span className="flex items-center text-[#414651] text-[16px]">
+                        <span className="flex items-center text-[#414651] text-[16px] mb-[6px]">
                             <Icon
                                 icon="mdi:location"
                                 width={16}
@@ -1166,8 +1290,8 @@ export default function ViewPage() {
                                                     width={16}
                                                     className="text-[#EA0A2A]"
                                                 />
-                                                    <div>{item?.owner_number== '0' ? "": item?.owner_number }</div>
-                                                    <div>{item?.warehouse_manager_contact == '0' ? "": item?.warehouse_manager_contact}</div></> : ""}
+                                                    <div>{item?.owner_number == '0' ? "" : item?.owner_number}</div>
+                                                    <div>{item?.warehouse_manager_contact == '0' ? "" : item?.warehouse_manager_contact}</div></> : ""}
                                             </div>
                                             <div className="flex items-center gap-[8px] text-[16px]">
                                                 {item?.owner_email ? <>
@@ -1249,173 +1373,222 @@ export default function ViewPage() {
 
 
             {activeTab === "warehouseCustomer" && (
-                <ContainerCard >
+                // <ContainerCard >
 
-                    <div className="flex flex-col h-full">
-                        <Table
-                            config={{
-                                api: {
-                                    search: searchCustomerById,
-                                    list: listCustomerById
-                                },
-                                header: {
-                                    searchBar: true
-                                },
-                                showNestedLoading: true,
-                                footer: { nextPrevBtn: true, pagination: true },
-                                columns: columns,
-                                rowSelection: false,
-                                pageSize: 50,
-                            }}
-                        />
-                    </div>
+                <div className="flex flex-col h-full">
+                    <Table
+                        config={{
+                            api: {
+                                search: searchCustomerById,
+                                list: listCustomerById
+                            },
+                            header: {
+                                searchBar: true
+                            },
+                            showNestedLoading: true,
+                            footer: { nextPrevBtn: true, pagination: true },
+                            columns: columns,
+                            rowSelection: false,
+                            pageSize: 50,
+                        }}
+                    />
+                    <Drawer anchor="right"  open={open} onClose={() => { setOpen(false) }} >
+                        <div className="flex flex-col h-full w-[calc(100vw-100px)] lg:w-[600px] p-4">
+                            <Table
+                                config={{
+                                    api: {
+                                        list: (...args) => salesByAgentCustomer(...args, UUIDAgentCustomer),
+                                        filterBy: (...args) => filterBySales(...args, UUIDAgentCustomer)
+                                    },
+                                    header: {
+                                        filterByFields: [
+                                            {
+                                                key: "start_date",
+                                                label: "Start Date",
+                                                type: "date"
+                                            },
+                                            {
+                                                key: "end_date",
+                                                label: "End Date",
+                                                type: "date"
+                                            },
 
-                </ContainerCard>
+                                        ],
+
+                                    },
+                                    showNestedLoading: true,
+                                    footer: { nextPrevBtn: true, pagination: true },
+                                    columns: AgentCustomerSalesColumns,
+                                    table: {
+                                        height: 500,
+                                    },
+                                    rowSelection: false,
+                                    // rowActions: [
+                                    //     {
+                                    //         icon: "material-symbols:download",
+                                    //         onClick: (data: TableDataType) => {
+                                    //             return(<IconComponentData2 row={data} />)
+                                    //             // exportFile(data.uuid, "csv"); // or "excel", "csv" etc.
+                                    //         },
+                                    //     }
+                                    // ],
+                                    pageSize: 50,
+                                }}
+                            />
+                        </div>
+                    </Drawer>
+                </div>
+
+                // </ContainerCard>
             )}
             {activeTab === "warehouseStock" && (
-                <ContainerCard >
+                // <ContainerCard >
 
-                    <div className="flex flex-col h-full">
-                        <Table
-                            config={{
-                                api: {
-                                    search: searchStockByWarehouse,
-                                    list: listStockByWarehouse
-                                },
-                                header: {
-                                    searchBar: true
-                                },
-                                footer: { nextPrevBtn: true, pagination: true },
-                                columns: stockColumns,
-                                showNestedLoading: true,
-                                rowSelection: false,
-                                pageSize: 50,
-                            }}
-                        />
-                    </div>
+                <div className="flex flex-col h-full">
+                    <Table
+                        config={{
+                            api: {
+                                search: searchStockByWarehouse,
+                                list: listStockByWarehouse
+                            },
+                            header: {
+                                searchBar: true
+                            },
+                            footer: { nextPrevBtn: true, pagination: true },
+                            columns: stockColumns,
+                            showNestedLoading: true,
+                            rowSelection: false,
+                            pageSize: 50,
+                        }}
+                    />
+                </div>
 
-                </ContainerCard>
+                // </ContainerCard>
             )}
             {activeTab === "route" && (
-                <ContainerCard >
+                // <ContainerCard >
 
-                    <div className="flex flex-col h-full">
-                        <Table
-                            config={{
-                                api: {
-                                    search: searchRouteByWarehouse,
-                                    list: listRouteByWarehouse
-                                },
-                                header: {
-                                    searchBar: true,
-                                },
-                                footer: { nextPrevBtn: true, pagination: true },
-                                columns: routeColumns,
-                                showNestedLoading: true,
-                                rowSelection: false,
-                                pageSize: 50,
-                            }}
-                        />
-                    </div>
+                <div className="flex flex-col h-full">
+                    <Table
+                        config={{
+                            api: {
+                                search: searchRouteByWarehouse,
+                                list: listRouteByWarehouse
+                            },
+                            header: {
+                                searchBar: true,
+                            },
+                            footer: { nextPrevBtn: true, pagination: true },
+                            columns: routeColumns,
+                            showNestedLoading: true,
+                            rowSelection: false,
+                            pageSize: 50,
+                        }}
+                    />
+                </div>
 
-                </ContainerCard>
+                // </ContainerCard>    
             )}
             {activeTab === "salesman" && (
-                <ContainerCard >
+                // <ContainerCard >
 
-                    <div className="flex flex-col h-full">
-                        <Table
-                            config={{
-                                api: {
-                                    search: searchSalesmanByWarehouse,
-                                    list: listSalesmanByWarehouse
-                                },
-                                header: {
-                                    searchBar: true
-                                },
-                                footer: { nextPrevBtn: true, pagination: true },
-                                columns: salesmanColumns,
-                                rowSelection: false,
-                                showNestedLoading: true,
-                                pageSize: 50,
-                            }}
-                        />
-                    </div>
+                <div className="flex flex-col h-full">
+                    <Table
+                        config={{
+                            api: {
+                                search: searchSalesmanByWarehouse,
+                                list: listSalesmanByWarehouse
+                            },
+                            header: {
+                                searchBar: true
+                            },
+                            footer: { nextPrevBtn: true, pagination: true },
+                            columns: salesmanColumns,
+                            rowSelection: false,
+                            showNestedLoading: true,
+                            pageSize: 50,
+                        }}
+                    />
+                </div>
 
-                </ContainerCard>
+                // </ContainerCard>
             )}
             {activeTab === "sales" && (
-                <ContainerCard >
+                // <ContainerCard >
 
-                    <div className="flex flex-col h-full">
-                        <Table
-                            config={{
-                                api: {
-                                    search: searchSalesByWarehouse,
-                                    list: listSalesByWarehouse,
-                                    filterBy: filterBy
-                                },
-                                header: {
-                                    filterByFields: [
-                                        {
-                                            key: "start_date",
-                                            label: "Start Date",
-                                            type: "date"
-                                        },
-                                        {
-                                            key: "end_date",
-                                            label: "End Date",
-                                            type: "date"
-                                        },
-                                    ],
-                                },
-                                footer: { nextPrevBtn: true, pagination: true },
-                                columns: salesColumns,
-                                showNestedLoading: true,
-                                rowSelection: false,
-                                pageSize: 50,
-                            }}
-                        />
-                    </div>
+                <div className="flex flex-col h-full">
+                    <Table
+                        config={{
+                            api: {
+                                search: searchSalesByWarehouse,
+                                list: listSalesByWarehouse,
+                                filterBy: filterBy
+                            },
+                            header: {
+                                filterByFields: [
+                                    {
+                                        key: "start_date",
+                                        label: "Start Date",
+                                        type: "date",
+                                        applyWhen: (filters) => !!filters.end_date && !!filters.start_date,
+                                        inputProps: {
+                                            // min: filters?.end_date ? undefined : "",
+                                        }
+                                    },
+                                    {
+                                        key: "end_date",
+                                        label: "End Date",
+                                        type: "date"
+                                    },
+                                ],
+                            },
+                            footer: { nextPrevBtn: true, pagination: true },
+                            columns: salesColumns,
+                            showNestedLoading: true,
+                            rowSelection: false,
+                            pageSize: 50,
+                        }}
+                    />
+                </div>
 
-                </ContainerCard>
+                // </ContainerCard>
             )}
             {activeTab === "return" && (
-                <ContainerCard >
+                // <ContainerCard >
 
-                    <div className="flex flex-col h-full">
-                        <Table
-                            config={{
-                                // api: {
-                                //     // search: searchReturnByWarehouse,
-                                //     // list: listReturnByWarehouse,
-                                //     // filterBy: filterByListReturn
-                                // },
-                                header: {
-                                    filterByFields: [
-                                        {
-                                            key: "start_date",
-                                            label: "Start Date",
-                                            type: "date"
-                                        },
-                                        {
-                                            key: "end_date",
-                                            label: "End Date",
-                                            type: "date"
-                                        },
-                                    ]
-                                },
-                                footer: { nextPrevBtn: true, pagination: true },
-                                columns: returnColumns,
-                                showNestedLoading: true,
-                                rowSelection: false,
-                                pageSize: 50,
-                            }}
-                            data={[]}
-                        />
-                    </div>
+                <div className="flex flex-col h-full">
+                    <Table
+                        config={{
+                            // api: {
+                            //     // search: searchReturnByWarehouse,
+                            //     // list: listReturnByWarehouse,
+                            //     // filterBy: filterByListReturn
+                            // },
+                            header: {
+                                filterByFields: [
+                                    {
+                                        key: "start_date",
+                                        label: "Start Date",
+                                        type: "date"
+                                    },
+                                    {
+                                        key: "end_date",
+                                        label: "End Date",
+                                        type: "date"
+                                    },
+                                ]
+                            },
+                            footer: { nextPrevBtn: true, pagination: true },
+                            columns: returnColumns,
+                            showNestedLoading: true,
+                            rowSelection: false,
+                            pageSize: 50,
+                        }}
+                        data={[]}
+                    />
+                </div>
 
-                </ContainerCard>
+                // </ContainerCard>
             )}
         </>
     );

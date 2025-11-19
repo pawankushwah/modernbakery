@@ -8,7 +8,7 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, RefObject, Fragment } from "react";
-import { returnByUuid, invoiceByUuid } from "@/app/services/agentTransaction";
+import { returnByUuid, invoiceByUuid,exportReturneWithDetails} from "@/app/services/agentTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
@@ -16,9 +16,10 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import PrintButton from "@/app/components/printButton";
 import KeyValueData from "@/app/components/keyValueData";
+import { downloadFile } from "@/app/services/allApi";
 
 interface DeliveryDetail {
-  id: number;
+  id: number; 
   item?: {
     id: number;
     code: string;
@@ -113,6 +114,7 @@ export default function OrderDetailPage() {
   const params = useParams();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
+  const [loading, setLoadingState] = useState<boolean>(false);
 
   const [deliveryData, setDeliveryData] = useState<InvoiceData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
@@ -186,6 +188,23 @@ export default function OrderDetailPage() {
   ];
 
   const targetRef = useRef<HTMLDivElement | null>(null);
+
+  const exportFile = async () => {
+        try {
+          setLoadingState(true);
+          const response = await exportReturneWithDetails({ uuid: uuid, format: "pdf" });
+          if (response && typeof response === 'object' && response.download_url) {
+            await downloadFile(response.download_url);
+            showSnackbar("File downloaded successfully ", "success");
+          } else {
+            showSnackbar("Failed to get download URL", "error");
+          }
+        } catch (error) {
+          showSnackbar("Failed to download warehouse data", "error");
+        } finally {
+          setLoadingState(false);
+        }
+      };
 
   return (
     <>
@@ -344,6 +363,8 @@ export default function OrderDetailPage() {
               leadingIcon={"lucide:download"}
               leadingIconSize={20}
               label="Download"
+              onClick={exportFile}
+
             />
             <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
           </div>

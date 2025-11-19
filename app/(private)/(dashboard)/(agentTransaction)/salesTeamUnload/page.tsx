@@ -110,40 +110,50 @@ export default function SalesmanUnloadPage() {
     [setLoading, isFiltered, form]
   );
 
-   const filterBy = useCallback(
-            async (
-                payload: Record<string, string | number | null>,
-                pageSize: number
-            ): Promise<listReturnType> => {
-                let result;
-                setLoading(true);
-                try {
-                    const params: Record<string, string> = { };
-                    Object.keys(payload || {}).forEach((k) => {
-                        const v = payload[k as keyof typeof payload];
-                        if (v !== null && typeof v !== "undefined" && String(v) !== "") {
-                            params[k] = String(v);
-                        }
-                    });
-                    result = await salesmanUnloadList(params);
-                } finally {
-                    setLoading(false);
-                }
-    
-                if (result?.error) throw new Error(result.data?.message || "Filter failed");
-                else {
-                    const pagination = result.pagination?.pagination || result.pagination || {};
-                    return {
-                        data: result.data || [],
-                        total: pagination.last_page || result.pagination?.last_page || 0,
-                        totalRecords: pagination.total || result.pagination?.total || 0,
-                        currentPage: pagination.current_page || result.pagination?.currentPage || 0,
-                        pageSize: pagination.limit || pageSize,
-                    };
-                }
-            },
-            [setLoading]
-        );
+     const filterBy = useCallback(
+        async (
+          payload: Record<string, any>,
+          pageSize: number
+        ): Promise<listReturnType> => {
+          let result;
+          setLoading(true);
+          try {
+            const params: Record<string, string> = { };
+            // Include pagination + submit flag used by API
+            params.page = String(payload.page ?? 1);
+            params.per_page = String(pageSize);
+            params.submit = "Filter";
+
+            // Normalize and include provided filters
+            Object.keys(payload || {}).forEach((k) => {
+              if (k === "page") return; // already handled
+              const v = payload[k as keyof typeof payload];
+              if (v === null || typeof v === "undefined") return;
+              if (Array.isArray(v)) {
+                if (v.length > 0) params[k] = v.join(",");
+              } else if (String(v) !== "") {
+                params[k] = String(v);
+              }
+            });
+            result = await salesmanUnloadList(params);
+          } finally {
+            setLoading(false);
+          }
+
+          if (result?.error) throw new Error(result.data?.message || "Filter failed");
+          else {
+            const pagination = result.pagination?.pagination || result.pagination || {};
+            return {
+              data: result.data || [],
+              total: pagination.last_page || result.pagination?.last_page || pagination.totalPages || 0,
+              totalRecords: pagination.total || result.pagination?.total || pagination.totalRecords || 0,
+              currentPage: pagination.current_page || result.pagination?.currentPage || pagination.page || 1,
+              pageSize: pagination.limit || pageSize,
+            };
+          }
+        },
+        [setLoading]
+      );
 
 
   // ✅ Table Columns
@@ -202,7 +212,7 @@ export default function SalesmanUnloadPage() {
       <Table
         refreshKey={refreshKey}
         config={{
-          api: { list: fetchSalesmanUnloadHeader },
+          api: { list: fetchSalesmanUnloadHeader, filterBy },
           header: {
             searchBar: false,
             columnFilter: true,
@@ -271,7 +281,7 @@ export default function SalesmanUnloadPage() {
             actions: [
               <SidebarBtn
                 key={0}
-                href="/salesmanUnload/add"
+                href="/salesTeamUnload/add"
                 isActive
                 leadingIcon="lucide:plus"
                 label="Add"
@@ -288,7 +298,7 @@ export default function SalesmanUnloadPage() {
               icon: "lucide:eye",
               onClick: (data: object) => {
                 const row = data as TableDataType;
-                router.push(`/salesmanUnload/details/${String(row.uuid)}`);
+                router.push(`/salesTeamUnload/details/${String(row.uuid)}`);
               },
             },
           ],

@@ -5,7 +5,7 @@ export const salesmanLoadHeaderList = async (params: Params) => {
   try {
     const res = await API.get("/api/agent_transaction/load/list", { params });
     return res.data;
-  } catch (error: unknown) {
+  } catch (error: unknown) { 
     return handleError(error);
   }
 };
@@ -152,11 +152,21 @@ type SalesmanUnloadParams = {
   page?: string;
   per_page?: string;
   submit?: string;
+  id?: string;
+  salesman_id?: string;
 };
 
 export const salesmanUnloadList = async (params: SalesmanUnloadParams) => {
   try {
     const res = await API.get(`/api/agent_transaction/unload/list`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const salesmanUnloadData = async (id: number, params?: SalesmanUnloadParams) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/unload/unload-data/${id}`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -303,7 +313,7 @@ export const exportOrderInvoice = async (params?:Params) => {
 
 export const exportInvoiceWithDetails = async (params?:Params) => {
   try {
-    const res = await API.get(`/api/agent_transaction/invoices/exportFull`,{params});
+    const res = await API.get(`/api/agent_transaction/invoices/exportall`,{params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -513,6 +523,15 @@ export const reasonList = async (params?:Params) => {
 export const returnByUuid = async (uuid:string) => {
   try {
     const res = await API.get(`/api/agent_transaction/returns/show/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const exportReturneWithDetails = async (params?:Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/returns/exportall`,{params});
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

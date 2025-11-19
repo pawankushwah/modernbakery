@@ -14,7 +14,8 @@ import jsPDF from "jspdf";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, RefObject,useRef } from "react";
+import PrintButton from "@/app/components/printButton";
 
 interface CustomerItem {
   id: number;
@@ -129,6 +130,9 @@ export default function ViewPage() {
       price: detail.price ?? "-",
     })) || [];
 
+  const targetRef = useRef<HTMLDivElement | null>(null);
+
+
   return (
     <>
       {/* ---------- Header ---------- */}
@@ -144,6 +148,7 @@ export default function ViewPage() {
       </div>
 
       {/* ---------- Main Card ---------- */}
+      <div ref={targetRef}>
       <ContainerCard>
         {/* Add print-area wrapper */}
         <div id="print-area">
@@ -219,15 +224,11 @@ export default function ViewPage() {
             label="Download"
             onClick={handleDownload}
           />
-          <SidebarBtn
-            isActive
-            leadingIcon="lucide:printer"
-            leadingIconSize={20}
-            label="Print Now"
-            onClick={handlePrint}
-          />
+                     <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
+         
         </div>
       </ContainerCard>
+      </div>
     </>
   );
 }

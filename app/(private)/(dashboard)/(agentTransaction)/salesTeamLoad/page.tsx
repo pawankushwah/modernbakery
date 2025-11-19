@@ -249,7 +249,7 @@ export default function SalemanLoad() {
                         actions: [
                           <SidebarBtn
                             key={0}
-                            href="/salesmanLoad/add"
+                            href="/salesTeamLoad/add"
                             isActive
                             leadingIcon="lucide:plus"
                             label="Add"
@@ -266,7 +266,7 @@ export default function SalemanLoad() {
               icon: "lucide:eye",
               onClick: (data: object) => {
                 const row = data as { uuid?: string };
-                if (row.uuid) router.push(`/salesmanLoad/details/${row.uuid}`);
+                if (row.uuid) router.push(`/salesTeamLoad/details/${row.uuid}`);
               },
             },
           ],

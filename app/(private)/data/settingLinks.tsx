@@ -19,6 +19,15 @@ export type LinkDataType = {
 export const initialLinkData: SidebarDataType[] = [
   {
     data: [
+{
+        isActive: false,
+        href: "/settings/profile",
+        label: "Profile ",
+        leadingIcon: "mdi:account-multiple",
+        trailingIcon: "mdi-light:chevron-right",
+        iconColor: "text-yellow-400",
+      },
+
       {
         isActive: false,
         href: "#",

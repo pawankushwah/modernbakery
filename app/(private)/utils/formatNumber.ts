@@ -41,18 +41,25 @@ export function toInternationalNumber(
 
   if (Number.isNaN(num)) return String(value);
   // If user requested rounding to specific places, apply it first. Otherwise keep high precision.
-  if (typeof options?.roundToPlaces === 'number' && Number.isFinite(options.roundToPlaces)) {
-    num = roundOff(num, Math.max(0, Math.floor(options.roundToPlaces)));
-  } else {
-    num = roundOff(num, 12);
-  }
-  // Debug logging removed (was useful during development)
+  // Determine rounding places. If `roundToPlaces` is provided use it;
+  // otherwise if maximumFractionDigits is provided use that as the rounding
+  // target so requesting max=0 will produce integer rounding.
+  const hasMax = typeof options?.maximumFractionDigits === 'number' && Number.isFinite(options!.maximumFractionDigits as number);
+  const hasMin = typeof options?.minimumFractionDigits === 'number' && Number.isFinite(options!.minimumFractionDigits as number);
 
-  // By default, format with 2 fraction digits (fixed to 2 decimals)
-  const minimumFractionDigits =
-    typeof options?.minimumFractionDigits === 'number' ? options!.minimumFractionDigits : 2;
-  const maximumFractionDigits =
-    typeof options?.maximumFractionDigits === 'number' ? options!.maximumFractionDigits : 2;
+  const roundPlaces =
+    typeof options?.roundToPlaces === 'number' && Number.isFinite(options!.roundToPlaces)
+      ? Math.max(0, Math.floor(options!.roundToPlaces))
+      : hasMax
+      ? Math.max(0, Math.floor(options!.maximumFractionDigits as number))
+      : 12;
+
+  num = roundOff(num, roundPlaces);
+
+  // Determine formatter fraction digits. If minimumFractionDigits is provided use it.
+  // Otherwise default minimum to the provided maximum (if any) so max=0 implies min=0.
+  const minimumFractionDigits = hasMin ? (options!.minimumFractionDigits as number) : (hasMax ? (options!.maximumFractionDigits as number) : 2);
+  const maximumFractionDigits = hasMax ? (options!.maximumFractionDigits as number) : 2;
 
   const formatter = new Intl.NumberFormat(locale, {
     style: options?.style ?? 'decimal',

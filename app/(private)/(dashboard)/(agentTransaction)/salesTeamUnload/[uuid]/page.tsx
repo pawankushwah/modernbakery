@@ -10,6 +10,7 @@ import {
   salesmanUnloadHeaderAdd,
   salesmanUnloadHeaderById,
   salesmanUnloadHeaderUpdate,
+  salesmanUnloadData,
 } from "@/app/services/agentTransaction";
 import { itemList } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
@@ -51,30 +52,61 @@ export default function AddEditSalesmanUnload() {
   const [itemData, setItemData] = useState<TableDataType[]>([]);
   const [isItemsLoaded, setIsItemsLoaded] = useState(false);
 
-  // ✅ Load all items
-  useEffect(() => {
-    if (!isItemsLoaded) {
-      (async () => {
-        try {
-          setLoading(true);
-          const res = await itemList({ page: "1" });
-          const data = res.data.map((item: any) => ({
-            id: item.id,
-            item_code: item.item_code,
-            name: item.name,
-            qty: "",
-            uom_id: "",
+  // ✅ Fetch salesman unload data when salesman is selected
+useEffect(() => {
+  if (form.salesman_id && !isEditMode) {
+    (async () => {
+      try {
+        setLoading(true);
+        
+        // ✅ Pass salesman_id as query parameter
+        const res = await salesmanUnloadData(Number(form.salesman_id));
+        
+        // console.log("🟢 Salesman Unload Data Response:", res);
+        // console.log("🟢 Salesman ID sent:", form.salesman_id);
+        
+        // Handle different response structures
+        const itemsArray = res?.data?.items || res?.data || res?.items || [];
+        
+        if (Array.isArray(itemsArray) && itemsArray.length > 0) {
+          const data = itemsArray.map((item: any) => ({
+            item_id: item.item?.item_id || item.item_id || item.item_id,
+            erp_code: item.item?.erp_code || item.erp_code,
+            item_name: item.item?.item_name || item.item_name,
+            total_load: item.total_load || "",
+
+            unload_qty: item.unload_qty?.toString() || "0", // Default to "0" instead of empty
+            // pcs: item.pcs || "",
+            // uom_id: item.uom_id || "",
           }));
           setItemData(data);
           setIsItemsLoaded(true);
-        } catch (error) {
-          console.error("Item Load Error:", error);
-        } finally {
-          setLoading(false);
+        } else {
+          // If no data, reset to empty table
+          setItemData([]);
+          setIsItemsLoaded(true);
+          showSnackbar("No items found for selected salesman", "info");
         }
-      })();
-    }
-  }, [isItemsLoaded, setLoading]);
+      } catch (error: any) {
+        console.error("Salesman Unload Data Error:", error);
+        console.error("Error details:", error?.response?.data);
+        showSnackbar(
+          error?.response?.data?.message || "Failed to fetch item data", 
+          "error"
+        );
+        // Reset items on error
+        setItemData([]);
+        setIsItemsLoaded(false);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  } else if (!form.salesman_id && !isEditMode) {
+    // Reset items when salesman is deselected
+    setItemData([]);
+    setIsItemsLoaded(false);
+  }
+}, [form.salesman_id, isEditMode, setLoading, showSnackbar]);
 
   // ✅ Fetch data for edit mode
   useEffect(() => {
@@ -99,7 +131,7 @@ export default function AddEditSalesmanUnload() {
             setItemData((prev) =>
               prev.map((item) => {
                 const matched = data.details.find(
-                  (d: any) => d.item?.id === item.id
+                  (d: any) => d.item?.item_id === item.item_id
                 );
                 return matched
                   ? {
@@ -151,10 +183,10 @@ export default function AddEditSalesmanUnload() {
       setSubmitting(true);
 
       const details = itemData
-        .filter((i) => i.qty && Number(i.qty) > 0)
+        .filter((i) => i.unload_qty && Number(i.unload_qty) > 0)
         .map((i) => ({
-          item_id: i.id,
-          qty: String(i.qty || "0"),
+          item_id: i.item_id,
+          qty: String(i.unload_qty || "0"),
           status: 1,
         }));
 
@@ -191,7 +223,7 @@ export default function AddEditSalesmanUnload() {
             : "Salesman Unload added successfully",
           "success"
         );
-        router.push("/salesmanUnload");
+        router.push("/salesTeamUnload");
       }
     } catch (err: any) {
       console.error("🔴 Submission Error:", err);
@@ -215,7 +247,7 @@ export default function AddEditSalesmanUnload() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/salesmanUnload">
+          <Link href="/salesTeamUnload">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
@@ -344,44 +376,37 @@ export default function AddEditSalesmanUnload() {
                 label: "Items",
                 render: (row) => (
                   <span>
-                    {row.item_code && row.name
-                      ? `${row.item_code} - ${row.name}`
-                      : row.item_code || row.name || "-"}
+                    {row.erp_code && row.item_name
+                      ? `${row.erp_code} - ${row.item_name}`
+                      : row.erp_code || row.item_name || "-"}
                   </span>
                 ),
               },
-              { key: "cse", label: "CSE" },
+              { 
+                key: "total_load", 
+                label: "PSC",
+                render: (row) => <span>{row.total_load || "-"}</span>
+              }, 
               {
-                key: "qty",
+                key: "unload_qty",
                 label: "Quantity",
                 render: (row) => (
                   <InputFields
                     label=""
                     type="number"
-                    name="qty"
-                    value={row.qty || ""}
+                    name="unload_qty"
+                    value={row.unload_qty || ""}
                     onChange={(e) =>
-                      recalculateItem(Number(row.idx), "qty", e.target.value)
+                      recalculateItem(Number(row.idx), "unload_qty", e.target.value)
                     }
                   />
                 ),
               },
-              { key: "pcs", label: "PCS" },
-              {
-                key: "qty",
-                label: "Quantity",
-                render: (row) => (
-                  <InputFields
-                    label=""
-                    type="number"
-                    name="qty"
-                    value={row.qty || ""}
-                    onChange={(e) =>
-                      recalculateItem(Number(row.idx), "qty", e.target.value)
-                    }
-                  />
-                ),
-              },
+              // { 
+              //   key: "pcs", 
+              //   label: "PCS",
+              //   render: (row) => <span>{row.pcs || "-"}</span>
+              // },
             ],
           }}
         />
@@ -391,7 +416,7 @@ export default function AddEditSalesmanUnload() {
           <button
             type="button"
             className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-            onClick={() => router.push("/salesmanUnload")}
+            onClick={() => router.push("/salesTeamUnload")}
           >
             Cancel
           </button>
