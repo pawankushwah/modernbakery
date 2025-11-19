@@ -516,7 +516,6 @@ export const getRouteVisitList = async (params: {
   status: string | null;
 }) => {
   try {
-    console.log(params);
     const res = await API.get("/api/master/route-visits/list");
     return res.data;
   } catch (error) {
@@ -1485,11 +1484,9 @@ export const deleteExpenseType = async (id: string) => {
 
 export const exportSalesmanData = async (params?: Params) => {
   try {
-    console.log(params);
     const res = await API.get("api/master/salesmen/exportfile", {
       params,
     });
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1522,7 +1519,6 @@ export const salesmanTypeList = async (params: Params) => {
     const res = await API.get("/api/settings/salesman_type/list", {
       params: params,
     });
-    console.log(res,"salesmenType");
     return res.data;
   } catch (error) {
     console.error("User List failed ❌", error);
@@ -1902,7 +1898,6 @@ export const vehicleGlobalSearch = async (params?: Params) => {
 
 export const routeGlobalSearch = async (params?: Params) => {
   try {
-    console.log(params);
     const res = await API.get(`/api/master/route/global_search`, {
       params: params,
     });
@@ -2533,7 +2528,6 @@ export const pricingHeaderList = async (params?: Params) => {
       params: params,
     });
     return res.data;
-    console.log(res);
   } catch (error: unknown) {
     return handleError(error);
   }
@@ -3126,7 +3120,6 @@ export const deletePromotionDetail = async (uuid: string) => {
 export const labelList = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/labels/list`, { params });
-    console.log(res, "Labels")
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3208,7 +3201,6 @@ export const addPayment = async (body?: FormData) => {
       "api/agent_transaction/advancepayments/create",
       body
     );
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3221,7 +3213,6 @@ export const updatePaymentById = async (uuid: string, body?: any) => {
       `api/agent_transaction/advancepayments/update/${uuid}`,
       body
     );
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3233,7 +3224,6 @@ export const getPaymentById = async (uuid: string) => {
     const res = await API.get(
       `api/agent_transaction/advancepayments/show/${uuid}`
     );
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3243,7 +3233,6 @@ export const getPaymentById = async (uuid: string) => {
 export const allPaymentList = async (body?: any) => {
   try {
     const res = await API.get("api/agent_transaction/advancepayments/list");
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3253,7 +3242,6 @@ export const allPaymentList = async (body?: any) => {
 export const getbankList = async (params?: any) => {
   try {
     const res = await API.get("/api/settings/banks/list", { params });
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3263,7 +3251,6 @@ export const getbankList = async (params?: any) => {
 export const getbankDetailbyId = async (uuid?: any) => {
   try {
     const res = await API.get(`/api/settings/banks/show/${uuid}`);
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3273,7 +3260,6 @@ export const getbankDetailbyId = async (uuid?: any) => {
 export const updateBankbyId = async (body: any, uuid?: any) => {
   try {
     const res = await API.put(`/api/settings/banks/update/${uuid}`, body);
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -3283,7 +3269,6 @@ export const updateBankbyId = async (body: any, uuid?: any) => {
 export const createBank = async (body: any, uuid?: any) => {
   try {
     const res = await API.post("/api/settings/banks/create", body);
-    console.log(res);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

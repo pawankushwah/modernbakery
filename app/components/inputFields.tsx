@@ -3,6 +3,7 @@ import Skeleton from '@mui/material/Skeleton';
 import React, { useEffect, useRef, useState } from "react";
 // import 'react-phone-input-2/lib/style.css';
 import DateRangePicker from "./DateRangePicker";
+import CustomCheckbox from './customCheckbox';
 
 export type Option = {
   value: string;
@@ -63,6 +64,8 @@ type Props = {
   multiSelectChips?: boolean;
   /** Callback function to fetch options dynamically based on search text. Called when user types in searchable dropdown */
   onSearchChange?: (searchText: string) => void;
+  // current filter state when InputFields is used inside filter UI
+  filters?: Record<string, any>;
 };
 
 export default function InputFields({
@@ -387,8 +390,8 @@ export default function InputFields({
                   checked={value === opt.value}
                   onChange={() => safeOnChange(createSingleSelectEvent(opt.value))}
                   disabled={disabled}
-                  className={`w-4 h-4 accent-gray-600 border-2 border-gray-600 focus:ring-2 focus:ring-red-400 appearance-none rounded-full checked:bg-red-500 checked:w-3 checked:h-3 checked:border-red-600 ${error ? "border-red-500" : "border-gray-300"}`}
-                  style={{ boxShadow: value === opt.value ? '0 0 0 2px #fff, 0 0 0 4px #252b37' : undefined }}
+                  className={`w-4 h-4 accent-gray-600 border-6 border-gray-600 focus:ring-[1px] focus:ring-red-400 appearance-none rounded-full checked:bg-red-500 checked:border-red-600 ${error ? "border-red-500" : "border-gray-300"}`}
+                  style={{ boxShadow: value === opt.value ? '0 0 0 2px #fff, 0 0 0 3px #252b37' : undefined }}
                 />
                 <span className="text-md text-gray-600">{opt.label}</span>
               </label>
@@ -501,37 +504,38 @@ export default function InputFields({
                           />
                         </div>
                       );
-                    }
-                    return (
-                      <input
-                        type="text"
-                        placeholder={selected.length === 0 ? `Search ${label}` : undefined}
-                        value={displayValue}
-                        onChange={e => {
-                          const v = (e.target as HTMLInputElement).value;
-                          setSearch(v);
-                          onSearch(v);
-                          // console.log("Search input changed:", v);
-                          if (!dropdownOpen) setDropdownOpen(true);
-                          if (v === '') {
-                            // user cleared the input -> clear selected values for multi-select
-                            safeOnChange(createMultiSelectEvent([]));
-                          }
-                        }}
-                        onFocus={() => setDropdownOpen(true)}
-                        className={`flex-1 truncate text-sm outline-none border-none ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
-                        style={hasSelection ? { color: '#111827' } : undefined}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            if (!loading && filteredOptions.length > 0) {
-                              // select first match for searchable Enter
-                              handleCheckbox(filteredOptions[0].value);
+                    } else {
+                      return (
+                        <input
+                          type="text"
+                          placeholder={selected.length === 0 ? `Search ${label}` : undefined}
+                          value={displayValue}
+                          onChange={e => {
+                            const v = (e.target as HTMLInputElement).value;
+                            setSearch(v);
+                            onSearch(v);
+                            // console.log("Search input changed:", v);
+                            if (!dropdownOpen) setDropdownOpen(true);
+                            if (v === '') {
+                              // user cleared the input -> clear selected values for multi-select
+                              safeOnChange(createMultiSelectEvent([]));
                             }
-                          }
-                        }}
-                      />
-                    );
+                          }}
+                          onFocus={() => setDropdownOpen(true)}
+                          className={`flex-1 truncate outline-none border-none h-full placeholder-gray-400 ${hasSelection ? 'text-gray-900' : 'text-gray-400'}`}
+                          style={hasSelection ? { color: '#111827' } : undefined}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              if (!loading && filteredOptions.length > 0) {
+                                // select first match for searchable Enter
+                                handleCheckbox(filteredOptions[0].value);
+                              }
+                            }
+                          }}
+                        />
+                      )
+                    }
                   })()
                 ) : (
                   (() => {
@@ -558,69 +562,68 @@ export default function InputFields({
                           {selected.length > 2 && <span className="text-sm text-gray-700 ml-1">+{selected.length - 2}</span>}
                         </div>
                       );
+                    } else {
+                      return (
+                        <span className={`truncate flex-1 ${selected.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
+                          {(() => {
+                            if (selected.length === 0) return `Select ${label}`;
+                            if (selected.length <= 2) return selected.map(s => s.label).join(', ');
+                            return selected.slice(0, 2).map(s => s.label).join(', ');
+                          })()}
+                        </span>
+                      );
                     }
-                    return (
-                      <span className={`truncate flex-1 ${selected.length === 0 ? "text-gray-400" : "text-gray-900"}`}>
-                        {(() => {
-                          if (selected.length === 0) return `Select ${label}`;
-                          if (selected.length <= 2) return selected.map(s => s.label).join(', ');
-                          return selected.slice(0, 2).map(s => s.label).join(', ');
-                        })()}
-                      </span>
-                    );
                   })()
                 )}
                 {/* Show down arrow only if not disabled and not searchable */}
-                {!isSearchable && !disabled && (
-                  <svg className="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                {!disabled && (
+                  <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 )}
               </div>
               {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
                 <>
                   <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white rounded-md shadow-lg overflow-auto" >
-                    {!isSearchable && (
-                      <div className="px-3 py-2 flex items-center">
-                        <svg className="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
+                    {!isSearchable && filteredOptions.length > 0 && (
+                      <div className="px-3 py-2 h-9 flex items-center">
+                        <svg className="w-6 h-6 text-gray-400 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
                         <input
                           type="text"
                           placeholder="Search"
                           value={search}
                           onChange={e => { setSearch(e.target.value); onSearch(e.target.value); /*console.log("Search input changed:", e.target.value);*/ }}
-                          className="w-full border-none outline-none text-sm"
+                          className="w-full border-none outline-none"
                           disabled={disabled}
                         />
                       </div>
                     )}
-                    <div
-                      className="flex items-center px-3 py-2 cursor-pointer"
-                      onClick={() => { if (!disabled) handleSelectAll(); }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedValues.length === filteredOptions.length && filteredOptions.length > 0}
-                        onChange={e => {
-                          e.stopPropagation();
-                          if (!disabled) handleSelectAll();
-                        }}
-                        className="mr-2 cursor-pointer"
-                        style={selectedValues.length === filteredOptions.length && filteredOptions.length > 0 ? { accentColor: '#EA0A2A' } : {}}
-                        disabled={disabled}
-                      />
-                      <span className="text-sm select-none">Select All</span>
-                    </div>
                     <div>
                       {filteredOptions.length === 0 ? (
-                        <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
-                      ) : filteredOptions.map((opt, idx) => (
+                        <div className="px-3 py-5 text-gray-600 text-center">No options</div>
+                      ) : <>
                         <div
-                          key={opt.value + idx}
-                          className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                          onClick={e => {
-                            e.preventDefault();
-                            if (!disabled) handleCheckbox(opt.value);
-                          }}
+                          className="flex items-center px-3 py-2 cursor-pointer"
+                          onClick={() => { if (!disabled) handleSelectAll(); }}
                         >
-                          <input
+                          <CustomCheckbox
+                            label="Select All"
+                            checked={selectedValues.length === filteredOptions.length && filteredOptions.length > 0}
+                            onChange={() => {
+                              if (!disabled) handleSelectAll();
+                            }}
+                            indeterminate={selectedValues.length > 0 && selectedValues.length < filteredOptions.length}
+                            disabled={disabled}
+                          />
+                        </div>
+                        {filteredOptions.map((opt, idx) => (
+                          <div
+                            key={opt.value + idx}
+                            className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            onClick={e => {
+                              e.preventDefault();
+                              if (!disabled) handleCheckbox(opt.value);
+                            }}
+                          >
+                            {/* <input
                             type="checkbox"
                             checked={selectedValues.includes(opt.value)}
                             onChange={e => {
@@ -635,9 +638,21 @@ export default function InputFields({
                             className="text-sm select-none cursor-pointer text-gray-800"
                           >
                             {opt.label}
-                          </label>
-                        </div>
-                      ))}
+                          </label> */}
+                            <CustomCheckbox
+                              label={opt.label}
+                              labelTw='!text-sm'
+                              width={20}
+                              checked={selectedValues.includes(opt.value)}
+                              onChange={e => {
+                                e.stopPropagation();
+                                if (!disabled) handleCheckbox(opt.value);
+                              }}
+                              disabled={disabled}
+                            />
+                          </div>
+                        ))}
+                      </>}
                     </div>
                   </div>
                 </>
@@ -700,7 +715,7 @@ export default function InputFields({
                   </span>
                 )}
                 {/* Show down arrow only if not disabled and not searchable */}
-                { !disabled && (
+                {!disabled && (
                   <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 )}
               </div>
@@ -767,7 +782,7 @@ export default function InputFields({
                     <button
                       type="button"
                       onClick={() => setDropdownOpen(!dropdownOpen)}
-                      className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none"
+                      className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 pr-[3px] text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none"
                     >
                       {selectedCountry?.flag}{" "}
                       {selectedCountry?.code}
@@ -804,7 +819,7 @@ export default function InputFields({
                         type="tel"
                         id="phone-input"
                         placeholder={placeholder || "Enter phone number"}
-                        className="block p-2.5 w-full z-20  h-[44px] text-sm text-gray-900 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
+                        className="tracking-[1px] block p-2.5 pl-[5px] w-full z-20 h-[44px] text-sm text-gray-900 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
                         value={phone}
                         onChange={handlePhoneChange}
                         disabled={disabled}

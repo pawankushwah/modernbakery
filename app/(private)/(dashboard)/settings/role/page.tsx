@@ -14,7 +14,7 @@ import StatusBtn from "@/app/components/statusBtn2";
 
 const columns = [
     { key: "name", label: "Name" },
-    { key: "status", label: "Status", isSortable: true, render: (data: TableDataType) => <StatusBtn isActive={data.status ? true : false} /> },
+    { key: "status", label: "Status", render: (data: TableDataType) => <StatusBtn isActive={data.status ? true : false} /> },
     // { key: "permissions", label: "Permissions", render: (data: TableDataType) => {
     //     const row = (data as any)[0];
     //     if (row && typeof row === "object" && "menus" in row) {
