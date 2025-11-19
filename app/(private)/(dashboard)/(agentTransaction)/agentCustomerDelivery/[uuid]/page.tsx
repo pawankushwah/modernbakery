@@ -151,7 +151,7 @@ export default function DeliveryAddEditPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
-  const CURRENCY = localStorage.getItem("currency") || "";
+  const CURRENCY = localStorage.getItem("country") || "";
   const [skeleton, setSkeleton] = useState({
     route: false,
     delivery: false,
@@ -511,6 +511,7 @@ export default function DeliveryAddEditPage() {
   ];
 
   const fetchAgentDeliveries = async (values: FormikValues, search: string) => {
+    setSkeleton({ ...skeleton, delivery: true });
     const res = await agentOrderList({
       warehouse_id: values.warehouse,
       delivery_date: values.delivery_date,
@@ -628,6 +629,11 @@ export default function DeliveryAddEditPage() {
                           setFieldValue("warehouse", opt.value);
                           setSkeleton((prev) => ({ ...prev, delivery: true }));
                           setFieldValue("delivery", "");
+                          // fetch deliveries for the selected warehouse only
+                          (async () => {
+                            setFieldValue("delivery", "");
+                            await fetchAgentDeliveries({ ...values, warehouse: opt.value }, "");
+                          })();
                         } else {
                           setFieldValue("warehouse", opt.value);
                         }
@@ -651,27 +657,27 @@ export default function DeliveryAddEditPage() {
                       label="Delivery Date"
                       type="date"
                       name="delivery_date"
+                      placeholder="Select Delivery"
                       value={values.delivery_date}
                       min={new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10)}
-                      onChange={handleChange}
+                      onChange={(e) => { handleChange(e); setFieldValue("delivery", ""); fetchAgentDeliveries({ ...values, delivery_date: e.target.value }, ""); }}
                     />
                   </div>
                   <div>
-                    <AutoSuggestion
+                    <InputFields
                       required
                       label="Delivery"
                       name="delivery"
-                      placeholder="Search delivery"
-                      onSearch={(q) => { return fetchAgentDeliveries(values, q) }}
-                      initialValue={filteredDeliveryOptions.find(o => o.value === String(values?.delivery))?.label || ""}
-                      onSelect={(opt) => {
-                        // console.log("selected delivery", opt.value);
-                        if (values.delivery !== opt.value) {
-                          setFieldValue("delivery", opt.value);
-                          // find the selected delivery and map its details to the ItemData shape
-                          const currentDelivery = deliveryData.find(o => String(o.id) === opt.value);
+                      value={values.delivery}
+                      options={filteredDeliveryOptions}
+                      searchable={true}
+                      placeholder="Select delivery"
+                      onChange={(e) => {
+                        const val = (e.target as HTMLSelectElement).value;
+                        if (values.delivery !== val) {
+                          setFieldValue("delivery", val);
+                          const currentDelivery = deliveryData.find(o => String(o.id) === val);
                           setFieldValue("customer_id", currentDelivery?.customer_id || "");
-                          // console.log("Selected delivery:", currentDelivery);
                           const details = currentDelivery?.details ?? [];
                           const mapped = details.map(d => {
                             const qty = Number(d.quantity || 0);
@@ -698,13 +704,13 @@ export default function DeliveryAddEditPage() {
                           setItemData(mapped.length ? mapped : [{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
                         }
                       }}
-                      onClear={() => {
-                        setFieldValue("delivery", "");
-                        setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
-                      }}
+                      // onClear={() => {
+                      //   setFieldValue("delivery", "");
+                      //   setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
+                      // }}
                       disabled={!values.warehouse || !values.delivery_date}
+                      showSkeleton={skeleton.delivery}
                       error={touched.delivery && (errors.delivery as string)}
-                      className="w-full"
                     />
                   </div>
                 </div>

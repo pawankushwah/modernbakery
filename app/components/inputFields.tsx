@@ -601,7 +601,7 @@ export default function InputFields({
               </div>
               {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
                 <>
-                  <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white rounded-md shadow-lg overflow-auto" >
+                  <div style={{ left: dropdownProperties.left, top: dropdownProperties.top, width: dropdownProperties.width, maxHeight: dropdownProperties.maxHeight }} className="inputfields-dropdown-content fixed z-50 mt-1 bg-white border border-gray-300 rounded-md shadow-lg overflow-auto" >
                     {!isSearchable && filteredOptions.length > 0 && (
                       <div className="px-3 py-2 h-9 flex items-center">
                         <svg className="w-6 h-6 text-gray-400 mr-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
@@ -755,7 +755,7 @@ export default function InputFields({
                   )}
                   <div>
                     {filteredOptions.length === 0 ? (
-                      <div className="px-3 py-2 text-gray-400 text-sm">No options</div>
+                      <div className="px-3 py-5 text-gray-600 text-center">No options</div>
                     ) : filteredOptions.map((opt, idx) => (
                       <div
                         key={opt.value + idx}
