@@ -431,24 +431,25 @@ export const initialLinkData: SidebarDataType[] = [
         isActive: false,
         href: "#",
         label: "Claim Management",
-        leadingIcon: "streamline-ultimate:accounting-bill-stack-1",
+        leadingIcon: "lucide:baggage-claim",
         iconColor: "text-green-500",
         trailingIcon: "mdi-light:chevron-right",
         children: [
           {
             isActive: false,
             href: "/compiledClaims",
-            label: "Compiled Claims",
+            label: "compiled Claims",
             leadingIcon: "carbon:delivery-parcel",
             iconColor: "text-cyan-500"
           },
           {
             isActive: false,
-            href: "/petitClaims",
-            label: "Petit Claims",
+            href: "/petitClaim",
+            label: "Petit Claim",
             leadingIcon: "carbon:delivery-parcel",
             iconColor: "text-cyan-500"
           },
+          
         ]
       },
     ],

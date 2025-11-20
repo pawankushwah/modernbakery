@@ -63,7 +63,7 @@ export default function Route() {
             label: "Distributor",
             render: (data: TableDataType) =>
                 typeof data.warehouse === "object" && data.warehouse !== null
-                    ? (data.warehouse as { code?: string }).code
+                    ? `${(data.warehouse as { code?: string }).code || ""} - ${(data.warehouse as { name?: string }).name || ""}`
                     : "-",
             filter: {
                 isFilterable: true,

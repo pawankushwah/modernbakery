@@ -72,9 +72,10 @@ export default function AddApprovalFlow() {
   canEditBeforeApproval: boolean;
   approvalMessage: string;
   notificationMessage: string;
+  condition: string; // condition expression or type (e.g. "AND" | "OR")
   conditionType: string; // AND / OR
   relatedSteps: string[]; // multi-selection
-  formType: string; // New field
+  formType: string | string[]; // allow both string and string[] to match dragTable prop types
 }
       const [stepsProccess, setStepsProcess] = useState<ApprovalStep[]>([]);
     
@@ -134,9 +135,46 @@ export default function AddApprovalFlow() {
     };
 
     const validateCurrentStep = async (step: number) => {
+        // Perform step-specific validation so users can't advance without
+        // filling required fields for the current step.
         try {
-            await ApprovalSchema.validate(form, { abortEarly: false });
-            setErrors({});
+            if (step === 1) {
+                // Only validate the basic details shown on step 1
+                const Step1Schema = Yup.object().shape({
+                    approvalName: Yup.string().required("Approval name is required"),
+                    description: Yup.string().required("Description is required"),
+                    modules: Yup.string().required("Module is required"),
+                    status: Yup.string().required("Status is required"),
+                });
+                await Step1Schema.validate(form, { abortEarly: false });
+                
+                setErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.approvalName;
+                    delete next.description;
+                    delete next.modules;
+                    delete next.status;
+                    return next;
+                });
+                return true;
+            }
+
+            if (step === 2) {
+                // Step 2 requires at least one approval step configured
+                if (!Array.isArray(stepsProccess) || stepsProccess.length === 0) {
+                    setErrors((prev) => ({ ...prev, stepsProccess: "Define at least one approval step" } as any));
+                    return false;
+                }
+                // clear any previous stepsProccess error
+                setErrors((prev) => {
+                    const next = { ...prev };
+                    delete (next as any).stepsProccess;
+                    return next;
+                });
+                return true;
+            }
+
+            // default to true for unknown steps
             return true;
         } catch (err) {
             if (err instanceof Yup.ValidationError) {
@@ -153,29 +191,41 @@ export default function AddApprovalFlow() {
     };
 
     const handleNext = async () => {
-        // const valid = await validateCurrentStep(currentStep);
-        // if (valid) {
-        markStepCompleted(currentStep);
-        nextStep();
-        // } else {
-        //   showSnackbar("Please fill all required fields before proceeding.", "error");
-        // }
+        const valid = await validateCurrentStep(currentStep);
+        if (valid) {
+            markStepCompleted(currentStep);
+            nextStep();
+        }
     };
 
     const handleSubmit = async () => {
-        // const valid = await validateCurrentStep(currentStep);
-        // if (!valid) {
-        //   showSnackbar("Please fill all required fields before submitting.", "error");
-        //   return;
-        // }
+        // Validate all steps and the full form before submitting
+        const step1Valid = await validateCurrentStep(1);
+        const step2Valid = await validateCurrentStep(2);
+        if (!step1Valid || !step2Valid) {
+            showSnackbar("Please fix validation errors before submitting.", "error");
+            return;
+        }
 
         try {
+            // Full form schema validation
+            await ApprovalSchema.validate(form, { abortEarly: false });
             setLoading(true);
-            console.log("Submitting Data:", {...form,steps:stepsProccess});
+            console.log("Submitting Data:", { ...form, steps: stepsProccess });
             showSnackbar("Approval Flow Created Successfully ✅", "success");
-            //   router.push("/approval");//
+            // router.push("/approval");
         } catch (err) {
-            showSnackbar("Failed to submit approval flow ❌", "error");
+            if (err instanceof Yup.ValidationError) {
+                const formErrors: Partial<Record<keyof ApprovalFormValues, string>> = {};
+                err.inner.forEach((validationErr) => {
+                    if (validationErr.path) formErrors[validationErr.path as keyof ApprovalFormValues] = validationErr.message;
+                });
+                setErrors((prev) => ({ ...prev, ...formErrors }));
+                setTouched((prev) => ({ ...prev, ...Object.fromEntries(Object.keys(formErrors).map((k) => [k, true])) }));
+                showSnackbar("Please fix validation errors before submitting.", "error");
+            } else {
+                showSnackbar("Failed to submit approval flow ❌", "error");
+            }
         } finally {
             setLoading(false);
         }
@@ -277,14 +327,13 @@ fetchUsersList();
                                 isSingle={true}
                                 options={modulesList}
                                 width="full"
-
+                                error={touched.modules && errors.modules}
                                 onChange={(e) => {
                                     console.log("Selected module:", e.target.value);
                                     setForm({ ...form, "modules": e.target.value })
                                 }
 
                                 }
-                            //  error={touched.labels && (Array.isArray(errors.labels) ? errors.labels.join(", ") : errors.labels)}
                             />
                             <div>
                                 <InputFields

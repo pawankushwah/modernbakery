@@ -8,7 +8,7 @@ import Logo from "@/app/components/logo";
 import { Icon } from "@iconify-icon/react";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect, useRef, RefObject, Fragment } from "react";
-import { deliveryByUuid, exportInvoiceWithDetails, invoiceByUuid } from "@/app/services/agentTransaction";
+import { deliveryByUuid, exportInvoiceWithDetails, exportInvoiceDetails,invoiceByUuid } from "@/app/services/agentTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import DismissibleDropdown from "@/app/components/dismissibleDropdown";
 import { useLoading } from "@/app/services/loadingContext";
@@ -71,6 +71,7 @@ interface InvoiceData {
   total_amount: number,
   status: number,
   uuid: string,
+  id: string,
   previous_uuid?: string,
   next_uuid?: string,
   details: {
@@ -119,6 +120,7 @@ export default function OrderDetailPage() {
   const params = useParams();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
+  const [invoiceId,setId] = useState<string>('');
   // const [showDropdown, setShowDropdown] = useState(false);
   const [deliveryData, setDeliveryData] = useState<InvoiceData | null>(null);
   const [tableData, setTableData] = useState<TableRow[]>([]);
@@ -134,6 +136,7 @@ export default function OrderDetailPage() {
           setLoading(true);
           const response = await invoiceByUuid(uuid);
           const data = response?.data ?? response;
+          setId( data?.header_id);
           setDeliveryData(data);
 
           // Map details to table data
