@@ -411,7 +411,7 @@ export default function ProfilePage() {
 
                 {/* DOWNLOAD MANUAL */}
                 {/* flex justify-between items-center p-4 bg-gray-50 rounded-xl  shadow-sm */}
-                <div className="p-[16px] w-[810px] h-[420px] rounded-lg border border border-gray-200">
+                <div className="p-[16px] w-full h-auto rounded-lg border border border-gray-200">
                   <h4 className="font-medium flex items-center gap-2">
                     <Icon icon="lucide:download" /> Download User Manual
                   </h4>
@@ -420,7 +420,7 @@ export default function ProfilePage() {
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 bg-white">
-                    <div className="p-3 w-[248.67px] h-[154px] rounded-lg border `gap-5`  bf-#FFFFFF border-gray-200">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
                       <div className="w-full `gap-[10px]` ">
                         <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
                           <Icon
@@ -438,7 +438,7 @@ export default function ProfilePage() {
                         Download
                       </button>
                     </div>
-                    <div className="p-3 w-[248.67px] h-[154px] rounded-lg border `gap-5`  bf-#FFFFFF border-gray-200">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
                       <div className="w-full `gap-[10px]` ">
                         <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
                           <Icon
@@ -456,7 +456,7 @@ export default function ProfilePage() {
                         Download
                       </button>
                     </div>
-                    <div className="p-3 w-[248.67px] h-[154px] rounded-lg border `gap-5`  bf-#FFFFFF border-gray-200">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
                       <div className="w-full `gap-[10px]` ">
                         <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
                           <Icon
@@ -474,7 +474,7 @@ export default function ProfilePage() {
                         Download
                       </button>
                     </div>
-                    <div className="p-3 w-[248.67px] h-[154px] rounded-lg border `gap-5`  bf-#FFFFFF border-gray-200">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
                       <div className="w-full `gap-[10px]` ">
                         <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
                           <Icon
@@ -492,7 +492,7 @@ export default function ProfilePage() {
                         Download
                       </button>
                     </div>
-                    <div className="p-3 w-[248.67px] h-[154px] rounded-lg border `gap-5`  bf-#FFFFFF border-gray-200">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
                       <div className="w-full `gap-[10px]` ">
                         <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
                           <Icon
@@ -510,7 +510,7 @@ export default function ProfilePage() {
                         Download
                       </button>
                     </div>
-                    <div className="p-3 w-[248.67px] h-[154px] rounded-lg border `gap-5`  bf-#FFFFFF border-gray-200">
+                    <div className="p-3 w-full h-[154px] rounded-lg border bg-white border-gray-200">
                       <div className="w-full `gap-[10px]` ">
                         <div className="w-[40px] h-[40px] p-[10px] rounded-lg border bg-[#FAFAFA] border-gray-200 flex items-center justify-center">
                           <Icon

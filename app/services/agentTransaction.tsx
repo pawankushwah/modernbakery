@@ -10,6 +10,15 @@ export const salesmanLoadHeaderList = async (params: Params) => {
   }
 };
 
+export const exportSalesmanLoad = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/agent_transaction/load/export`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const salesmanLoadHeaderAdd = async (body: object) => {
   try {
     const res = await API.post(`/api/agent_transaction/load/add`, body);
