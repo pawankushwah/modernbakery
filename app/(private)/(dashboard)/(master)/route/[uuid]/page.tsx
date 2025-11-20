@@ -294,6 +294,7 @@ export default function AddEditRoute() {
                 required
                 searchable={true}
                 label="Warehouse"
+                // isSingle={false}
                 value={form.warehouse}
                 options={warehouseAllOptions}
                 onChange={(e) => {
