@@ -10,8 +10,6 @@ import * as Yup from "yup";
 import Link from "next/link";
 import { Icon } from "@iconify-icon/react";
 import Loading from "@/app/components/Loading";
-import InputDropdown from "@/app/components/inputDropdown";
-import { set } from "date-fns";
 // import ApprovalFlowTable from "./dragTable";
 import ApprovalFlowTable from "./dragTable";
 import { submenuList,roleList,userList, approvalAdd } from "@/app/services/allApi";
@@ -288,7 +286,7 @@ export default function AddApprovalFlow() {
             // Full form schema validation
             // await ApprovalSchema.validate(form, { abortEarly: false });
             setLoading(true);
-            let resultData = await approvalAdd(result)
+            const resultData = await approvalAdd(result)
 
             console.log("Submitting Data:", result);
             if(resultData)
