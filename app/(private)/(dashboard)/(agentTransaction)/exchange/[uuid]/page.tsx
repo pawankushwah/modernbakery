@@ -210,9 +210,9 @@ export default function ExchangeAddEditPage() {
   };
 
   // Function for fetching Item
-  const fetchItem = async (searchTerm: string) => {
+  const fetchItem = async (searchTerm: string, warehouse_id?: string) => {
     setSkeleton((prev) => ({ ...prev, item: true }));
-    const res = await itemGlobalSearch({ perPage: "10", query: searchTerm });
+    const res = await itemGlobalSearch({ perPage: "10", query: searchTerm, warehouse_id });
     if (res?.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
       setSkeleton((prev) => ({ ...prev, item: false }));
@@ -520,7 +520,7 @@ export default function ExchangeAddEditPage() {
         <Formik<FormikValues> initialValues={form} onSubmit={handleSubmit} validationSchema={validationSchema} enableReinitialize={true}>
           {({ values, touched, errors, setFieldValue, handleChange, submitForm, isSubmitting }: FormikProps<FormikValues>) => {
             // key/value summary data (use values.currency)
-            
+
 
             return (
               <>
@@ -611,8 +611,9 @@ export default function ExchangeAddEditPage() {
                                   label=""
                                   name={`item_id_${row.idx}`}
                                   placeholder="Search item"
-                                  onSearch={(q) => fetchItem(q)}
+                                  onSearch={(q) => fetchItem(q, values.warehouse)}
                                   initialValue={initialLabel}
+                                  minSearchLength={0}
                                   onSelect={(opt) => {
                                     if (opt.value !== row.item_id) {
                                       recalculateItem(Number(row.idx), "item_id", opt.value);
@@ -621,7 +622,7 @@ export default function ExchangeAddEditPage() {
                                   onClear={() => {
                                     recalculateItem(Number(row.idx), "item_id", "");
                                   }}
-                                  disabled={!values.customer}
+                                  disabled={!values.warehouse}
                                   error={err && err}
                                   className="w-full"
                                 />
@@ -869,7 +870,7 @@ export default function ExchangeAddEditPage() {
                       </div>
                     </div>
 
-                    
+
                   </div>
                 </div>
 

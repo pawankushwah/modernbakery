@@ -246,10 +246,10 @@ export default function DeliveryAddEditPage() {
       setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
     }
   };
-
+ 
   // Function for fetching Item
-  const fetchItem = async (searchTerm: string) => {
-    const res = await itemGlobalSearch({ per_page: "10", query: searchTerm });
+  const fetchItem = async (searchTerm: string,values?: FormikValues) => {
+    const res = await itemGlobalSearch({ per_page: "10", query: searchTerm,warehouse: values?.warehouse || "" });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch items", "error");
       setSkeleton({ ...skeleton, item: false });
@@ -747,7 +747,7 @@ export default function DeliveryAddEditPage() {
                                 label=""
                                 name={`item_id_${row.idx}`}
                                 placeholder="Search item"
-                                onSearch={(q) => fetchItem(q)}
+                                onSearch={(q) => fetchItem(q, values)}
                                 initialValue={initialLabel}
                                 selectedOption={selectedOpt ?? null}
                                 onSelect={(opt) => {
