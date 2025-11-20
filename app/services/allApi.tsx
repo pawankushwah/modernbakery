@@ -2016,6 +2016,17 @@ export const approvalAdd = async (payload: object) => {
   }
 };
 
+export const workFlowList = async () => {
+  try {
+    const res = await API.get(
+      `/api/master/approval/workflow/list`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const deleteAgentCustomer = async (uuid: string) => {
   try {
     const res = await API.delete(`/api/master/agent_customers/${uuid}`);
