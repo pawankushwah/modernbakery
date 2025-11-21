@@ -233,73 +233,75 @@ export default function SalemanLoad() {
     setRefreshKey(k => k + 1);
   }, [companyOptions, regionOptions, areaOptions, warehouseOptions, routeOptions, salesmanOptions]);
 
-  return (
-    <>
-      <div className="flex flex-col h-full">
-        <Table
-          refreshKey={refreshKey}
-          config={{
-            api: {
-              list: fetchSalesmanLoadHeader,
-              filterBy: filterBy,
-            },
-            header: {
-              filterByFields: [
-                {
-                  key: "start_date",
-                  label: "Start Date",
-                  type: "date"
-                },
-                {
-                  key: "end_date",
-                  label: "End Date",
-                  type: "date"
-                },
-                {
-                  key: "company",
-                  label: "Company",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(companyOptions) ? companyOptions : [],
-                },
-                {
-                  key: "region",
-                  label: "Region",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(regionOptions) ? regionOptions : [],
-                },
-                {
-                  key: "area",
-                  label: "Area",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(areaOptions) ? areaOptions : [],
-                },
-                {
-                  key: "warehouse",
-                  label: "Warehouse",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                },
-                {
-                  key: "route_id",
-                  label: "Route",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(routeOptions) ? routeOptions : [],
-                },
-                {
-                  key: "salesman",
-                  label: "Salesman",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                },
-
-              ],
-              threeDot: [
+    return (
+        <>
+            <div className="flex flex-col h-full">
+                <Table
+                    refreshKey={refreshKey}
+                    config={{
+                        api: {
+                            list: fetchSalesmanLoadHeader,
+                            filterBy: filterBy,
+                        },
+                        header: {
+                             filterByFields: [
+                                {
+                                    key: "start_date",
+                                    label: "Start Date",
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
+                                },
+                                {
+                                    key: "end_date",
+                                    label: "End Date",
+                                    type: "date",
+                                    applyWhen: (filters) => !!filters.start_date && !!filters.end_date
+                                },
+                                {
+                                    key: "company",
+                                    label: "Company",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(companyOptions) ? companyOptions : [],
+                                },
+                                {
+                                    key: "region",
+                                    label: "Region",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(regionOptions) ? regionOptions : [],
+                                },
+                                {
+                                    key: "area",
+                                    label: "Area",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(areaOptions) ? areaOptions : [],
+                                },
+                                {
+                                    key: "warehouse",
+                                    label: "Warehouse",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
+                                },
+                                {
+                                    key: "route_id",
+                                    label: "Route",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(routeOptions) ? routeOptions : [],
+                                },
+                                 {
+                                    key: "salesman",
+                                    label: "Salesman",
+                                    isSingle: false,
+                                    multiSelectChips: true,
+                                    options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
+                                },
+                                
+                            ],
+                             threeDot: [
                 {
                   icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
                   label: "Export CSV",

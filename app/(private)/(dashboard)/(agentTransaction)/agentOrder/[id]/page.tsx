@@ -10,7 +10,7 @@ import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
-import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
+import { agentCustomerGlobalSearch, agentCustomerList, genearateCode, getAllActiveWarehouse, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, saveFinalCode, warehouseList, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
@@ -378,7 +378,7 @@ export default function OrderAddEditPage() {
     (sum, item) => sum + Number(item.Discount || 0),
     0
   );
-  const finalTotal = grossTotal + totalVat;
+  const finalTotal = netAmount + totalVat;
 
   const generatePayload = (values?: FormikValues) => {
     return {
@@ -434,7 +434,7 @@ export default function OrderAddEditPage() {
         try {
           await saveFinalCode({
             reserved_code: code,
-            model_name: "agent_order_headers",
+            model_name: "order",
           });
         } catch (e) {
           // Optionally handle error, but don't block success
@@ -483,9 +483,10 @@ export default function OrderAddEditPage() {
   }
 
   const fetchWarehouse = async (searchQuery?: string) => {
-    const res = await warehouseListGlobalSearch({
-      query: searchQuery || "",
+    const res = await getAllActiveWarehouse({
+      search: searchQuery || "",
       dropdown: "1",
+      status: "1",
       per_page: "50"
     });
 
@@ -775,7 +776,7 @@ export default function OrderAddEditPage() {
                       },
                       // { key: "excise", label: "Excise", render: (row) => <span>{toInternationalNumber(row.Excise) || "0.00"}</span> },
                       // { key: "discount", label: "Discount", render: (row) => <span>{toInternationalNumber(row.Discount) || "0.00"}</span> },
-                      { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
+                      // { key: "preVat", label: "Pre VAT", render: (row) => <span>{toInternationalNumber(row.preVat) || "0.00"}</span> },
                       { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
                       { key: "Vat", label: "VAT", render: (row) => <span>{toInternationalNumber(row.Vat) || "0.00"}</span> },
                       // { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
@@ -846,7 +847,7 @@ export default function OrderAddEditPage() {
                       ))}
                       <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                         <span>Total</span>
-                        <span>AED {toInternationalNumber(finalTotal)}</span>
+                        <span>{CURRENCY} {toInternationalNumber(finalTotal)}</span>
                       </div>
                     </div>
                   </div>
@@ -862,7 +863,7 @@ export default function OrderAddEditPage() {
                   >
                     Cancel
                   </button>
-                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !itemData || !itemData.length} onClick={() => submitForm()} />
+                  <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Order..." : "Create Order"} disabled={isSubmitting || !values.warehouse || !values.customer || !itemData || itemData.length > 0 } onClick={() => submitForm()} />
                 </div>
               </>
             );

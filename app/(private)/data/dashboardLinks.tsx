@@ -429,6 +429,31 @@ export const initialLinkData: SidebarDataType[] = [
           },
         ]
       },
+      {
+        isActive: false,
+        href: "#",
+        label: "Claim Management",
+        leadingIcon: "lucide:baggage-claim",
+        iconColor: "text-green-500",
+        trailingIcon: "mdi-light:chevron-right",
+        children: [
+          {
+            isActive: false,
+            href: "/compiledClaims",
+            label: "compiled Claims",
+            leadingIcon: "carbon:delivery-parcel",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/petitClaim",
+            label: "Petit Claim",
+            leadingIcon: "carbon:delivery-parcel",
+            iconColor: "text-cyan-500"
+          },
+          
+        ]
+      },
     ],
   },
 ];
