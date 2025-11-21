@@ -217,7 +217,8 @@ export default function WorkflowTable() {
                         {
                             icon: "lucide:edit-2",
                             onClick: (row: TableDataType) => {
-                                window.location.href = `/workflow/${row.workflow_id}`;
+                                window.location.href = `/settings/approval/${row.uuid}`;
+                                localStorage.setItem("selectedFlow",JSON.stringify(row))
                             },
                         },
                     ],
