@@ -8,7 +8,7 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
-import { salesmanLoadHeaderList, exportSalesmanLoad } from "@/app/services/agentTransaction";
+import { salesmanLoadHeaderList, exportSalesmanLoad, exportSalesmanLoadDownload } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
@@ -185,6 +185,25 @@ export default function SalemanLoad() {
   }, [regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions]);
 
 
+  const downloadPdf = async (uuid: string) => {
+    try {
+      setLoading(true);
+      const response = await exportSalesmanLoadDownload({ id: uuid, uuid: uuid, load_id: uuid, salesman_load_id: uuid, format: "csv" });
+      if (response && typeof response === 'object' && response.download_url) {
+        await downloadFile(response.download_url);
+        showSnackbar("File downloaded successfully ", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
+      }
+    } catch (error) {
+      showSnackbar("Failed to download file", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+
   const exportFile = async (format: "csv" | "xlsx" = "csv") => {
     try {
       setThreeDotLoading((prev) => ({ ...prev, [format]: true }));
@@ -309,6 +328,10 @@ export default function SalemanLoad() {
                 const row = data as { uuid?: string };
                 if (row.uuid) router.push(`/salesTeamLoad/details/${row.uuid}`);
               },
+            },
+            {
+              icon: "lucide:download",
+              onClick: (row: TableDataType) => downloadPdf(row.uuid),
             },
           ],
           pageSize: 50,

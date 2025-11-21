@@ -44,7 +44,7 @@ export default function ProfilePage() {
 
       <div className="flex flex-col lg:flex-row lg:gap-6">
         {/* LEFT PROFILE CARD */}
-        <ContainerCard className="lg:w-[450px] space-y-6 p-6 h-fit">
+        <ContainerCard className="w-full lg:w-[450px] space-y-6 p-6 h-fit">
           <div className="flex flex-col items-center">
             <img
               src="/logo.png"
@@ -61,7 +61,7 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <h3 className="font-semibold text-gray-700">Personal Info</h3>
 
-            <div className="grid grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
+            <div className="grid grid-cols-[120px_10px_1fr] md:grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
 
               <span className="text-gray-600">User Name</span>
               <span className="text-gray-600">:</span>
@@ -89,7 +89,7 @@ export default function ProfilePage() {
           <div className="space-y-2">
             <h3 className="font-semibold text-gray-700">Contact Info</h3>
 
-            <div className="grid grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
+            <div className="grid grid-cols-[120px_10px_1fr] md:grid-cols-[150px_20px_1fr] gap-y-2 text-sm">
 
               <span className="text-gray-600">Email</span>
               <span className="text-gray-600">:</span>
@@ -411,7 +411,7 @@ export default function ProfilePage() {
 
                 {/* DOWNLOAD MANUAL */}
                 {/* flex justify-between items-center p-4 bg-gray-50 rounded-xl  shadow-sm */}
-                <div className="p-[16px] w-full h-auto rounded-lg border border border-gray-200">
+                <div className="p-[16px] w-full h-auto rounded-lg border border-gray-200">
                   <h4 className="font-medium flex items-center gap-2">
                     <Icon icon="lucide:download" /> Download User Manual
                   </h4>
@@ -528,8 +528,6 @@ export default function ProfilePage() {
                         Download
                       </button>
                     </div>
-
-
                   </div>
                 </div>
               </div>

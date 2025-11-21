@@ -523,7 +523,7 @@ export default function OrderAddEditPage() {
             onClick={() => router.back()}
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
-            Add Order
+            Add Distributor's Orders
           </h1>
         </div>
       </div>

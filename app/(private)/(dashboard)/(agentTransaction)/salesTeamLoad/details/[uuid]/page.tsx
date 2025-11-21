@@ -5,7 +5,7 @@ import ContainerCard from "@/app/components/containerCard";
 import Table, { configType } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import Logo from "@/app/components/logo";
-import { salesmanLoadByUuid } from "@/app/services/agentTransaction";
+import { salesmanLoadByUuid, exportSalesmanLoadDownload } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
@@ -14,8 +14,9 @@ import jsPDF from "jspdf";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState, RefObject,useRef } from "react";
+import { useEffect, useState, RefObject, useRef } from "react";
 import PrintButton from "@/app/components/printButton";
+import { downloadFile } from "@/app/services/allApi";
 
 interface CustomerItem {
   id: number;
@@ -38,7 +39,7 @@ interface CustomerItem {
   }>;
 }
 
-const backBtnUrl = "/salesmanLoad";
+const backBtnUrl = "/salesTeamLoad";
 
 export default function ViewPage() {
   const params = useParams();
@@ -49,6 +50,7 @@ export default function ViewPage() {
   const [customer, setCustomer] = useState<CustomerItem | null>(null);
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
+  const [loading, setLoadingState] = useState<boolean>(false);
 
   const title = `Load ${customer?.osa_code || "-"}`;
 
@@ -132,6 +134,23 @@ export default function ViewPage() {
 
   const targetRef = useRef<HTMLDivElement | null>(null);
 
+  const downloadPdf = async (uuid: string) => {
+    try {
+      setLoadingState(true);
+      const response = await exportSalesmanLoadDownload({ id: uuid, uuid: uuid, load_id: uuid, salesman_load_id: uuid, format: "pdf" });
+      if (response && typeof response === 'object' && response.download_url) {
+        await downloadFile(response.download_url);
+        showSnackbar("File downloaded successfully ", "success");
+      } else {
+        showSnackbar("Failed to get download URL", "error");
+      }
+    } catch (error) {
+      showSnackbar("Failed to download file", "error");
+    } finally {
+      setLoadingState(false);
+    }
+  };
+
 
   return (
     <>
@@ -149,85 +168,91 @@ export default function ViewPage() {
 
       {/* ---------- Main Card ---------- */}
       <div ref={targetRef}>
-      <ContainerCard>
-        {/* Add print-area wrapper */}
-        <div id="print-area">
-          {/* Top Section */}
-          <div className="flex justify-between flex-wrap gap-6 items-start">
-            <Logo type="full" />
-            <div className="text-right">
-              <h2 className="text-4xl font-bold text-gray-400 uppercase mb-2">
-                Load
-              </h2>
-              <p className="text-primary text-sm tracking-[5px]">
-                {customer?.osa_code || "-"}
-              </p>
+        <ContainerCard>
+          {/* Add print-area wrapper */}
+          <div id="print-area">
+            {/* Top Section */}
+            <div className="flex justify-between flex-wrap gap-6 items-start">
+              <Logo type="full" />
+              <div className="text-right">
+                <h2 className="text-4xl font-bold text-gray-400 uppercase mb-2">
+                  Salesman Load
+                </h2>
+                <p className="text-primary text-sm tracking-[5px]">
+                  {customer?.osa_code || "-"}
+                </p>
+              </div>
             </div>
+
+            <hr className="border-gray-200 my-5" />
+
+            {/* ---------- Info & Table Section ---------- */}
+            {/* ---------- Info & Table Section ---------- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-6">
+              {/* ---------- Left Side (Details) ---------- */}
+              <div className="lg:col-span-1">
+                <KeyValueData
+                  data={[
+                    {
+                      key: "Warehouse",
+                      value:
+                        customer?.warehouse?.code && customer?.warehouse?.name
+                          ? `${customer.warehouse.code} - ${customer.warehouse.name}`
+                          : "-",
+                    },
+                    {
+                      key: "Route",
+                      value: customer?.route
+                        ? `${customer.route.code} - ${customer.route.name}`
+                        : "-",
+                    },
+                    {
+                      key: "Salesman Type",
+                      value: customer?.salesman_type?.name || "-",
+                    },
+                    {
+                      key: "Project Type",
+                      value: customer?.project_type?.name || "-",
+                    },
+                    {
+                      key: "Salesman",
+                      value: customer?.salesman
+                        ? `${customer.salesman.code} - ${customer.salesman.name}`
+                        : "-",
+                    },
+                  ]}
+                />
+              </div>
+
+              {/* ---------- Right Side (Table) ---------- */}
+              <div className="lg:col-span-2 w-full">
+                <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                  Load Items
+                </h3>
+                <Table data={tableData} config={{ columns }} />
+              </div>
+            </div>
+
           </div>
 
-          <hr className="border-gray-200 my-5" />
+          {/* ---------- Footer Buttons ---------- */}
+          <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200 mt-6">
+            {/* <SidebarBtn
+              leadingIcon="lucide:download"
+              leadingIconSize={20}
+              label="Download"
+              onClick={handleDownload}
+            /> */}
+            <SidebarBtn
+              leadingIcon={loading ? "eos-icons:three-dots-loading" : "lucide:download"}
+              leadingIconSize={20}
+              label="Download"
+              onClick={() => downloadPdf(uuid)}
+            />
+            <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
 
-          {/* ---------- Info & Table Section ---------- */}
-         {/* ---------- Info & Table Section ---------- */}
-<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-6">
-  {/* ---------- Left Side (Details) ---------- */}
-  <div className="lg:col-span-1">
-    <KeyValueData
-      data={[
-        {
-          key: "Warehouse",
-          value:
-            customer?.warehouse?.code && customer?.warehouse?.name
-              ? `${customer.warehouse.code} - ${customer.warehouse.name}`
-              : "-",
-        },
-        {
-          key: "Route",
-          value: customer?.route
-            ? `${customer.route.code} - ${customer.route.name}`
-            : "-",
-        },
-        {
-          key: "Salesman Type",
-          value: customer?.salesman_type?.name || "-",
-        },
-        {
-          key: "Project Type",
-          value: customer?.project_type?.name || "-",
-        },
-        {
-          key: "Salesman",
-          value: customer?.salesman
-            ? `${customer.salesman.code} - ${customer.salesman.name}`
-            : "-",
-        },
-      ]}
-    />
-  </div>
-
-  {/* ---------- Right Side (Table) ---------- */}
-  <div className="lg:col-span-2 w-full">
-    <h3 className="text-lg font-semibold text-gray-700 mb-3">
-      Load Items
-    </h3>
-    <Table data={tableData} config={{ columns }} />
-  </div>
-</div>
-
-        </div>
-
-        {/* ---------- Footer Buttons ---------- */}
-        <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200 mt-6">
-          <SidebarBtn
-            leadingIcon="lucide:download"
-            leadingIconSize={20}
-            label="Download"
-            onClick={handleDownload}
-          />
-                     <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
-         
-        </div>
-      </ContainerCard>
+          </div>
+        </ContainerCard>
       </div>
     </>
   );
