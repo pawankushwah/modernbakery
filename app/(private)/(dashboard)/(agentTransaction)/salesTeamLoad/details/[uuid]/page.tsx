@@ -38,7 +38,7 @@ interface CustomerItem {
   }>;
 }
 
-const backBtnUrl = "/salesmanLoad";
+const backBtnUrl = "/salesTeamLoad";
 
 export default function ViewPage() {
   const params = useParams();
