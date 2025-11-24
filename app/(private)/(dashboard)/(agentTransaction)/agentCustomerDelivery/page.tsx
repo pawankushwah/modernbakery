@@ -15,6 +15,7 @@ import StatusBtn from "@/app/components/statusBtn2";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/(private)/utils/date";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 // const dropdownDataList = [
 //     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -86,7 +87,7 @@ const columns = [
     // { key: "Invoice_no", label: "Invoice No" },
     // { key: "sap_id", label: "SAP ID" },
     // { key: "sap_status", label: "SAP Status" },
-    { key: "total", label: "Amount", showByDefault: true },
+    { key: "total", label: "Amount", showByDefault: true, render: (row: TableDataType) => toInternationalNumber(Number(row.total) || 0) },
     {
         key: "status",
         label: "Status",

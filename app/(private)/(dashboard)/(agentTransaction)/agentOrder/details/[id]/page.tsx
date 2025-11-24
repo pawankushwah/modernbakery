@@ -48,7 +48,7 @@ interface OrderData {
   customer_email: string,
   customer_contact: string,
   customer_street: string,
-  customer_city: string,
+  customer_town: string,
   delivery_date: string,
   comment: string,
   created_at: string,
@@ -125,7 +125,7 @@ export default function OrderDetailPage() {
     (sum, item) => sum + Number(item.discount || 0),
     0
   ) ?? 0;
-  const finalTotal = grossTotal + totalVat;
+  const finalTotal = netAmount + totalVat;
 
   const keyValueData = [
     { key: "Net Total", value: CURRENCY + " " + toInternationalNumber(netAmount ?? 0) },
@@ -240,7 +240,7 @@ export default function OrderDetailPage() {
                 <span>Customer</span>
                 <div className="flex flex-col space-y-[10px]">
                   <span className="font-semibold">{data?.customer_code && data?.customer_name ? `${data?.customer_code} - ${data?.customer_name}` : "-"}</span>
-                  <span>{data?.customer_street && ` ${data?.customer_street}`}</span>
+                  <span>{data?.customer_street && ` ${data?.customer_street}`}{data?.customer_town && ` ${data?.customer_town}`}</span>
                   <span>
                     {data?.customer_contact && `Phone: ${data?.customer_contact}`} <br /> {data?.customer_email && `Email: ${data?.customer_email}`}
                   </span>

@@ -14,7 +14,7 @@ import jsPDF from "jspdf";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState, RefObject,useRef } from "react";
+import { useEffect, useState, RefObject, useRef } from "react";
 import PrintButton from "@/app/components/printButton";
 
 interface CustomerItem {
@@ -52,43 +52,6 @@ export default function ViewPage() {
 
   const title = `Load ${customer?.osa_code || "-"}`;
 
-  // ✅ PDF Download
-  const handleDownload = async () => {
-    try {
-      const element = document.getElementById("print-area");
-      if (!element) return;
-
-      const canvas = await html2canvas(element, { scale: 2 });
-      const imgData = canvas.toDataURL("image/png");
-
-      const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidth = 210;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.save(`${customer?.osa_code || "Salesman_Load"}.pdf`);
-    } catch (err) {
-      console.error("Error generating PDF:", err);
-    }
-  };
-
-  // ✅ Print Function
-  const handlePrint = () => window.print();
-
-  // ✅ Fetch data
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -132,7 +95,6 @@ export default function ViewPage() {
 
   const targetRef = useRef<HTMLDivElement | null>(null);
 
-
   return (
     <>
       {/* ---------- Header ---------- */}
@@ -149,85 +111,85 @@ export default function ViewPage() {
 
       {/* ---------- Main Card ---------- */}
       <div ref={targetRef}>
-      <ContainerCard>
-        {/* Add print-area wrapper */}
-        <div id="print-area">
-          {/* Top Section */}
-          <div className="flex justify-between flex-wrap gap-6 items-start">
-            <Logo type="full" />
-            <div className="text-right">
-              <h2 className="text-4xl font-bold text-gray-400 uppercase mb-2">
-                Load
-              </h2>
-              <p className="text-primary text-sm tracking-[5px]">
-                {customer?.osa_code || "-"}
-              </p>
+        <ContainerCard>
+          {/* Add print-area wrapper */}
+          <div id="print-area">
+            {/* Top Section */}
+            <div className="flex justify-between flex-wrap gap-6 items-start">
+              <Logo type="full" />
+              <div className="text-right">
+                <h2 className="text-4xl font-bold text-gray-400 uppercase mb-2">
+                  Load
+                </h2>
+                <p className="text-primary text-sm tracking-[5px]">
+                  {customer?.osa_code || "-"}
+                </p>
+              </div>
             </div>
+
+            <hr className="border-gray-200 my-5" />
+
+            {/* ---------- Info & Table Section ---------- */}
+            {/* ---------- Info & Table Section ---------- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-6">
+              {/* ---------- Left Side (Details) ---------- */}
+              <div className="lg:col-span-1">
+                <KeyValueData
+                  data={[
+                    {
+                      key: "Warehouse",
+                      value:
+                        customer?.warehouse?.code && customer?.warehouse?.name
+                          ? `${customer.warehouse.code} - ${customer.warehouse.name}`
+                          : "-",
+                    },
+                    {
+                      key: "Route",
+                      value: customer?.route
+                        ? `${customer.route.code} - ${customer.route.name}`
+                        : "-",
+                    },
+                    {
+                      key: "Salesman Type",
+                      value: customer?.salesman_type?.name || "-",
+                    },
+                    {
+                      key: "Project Type",
+                      value: customer?.project_type?.name || "-",
+                    },
+                    {
+                      key: "Salesman",
+                      value: customer?.salesman
+                        ? `${customer.salesman.code} - ${customer.salesman.name}`
+                        : "-",
+                    },
+                  ]}
+                />
+              </div>
+
+              {/* ---------- Right Side (Table) ---------- */}
+              <div className="lg:col-span-2 w-full">
+                <h3 className="text-lg font-semibold text-gray-700 mb-3">
+                  Load Items
+                </h3>
+                <Table data={tableData} config={{ columns }} />
+              </div>
+            </div>
+
           </div>
 
-          <hr className="border-gray-200 my-5" />
+          {/* ---------- Footer Buttons ---------- */}
+          <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200 mt-6">
+            {/* <SidebarBtn
+              leadingIcon="lucide:download"
+              leadingIconSize={20}
+              label="Download"
+              onClick={async () => {}}
+            /> */}
+            <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
 
-          {/* ---------- Info & Table Section ---------- */}
-         {/* ---------- Info & Table Section ---------- */}
-<div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start mt-6">
-  {/* ---------- Left Side (Details) ---------- */}
-  <div className="lg:col-span-1">
-    <KeyValueData
-      data={[
-        {
-          key: "Warehouse",
-          value:
-            customer?.warehouse?.code && customer?.warehouse?.name
-              ? `${customer.warehouse.code} - ${customer.warehouse.name}`
-              : "-",
-        },
-        {
-          key: "Route",
-          value: customer?.route
-            ? `${customer.route.code} - ${customer.route.name}`
-            : "-",
-        },
-        {
-          key: "Salesman Type",
-          value: customer?.salesman_type?.name || "-",
-        },
-        {
-          key: "Project Type",
-          value: customer?.project_type?.name || "-",
-        },
-        {
-          key: "Salesman",
-          value: customer?.salesman
-            ? `${customer.salesman.code} - ${customer.salesman.name}`
-            : "-",
-        },
-      ]}
-    />
-  </div>
-
-  {/* ---------- Right Side (Table) ---------- */}
-  <div className="lg:col-span-2 w-full">
-    <h3 className="text-lg font-semibold text-gray-700 mb-3">
-      Load Items
-    </h3>
-    <Table data={tableData} config={{ columns }} />
-  </div>
-</div>
-
-        </div>
-
-        {/* ---------- Footer Buttons ---------- */}
-        <div className="flex flex-wrap justify-end gap-4 pt-4 border-t border-gray-200 mt-6">
-          <SidebarBtn
-            leadingIcon="lucide:download"
-            leadingIconSize={20}
-            label="Download"
-            onClick={handleDownload}
-          />
-                     <PrintButton targetRef={targetRef as unknown as RefObject<HTMLElement>} />
-         
-        </div>
-      </ContainerCard>
+          </div>
+        </ContainerCard>
       </div>
     </>
   );

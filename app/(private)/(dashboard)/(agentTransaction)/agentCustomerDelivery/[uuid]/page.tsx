@@ -500,7 +500,7 @@ export default function DeliveryAddEditPage() {
 
   const generatePayload = (values?: FormikValues) => {
     return {
-      order_code: code,
+      delivery_code: code,
       warehouse_id: Number(values?.warehouse) || null,
       customer_id: Number(values?.customer_id) || null,
       delivery_date: values?.delivery_date || form.delivery_date,
@@ -551,6 +551,7 @@ export default function DeliveryAddEditPage() {
 
       formikHelpers.setSubmitting(true);
       const payload = generatePayload(values);
+      // console.log(payload)
       // console.log("Submitting payload:", payload);
       const res = await createDelivery(payload);
       if (res.error) {

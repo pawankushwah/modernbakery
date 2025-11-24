@@ -53,17 +53,17 @@ const VehicleSchema = Yup.object().shape({
   ownerType: Yup.string().required("Owner Type is required"),
   odoMeter: Yup.number()
     .transform((value, originalValue) =>
-      originalValue === "" ? undefined : value,
+      originalValue === "" ? undefined : value
     )
     .required("Odometer is required"),
   capacity: Yup.string()
     .transform((value, originalValue) =>
-      originalValue === "" ? undefined : value,
+      originalValue === "" ? undefined : value
     )
     .required("Capacity is required"),
   fuel_reading: Yup.number()
     .transform((value, originalValue) =>
-      originalValue === "" ? undefined : value,
+      originalValue === "" ? undefined : value
     )
     .required("Fuel Reading is required")
     .max(999, "Fuel Reading must be at most 3 digits"),
@@ -71,12 +71,12 @@ const VehicleSchema = Yup.object().shape({
   status: Yup.string().required("Status is required"),
   validFrom: Yup.date()
     .transform((value, originalValue) =>
-      originalValue === "" ? undefined : value,
+      originalValue === "" ? undefined : value
     )
     .required("Valid From date is required"),
   validTo: Yup.date()
     .transform((value, originalValue) =>
-      originalValue === "" ? undefined : value,
+      originalValue === "" ? undefined : value
     )
     .min(Yup.ref("validFrom"), "Valid To must be after Valid From")
     .required("Valid To date is required"),
@@ -204,7 +204,7 @@ export default function AddEditVehicleWithStepper() {
   }, [isEditMode, uuid, showSnackbar]);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
 
@@ -277,7 +277,7 @@ export default function AddEditVehicleWithStepper() {
     } else {
       showSnackbar(
         "Please fill in all required fields before proceeding.",
-        "error",
+        "error"
       );
     }
   };
@@ -287,7 +287,7 @@ export default function AddEditVehicleWithStepper() {
     if (!valid) {
       showSnackbar(
         "Please fill in all required fields before submitting.",
-        "error",
+        "error"
       );
       return;
     }
@@ -338,14 +338,14 @@ export default function AddEditVehicleWithStepper() {
           isEditMode
             ? "Vehicle updated successfully"
             : "Vehicle added successfully",
-          "success",
+          "success"
         );
         router.push("/vehicle");
       }
     } catch (err) {
       showSnackbar(
         isEditMode ? "Update vehicle failed" : "Add vehicle failed",
-        "error",
+        "error"
       );
     }
   };
@@ -482,14 +482,14 @@ export default function AddEditVehicleWithStepper() {
               <div>
                 <InputFields
                   required
-                  label="Owner Type"
+                  label="Vehicle Owner"
                   value={form.ownerType}
                   onChange={handleChange}
                   name="ownerType"
                   error={touched.ownerType && errors.ownerType}
                   options={[
                     { value: "company", label: "Company" },
-                    { value: "agent", label: "Agent" },
+                    { value: "agent", label: "Distributor" },
                   ]}
                 />
               </div>
@@ -497,13 +497,13 @@ export default function AddEditVehicleWithStepper() {
               {form.ownerType !== "company" && (
                 <div>
                   <InputFields
-                    label="Warehouse"
+                    label="Distributor"
                     value={form.warehouseId}
                     searchable={true}
                     onChange={handleChange}
                     name="warehouseId"
                     options={warehouseOptions}
-                  />
+                  /> 
                 </div>
               )}
             </div>

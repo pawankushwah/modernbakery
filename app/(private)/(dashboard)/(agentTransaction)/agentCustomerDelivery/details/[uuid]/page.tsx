@@ -199,7 +199,7 @@ export default function OrderDetailPage() {
 
   // Always show these fields (not conditionally hidden)
   const keyValueData = [
-    { key: "Gross Total", value: `${CURRENCY} ${toInternationalNumber(grossTotal)}` },
+    { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netTotal)}` },
     { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(vatTotal)}` },
     // { key: "Pre VAT", value: `${CURRENCY} ${toInternationalNumber(computedPreVat)}` },
     // (deliveryData?.delivery_charges) && {
