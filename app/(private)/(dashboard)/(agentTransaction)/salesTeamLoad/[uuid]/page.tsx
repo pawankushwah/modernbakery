@@ -225,11 +225,11 @@ export default function AddEditSalesmanLoad() {
   // ✅ Validation Schema
   // ✅ Validation Schema
   const validationSchema = yup.object().shape({
-    salesman_type: yup.string().required("Salesman Type is required"),
+    salesman_type: yup.string().required("Sales Team Type is required"),
     warehouse: yup.string().required("Warehouse is required"),
     route: yup.string().required("Route is required"),
-
-    salesman: yup.string().required("Salesman is required"),
+    
+    salesman: yup.string().required("Sales Team is required"),
   });
 
   const handleChange = (field: string, value: string) => {
@@ -312,7 +312,7 @@ export default function AddEditSalesmanLoad() {
             : "Salesman Load added successfully",
           "success"
         );
-        router.push("/selesTeamLoad");
+        router.push("/salesTeamLoad");
       }
     } catch (err) {
       if (err instanceof yup.ValidationError) {
