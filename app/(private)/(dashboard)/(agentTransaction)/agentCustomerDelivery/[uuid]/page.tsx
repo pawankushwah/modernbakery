@@ -157,7 +157,7 @@ export default function DeliveryAddEditPage() {
 
   const validationSchema = Yup.object({
     warehouse: Yup.string().required("Warehouse is required"),
-    delivery: Yup.string().required("Delivery is required"),
+    order_code: Yup.string().required("Delivery is required"),
     note: Yup.string().max(1000, "Note is too long"),
     items: Yup.array().of(itemRowSchema),
   });
@@ -168,7 +168,7 @@ export default function DeliveryAddEditPage() {
   const CURRENCY = localStorage.getItem("country") || "";
   const [skeleton, setSkeleton] = useState({
     route: false,
-    delivery: false,
+    order_code: false,
     item: false,
   });
   const [filteredDeliveryOptions, setFilteredDeliveryOptions] = useState<
@@ -180,7 +180,7 @@ export default function DeliveryAddEditPage() {
   const form = {
     warehouse: "",
     route: "",
-    delivery: "",
+    order_code: "",
     note: "",
     delivery_date: new Date().toISOString().slice(0, 10),
   };
@@ -510,6 +510,7 @@ export default function DeliveryAddEditPage() {
       warehouse_id: Number(values?.warehouse) || null,
       customer_id: Number(values?.customer_id) || null,
       delivery_date: values?.delivery_date || form.delivery_date,
+      order_code: values?.order_code || "",
       // gross_total: Number(grossTotal.toFixed(2)),
       vat: Number(totalVat.toFixed(2)),
       net_amount: Number(netAmount.toFixed(2)),
@@ -598,7 +599,7 @@ export default function DeliveryAddEditPage() {
   ];
 
   const fetchAgentDeliveries = async (values: FormikValues, search: string) => {
-    setSkeleton({ ...skeleton, delivery: true });
+    setSkeleton({ ...skeleton, order_code: true });
     const res = await agentOrderList({
       warehouse_id: values.warehouse,
       delivery_date: values.delivery_date,
@@ -608,7 +609,7 @@ export default function DeliveryAddEditPage() {
     });
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch Deliveries", "error");
-      setSkeleton({ ...skeleton, delivery: false });
+      setSkeleton({ ...skeleton, order_code: false });
       return;
     }
     const data = res?.data || [];
@@ -634,7 +635,7 @@ export default function DeliveryAddEditPage() {
     );
     setFilteredDeliveryOptions(options);
     setDeliveryData(data);
-    setSkeleton({ ...skeleton, delivery: false });
+    setSkeleton({ ...skeleton, order_code: false });
     return options;
   };
 
@@ -859,15 +860,15 @@ export default function DeliveryAddEditPage() {
                     <InputFields
                       required
                       label="Delivery"
-                      name="delivery"
-                      value={values.delivery}
+                      name="order_code"
+                      value={values.order_code}
                       options={filteredDeliveryOptions}
                       searchable={true}
                       placeholder="Select delivery"
                       onChange={(e) => {
                         const val = (e.target as HTMLSelectElement).value;
-                        if (values.delivery !== val) {
-                          setFieldValue("delivery", val);
+                        if (values.order_code !== val) {
+                          setFieldValue("order_code", val);
                           const currentDelivery = deliveryData.find(
                             (o) => String(o.id) === val
                           );
@@ -953,8 +954,8 @@ export default function DeliveryAddEditPage() {
                       //   setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
                       // }}
                       disabled={!values.warehouse || !values.delivery_date}
-                      showSkeleton={skeleton.delivery}
-                      error={touched.delivery && (errors.delivery as string)}
+                      showSkeleton={skeleton.order_code}
+                      error={touched.order_code && (errors.order_code as string)}
                     />
                   </div>
                 </div>
@@ -1365,7 +1366,7 @@ export default function DeliveryAddEditPage() {
                       isSubmitting ||
                       !values.warehouse ||
                       !values.delivery_date ||
-                      !values.delivery ||
+                      !values.order_code ||
                       !itemData ||
                       (itemData.length === 1 && !itemData[0].item_name)
                     }

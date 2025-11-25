@@ -1632,6 +1632,16 @@ export const addVehicle = async (data: object) => {
   }
 };
 
+export const numberPlateVerification = async (query: string) => {
+  try {
+    const res = await API.get(`/api/master/vehicle/numberplate?number_plat=${query}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const updateVehicle = async (
   uuid: string,
   data: object
