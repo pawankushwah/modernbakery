@@ -422,6 +422,27 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
+            href: "/return",
+            label: "Return",
+            leadingIcon: "hugeicons:invoice",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/tmpReturn",
+            label: "Temporary Return",
+            leadingIcon: "hugeicons:invoice",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/caps",
+            label: "CAPS Collection",
+            leadingIcon: "game-icons:bottle-cap",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
             href: "/creditNote",
             label: "Credit Note",
             leadingIcon: "hugeicons:invoice",
