@@ -55,13 +55,13 @@ const columns = [
       },
   { key: "item_category_dll", label: "Compensation Code", showByDefault: true },
    {
-          key: "warehouse_code", label: "Item", showByDefault: true,
-          render: (row: TableDataType) => {
-              const code = row.erp_code || "-";
-              const name = row.item_name || "-";
-              return `${code}${code && name ? " - " : "-"}${name}`;
-          }
-      },
+      key: "erp_code", label: "Item", showByDefault: true,
+      render: (row: TableDataType) => {
+        const code = row.erp_code || "-";
+        const name = row.item_name || "-";
+        return `${code}${code && name ? " - " : "-"}${name}`;
+      }
+    },
   { key: "base_uom_vol_calc", label: "Facotry Price", showByDefault: true, render: (row: TableDataType) => (row.base_uom_vol_calc) ?? "-" },
   { key: "alter_base_uom_vol_calc", label: "Purchase Price", showByDefault: true, render: (row: TableDataType) => (row.alter_base_uom_vol_calc) ?? "-" },
   { key: "quantity", label: "Free Quantity", showByDefault: true, render: (row: TableDataType) => toInternationalNumber(row.quantity) ?? "-" },

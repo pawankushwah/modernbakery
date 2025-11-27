@@ -32,3 +32,24 @@ export function handleError(error: unknown) {
     return { error: true, data: { message: "An unknown error occurred." } };
   }
 }
+
+// Axios instance for multipart/form-data requests (file uploads)
+export const APIFormData = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
+  headers: {
+    "Content-Type": "multipart/form-data",
+  },
+});
+
+APIFormData.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("token");
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);

@@ -235,6 +235,31 @@ export const initialLinkData: SidebarDataType[] = [
       },
       {
         isActive: false,
+        href: "#",
+        label: "Loyalty Program",
+        leadingIcon: "ix:customer-filled",
+        trailingIcon: "qlementine-icons:items-grid-small-24",
+        iconColor: "text-yellow-400",
+        children: [
+          {
+            isActive: false,
+            href: "/settings/tier",
+            label: "Tier",
+            leadingIcon: "arcticons:myfrontier",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/rewardCategory",
+            label: "Reward Category",
+            leadingIcon: "streamline-ultimate:reward-stars-4",
+            iconColor: "text-green-500",
+          },
+          
+        ],
+      },
+      {
+        isActive: false,
         href: "/settings/bank",
         label: "Bank",
         leadingIcon: "mdi:bank",

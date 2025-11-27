@@ -33,26 +33,34 @@ const columns = [
   { key: "osa_code", label: "Code", render: (row: TableDataType) => (<span className="font-semibold text-[#181D27] text-[14px]">{row.osa_code || "-"}</span>) },
   { key: "claim_period", label: "Claim Period", render: (row: TableDataType) => {
   const cp = row.claim_period;
-  // if claim period is null/undefined show a dash
   if (cp === null || cp === undefined) return "-";
-      if (typeof cp === "string") {
-        // expected format: 'YYYY-MM-DD to YYYY-MM-DD' or similar
-        const parts = cp.split(/\s+to\s+/i).map(p => p.trim()).filter(Boolean);
-        if (parts.length === 2) {
-          const d1 = new Date(parts[0]);
-          const d2 = new Date(parts[1]);
-          if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
-            return `${formatWithPattern(d1, "DD MMM YYYY", "en-GB")} to ${formatWithPattern(d2, "DD MMM YYYY", "en-GB") || "-"}`;
-          }
+  if (typeof cp === "string") {
+    // expected format: 'YYYY-MM-DD to YYYY-MM-DD' or similar
+    const parts = cp.split(/\s+to\s+/i).map(p => p.trim()).filter(Boolean);
+    if (parts.length === 2) {
+      const d1 = new Date(parts[0]);
+      const d2 = new Date(parts[1]);
+      if (!isNaN(d1.getTime()) && !isNaN(d2.getTime())) {
+        // If both dates are in the same month and year, shorten to 'DD to DD MMM YYYY'
+        const sameMonth = d1.getMonth() === d2.getMonth();
+        const sameYear = d1.getFullYear() === d2.getFullYear();
+        if (sameMonth && sameYear) {
+          const day1 = formatWithPattern(d1, "DD", "en-GB");
+          const day2 = formatWithPattern(d2, "DD MMM YYYY", "en-GB");
+          return `${day1} to ${day2}`;
         }
-        // fallback: try parsing as single date
-        const single = new Date(cp);
-        if (!isNaN(single.getTime())) return formatWithPattern(single, "DD MMM YYYY", "en-GB") || "-";
-        return cp;
+        // otherwise show full range
+        return `${formatWithPattern(d1, "DD MMM YYYY", "en-GB")} to ${formatWithPattern(d2, "DD MMM YYYY", "en-GB") || "-"}`;
       }
+    }
+    // fallback: try parsing as single date
+    const single = new Date(cp);
+    if (!isNaN(single.getTime())) return formatWithPattern(single, "DD MMM YYYY", "en-GB") || "-";
+    return cp;
+  }
   if ((cp as any) instanceof Date) return formatWithPattern(cp as Date, "DD MMM YYYY", "en-GB") || "-";
-      return String(cp) || "-";
-    } },
+  return String(cp) || "-";
+  } },
   
    {
      key: "warehouse", label: "Distributor",render: (row: TableDataType) => {
