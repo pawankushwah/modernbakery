@@ -248,38 +248,6 @@ export const initialLinkData: SidebarDataType[] = [
           // },
         ],
       },
-
-      {
-        isActive: false,
-        href: "#",
-        label: "Assets",
-        leadingIcon: "streamline-freehand:money-bag",
-        iconColor: "text-green-500",
-        trailingIcon: "mdi-light:chevron-right",
-        children: [
-          {
-            isActive: false,
-            href: "/assets/chiller",
-            label: "Chiller",
-            leadingIcon: "guidance:refrigeration",
-            iconColor: "text-cyan-500",
-          },
-          {
-            isActive: false,
-            href: "/assets/chillerRequest",
-            label: "Chiller Request",
-            leadingIcon: "si:pull-request-duotone",
-            iconColor: "text-cyan-500",
-          },
-          {
-            isActive: false,
-            href: "/assets/vendor",
-            label: "Vendor",
-            leadingIcon: "streamline-freehand:shop",
-            iconColor: "text-cyan-500",
-          },
-        ],
-      },
       // {
       //     isActive: false,
       //     href: "/report",
@@ -482,6 +450,37 @@ export const initialLinkData: SidebarDataType[] = [
           },
           
         ]
+      },
+      {
+        isActive: false,
+        href: "#",
+        label: "Assets",
+        leadingIcon: "streamline-freehand:money-bag",
+        iconColor: "text-green-500",
+        trailingIcon: "mdi-light:chevron-right",
+        children: [
+          {
+            isActive: false,
+            href: "/assets/chiller",
+            label: "Chiller",
+            leadingIcon: "guidance:refrigeration",
+            iconColor: "text-cyan-500",
+          },
+          {
+            isActive: false,
+            href: "/assets/chillerRequest",
+            label: "Chiller Request",
+            leadingIcon: "si:pull-request-duotone",
+            iconColor: "text-cyan-500",
+          },
+          {
+            isActive: false,
+            href: "/assets/vendor",
+            label: "Vendor",
+            leadingIcon: "streamline-freehand:shop",
+            iconColor: "text-cyan-500",
+          },
+        ],
       },
     ],
   },
