@@ -707,6 +707,7 @@ export default function InvoiceddEditPage() {
         const deliveryId = form.invoice_type === "0" && form.customer ? Number(form.customer) : undefined;
 
         return {
+            invoice_code: code,
             invoice_type: Number(form.invoice_type),
             warehouse_id: Number(form.warehouse),
             customer_id: customerId,
@@ -868,7 +869,7 @@ export default function InvoiceddEditPage() {
 
                     <div className="flex flex-col items-end">
                         <span className="text-[42px] uppercase text-[#A4A7AE] mb-[10px]">
-                            Distributor&apos;s Invoices
+                            Invoices
                         </span>
                         <span className="text-primary text-[14px] tracking-[10px]">
                             #{code}

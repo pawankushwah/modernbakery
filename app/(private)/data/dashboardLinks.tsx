@@ -390,18 +390,33 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
-            href: "/creditNote",
-            label: "Credit Note",
+            href: "/return",
+            label: "Return",
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
           {
             isActive: false,
-            href: "/compensationReport",
-            label: "Compensation Report",
+            href: "/tmpReturn",
+            label: "Temporary Return",
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
+          {
+            isActive: false,
+            href: "/caps",
+            label: "CAPS Collection",
+            leadingIcon: "game-icons:bottle-cap",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/creditNote",
+            label: "Credit Note",
+            leadingIcon: "hugeicons:invoice",
+            iconColor: "text-cyan-500"
+          },
+          
         ]
       },
       {
@@ -424,6 +439,13 @@ export const initialLinkData: SidebarDataType[] = [
             href: "/petitClaim",
             label: "Petit Claim",
             leadingIcon: "mdi:file-document-outline",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
+            href: "/compensationReport",
+            label: "Compensation Report",
+            leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
           

@@ -943,141 +943,111 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   }, []);
 
   const refreshDropdowns = async () => {
+    // Progressive fetch: load a small set of critical dropdowns immediately
+    // then warm-fetch the remaining lists when the browser is idle.
     setLoading(true);
+    const normalize = (r: unknown): unknown[] => {
+      if (r && typeof r === 'object') {
+        const obj = r as Record<string, unknown>;
+        if (Array.isArray(obj.data)) return obj.data as unknown[];
+      }
+      if (Array.isArray(r)) return r as unknown[];
+      return (r as unknown) ? [r as unknown] : [];
+    };
+
+    // critical short list to fetch immediately (make UI usable fast)
+    const criticalTasks: { run: () => Promise<unknown>; setter: (v: unknown[]) => void }[] = [
+      { run: () => companyList(), setter: (v) => setCompanyListData(v as CompanyItem[]) },
+      { run: () => countryList(), setter: (v) => setCountryListData(v as CountryItem[]) },
+      { run: () => regionList(), setter: (v) => setRegionListData(v as RegionItem[]) },
+      { run: () => routeList({}), setter: (v) => setRouteListData(v as RouteItem[]) },
+      { run: () => getAllActiveWarehouse(), setter: (v) => setWarehouseListData(v as WarehouseItem[]) },
+      { run: () => routeType({ dropdown: 'true' }), setter: (v) => setRouteTypeData(v as RouteTypeItem[]) },
+      { run: () => itemCategory({ dropdown: 'true' }), setter: (v) => setItemCategoryData(v as ItemCategoryItem[]) },
+    ];
+
+    const nonCriticalTasks: { run: () => Promise<unknown>; setter: (v: unknown[]) => void }[] = [
+      { run: () => SurveyList(), setter: (v) => setSurveyListData(v as SurveyItem[]) },
+      { run: () => warehouseList({ dropdown: 'true' }), setter: (v) => setWarehouseAllList(v as WarehouseAll[]) },
+      { run: () => getSubRegion(), setter: (v) => setAreaListData(v as AreaItem[]) },
+      { run: () => getCompanyCustomers({ dropdown: 'true' }), setter: (v) => setCompanyCustomersData(v as CustomerItem[]) },
+      { run: () => getCompanyCustomersType(), setter: (v) => setCompanyCustomersTypeData(v as CustomerTypeItem[]) },
+      { run: () => itemSubCategory({ dropdown: 'true' }), setter: (v) => setItemSubCategoryData(v as ItemSubCategoryItem[]) },
+      { run: () => channelList(), setter: (v) => setChannelListData(v as ChannelItem[]) },
+      { run: () => getCustomerType(), setter: (v) => setCustomerTypeData(v as CustomerType[]) },
+      { run: () => salesmanTypeList({}), setter: (v) => setSalesmanTypesData(v as SalesmanType[]) },
+      { run: () => vehicleListData(), setter: (v) => setVehicleList(v as VehicleListItem[]) },
+      { run: () => customerCategoryList(), setter: (v) => setCustomerCategory(v as CustomerCategory[]) },
+      { run: () => customerSubCategoryList(), setter: (v) => setCustomerSubCategory(v as CustomerSubCategory[]) },
+      { run: () => itemList(), setter: (v) => setItem(v as Item[]) },
+      { run: () => getDiscountTypeList(), setter: (v) => setDiscountType(v as DiscountType[]) },
+      { run: () => getMenuList(), setter: (v) => setMenuList(v as MenuList[]) },
+      { run: () => vendorList(), setter: (v) => setVendor(v as VendorList[]) },
+      { run: () => salesmanList(), setter: (v) => setSalesman(v as SalesmanList[]) },
+      { run: () => agentCustomerList(), setter: (v) => setAgentCustomer(v as AgentCustomerList[]) },
+      { run: () => shelvesList(), setter: (v) => setShelves(v as ShelvesList[]) },
+      { run: () => submenuList(), setter: (v) => setSubmenu(v as submenuList[]) },
+      { run: () => permissionList(), setter: (v) => setPermissions(v as permissionsList[]) },
+      { run: () => labelList(), setter: (v) => setLabels(v as LabelItem[]) },
+      { run: () => roleList(), setter: (v) => setRoles(v as Role[]) },
+      { run: () => projectList({}), setter: (v) => setProject(v as Project[]) },
+      { run: () => companyTypeList(), setter: (v) => setComapanyType(v as CompanyType[]) },
+      { run: () => uomList(), setter: (v) => setUom(v as UOM[]) },
+      { run: () => locationList(), setter: (v) => setLocation(v as LocationItem[]) },
+      { run: () => assetsTypeList(), setter: (v) => setAssetsType(v as AssetsType[]) },
+      { run: () => manufacturerList(), setter: (v) => setManufacturer(v as Manufacturer[]) },
+    ];
+
     try {
-      const res = await Promise.all([
-        companyList(),
-        countryList(),
-        regionList(),
-        SurveyList(),
-        routeList({}),
-        getAllActiveWarehouse(),
-        warehouseList({dropdown: "true"}),
-        routeType({ dropdown: "true" }),
-        getSubRegion(),
-        getCompanyCustomers({ dropdown: "true" }),
-        getCompanyCustomersType(),
-        itemCategory({ dropdown: "true" }),
-        itemSubCategory({ dropdown: "true" }),
-        channelList(),
-        getCustomerType(),
-        salesmanTypeList({}),
-        vehicleListData(),
-        customerCategoryList(),
-        customerSubCategoryList(),
-        itemList(),
-        getDiscountTypeList(),
-        getMenuList(),
-        vendorList(),
-        salesmanList(),
-        agentCustomerList(),
-        shelvesList(),
-        submenuList(),
-        permissionList(),
-        labelList(),
-        roleList(),
-        projectList({}),
-        companyTypeList(),
-        uomList(),
-        locationList(),
-        assetsTypeList(),
-        manufacturerList(),
-        assetsModelList(),
-        BrandList(),
-      ]);
-
-
-      // normalize: accept unknown response and extract array of items from `.data` when present
-      const normalize = (r: unknown): unknown[] => {
-        if (r && typeof r === 'object') {
-          const obj = r as Record<string, unknown>;
-          if (Array.isArray(obj.data)) return obj.data as unknown[];
+      // run critical tasks now and wait for them so UI has required data quickly
+      const criticalPromises = criticalTasks.map(t => t.run());
+      const criticalSettled = await Promise.allSettled(criticalPromises);
+      criticalSettled.forEach((s, idx) => {
+        if (s.status === 'fulfilled') {
+          try {
+            const arr = normalize(s.value);
+            criticalTasks[idx].setter(arr);
+          } catch (e) {
+            console.warn('Failed to normalize critical dropdown', idx, e);
+          }
+        } else {
+          console.warn('Critical dropdown fetch failed', idx, s.reason);
         }
-        if (Array.isArray(r)) return r as unknown[];
-        return (r as unknown) ? [r as unknown] : [];
+      });
+
+      // schedule warm background fetch of non-critical lists when the browser is idle
+      const backgroundFetch = async () => {
+        try {
+          const nonCriticalPromises = nonCriticalTasks.map(t => t.run());
+          const settled = await Promise.allSettled(nonCriticalPromises);
+          settled.forEach((s, idx) => {
+            if (s.status === 'fulfilled') {
+              try {
+                const arr = normalize(s.value);
+                nonCriticalTasks[idx].setter(arr);
+              } catch (e) {
+                console.warn('Failed to normalize non-critical dropdown', idx, e);
+              }
+            } else {
+              console.warn('Non-critical dropdown fetch failed', idx, s.reason);
+            }
+          });
+        } catch (e) {
+          console.error('Background fetch error', e);
+        }
       };
 
-      setCompanyListData(normalize(res[0]) as CompanyItem[]);
-      setCountryListData(normalize(res[1]) as CountryItem[]);
-      setRegionListData(normalize(res[2]) as RegionItem[]);
-      setSurveyListData(normalize(res[3]) as SurveyItem[]);
-      setRouteListData(normalize(res[4]) as RouteItem[]);
-      setWarehouseListData(normalize(res[5]) as WarehouseItem[]);
-      setWarehouseAllList(normalize(res[6]) as WarehouseAll[]);
-      setRouteTypeData(normalize(res[7]) as RouteTypeItem[]);
-      setAreaListData(normalize(res[8]) as AreaItem[]);
-      setCompanyCustomersData(normalize(res[9]) as CustomerItem[]);
-      setCompanyCustomersTypeData(normalize(res[10]) as CustomerTypeItem[]);
-      setItemCategoryData(normalize(res[11]) as ItemCategoryItem[]);
-      setItemSubCategoryData(normalize(res[12]) as ItemSubCategoryItem[]);
-      setChannelListData(normalize(res[13]) as ChannelItem[]);
-      setCustomerTypeData(normalize(res[14]) as CustomerType[]);
-      setSalesmanTypesData(normalize(res[15]) as SalesmanType[]);
-      setVehicleList(normalize(res[16]) as VehicleListItem[]);
-      setCustomerCategory(normalize(res[17]) as CustomerCategory[]);
-      setCustomerSubCategory(normalize(res[18]) as CustomerSubCategory[]);
-      setItem(normalize(res[19]) as Item[]);
-      setDiscountType(normalize(res[20]) as DiscountType[]);
-      setMenuList(normalize(res[21]) as MenuList[]);
-      setVendor(normalize(res[22]) as VendorList[]);
-      setSalesman(normalize(res[23]) as SalesmanList[]);
-      setAgentCustomer(normalize(res[24]) as AgentCustomerList[]);
-      setShelves(normalize(res[25]) as ShelvesList[]);
-      setSubmenu(normalize(res[26]) as submenuList[]);
-      setPermissions(normalize(res[27]) as permissionsList[]);
-      // console.log(normalize(res[27]), "normalize(res[27]) ")
-      setLabels(normalize(res[28]) as LabelItem[]);
-      setRoles(normalize(res[29]) as Role[]);
-      setProject(normalize(res[30]) as Project[]);
-      setComapanyType(normalize(res[31]) as CompanyType[]);
-      setUom(normalize(res[32]) as UOM[]);
-      setLocation(normalize(res[33]) as LocationItem[]);
-      setAssetsType(normalize(res[34]) as AssetsType[]);
-      setManufacturer(normalize(res[35]) as Manufacturer[]);
-      setAssetsModel(normalize(res[36]) as AssetsModel[]);
-      setBrandList(normalize(res[37]) as Brand[]);
+      if (typeof (window as any).requestIdleCallback === 'function') {
+        (window as any).requestIdleCallback(() => backgroundFetch(), { timeout: 2000 });
+      } else {
+        // fallback: run after small timeout
+        setTimeout(() => { backgroundFetch(); }, 1500);
+      }
 
-    } catch (error) {
-      console.error('Error loading dropdown data:', error);
-      // on error clear to empty arrays
-      setCompanyListData([]);
-      setCountryListData([]);
-      setRegionListData([]);
-      setSurveyListData([]);
-      setRouteListData([]);
-      setWarehouseListData([]);
-      setRouteTypeData([]);
-      setAreaListData([]);
-      setCompanyCustomersData([]);
-      setCompanyCustomersTypeData([]);
-      setItemCategoryData([]);
-      setItemSubCategoryData([]);
-      setChannelListData([]);
-      setCustomerTypeData([]);
-      setSalesmanTypesData([]);
-      setVehicleList([]);
-      setCustomerCategory([]);
-      setCustomerSubCategory([]);
-      setItem([]);
-      setDiscountType([]);
-      setMenuList([]);
-      setVendor([]);
-      setSalesman([]);
-      setAgentCustomer([]);
-      setShelves([]);
-      setSubmenu([]);
-      setPermissions([]);
-      setLabels([]);
-      setRoles([]);
-      setProject([]);
-      setComapanyType([]);
-      setUom([]);
-      setLocation([]);
-      setAssetsType([]);
-      setManufacturer([]);
-      setAssetsModel([]);
-      setBrandList([]);
+    } catch (err) {
+      console.error('refreshDropdowns error', err);
     } finally {
+      // stop showing global loading after the critical fetch; background fetches run without blocking UI
       setLoading(false);
     }
   };
