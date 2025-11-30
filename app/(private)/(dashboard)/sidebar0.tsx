@@ -56,9 +56,16 @@ export default function Sidebar({
   };
 
   // Helper to check if a parent menu should be active if any child is active
+  // Checks if any child or grandchild is active
   const isParentActive = (children: LinkDataType[] | undefined): boolean => {
     if (!children) return false;
-    return Boolean(children.some((child) => child.href === activeHref));
+    return children.some((child) => {
+      if (child.href === activeHref) return true;
+      if (child.children && child.children.length > 0) {
+        return child.children.some((grand) => grand.href === activeHref);
+      }
+      return false;
+    });
   };
 
   useEffect(() => {
@@ -127,7 +134,7 @@ export default function Sidebar({
                         : "mdi-light:chevron-right"
                       : link.trailingIcon;
 
-                    // Determine if this link or its children are active
+                    // Determine if this link or its children/grandchildren are active
                     const isActive = link.href === activeHref || isParentActive(link.children);
 
                     return (
@@ -148,47 +155,76 @@ export default function Sidebar({
                         {hasChildren && isChildrenOpen && link.children && (
                           <ul className={`${isOpen ? "block" : "hidden"} group-hover:block mt-1 ml-[10px]`}>
                             {link.children.map((child: LinkDataType) => {
-                              const isChildActive = child.href === activeHref;
+                              // Active if child or any grandchild is active
+                              const isChildActive = child.href === activeHref || (child.children && child.children.some((grand) => grand.href === activeHref));
+                              const hasThirdLevel = child.children && child.children.length > 0;
+                              const isThirdLevelOpen = openMenus[child.label] ?? false;
 
                               return (
-                                <li
-                                  key={child.href}
-                                  className={`w-full cursor-pointer transition-all rounded-md ${isChildActive ? "text-[#2563eb] font-medium" : "hover:bg-[#FFF0F2]"
-                                    }`}
-                                >
+                                <li key={child.href} className="w-full">
                                   <div
-                                    className="flex items-center gap-2 w-full"
+                                    className={`flex items-center gap-2 w-full cursor-pointer transition-all rounded-md ${isChildActive ? "text-[#2563eb] font-medium" : "hover:bg-[#FFF0F2]"}`}
                                     onClick={() => {
-                                      setActiveHref(child.href);
-                                      onClickHandler(child.href);
+                                      if (hasThirdLevel) {
+                                        toggleMenu(child.label);
+                                        setIsOpen(true);
+                                      } else {
+                                        setActiveHref(child.href);
+                                        onClickHandler(child.href);
+                                      }
                                     }}
                                   >
                                     {/* Line indicator */}
                                     <span
-                                      className={`w-0.5 h-8 ml-4 flex-shrink-0 rounded ${isChildActive ? "bg-red-500" : "bg-gray-300"
-                                        }`}
+                                      className={`w-0.5 h-8 ml-4 flex-shrink-0 rounded ${isChildActive ? "bg-red-500" : "bg-gray-300"}`}
                                     ></span>
-
                                     {/* Label (fills remaining space, clickable too) */}
                                     <div className="flex-1">
                                       <SidebarBtn
-                                        isActive={false} // no background
+                                        isActive={false}
                                         href={child.href}
                                         label={child.label}
-                                        labelTw={`${isOpen ? "block" : "hidden"} group-hover:block`}
+                                        className={`${!isChildActive ? "hover:bg-transparent!" : ""}`}
+                                        labelTw={`${isOpen ? "block" : "hidden"} ${isChildActive ? "text-red-500 font-medium" : ""} group-hover:block`}
                                         isSubmenu={true}
+                                        trailingIcon={hasThirdLevel ? (isThirdLevelOpen ? "mdi-light:chevron-down" : "mdi-light:chevron-right") : child.trailingIcon}
+                                        trailingIconTw={`${isChildActive ? "text-red-500 font-medium" : ""}`}
                                       />
                                     </div>
                                   </div>
+                                  {/* 3rd level menu */}
+                                  {hasThirdLevel && isThirdLevelOpen && (
+                                    <ul className="ml-8 mt-1">
+                                      {(child.children || []).map((third: LinkDataType) => {
+                                        const isThirdActive = third.href === activeHref;
+                                        return (
+                                          <li key={third.href} className={`w-full cursor-pointer transition-all rounded ${isThirdActive ? "bg-gray-100 text-primary font-medium" : "hover:bg-gray-50 hover:font-medium"} group/third px-2`}>
+                                            <div
+                                              className="flex items-center gap-2 w-full"
+                                              onClick={() => {
+                                                setActiveHref(third.href);
+                                                onClickHandler(third.href);
+                                              }}
+                                            >
+                                              {/* Subtle vertical line for indentation */}
+                                              <span className={"w-1 h-6 bg-gray-200 group-hover/third:bg-gray-600 rounded mr-2" + (isThirdActive ? " bg-gray-600" : "")}></span>
+                                              <div className="flex-1">
+                                                <SidebarBtn
+                                                  isActive={false}
+                                                  href={third.href}
+                                                  label={third.label}
+                                                  className="hover:bg-transparent"
+                                                  labelTw={`block text-xs ${isThirdActive ? "text-primary" : "text-gray-700"}`}
+                                                  isSubmenu={true}
+                                                />
+                                              </div>
+                                            </div>
+                                          </li>
+                                        );
+                                      })}
+                                    </ul>
+                                  )}
                                 </li>
-
-
-
-
-
-
-
-
                               );
                             })}
                           </ul>
