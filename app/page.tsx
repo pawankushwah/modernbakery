@@ -15,7 +15,6 @@ export default function Home() {
         async function verifyUser() {
             const res = await isVerify();
             if (res.error) {
-                localStorage.removeItem("token");
                 showSnackbar(res.data.message, "error");
                 setIsLoading(false);
             }

@@ -4,7 +4,7 @@ import SearchBar from "./searchBar";
 import { Icon } from "@iconify-icon/react";
 import CustomDropdown from "./customDropdown";
 import BorderIconButton from "./borderIconButton";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import FilterDropdown from "./filterDropdown";
 import InputFields from "./inputFields";
 import SidebarBtn from "./dashboardSidebarBtn";
@@ -12,6 +12,7 @@ import CustomCheckbox from "./customCheckbox";
 import DismissibleDropdown from "./dismissibleDropdown";
 import { naturalSort } from "../(private)/utils/naturalSort";
 import { CustomTableSkelton } from "./customSkeleton";
+import Draggable from "react-draggable";
 
 export type listReturnType = {
     data: TableDataType[];
@@ -102,7 +103,16 @@ export type configType = {
     floatingInfoBar?: {
         showByDefault?: boolean;
         showSelectedRow?: boolean;
-        buttons?: (tableData: TableDataType[], selectedRows: number[], selectedColumns: number[]) => React.ReactNode[];
+        rowSelectionOnClick?: (data: TableDataType[], selectedRow?: number[], selectedColumns?: number[]) => void;
+        buttons?: {
+            label: string;
+            labelTw?: string;
+            icon?: string;
+            iconWidth?: string;
+            onClick?: (data: TableDataType[], selectedRow?: number[], selectedColumns?: number[]) => void;
+            showOnSelect?: boolean;
+            showWhen?: (data: TableDataType[], selectedRow?: number[], selectedColumns?: number[]) => boolean;
+        }[];
     };
     columns: {
         key: string;
@@ -245,7 +255,6 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     const { setConfig } = useContext(Config);
     const { tableDetails, setTableDetails, setNestedLoading, setInitialTableData } = useContext(TableDetails);
     const { selectedRow, setSelectedRow } = useContext(SelectedRow);
-    const { selectedColumns } = useContext<columnFilterConfigType>(ColumnFilterConfig);
     const [showDropdown, setShowDropdown] = useState(false);
     const [displayedData, setDisplayedData] = useState<TableDataType[]>([]);
     // ordering of columns (array of original column indices). initialized from config.columns
@@ -354,118 +363,6 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
 
 
     const orderedColumns = (columnOrder || []).map((i) => config.columns[i]).filter(Boolean);
-
-    // Floating Info Bar State
-    const [showFloatingBar, setShowFloatingBar] = useState(
-        !!config.floatingInfoBar?.showByDefault
-    );
-    const floatingBarRef = useRef<HTMLDivElement>(null);
-    const [dragging, setDragging] = useState(false);
-    const [barPosition, setBarPosition] = useState({ x: 100, y: 100 });
-    const dragOffset = useRef({ x: 0, y: 0 });
-
-    // Show bar if showSelectedRow and rows are selected
-    useEffect(() => {
-        if (config.floatingInfoBar?.showSelectedRow && selectedRow.length > 0) {
-            setShowFloatingBar(true);
-        } else if (!config.floatingInfoBar?.showByDefault) {
-            setShowFloatingBar(false);
-        }
-    }, [selectedRow, config.floatingInfoBar]);
-
-    // Drag handlers
-    const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-        setDragging(true);
-        const rect = floatingBarRef.current?.getBoundingClientRect();
-        if (rect) {
-            dragOffset.current = {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top,
-            };
-        }
-    };
-    const handleMouseMove = (e: MouseEvent) => {
-        if (dragging) {
-            setBarPosition({
-                x: e.clientX - dragOffset.current.x,
-                y: e.clientY - dragOffset.current.y,
-            });
-        }
-    };
-    const handleMouseUp = () => setDragging(false);
-    useEffect(() => {
-        if (dragging) {
-            window.addEventListener("mousemove", handleMouseMove);
-            window.addEventListener("mouseup", handleMouseUp);
-        } else {
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("mouseup", handleMouseUp);
-        }
-        return () => {
-            window.removeEventListener("mousemove", handleMouseMove);
-            window.removeEventListener("mouseup", handleMouseUp);
-        };
-    }, [dragging]);
-
-    // Floating Info Bar Component
-    const FloatingInfoBar = () => {
-        if (!showFloatingBar || !config.floatingInfoBar) return null;
-        const selectedCount = selectedRow.length;
-        return (
-            <div
-                ref={floatingBarRef}
-                style={{
-                    position: "fixed",
-                    left: barPosition.x,
-                    top: barPosition.y,
-                    zIndex: 9999,
-                    minWidth: 320,
-                    background: "#6B6B6BEE",
-                    borderRadius: 24,
-                    boxShadow: "0 2px 12px #0002",
-                    padding: "8px 24px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 16,
-                    cursor: dragging ? "grabbing" : "default",
-                }}
-            >
-                <div
-                    style={{
-                        fontWeight: 600,
-                        color: "#fff",
-                        fontSize: 18,
-                        marginRight: 16,
-                        userSelect: "none",
-                        cursor: "grab",
-                    }}
-                    onMouseDown={handleMouseDown}
-                >
-                    {selectedCount} Selected
-                </div>
-                {config.floatingInfoBar.buttons &&
-                    config.floatingInfoBar.buttons(
-                        tableDetails.data || [],
-                        selectedRow,
-                        selectedColumns
-                    ).map((btn, idx) => (
-                        <span key={idx}>{btn}</span>
-                    ))}
-                <span
-                    style={{
-                        marginLeft: 16,
-                        cursor: "pointer",
-                        color: "#fff",
-                        fontSize: 20,
-                        fontWeight: 700,
-                    }}
-                    onClick={() => setShowFloatingBar(false)}
-                >
-                    ×
-                </span>
-            </div>
-        );
-    };
 
     return (
         <>
@@ -1300,17 +1197,14 @@ function FilterTableHeader({
 function TableFooter() {
     const { config } = useContext(Config);
     const { api, footer, pageSize = defaultPageSize } = config;
-    const { tableDetails, setTableDetails, setNestedLoading, searchState, filterState } = useContext(TableDetails);
+    const { tableDetails, nestedLoading, setTableDetails, setNestedLoading, searchState, filterState } = useContext(TableDetails);
+    const { selectedRow } = useContext(SelectedRow);
+    const { selectedColumns } = useContext<columnFilterConfigType>(ColumnFilterConfig);
     const cPage = tableDetails.currentPage || 0;
     const totalPages = tableDetails.total || 1;
 
     async function handlePageChange(pageNo: number) {
         if (pageNo < 0 || pageNo > totalPages - 1) return;
-        // NOTE: previously we dispatched a global "customTable:clearFilters"
-        // event here which caused filter UI to reset when changing pages.
-        // That cleared the applied filters and active filter count unexpectedly
-        // when paginating. Do not clear filters on page change — pagination
-        // should respect the currently applied filters (see filterState).
 
         const MIN_LOADING_MS = 1000;
         const start = Date.now();
@@ -1388,9 +1282,88 @@ function TableFooter() {
         }
     }
 
-    return (
-        footer && (
-            <div className="px-[24px] py-[12px] flex justify-between items-center text-[#414651]">
+     // Floating Info Bar State
+    const [showFloatingBar, setShowFloatingBar] = useState(
+        !!config.floatingInfoBar?.showByDefault
+    );
+
+    // Show bar if showSelectedRow and rows are selected
+    useEffect(() => {
+        if (config.floatingInfoBar?.showSelectedRow && selectedRow.length > 0) {
+            setShowFloatingBar(true);
+        } else if (!config.floatingInfoBar?.showByDefault) {
+            setShowFloatingBar(false);
+        }
+    }, [selectedRow, config.floatingInfoBar]);
+
+    // Move nodeRef outside to prevent recreation and flickering
+    const floatingBarNodeRef = useRef(null);
+
+    // Memoize visible buttons to avoid recalculation
+    const visibleButtons = useMemo(() => {
+        if (!config.floatingInfoBar?.buttons) return [];
+        
+        return config.floatingInfoBar.buttons.filter(button => {
+            // Check showOnSelect condition
+            if (button.showOnSelect && selectedRow.length === 0) return false;
+            
+            // Check showWhen condition
+            if (button.showWhen && !button.showWhen(tableDetails?.data || [], selectedRow, selectedColumns)) return false;
+            
+            return true;
+        });
+    }, [config.floatingInfoBar?.buttons, selectedRow, tableDetails?.data, selectedColumns]);
+
+    const FloatingInfoBar = useCallback(() => {
+        if (!config.floatingInfoBar || !showFloatingBar || nestedLoading) return null;
+        
+        return (
+            <Draggable nodeRef={floatingBarNodeRef}>
+                <div 
+                    ref={floatingBarNodeRef} 
+                    className={`flex justify-between items-center gap-6 w-fit p-4 z-[70] cursor-grab text-white bg-[#00000080] backdrop-blur-xl rounded-[40px] transition-all ease-in-out ${footer ? 'mb-20' : ''}`}
+                >
+                    <span onClick={() => config?.floatingInfoBar?.rowSelectionOnClick && config.floatingInfoBar.rowSelectionOnClick(tableDetails?.data || [], selectedRow, selectedColumns) }>selected {selectedRow.length}</span>
+                    {visibleButtons.length > 0 && (
+                        <span className="flex gap-[18px]">
+                            {visibleButtons.map((button, index) => (
+                                <span 
+                                    key={`${button.label}-${index}`}
+                                    className={`cursor-pointer bg-[#FDFDFD33] shadow-[0px_1px_2px_0px_#0A0D120D] py-2 px-3 rounded-3xl flex items-center gap-2 ${
+                                        button.labelTw || ''
+                                    }`}
+                                    onClick={() => button.onClick?.(tableDetails?.data || [], selectedRow, selectedColumns)}
+                                >
+                                    {button.icon && (
+                                        <span className="w-5 h-5">
+                                            <Icon 
+                                                icon={button.icon}
+                                                className="transition-all duration-200 ease-in-out"
+                                                width={button.iconWidth ? parseInt(button.iconWidth) : 20} 
+                                            />
+                                        </span>
+                                    )}
+                                    <span>{button.label}</span>
+                                </span>
+                            ))}
+                        </span>
+                    )}
+                    <span className="rounded-full py-2 px-3 bg-[#FDFDFD33] bg-opacity-30 flex items-center justify-center cursor-pointer">
+                        <span className="w-5 h-5">
+                            <Icon icon="mdi:close" className="transition-all duration-200 ease-in-out" width={20} onClick={() => setShowFloatingBar(false)} />
+                        </span>
+                    </span>
+                </div>
+            </Draggable>
+        );
+    }, [config.floatingInfoBar, showFloatingBar, nestedLoading, selectedRow.length, visibleButtons, footer]);
+
+    return (<div className="relative">
+        <div className="absolute left-1/2 -translate-x-1/2 ml-2 flex justify-center bottom-1">
+            <FloatingInfoBar />
+        </div>
+        {footer && (
+            <div className="px-6 py-3 flex justify-between items-center text-[#414651]">
                 <div>
                     {footer?.nextPrevBtn && (
                         <BorderIconButton
@@ -1405,7 +1378,7 @@ function TableFooter() {
                 </div>
                 <div>
                     {footer?.pagination && (
-                        <div className="gap-[2px] text-[14px] hidden md:flex select-none">
+                        <div className="gap-0.5 text-[14px] hidden md:flex select-none">
                             {(() => {
                                 // Build pagination elements based on totalPages and current page (cPage)
                                 if (totalPages <= 6) {
@@ -1481,7 +1454,8 @@ function TableFooter() {
                     )}
                 </div>
             </div>
-        )
+        )}
+    </div>
     );
 }
 

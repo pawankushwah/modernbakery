@@ -195,6 +195,24 @@ export default function CompanyCustomers() {
                   labelTw: "text-[12px] hidden sm:block",
                   onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
                 },
+              ],
+              searchBar: true,
+              columnFilter: true,
+              actions: [
+                <SidebarBtn
+                  key="add-company-customer"
+                  href="/keyCustomer/add"
+                  leadingIcon="lucide:plus"
+                  label="Add"
+                  labelTw="hidden sm:block"
+                  isActive
+                />,
+              ],
+            },
+            floatingInfoBar: {
+              showByDefault: true,
+              showSelectedRow: true,
+              buttons: [
                 {
                   icon: "lucide:radio",
                   label: "Inactive",
@@ -202,7 +220,6 @@ export default function CompanyCustomers() {
                   showWhen: (data: TableDataType[], selectedRow?: number[]) => {
                     if (!selectedRow || selectedRow.length === 0) return false;
                     const status = selectedRow?.map((id) => data[id].status).map(String);
-                    console.log(status, "status");
                     return status?.includes("1") || false;
                   },
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
@@ -224,7 +241,6 @@ export default function CompanyCustomers() {
                   showWhen: (data: TableDataType[], selectedRow?: number[]) => {
                     if (!selectedRow || selectedRow.length === 0) return false;
                     const status = selectedRow?.map((id) => data[id].status).map(String);
-                    console.log(status, "status");
                     return status?.includes("0") || false;
                   },
                   onClick: (data: TableDataType[], selectedRow?: number[]) => {
@@ -239,34 +255,8 @@ export default function CompanyCustomers() {
                     handleStatusChange(ids, Number(1));
                   },
                 },
-              ],
-              searchBar: true,
-              columnFilter: true,
-              actions: [
-                <SidebarBtn
-                  key="add-company-customer"
-                  href="/keyCustomer/add"
-                  leadingIcon="lucide:plus"
-                  label="Add"
-                  labelTw="hidden sm:block"
-                  isActive
-                />,
-              ],
+              ]
             },
-            // floatingInfoBar: {
-            //   showByDefault: true,
-            //   showSelectedRow: true,
-            //   buttons: (tableData: TableDataType[], selectedRows: number[], selectedColumns: number[]) => [
-            //     <SidebarBtn
-            //       key="add-company-customer"
-            //       href="/keyCustomer/add"
-            //       leadingIcon="lucide:plus"
-            //       label="Add"
-            //       labelTw="hidden sm:block"
-            //       isActive
-            //     />
-            //   ],
-            // },
             localStorageKey: "company-customers-table",
             footer: { nextPrevBtn: true, pagination: true },
             columns,
