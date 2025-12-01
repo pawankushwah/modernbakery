@@ -310,7 +310,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { list: fetchIRO },
                     header: {
-                        title: "ACF",
+                        title: "IRO List",
                         columnFilter: true,
                         searchBar: false,
                         // threeDot: [
@@ -432,7 +432,11 @@ export default function CustomerInvoicePage() {
                         {
                             icon: "lucide:eye",
                             onClick: (row: TableDataType) => {
-                                    router.push(`/assetsRequest/view/${row.id}`);
+                                if (hasChillerRequest(row)) {
+                                    router.push(`/assetsRequest/view/${row.chiller_request.uuid}`);
+                                } else {
+                                    showSnackbar("Invalid row data", "error");
+                                }
                             },
                         },
                     ],

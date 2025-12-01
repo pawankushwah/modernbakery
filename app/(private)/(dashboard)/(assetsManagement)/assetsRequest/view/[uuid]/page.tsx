@@ -110,7 +110,6 @@ export default function ViewPage() {
     ) : (
       "-"
     );
-
   return (
     <>
       {/* Header */}

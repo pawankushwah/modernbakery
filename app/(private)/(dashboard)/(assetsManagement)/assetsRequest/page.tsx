@@ -166,16 +166,16 @@ export default function Page() {
               ],
               searchBar: false,
               columnFilter: true,
-              actions: [
-                <SidebarBtn
-                  key="name"
-                  href="/assets/chillerRequest/add"
-                  leadingIcon="lucide:plus"
-                  label="Add"
-                  labelTw="hidden lg:block"
-                  isActive
-                />,
-              ],
+              // actions: [
+              //   <SidebarBtn
+              //     key="name"
+              //     href="/assets/chillerRequest/add"
+              //     leadingIcon="lucide:plus"
+              //     label="Add"
+              //     labelTw="hidden lg:block"
+              //     isActive
+              //   />,
+              // ],
             },
             footer: { nextPrevBtn: true, pagination: true },
             columns: [
@@ -263,7 +263,7 @@ export default function Page() {
               {
                 icon: "lucide:edit-2",
                 onClick: (data: TableDataType) => {
-                  router.push(`/assetsRequest/edit/${data.uuid}`);
+                  router.push(`/assetsRequest/${data.uuid}`);
                 },
               },
 
