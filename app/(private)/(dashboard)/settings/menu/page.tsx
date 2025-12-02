@@ -61,7 +61,9 @@ export default function Page() {
             pageSize: number = 50
         ): Promise<listReturnType> => {
             setLoading(true);
-            const listRes = await menuList();
+            const listRes = await menuList(
+                // {page: page.toString(), per_page: pageSize.toString()}
+            );
             setLoading(false);
             if (listRes.error) {
                 showSnackbar(

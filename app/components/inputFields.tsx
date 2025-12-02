@@ -1260,7 +1260,7 @@ export default function InputFields({
               step={integerOnly ? 1 : step ? step : undefined}
               disabled={disabled}
               onBlur={onBlur}
-              className={`h-full px-3 rounded-md text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100`}
+              className={`h-full w-full px-3 rounded-md text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100`}
               placeholder={`Enter ${label}`}
               maxLength={maxLength}
               min={min}

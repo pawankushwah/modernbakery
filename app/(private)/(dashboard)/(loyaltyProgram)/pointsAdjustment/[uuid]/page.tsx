@@ -1,8 +1,10 @@
 "use client";
+import AutoSuggestion, { Option } from "@/app/components/autoSuggestion";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import InputFields from "@/app/components/inputFields";
 import Loading from "@/app/components/Loading";
-import {createTier,getTierDetails,updateTier} from "@/app/services/settingsAPI";
+import {createBonus,getTierDetails,updateTier} from "@/app/services/settingsAPI";
+import { itemGlobalSearch } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
@@ -19,11 +21,15 @@ export default function AddEditTier() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
-    tierName: "",
-    tierPeriod: "",
-    min: "",
-    max: "",
+    item: "",
+    rewardBasis: "",
+    thresholdValue: "",
+    rewardPoints: "",
   });
+
+  // keep the selected option (label + value) for AutoSuggestion so the input
+  // can show the human-friendly label while `form.item` stores the id
+  const [selectedItemOption, setSelectedItemOption] = useState<Option | null>(null);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   useEffect(() => {
@@ -33,12 +39,22 @@ export default function AddEditTier() {
         try {
           const res = await getTierDetails(String(routeId));
           const data = res?.data ?? res;
+          // store the item id in form.item and also set the selected option
+          const itemId = data?.item_id ?? data?.itemId ?? data?.id ?? "";
+          const labelParts = [];
+          if (data?.erp_code) labelParts.push(data.erp_code);
+          else if (data?.item_code) labelParts.push(data.item_code);
+          else if (data?.code) labelParts.push(data.code);
+          if (data?.name) labelParts.push(data.name);
+          const itemLabel = labelParts.join(" - ") || (data?.name ?? "");
+
           setForm({
-            tierName: data?.name,
-            tierPeriod: data?.period,
-            min: data?.minpurchase,
-            max: data?.maxpurchase,
+            item: itemId ? String(itemId) : "",
+            rewardBasis: data?.period,
+            thresholdValue: data?.minpurchase,
+            rewardPoints: data?.maxpurchase,
           });
+          setSelectedItemOption(itemId ? { value: String(itemId), label: itemLabel } : null);
 
        
         } catch (err) {
@@ -52,37 +68,42 @@ export default function AddEditTier() {
 
   // Validation schema
   const validationSchema = yup.object().shape({
-    tierName: yup
+    item: yup
       .string()
-      .required("Tier Name is required"),
+      .required("Item is required"),
 
-    tierPeriod: yup.string().required("Purchase Period is required"),
-    min: yup
+    rewardBasis: yup.string().required("Reward Basis is required"),
+    thresholdValue: yup
       .number()
       .transform((value, originalValue) => {
+        // treat empty string as undefined so required() triggers
         return originalValue === "" || originalValue === null || originalValue === undefined
           ? undefined
           : Number(originalValue);
       })
-      .typeError("Purchase Volume Min must be a number")
-      .required("Purchase Volumne Min is required")
+      .typeError("Threshold Value must be a number")
+      .required("Threshold Value is required")
       .min(0, "You cannot write negative value"),
-    max: yup
+    rewardPoints: yup
       .number()
       .transform((value, originalValue) => {
         return originalValue === "" || originalValue === null || originalValue === undefined
           ? undefined
           : Number(originalValue);
       })
-      .typeError("Purchase Volume Max must be a number")
-      .required("Purchae Volume Max is required")
+      .typeError("Reward Points must be a number")
+      .required("Reward Point is required")
       .min(0, "You cannot write negative value"),
   });
 
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    // clear existing error for this field
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
-    if (field === "min" || field === "max") {
+
+    // Live validation: prevent negative values being entered for number fields
+    if (field === "thresholdValue" || field === "rewardPoints") {
+      // allow empty value (will be caught by required on submit)
       if (value === "") {
         setErrors((prev) => ({ ...prev, [field]: "" }));
         return;
@@ -91,8 +112,28 @@ export default function AddEditTier() {
       if (!isNaN(num) && num < 0) {
         setErrors((prev) => ({ ...prev, [field]: "You cannot write negative value" }));
       } else {
+        // clear negative error if fixed
         setErrors((prev) => ({ ...prev, [field]: "" }));
       }
+    }
+  };
+
+  const fetchItems = async (searchTerm: string) => {
+    try {
+      const res = await itemGlobalSearch({ per_page: "10", query: searchTerm });
+      if (res?.error) {
+        showSnackbar(res.data?.message || "Failed to fetch items", "error");
+        return [];
+      }
+      const data = res?.data || [];
+      const options = data.map((item: any) => ({
+        value: String(item.id),
+        label: (item.erp_code ?? item.item_code ?? item.code ?? "") + (item.name ? ` - ${item.name}` : ""),
+      }));
+      return options;
+    } catch (err) {
+      showSnackbar("Failed to fetch items", "error");
+      return [];
     }
   };
 
@@ -103,27 +144,27 @@ export default function AddEditTier() {
       setSubmitting(true);
 
       const payload = {
-        name: form.tierName,
-        period: form.tierPeriod,
-        minpurchase: form.min,
-        maxpurchase: form.max,
+        item_id: form.item,
+        reward_basis: form.rewardBasis,
+        volume: (form.thresholdValue),
+        bonus_points: form.rewardPoints,
       };
 
       let res;
       if (isEditMode && routeId) {
         res = await updateTier(routeId, payload);
       } else {
-        res = await createTier(payload);
+        res = await createBonus(payload);
       }
 
       if (res?.error) {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(
-          isEditMode ? "Tier updated successfully" : "Tier added successfully",
+          isEditMode ? "Bonus Points updated successfully" : "Bonus Points added successfully",
           "success"
         );
-        router.push("/settings/tier");
+        router.push("/settings/bonusPoints");
       }
     } catch (err) {
       if (err instanceof yup.ValidationError) {
@@ -157,11 +198,11 @@ export default function AddEditTier() {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <Link href="/settings/tier">
+          <Link href="/settings/bonusPoints">
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Tier" : "Add Tier"}
+            {isEditMode ? "Update Bonus Points" : "Add Bonus Points"}
           </h1>
         </div>
       </div>
@@ -170,7 +211,7 @@ export default function AddEditTier() {
       <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
-            Tier Details
+            Bonus Points Details
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            
@@ -178,14 +219,26 @@ export default function AddEditTier() {
 
             {/* Route Name */}
             <div className="flex flex-col">
-              <InputFields
+              <AutoSuggestion
                 required
-                label="Tier Name"
-                value={form.tierName}
-                onChange={(e) => handleChange("tierName", e.target.value)}
+                label="Item"
+                placeholder="Search item"
+                onSearch={(q) => fetchItems(q)}
+                // show the human-friendly label via selectedOption; keep id in form.item
+                selectedOption={selectedItemOption}
+                onSelect={(opt) => {
+                  // store id and remember label for display
+                  setForm(prev => ({ ...prev, item: String(opt.value) }));
+                  setSelectedItemOption(opt);
+                }}
+                onClear={() => {
+                  setForm(prev => ({ ...prev, item: "" }));
+                  setSelectedItemOption(null);
+                }}
+                className="w-full"
               />
-              {errors.tierName && (
-                <p className="text-red-500 text-sm mt-1">{errors.tierName}</p>
+              {errors.item && (
+                <p className="text-red-500 text-sm mt-1">{errors.item}</p>
               )}
             </div>
 
@@ -193,18 +246,16 @@ export default function AddEditTier() {
             <div className="flex flex-col">
               <InputFields
                 required
-                label="Purchase Period"
-                value={form.tierPeriod}
-                onChange={(e) => handleChange("tierPeriod", e.target.value)}
+                label="Reward Basis"
+                value={form.rewardBasis}
+                onChange={(e) => handleChange("rewardBasis", e.target.value)}
                 options={[
-                  { value: "1", label: "Monthly" },
-                  { value: "2", label: "Quarterly" },
-                  { value: "3", label: "Half Yearly" },
-                  { value: "4", label: "Yearly" },
+                  { value: "qty", label: "Quantity" },
+                  { value: "amount", label: "Amount" },
                 ]}
               />
-              {errors.tierPeriod && (
-                <p className="text-red-500 text-sm mt-1">{errors.tierPeriod}</p>
+              {errors.rewardBasis && (
+                <p className="text-red-500 text-sm mt-1">{errors.rewardBasis}</p>
               )}
             </div>
 
@@ -214,30 +265,30 @@ export default function AddEditTier() {
               min={1}
                 required
                 type="number"
-                label="Purchase Volume Min"
-                value={form.min}
+                label="Threshold Value"
+                value={form.thresholdValue}
                 onChange={(e) => {
-                  handleChange("min", e.target.value);
+                  handleChange("thresholdValue", e.target.value);
                 }}
+                error={(errors.thresholdValue)}
               />
-              {errors.min && (
-                <p className="text-red-500 text-sm mt-1">{errors.min}</p>
-              )}
+              
             </div>
             <div className="flex flex-col">
               <InputFields
               min={1}
                 required
                 type="number"
-                label="Purchase Volume Max"
-                value={form.max}
+                label="Reward Points"
+                value={form.rewardPoints}
                 onChange={(e) => {
-                  handleChange("max", e.target.value);
+                  handleChange("rewardPoints", e.target.value);
                 }}
+                error={(errors.rewardPoints)}
               />
-              {errors.max && (
-                <p className="text-red-500 text-sm mt-1">{errors.max}</p>
-              )}
+              {/* {errors.rewardPoints && (
+                <p className="text-red-500 text-sm mt-1">{errors.rewardPoints}</p>
+              )} */}
             </div>
           </div>
         </div>
@@ -253,7 +304,7 @@ export default function AddEditTier() {
               ? "bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400"
               : "border-gray-300"
             }`}
-          onClick={() => router.push("/settings/tier")}
+          onClick={() => router.push("/settings/bonusPoints")}
           disabled={submitting}
         // disable while submitting
         >

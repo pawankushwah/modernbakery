@@ -209,7 +209,7 @@ export const initialLinkData: SidebarDataType[] = [
       {
         isActive: false,
         href: "#",
-        label: "Loyalty Program",
+        label: "Loyalty Management",
         leadingIcon: "ix:customer-filled",
         trailingIcon: "qlementine-icons:items-grid-small-24",
         iconColor: "text-yellow-400",
@@ -224,8 +224,15 @@ export const initialLinkData: SidebarDataType[] = [
           {
             isActive: false,
             href: "/settings/rewardCategory",
-            label: "Reward Category",
+            label: "Reward & Benefits",
             leadingIcon: "streamline-ultimate:reward-stars-4",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/bonusPoints",
+            label: "Bonus Points",
+            leadingIcon: "fa-solid:coins",
             iconColor: "text-green-500",
           },
           

@@ -21,6 +21,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 
 export default function RewardCategory() {
@@ -76,14 +77,14 @@ export default function RewardCategory() {
             key: "points_required",
             label: "Points Required",
             render: (data: TableDataType) => {
-                return data?.points_required ||  "-";
+                return toInternationalNumber(data?.points_required ||  "-");
             },
         },
         {
             key: "stock_qty",
             label: "Stock Qty",
             render: (data: TableDataType) => {
-                return data?.stock_qty ||  "-";
+                return toInternationalNumber(data?.stock_qty ||  "-");
             },
         },
         {
@@ -212,7 +213,7 @@ export default function RewardCategory() {
                             search: searchRoute,
                         },
                         header: {
-                            title: "Reward Category",
+                            title: "Reward & Benefits",
                             // threeDot: [
                             //     {
                             //         icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",

@@ -87,3 +87,39 @@ export const updateReward = async (uuid: string,body:object) => {
     return handleError(error);
   }
 };
+
+export const bonusList = async (params: Params) => {
+  try {
+    const res = await API.get("/api/settings/bonus/list", { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const createBonus = async (payload: object) => {
+  try {
+    const res = await API.post("/api/settings/bonus/create", payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getBonusDetails = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/settings/bonus/show/${uuid}`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateBonus = async (uuid: string,body:object) => {
+  try {
+    const res =  await API.put(`/api/settings/bonus/update/${uuid}`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

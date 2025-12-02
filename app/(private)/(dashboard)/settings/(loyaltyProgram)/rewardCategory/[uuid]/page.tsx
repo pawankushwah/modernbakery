@@ -59,14 +59,49 @@ export default function AddEditRewardCategory() {
       .required("Reward Name is required"),
     // can be a File or existing string path
     rewardImage: yup.mixed().required("Image is required"),
-    points: yup.string().required("Points is required"),
-    stockQty: yup.string().required("Stock Qty is required"),
+    points: yup
+      .number()
+      .transform((value, originalValue) => {
+        return originalValue === "" || originalValue === null || originalValue === undefined
+          ? undefined
+          : Number(originalValue);
+      })
+      .typeError("Points must be a number")
+      .required("Points is required")
+      .min(0, "You cannot write negative value"),
+    stockQty: yup
+      .number()
+      .transform((value, originalValue) => {
+        return originalValue === "" || originalValue === null || originalValue === undefined
+          ? undefined
+          : Number(originalValue);
+      })
+      .typeError("Stock Qty must be a number")
+      .required("Stock Qty is required")
+      .min(0, "You cannot write negative value"),
     giftType: yup.string().required("Gift Type is required"),
   });
 
   const handleChange = (field: string, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    // clear existing error for this field
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
+
+    // Live validation: prevent negative values being entered for number fields
+    if (field === "points" || field === "stockQty") {
+      // allow empty value (will be caught by required on submit)
+      if (value === "") {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+        return;
+      }
+      const num = Number(value);
+      if (!isNaN(num) && num < 0) {
+        setErrors((prev) => ({ ...prev, [field]: "You cannot write negative value" }));
+      } else {
+        // clear negative error if fixed
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+    }
   };
 
   // special handler to accept File from file input
@@ -106,7 +141,7 @@ export default function AddEditRewardCategory() {
         showSnackbar(res.data?.message || "Failed to submit form", "error");
       } else {
         showSnackbar(
-          isEditMode ? "Reward Category updated successfully" : "Reward Category added successfully",
+          isEditMode ? "Reward & Benefits updated successfully" : "Reward & Benefits added successfully",
           "success"
         );
         router.push("/settings/rewardCategory");
@@ -147,7 +182,7 @@ export default function AddEditRewardCategory() {
             <Icon icon="lucide:arrow-left" width={24} />
           </Link>
           <h1 className="text-xl font-semibold text-gray-900">
-            {isEditMode ? "Update Reward Category" : "Add Reward Category"}
+            {isEditMode ? "Update Reward & Benefits" : "Add Reward & Benefits"}
           </h1>
         </div>
       </div>
@@ -156,7 +191,7 @@ export default function AddEditRewardCategory() {
       <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
         <div className="p-6">
           <h2 className="text-lg font-medium text-gray-800 mb-4">
-            Reward Category Details
+            Reward & Benefits Details
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
            

@@ -13,12 +13,11 @@ import {
     routeGlobalSearch,
     routeStatusUpdate,
 } from "@/app/services/allApi";
-import { tierList } from "@/app/services/settingsAPI";
+import { bonusList } from "@/app/services/settingsAPI";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 
 export default function Tier() {
@@ -43,41 +42,27 @@ export default function Tier() {
             ),
         },
         {
-            key: "name",
-            label: "Tier name",
+            key: "item_code,item_name",
+            label: "Item",
             render: (data: TableDataType) => {
-                return data?.name ||  "-";
+                return `${data?.item_code ||  "-"} - ${data?.item_name ||  "-"}`;
             },
         },
         {
-            key: "period",
-            label: "Period",
+            key: "volume",
+            label: "Threshold Value",
             render: (data: TableDataType) => {
-                const map: Record<string, string> = {
-                    "1": "Monthly",
-                    "2": "Quarterly",
-                    "3": "Half Yearly",
-                    "4": "Yearly",
-                };
-                const val = data?.period;
-                if (val === null || val === undefined || val === "") return "-";
-                return map[String(val)] ?? String(val);
+                return data?.volume ||  "-";
             },
         },
         {
-            key: "minpurchase",
-            label: "Min Purchase",
+            key: "bonus_points",
+            label: "Bonus Points",
             render: (data: TableDataType) => {
-                return toInternationalNumber(data?.minpurchase ||  "-");
+                return data?.bonus_points ||  "-";
             },
         },
-        {
-            key: "maxpurchase",
-            label: "Max Purchase",
-            render: (data: TableDataType) => {
-                return toInternationalNumber(data?.maxpurchase ||  "-");
-            },
-        },
+        
     ];
 
     useEffect(() => {
@@ -96,7 +81,7 @@ export default function Tier() {
             if (warehouseId) {
                 params.warehouse_id = warehouseId;
             }
-            const listRes = await tierList(params);
+            const listRes = await bonusList(params);
             return {
                 data: listRes?.data || [],
                 currentPage: listRes?.pagination?.page || pageNo,
@@ -121,7 +106,7 @@ export default function Tier() {
             // setLoading(true);
             let result;
             if (columnName && columnName !== "") {
-                result = await tierList({
+                result = await bonusList({
                     per_page: pageSize.toString(),
                     [columnName]: searchQuery,
                     page: page.toString(),
@@ -197,7 +182,7 @@ export default function Tier() {
                             search: searchTier,
                         },
                         header: {
-                            title: "Tiers",
+                            title: "Bonus Points",
                             // threeDot: [
                             //     {
                             //         icon: threeDotLoading.csv ? "eos-icons:three-dots-loading" : "gala:file-document",
@@ -257,7 +242,7 @@ export default function Tier() {
                             actions: [
                                 <SidebarBtn
                                     key={0}
-                                    href="/settings/tier/add"
+                                    href="/settings/bonusPoints/add"
                                     isActive={true}
                                     leadingIcon="lucide:plus"
                                     label="Add"
@@ -283,13 +268,13 @@ export default function Tier() {
                             // {
                             //     icon: "lucide:eye",
                             //     onClick: (data: TableDataType) => {
-                            //         router.push(`/settings/tier/details/${data.uuid}`);
+                            //         router.push(`/settings/bonusPoints/details/${data.uuid}`);
                             //     },
                             // },
                             {
                                 icon: "lucide:edit-2",
                                 onClick: (data: TableDataType) => {
-                                    router.push(`/settings/tier/${data.uuid}`);
+                                    router.push(`/settings/bonusPoints/${data.uuid}`);
                                 },
                             },
                         ],

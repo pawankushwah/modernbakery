@@ -506,6 +506,31 @@ export const initialLinkData: SidebarDataType[] = [
           },
         ],
       },
+      {
+        isActive: false,
+        href: "#",
+        label: "Loyalty Program",
+        leadingIcon: "fa-solid:award",
+        iconColor: "text-green-500",
+        trailingIcon: "mdi-light:chevron-right",
+        children: [
+          {
+            isActive: false,
+            href: "/customerLoyaltyPoints",
+            label: "Customer Loyalty Points",
+            leadingIcon: "guidance:refrigeration",
+            iconColor: "text-cyan-500",
+          },
+          {
+            isActive: false,
+            href: "/pointsAdjustment",
+            label: "Points Adjustment",
+            leadingIcon: "si:pull-request-duotone",
+            iconColor: "text-cyan-500",
+          },
+         
+        ],
+      },
     ],
   },
 ];

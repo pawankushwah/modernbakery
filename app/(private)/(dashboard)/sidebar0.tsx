@@ -115,8 +115,7 @@ export default function Sidebar({
         </div>
 
         {/* menu */}
-        <div className={`w-full h-[calc(100vh-60px)] text-sm py-5 ${isOpen ? "px-2" : "px-4"} group-hover:px-2 transition-all ease-in-out border-[1px] border-[#E9EAEB] border-t-0 overflow-y-auto scrollbar-none`}>
-          <div className="mb-5 w-full h-full">
+        <div className={`w-full h-[calc(100vh-60px)] text-sm py-5 ${isOpen ? "px-2" : "px-4"} pb-40 group-hover:px-2 transition-all ease-in-out border-[1px] border-[#E9EAEB] border-t-0 overflow-y-auto scrollbar-none`}>
             {data.map((group: SidebarDataType,index) => (
               <div key={index} className={`${isOpen ? "mb-[20px]" : "m-0" } group-hover:mb-[20px]`}>
                 {/* <div className={`text-[#717680] text-[14px] mb-3 ${isOpen ? "block" : "hidden"} group-hover:block`}>
@@ -237,7 +236,6 @@ export default function Sidebar({
               </div>
             ))}
           </div>
-        </div>
       </div>
     </div>
   );
