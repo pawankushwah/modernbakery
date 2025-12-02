@@ -98,7 +98,7 @@ export default function Settings({ children }: { children: React.ReactNode }) {
                                                 <SidebarBtn
                                                     isActive={isActive}
                                                     href={hasChildren ? "#" : link.href}
-                                                    buttonTw="px-3 py-2 h-10 w-full"
+                                                    buttonTw="px-3 py-2 h-fit w-full"
                                                     label={link.label}
                                                     labelTw={`${isOpen ? "block" : "hidden"}`}
                                                     leadingIcon={link.leadingIcon}

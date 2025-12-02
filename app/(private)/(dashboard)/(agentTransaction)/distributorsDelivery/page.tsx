@@ -259,7 +259,7 @@ export default function CustomerInvoicePage() {
                             // />,
                             <SidebarBtn
                                 key={1}
-                                href="/agentCustomerDelivery/add"
+                                href="/distributorsDelivery/add"
                                 isActive
                                 leadingIcon="mdi:plus"
                                 label="Add"
@@ -332,7 +332,7 @@ export default function CustomerInvoicePage() {
                             icon: "lucide:eye",
                             onClick: (row: TableDataType) =>
                                 router.push(
-                                    `/agentCustomerDelivery/details/${row.uuid}`
+                                    `/distributorsDelivery/details/${row.uuid}`
                                 ),
                         },
                         {
@@ -344,7 +344,7 @@ export default function CustomerInvoicePage() {
                         //     icon: "lucide:edit-2",
                         //     onClick: (row: TableDataType) =>
                         //         router.push(
-                        //             `/agentCustomerDelivery/${row.uuid}`
+                        //             `/distributorsDelivery/${row.uuid}`
                         //         ),
                         // },
                     ],

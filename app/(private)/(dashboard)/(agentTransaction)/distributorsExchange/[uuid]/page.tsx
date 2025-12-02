@@ -544,7 +544,7 @@ export default function ExchangeAddEditPage() {
           // Optionally handle error, but don't block success
         }
         showSnackbar("Exchange created successfully", "success");
-        router.push("/exchange");
+        router.push("/distributorsExchange");
       }
     } catch (err) {
       console.error(err);
@@ -602,7 +602,7 @@ export default function ExchangeAddEditPage() {
     <div className="flex flex-col">
       <div className="flex justify-between items-center mb-[20px]">
         <div className="flex items-center gap-[16px]">
-          <Icon icon="lucide:arrow-left" width={24} onClick={() => router.back()} />
+          <Icon icon="lucide:arrow-left" className="curosor-pointer" width={24} onClick={() => router.back()} />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">Add Exchange</h1>
         </div>
       </div>
@@ -963,7 +963,7 @@ export default function ExchangeAddEditPage() {
 
                 {/* --- Buttons --- */}
                 <div className="flex justify-end gap-4 mt-6">
-                  <button type="button" className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100" onClick={() => router.push("/exchange")}>
+                  <button type="button" className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100" onClick={() => router.push("/distributorsExchange")}>
                     Cancel
                   </button>
                   <SidebarBtn type="submit" isActive={true} label={isSubmitting ? "Creating Exchange..." : "Create Exchange"} disabled={isSubmitting} onClick={() => submitForm()} />

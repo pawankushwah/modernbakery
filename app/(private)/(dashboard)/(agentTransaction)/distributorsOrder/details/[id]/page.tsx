@@ -89,7 +89,7 @@ export default function OrderDetailPage() {
   const params = useParams();
   const UUID = Array.isArray(params.id) ? params.id[0] : params.id ?? "";
   const CURRENCY = localStorage.getItem("country") || "";
-  const PATH = `/agentOrder/details/`;
+  const PATH = `/distributorsOrder/details/`;
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -164,7 +164,7 @@ export default function OrderDetailPage() {
           <Icon
             icon="lucide:arrow-left"
             width={24}
-            onClick={() => router.push("/agentOrder")}
+            onClick={() => router.push("/distributorsOrder")}
             className="cursor-pointer"
           />
           <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">

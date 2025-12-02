@@ -797,7 +797,7 @@ export default function InvoiceddEditPage() {
                     : "Invoice created successfully!",
                 "success"
             );
-            router.push("/agentInvoice");
+            router.push("/distributorsInvoice");
         } catch (error) {
             if (error instanceof yup.ValidationError) {
                 // Handle yup validation errors
@@ -855,6 +855,7 @@ export default function InvoiceddEditPage() {
                         icon="lucide:arrow-left"
                         width={24}
                         onClick={() => router.back()}
+                        className="cursor-pointer"
                     />
                     <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px] mb-[4px]">
                         {isEditMode ? "Update Invoice" : "Add Invoice"}
@@ -1703,7 +1704,7 @@ export default function InvoiceddEditPage() {
                     <button
                         type="button"
                         className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
-                        onClick={() => router.push("/agentInvoice")}
+                        onClick={() => router.push("/distributorsInvoice")}
                         disabled={isSubmitting}
                     >
                         Cancel

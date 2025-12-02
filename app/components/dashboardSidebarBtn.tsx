@@ -6,7 +6,7 @@ export default function SidebarBtn({
     isActive = false,
     href,
     className = "cursor-pointer",
-    buttonTw = "px-3 py-2 h-10",
+    buttonTw = "px-3 py-2 min-h-10",
     disabled = false,
     onClick,
     label,
@@ -62,7 +62,7 @@ export default function SidebarBtn({
                 {children ? (
                     children
                 ) : (
-                    <span className={labelTw}>{label}</span>
+                    <span className={`${labelTw} transition-all ease-in-out duration-1500`}>{label}</span>
                 )}
             </div>
             {trailingIcon && (

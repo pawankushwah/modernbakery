@@ -48,11 +48,25 @@ export default function Sidebar({
     [] as LinkDataType[]
   );
   const [activeHref, setActiveHref] = useState<string>("");
+  const [openSubMenus, setOpenSubMenus] = useState<Record<string, boolean>>({});
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     // keep local activeHref in sync with router pathname
-    setActiveHref(pathname ?? window.location.pathname);
-  }, [pathname]);
+    const currentPath = pathname ?? window.location.pathname;
+    setActiveHref(currentPath);
+    
+    // Auto-open submenus if current path matches any child
+    const initialOpenSubMenus: Record<string, boolean> = {};
+    secondSidebarChildren.forEach((link) => {
+      if (link.children && link.children.length > 0) {
+        const shouldOpen = link.children.some((child) => child.href === currentPath);
+        if (shouldOpen) {
+          initialOpenSubMenus[link.label] = true;
+        }
+      }
+    });
+    setOpenSubMenus((prev) => ({ ...prev, ...initialOpenSubMenus }));
+  }, [pathname, secondSidebarChildren]);
 
   // Collapse second sidebar when clicking outside the whole sidebar area
   useEffect(() => {
@@ -63,6 +77,7 @@ export default function Sidebar({
         setIsOpen(false);
         setCurrentPageForSecondSidebar("");
         setSecondSidebarChildren([]);
+        setOpenSubMenus({});
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -120,7 +135,20 @@ export default function Sidebar({
 
   const isParentActive = (children: LinkDataType[] | undefined): boolean => {
     if (!children) return false;
-    return Boolean(children.some((child) => child.href === activeHref));
+    return children.some((child) => {
+      if (child.href === activeHref) return true;
+      if (child.children && child.children.length > 0) {
+        return child.children.some((grand) => grand.href === activeHref);
+      }
+      return false;
+    });
+  };
+
+  const toggleSubMenu = (label: string) => {
+    setOpenSubMenus((prev) => ({
+      ...prev,
+      [label]: !(prev[label] ?? false),
+    }));
   };
 
   return (
@@ -166,9 +194,12 @@ export default function Sidebar({
                         setIsOpen(true);
                         setCurrentPageForSecondSidebar(link.href);
                         setSecondSidebarChildren(link.children);
+                        // Reset submenu states when switching to different parent menu
+                        setOpenSubMenus({});
                       } else {
                         setIsOpen(false);
                         setCurrentPageForSecondSidebar("");
+                        setOpenSubMenus({});
                       }
                     }}
                   >
@@ -229,8 +260,8 @@ export default function Sidebar({
                       buttonClassName="bg-transparent text-white"
                     />
                     {/* <div className={`hidden group-hover:flex absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}>
-                                            {link.label}
-                                        </div> */}
+                        {link.label}
+                    </div> */}
                   </div>
                 );
               }
@@ -250,10 +281,10 @@ export default function Sidebar({
                     onClick={link.onClick}
                   />
                   {/* <div
-                                        className={`hidden group-hover:flex absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
-                                    >
-                                        {link.label}
-                                    </div> */}
+                      className={`hidden group-hover:flex absolute z-60 top-0 left-[100%] whitespace-nowrap w-fit px-[10px] py-[8px] items-center justify-center bg-gray-900 text-[12px] rounded-[8px]`}
+                  >
+                      {link.label}
+                  </div> */}
                 </Link>
               );
             }
@@ -347,21 +378,59 @@ export default function Sidebar({
           {secondSidebarChildren &&
             isOpen &&
             secondSidebarChildren.map((link, index) => {
+              const hasChildren = Boolean(link.children && link.children.length > 0);
+              const isSubMenuOpen = openSubMenus[link.label] ?? false;
+              // Active if parent or any child is active
+              const isActive = link.href === activeHref || (link.children && link.children.some((child) => child.href === activeHref));
               return (
-                <div key={index}>
-                  <SidebarBtn1
-                    isActive={activeHref === link.href}
-                    href={link.href}
-                    label={link.label}
-                    labelTw={`text-[#C2CBDE]`}
-                    className=""
-                    onClick={() => {
-                      setIsOpen(false);
-                      setActiveHref(link.href);
-                    }}
-                    leadingIcon={link.leadingIcon}
-                    leadingIconSize={20}
-                  />
+                <div key={index} className={`w-full`}>
+                  <div className={`w-full ${isActive ? "bg-[#285295]" : "hover:bg-[#223458]"} rounded-lg transition-all`}>
+                    <SidebarBtn1
+                      isActive={isActive}
+                      href={hasChildren ? "#" : link.href}
+                      label={link.label}
+                      labelTw={`text-[#C2CBDE]`}
+                      className="w-full h-fit!"
+                      onClick={() => {
+                        if (hasChildren) {
+                          toggleSubMenu(link.label);
+                        } else {
+                          setIsOpen(false);
+                          setActiveHref(link.href);
+                        }
+                      }}
+                      leadingIcon={link.leadingIcon}
+                      leadingIconSize={20}
+                      trailingIcon={hasChildren ? (isSubMenuOpen ? "mdi-light:chevron-down" : "mdi-light:chevron-right") : undefined}
+                    />
+                  </div>
+                  {/* Second level submenu */}
+                  {hasChildren && isSubMenuOpen && link.children && (
+                    <div className="flex flex-col gap-1 mt-2 pl-5">
+                      {link.children.map((child: LinkDataType, childIndex) => {
+                        const isChildActive = child.href === activeHref;
+                        return (
+                          <div key={childIndex} className={`w-full`}>
+                            <div className={`w-full ${isChildActive ? "bg-[#536893]" : "hover:bg-[#536893]"} rounded-lg transition-all flex items-center`}>
+                              <SidebarBtn1
+                                isActive={false}
+                                href={child.href}
+                                label={child.label}
+                                labelTw={`text-[12px] ${isChildActive ? "text-white font-medium" : "text-[#C2CBDE]"}`}
+                                className="hover:bg-transparent! w-full"
+                                onClick={() => {
+                                  setIsOpen(false);
+                                  setActiveHref(child.href);
+                                }}
+                                leadingIcon={child.leadingIcon}
+                                leadingIconSize={16}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}

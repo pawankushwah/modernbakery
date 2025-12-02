@@ -41,7 +41,7 @@ export default function SidebarBtn1({
                     isActive
                         ? "bg-[#285295] text-white"
                         : "bg-transparent text-[#C2CBDE] hover:bg-[#536893] hover:text-white"
-                }`}
+                } ${className}`}
             >
                 <div className="flex items-center gap-[12px]">
                     {leadingIcon && (

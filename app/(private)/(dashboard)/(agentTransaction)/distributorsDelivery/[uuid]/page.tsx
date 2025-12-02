@@ -577,7 +577,7 @@ export default function DeliveryAddEditPage() {
           // Optionally handle error, but don't block success
         }
         showSnackbar("Delivery created successfully", "success");
-        router.push("/agentCustomerDelivery");
+        router.push("/distributorsDelivery");
       }
     } catch (err) {
       console.error(err);
@@ -703,6 +703,7 @@ export default function DeliveryAddEditPage() {
             icon="lucide:arrow-left"
             width={24}
             onClick={() => router.back()}
+            className="cursor-pointer"
           />
           <h1
             className="
@@ -1381,7 +1382,7 @@ export default function DeliveryAddEditPage() {
                 >
                   <button
                     type="button"
-                    onClick={() => router.push("/agentCustomerDelivery")}
+                    onClick={() => router.push("/distributorsDelivery")}
                     className="
                       px-6 py-2
                       text-gray-700
