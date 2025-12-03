@@ -3024,7 +3024,7 @@ export const assignWorkFlowsToSubmenu = async (payload: any) => {
 
 export const updateWorkFlowsToSubmenu = async (payload: any) => {
   try {
-    const res = await API.post(`/api/master/approval/workflow/updateAssignedWorkflow`, payload);
+    const res = await API.put(`/api/master/approval/workflow/updateAssignedWorkflow`, payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
