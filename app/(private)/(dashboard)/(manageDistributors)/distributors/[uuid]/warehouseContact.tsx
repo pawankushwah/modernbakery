@@ -6,7 +6,7 @@ type Props = {
   values: Record<string, string>;
   errors?: Record<string, string>;
   touched?: Record<string, boolean>;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   setFieldValue: (field: string, value: string) => void;
 };
 
@@ -31,14 +31,14 @@ export default function WarehouseContactDetails({
 
 
   const handleContactChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
     field: string
   ) => {
     const inputValue = "value" in e.target ? e.target.value.replace(/\D/g, "") : "";
     setFieldValue(field, inputValue);
   };
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     // No local validation required here; delegate to parent/Formik validation
     handleChange(e);
   };

@@ -30,10 +30,8 @@ type Props = {
   label?: string;
   name?: string;
   value?: string | string[];
-  onBlur?: (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => void;
+  onBlur?: (e: any) => void;
+  onChange: (e: any) => void;
   options?: Option[];
   type?:
     | "text"
@@ -78,7 +76,7 @@ type Props = {
   onSearchChange?: (searchText: string) => void;
   // current filter state when InputFields is used inside filter UI
   filters?: Record<string, any>;
-} & React.InputHTMLAttributes<HTMLInputElement> & React.TextareaHTMLAttributes<HTMLTextAreaElement>;
+} & React.InputHTMLAttributes<any>;
 
 export default function InputFields({
   label,

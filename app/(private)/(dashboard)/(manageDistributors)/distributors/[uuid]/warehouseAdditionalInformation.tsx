@@ -17,7 +17,7 @@ type Props = {
     values: WarehouseValues;
     errors?: Record<string, string>;
     touched?: Record<string, boolean>;
-    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
     setFieldValue: (field: string, value: unknown) => void;
 };
 
