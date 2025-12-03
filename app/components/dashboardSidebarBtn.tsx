@@ -62,7 +62,7 @@ export default function SidebarBtn({
                 {children ? (
                     children
                 ) : (
-                    <span className={`${labelTw} transition-all ease-in-out duration-1500`}>{label}</span>
+                    <span className={`${labelTw}`}>{label}</span>
                 )}
             </div>
             {trailingIcon && (

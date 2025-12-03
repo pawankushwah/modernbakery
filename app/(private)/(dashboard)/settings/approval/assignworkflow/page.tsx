@@ -7,7 +7,7 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
-import { assignWorkFlowsToSubmenu, submenuList, workFlowAssignList, workFlowList } from "@/app/services/allApi";
+import { assignWorkFlowsToSubmenu, submenuList, workFlowAssignList, workFlowAssignmentList, workFlowList, workFlowProcessType, workFlowRequest } from "@/app/services/allApi";
 import Divider from "@mui/material/Divider";
 import Drawer from "@mui/material/Drawer";
 import { useFormik } from "formik";
@@ -15,6 +15,8 @@ import * as Yup from "yup";
 
 import { useEffect, useState } from "react";
 import InputFields from "@/app/components/inputFields";
+import { Icon } from "@iconify-icon/react";
+import { useRouter } from "next/navigation";
 
 // ---- Your JSON pasted here ----
 // const WORKFLOW_DATA:any = [
@@ -108,27 +110,28 @@ import InputFields from "@/app/components/inputFields";
 export default function WorkflowTable() {
     const [refreshKey, setRefreshKey] = useState(0);
     const [open, setOpen] = useState(false)
-    const [workFlowList, setWorkflowList] = useState([])
+    const [workFlowListOptions, setWorkflowListOptions] = useState<{ value: string, label: string }[]>([])
     const [modulesList, setModulesList] = useState<any>([])
+    const router = useRouter();
 
     const formik = useFormik({
     initialValues: {
         workflow_id: "",
-        // process_type: "",
-        process_id: "",
+        process_type: "",
+        // process_id: "",
     },
 
     validationSchema: Yup.object({
         workflow_id: Yup.string().required("Workflow is required"),
         // process_type: Yup.string().required("Process Type is required"),
-        process_id: Yup.number()
-            .typeError("Process ID must be a number")
+        process_id: Yup.string()
             .required("Process ID is required"),
     }),
 
     onSubmit: async(values) => {
-        console.log("✨ Final Submitted Values:", values);
-        const workflowType = modulesList.filter((ids:any)=>ids.value == values.process_id)[0]?.label
+        
+        console.log("✨ Final Submitted Values:", {workflow_id: values.workflow_id, process_type: values.process_type});
+        const workflowType = modulesList.filter((ids:any)=>ids.value == values.process_type)[0]?.label
 
         const data = await assignWorkFlowsToSubmenu({...values,process_type:workflowType})
 
@@ -139,17 +142,31 @@ export default function WorkflowTable() {
     },
 });
 
+    useEffect(() => {
+        const fetchWorkflowList = async () => {
+            try {
+                const res = await workFlowList();
+                const workflowListData: { value: string, label: string }[] = []
+                res.data.map((item: { workflow_id: string, name: string }) => {
+                    workflowListData.push({ value: item.workflow_id.toString(), label: item.name });
+                });
+                setWorkflowListOptions(workflowListData);
+            }
+            catch (err) {
+            }
+        }
+        fetchWorkflowList()
+    }, [])
 
 
     useEffect(() => {
         const fetchSubmenuList = async () => {
             try {
-                const res = await submenuList();
+                const res = await workFlowProcessType();
                 const subMenuListDta: { value: string, label: string }[] = []
-                res.data.map((item: { id: number, name: string }) => {
-                    subMenuListDta.push({ value: item.id.toString(), label: item.name });
+                res.data.map((item: { process_type: string, display_name: string }) => {
+                    subMenuListDta.push({ value: item.display_name.toString(), label: item.display_name });
                 });
-                console.log("submenu list", res.data);
                 setModulesList(subMenuListDta);
             }
             catch (err) {
@@ -162,39 +179,13 @@ export default function WorkflowTable() {
     // ------------------ COLUMNS --------------------
     const columns = [
         {
-            key: "name",
-            label: "Workflow Name",
-            render: (data: TableDataType) => (
-                <span className="font-semibold text-[#181D27] text-[14px]">
-                    {data.name}
-                </span>
-            ),
+            key: "workflow_name",
+            label: "Workflow Name"
         },
         {
-            key: "description",
-            label: "Description",
-            
-            render: (data: TableDataType) => data.description || "-",
-        }
-        // {
-        //     key: "steps",
-        //     label: "Total Steps",
-        //     render: (data: TableDataType) => data.steps?.length || 0,
-        // },
-        ,{
-            key: "assigned_to",
+            key: "display_name",
             label: "Assigned To",
-            width: 300,
-            render: (data: any) => {
-                const step = data.assigned_to?.map((ids:any)=>ids.model_name).join(",")
-                if (!step) return "-";
-                return (
-                    <span className="text-sm text-gray-600">
-                        {step}
-                    </span>
-                );
-            },
-        },
+        }, 
     ];
 
     // ------------------ LOCAL LIST FUNCTION -----------------
@@ -206,18 +197,8 @@ export default function WorkflowTable() {
         const end = start + pageSize;
 
         // WORKFLOW_DATA.slice(start, end);
-        const pageData: any = await workFlowAssignList()
-        console.log(pageData, "pageData")
-        const workFlowListData: any = []
-        pageData.data.map((dta: any) => {
-            workFlowListData.push({
-                value: dta.workflow_id,
-                label: dta.name
-            })
-
-
-        })
-        setWorkflowList(workFlowListData)
+        const pageData: any = await workFlowAssignmentList()
+        
         return {
             data: pageData.data,
             currentPage: 1,
@@ -225,7 +206,6 @@ export default function WorkflowTable() {
             total: 1,
         };
     };
-
     // ------------------ SEARCH FUNCTION ----------------------
     // const searchWorkflow = async (
     //     query: string
@@ -244,6 +224,19 @@ export default function WorkflowTable() {
 
     return (
         <div className="flex flex-col h-full">
+            <div className="flex justify-between items-center mb-[20px]">
+                <div className="flex items-center gap-[16px]">
+                <Icon
+                    icon="lucide:arrow-left"
+                    width={24}
+                    onClick={() => router.back()}
+                    className="cursor-pointer"
+                />
+                <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">
+                    Assign Workflow
+                </h1>
+                </div>
+            </div>
             <Table
                 refreshKey={refreshKey}
                 config={{
@@ -252,7 +245,7 @@ export default function WorkflowTable() {
                         // search: searchWorkflow,
                     },
                     header: {
-                        title: "Assign Workflow",
+                        // title: "Assign Workflow",
                         // searchBar: true,
                         columnFilter: true,
                         actions: [
@@ -277,8 +270,9 @@ export default function WorkflowTable() {
                         {
                             icon: "lucide:edit-2",
                             onClick: (row: TableDataType) => {
-                                window.location.href = `/settings/approval/${row.uuid}`;
-                                localStorage.setItem("selectedFlow", JSON.stringify(row))
+                                formik.setFieldValue("workflow_id",row.workflow_id)
+                                formik.setFieldValue("process_type",row.process_type)
+                                setOpen(true);
                             },
                         },
                     ],
@@ -287,13 +281,13 @@ export default function WorkflowTable() {
             />
 
             <Drawer anchor="right" open={open} onClose={() => setOpen(false)}>
-    <div className="w-[350px] p-[10px] text-lg font-semibold">
+    <div className="w-[350px] p-2.5 text-lg font-semibold">
         Assign Workflow
     </div>
 
     <Divider />
 
-    <div className="w-[350px] p-[10px]">
+    <div className="w-[350px] p-2.5">
         <form onSubmit={formik.handleSubmit} className="space-y-4">
 
             {/* Workflow */}
@@ -302,7 +296,7 @@ export default function WorkflowTable() {
                 label="Workflow"
                 name="workflow_id"
                 isSingle={true}
-                options={workFlowList}
+                options={workFlowListOptions}
                 value={formik.values.workflow_id}
                 onChange={(e: any) => {
                     formik.setFieldValue("workflow_id", e.target.value);
@@ -318,11 +312,11 @@ export default function WorkflowTable() {
                 name="process_type"
                 isSingle={true}
                 options={modulesList}
-                value={formik.values.process_id}
+                value={formik.values.process_type}
                 onChange={(e: any) => {
-                    formik.setFieldValue("process_id", e.target.value);
+                    formik.setFieldValue("process_type", e.target.value);
                 }}
-                error={formik.touched.process_id && formik.errors.process_id}
+                error={formik.touched.process_type && formik.errors.process_type}
                 width="full"
             />
 

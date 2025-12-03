@@ -204,7 +204,7 @@ export default function WorkflowTable() {
                                 label="Add"
                                 labelTw="hidden sm:block"
                             />,<SidebarBtn
-                                key={0}
+                                key={1}
                                 href="/settings/approval/assignworkflow"
                                 isActive={true}
                                 leadingIcon="lucide:plus"

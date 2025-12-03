@@ -39,7 +39,6 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import Loading from "@/app/components/Loading";
 import { useRouter } from "next/navigation";
 import * as yup from "yup";
-import Select from "@mui/material/Select";
 
 type KeyOption = { label: string; id: string; isSelected: boolean };
 type KeyGroup = { type: string; options: KeyOption[] };
@@ -74,7 +73,8 @@ const initialKeys: KeyGroup[] = [
 
 const Buom = ({ row, details, setDetails }: any) => {
   const [buom, setBuom] = useState("");
-  const unit = row.item_uoms.find((u: any) => u.uom_type === "primary")?.name || "";
+  const primary_uom = row.item_uoms.find((u: any) => u.uom_type === "primary");
+  const trailingValue = primary_uom?.name + " - " + primary_uom?.uom_price;
 
   useEffect(() => {
     details.filter((ids: any, index: number) => {
@@ -91,7 +91,7 @@ const Buom = ({ row, details, setDetails }: any) => {
     min={0}
     step="0.01"
     value={buom}
-    trailingElement={unit || " "}
+    trailingElement={trailingValue || " "}
     onChange={(e) => {
       setBuom(e.target.value)
       let isAvailable = false
@@ -136,7 +136,8 @@ const Buom = ({ row, details, setDetails }: any) => {
 
 const Auom = ({ row, details, setDetails }: any) => {
   const [auom, setAuom] = useState("");
-  const unit = row.item_uoms.find((u: any) => u.uom_type === "secondary")?.name || "";
+  const secondary_uom = row.item_uoms.find((u: any) => u.uom_type === "secondary");
+  const trailingValue = secondary_uom?.name + " - " + secondary_uom?.uom_price;
 
   useEffect(() => {
     details.filter((ids: any, index: number) => {
@@ -153,7 +154,7 @@ const Auom = ({ row, details, setDetails }: any) => {
     min={0}
     step="0.01"
     value={auom || ""}
-    trailingElement={unit || " "}
+    trailingElement={trailingValue || " "}
     onChange={(e) => {
       setAuom(e.target.value)
       let isAvailable = false
@@ -643,8 +644,8 @@ export default function AddPricing() {
       };
 
       // If any selected key group has no corresponding values, block progression.
-      if (!requireSelectedValues(keyCombo.Location)) return false;
-      if (!requireSelectedValues(keyCombo.Customer)) return false;
+      // if (!requireSelectedValues(keyCombo.Location)) return false;
+      // if (!requireSelectedValues(keyCombo.Customer)) return false;
       if (!requireSelectedValues(keyCombo.Item)) return false;
 
       return true;
@@ -656,6 +657,12 @@ export default function AddPricing() {
   };
 
   const handleNext = () => {
+    try {
+      validateStep(currentStep);
+    } catch (itemErr: any) {
+      console.error("Item validation errors:", itemErr.inner || itemErr);
+      showSnackbar(itemErr.inner.map((err: any) => err.message).join(", "), "error");
+    }
     if (!validateStep(currentStep)) {
       showSnackbar(
         "Please fill in all required fields before proceeding.",
@@ -672,6 +679,7 @@ export default function AddPricing() {
   const router = useRouter();
   const pricingValidationSchema = yup.object().shape({
     name: yup.string().required("Name is required"),
+    applicable_for: yup.string().required("Pricing Type is Required"),
     start_date: yup.string().required("Start date is required"),
     end_date: yup.string().required("End date is required"),
     item: yup.array().of(yup.string()).min(1, "At least one item is required"),
@@ -825,6 +833,7 @@ export default function AddPricing() {
   // Removed duplicate keyValue declaration
   const [promotion, setPromotion] = useState<{
     itemName: string;
+    applicable_for: string;
     startDate: string;
     endDate: string;
     status: string;
@@ -838,6 +847,7 @@ export default function AddPricing() {
     offerItems: Array<{ itemName: string; uom: string; quantity: string }>;
   }>({
     itemName: "",
+    applicable_for: "Primary",
     startDate: "",
     endDate: "",
     status: "1",
@@ -1240,55 +1250,36 @@ export default function AddPricing() {
         return (
           <ContainerCard className="bg-[#fff] p-6 rounded-xl border border-[#E5E7EB]">
             <h2 className="text-xl font-semibold mb-6">Pricing</h2>
-            <div className="grid grid-cols-4 gap-6 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
               <div>
-                <label className="block mb-2 font-medium">
-                  Name<span className="text-red-500 ml-1">*</span>
-                </label>
                 <InputFields
-                  label=""
+                  required
+                  label="Name"
                   type="text"
                   value={promotion.itemName}
                   onChange={(e) =>
                     setPromotion((s) => ({ ...s, itemName: e.target.value }))
                   }
                   width="w-full"
+                  error={errors.itemName}
                 />
               </div>
               <div>
-                <label className="block mb-2 font-medium">
-                  Start Date<span className="text-red-500 ml-1">*</span>
-                </label>
                 <InputFields
-                  label=""
-                  type="date"
-                  value={promotion.startDate}
-                  onChange={(e) =>
-                    setPromotion((s) => ({ ...s, startDate: e.target.value }))
-                  }
-                  width="w-full"
+                  label="Pricing Type"
+                  placeholder="Select Pricing Type"
+                  value={promotion.applicable_for}
+                  options={[
+                    { label: "Primary", value: "Primary" },
+                    { label: "Secondary", value: "Secondary" },
+                  ]}
+                  onChange={(e) => setPromotion({...promotion, applicable_for: e.target.value})}
                 />
               </div>
               <div>
-                <label className="block mb-2 font-medium">
-                  End Date<span className="text-red-500 ml-1">*</span>
-                </label>
                 <InputFields
-                  label=""
-                  type="date"
-                  value={promotion.endDate}
-                  onChange={(e) =>
-                    setPromotion((s) => ({ ...s, endDate: e.target.value }))
-                  }
-                  width="w-full"
-                />
-              </div>
-              <div>
-                <label className="block mb-2 font-medium">
-                  Status<span className="text-red-500 ml-1">*</span>
-                </label>
-                <InputFields
-                  label=""
+                  required
+                  label="Status"
                   type="radio"
                   isSingle={true}
                   options={[
@@ -1300,6 +1291,34 @@ export default function AddPricing() {
                     setPromotion((s) => ({ ...s, status: e.target.value }))
                   }
                   width="w-full"
+                />
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="Start Date"
+                  type="date"
+                  value={promotion.startDate || new Date(Date.now()).toISOString().slice(0, 10)}
+                  min={new Date(Date.now()).toISOString().slice(0, 10)}
+                  onChange={(e) =>
+                    setPromotion((s) => ({ ...s, startDate: e.target.value }))
+                  }
+                  width="w-full"
+                  error={errors.startDate}
+                />
+              </div>
+              <div>
+                <InputFields
+                  required
+                  label="End Date"
+                  type="date"
+                  value={promotion.endDate || new Date(Date.now()).toISOString().slice(0, 10)}
+                  min={promotion.startDate || new Date(Date.now()).toISOString().slice(0, 10)}
+                  onChange={(e) =>
+                    setPromotion((s) => ({ ...s, endDate: e.target.value }))
+                  }
+                  width="w-full"
+                  error={errors.endDate}
                 />
               </div>
             </div>
@@ -1324,23 +1343,23 @@ export default function AddPricing() {
                         ),
                       },
 
-                      {
-                        key: "price",
-                        label: "Price",
-                        render: (row) => (
-                          <div className="text-[14px] text-[#181D27] font-semibold space-y-1">
-                            {Array.isArray(row?.item_uoms) && row.item_uoms.length > 0 ? (
-                              row.item_uoms.map((u) => (
-                                <div key={u?.id}>
-                                  {`${u?.name} - ${u?.uom_price}`}
-                                </div>
-                              ))
-                            ) : (
-                              <span>-</span>
-                            )}
-                          </div>
-                        ),
-                      },
+                      // {
+                      //   key: "price",
+                      //   label: "Price",
+                      //   render: (row) => (
+                      //     <div className="text-[14px] text-[#181D27] font-semibold space-y-1">
+                      //       {Array.isArray(row?.item_uoms) && row.item_uoms.length > 0 ? (
+                      //         row.item_uoms.map((u) => (
+                      //           <div key={u?.id}>
+                      //             {`${u?.name} - ${u?.uom_price}`}
+                      //           </div>
+                      //         ))
+                      //       ) : (
+                      //         <span>-</span>
+                      //       )}
+                      //     </div>
+                      //   ),
+                      // },
                       {
                         key: "buom_ctn_price",
                         label: "Base Price",
@@ -1398,7 +1417,10 @@ export default function AddPricing() {
           onStepClick={() => { }}
           onBack={prevStep}
           onNext={handleNext}
-          onSubmit={handleSubmit}
+          onSubmit={() => {
+            handleNext();
+            handleSubmit();
+          }}
           showSubmitButton={isLastStep}
           showNextButton={!isLastStep}
           nextButtonText="Save & Next"

@@ -362,7 +362,7 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                                     <th className="p-2">Step</th>
                                     <th className="p-2">Form Type</th>
                                     <th className="p-2">Target Type</th>
-                                    <th className="p-2">Role</th>
+                                    {/* <th className="p-2">Role</th> */}
                                     <th className="p-2">User</th>
                                     <th className="p-2 text-center">Condition</th>
                                     <th className="p-2 text-center">Action</th>

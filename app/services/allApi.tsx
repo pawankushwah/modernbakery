@@ -2146,11 +2146,34 @@ export const workFlowList = async () => {
 
 export const workFlowAssignList = async () => {
   try {
+    const res = await API.get(`/api/master/approval/workflow/assigned-list`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
-    const res = await API.get(
-      `/api/master/approval/workflow/assigned-list
-`);
+export const workFlowAssignmentList = async () => {
+  try {
+    const res = await API.get(`/api/master/approval/workflow/assignments`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
+export const workFlowRequest = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/master/approval/workflow/requests`, { params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const workFlowProcessType = async (params?: Params) => {
+  try {
+    const res = await API.get(`/api/master/approval/workflow/models`, { params });
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -2167,6 +2190,45 @@ export const singleWorkFlowList = async (uuid: string) => {
     return handleError(error);
   }
 }
+
+// Approval Actions
+export const approveWorkflow = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/approval/workflow/approve`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const rejectWorkflow = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/approval/workflow/reject`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const returnBackWorkflow = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/approval/workflow/return-back`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const editBeforeApprovalWorkflow = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/approval/workflow/reassign`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
 
 export const deleteAgentCustomer = async (uuid: string) => {
   try {
@@ -2953,7 +3015,16 @@ export const updateMenu = async (uuid: string, payload: menuType) => {
 
 export const assignWorkFlowsToSubmenu = async (payload: any) => {
   try {
-    const res = await API.post(`/api/master/approval/workflow/start`, payload);
+    const res = await API.post(`/api/master/approval/workflow/assign`, payload);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateWorkFlowsToSubmenu = async (payload: any) => {
+  try {
+    const res = await API.post(`/api/master/approval/workflow/updateAssignedWorkflow`, payload);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
