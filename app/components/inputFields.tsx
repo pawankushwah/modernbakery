@@ -559,7 +559,7 @@ export default function InputFields({
           );
         } else {
           return isSingle === false ? (
-            <div className="relative select-none" ref={dropdownRef}>
+            <div className="relative select-none w-full" ref={dropdownRef}>
               <div
                 tabIndex={0}
                 onMouseDown={() => {

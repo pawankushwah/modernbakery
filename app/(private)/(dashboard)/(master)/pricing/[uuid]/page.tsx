@@ -73,13 +73,13 @@ const initialKeys: KeyGroup[] = [
 
 const Buom = ({ row, details, setDetails }: any) => {
   const [buom, setBuom] = useState("");
-  const primary_uom = row.item_uoms.find((u: any) => u.uom_type === "primary");
+  const primary_uom = row?.item_uoms.find((u: any) => u.uom_type === "primary");
   const trailingValue = primary_uom?.name + " - " + primary_uom?.uom_price;
 
   useEffect(() => {
     details.filter((ids: any, index: number) => {
-      // console.log(ids, "ids", row.id)
-      if (ids.item_id == row.id) {
+      // console.log(ids, "ids", row?.id)
+      if (ids.item_id == row?.id) {
         setBuom(ids.buom_ctn_price)
       }
     })
@@ -99,8 +99,8 @@ const Buom = ({ row, details, setDetails }: any) => {
       if (details.length > 0) {
 
         details.filter((ids: any, index: number) => {
-          console.log(ids, "ids", row.id)
-          if (ids.item_id == row.id) {
+          console.log(ids, "ids", row?.id)
+          if (ids.item_id == row?.id) {
             isAvailable = true
             indexVal = index
 
@@ -112,18 +112,18 @@ const Buom = ({ row, details, setDetails }: any) => {
           setDetails(details)
         }
         else {
-          const newdata = { buom_ctn_price: e.target.value, auom_pc_price: 0, item_id: row.id, name: `${row.item_code}-${row.name}` }
+          const newdata = { buom_ctn_price: e.target.value, auom_pc_price: 0, item_id: row?.id, name: `${row?.item_code}-${row?.name}` }
           details.push(newdata)
           setDetails(details)
         }
 
-        // let newdata = {buom_ctn_price:e.target.value,auom_pc_price:0,item_id:row.id,name:`${row.item_code}-${row.name}`}    
+        // let newdata = {buom_ctn_price:e.target.value,auom_pc_price:0,item_id:row?.id,name:`${row?.item_code}-${row?.name}`}    
         // details.push(newdata)
         // setDetails(details)
 
       }
       else {
-        const newdata = { buom_ctn_price: e.target.value, auom_pc_price: 0, item_id: row.id, name: `${row.item_code}-${row.name}` }
+        const newdata = { buom_ctn_price: e.target.value, auom_pc_price: 0, item_id: row?.id, name: `${row?.item_code}-${row?.name}` }
         details.push(newdata)
         setDetails(details)
 
@@ -136,13 +136,13 @@ const Buom = ({ row, details, setDetails }: any) => {
 
 const Auom = ({ row, details, setDetails }: any) => {
   const [auom, setAuom] = useState("");
-  const secondary_uom = row.item_uoms.find((u: any) => u.uom_type === "secondary");
+  const secondary_uom = row?.item_uoms.find((u: any) => u.uom_type === "secondary");
   const trailingValue = secondary_uom?.name + " - " + secondary_uom?.uom_price;
 
   useEffect(() => {
     details.filter((ids: any, index: number) => {
-      // console.log(ids, "ids", row.id)
-      if (ids.item_id == row.id) {
+      // console.log(ids, "ids", row?.id)
+      if (ids.item_id == row?.id) {
         setAuom(ids.auom_pc_price)
 
       }
@@ -162,8 +162,8 @@ const Auom = ({ row, details, setDetails }: any) => {
       if (details.length > 0) {
 
         details.filter((ids: any, index: number) => {
-          // console.log(ids, "ids", row.id)
-          if (ids.item_id == row.id) {
+          // console.log(ids, "ids", row?.id)
+          if (ids.item_id == row?.id) {
             isAvailable = true
             indexVal = index
 
@@ -175,17 +175,17 @@ const Auom = ({ row, details, setDetails }: any) => {
           setDetails(details)
         }
         else {
-          const newdata = { buom_ctn_price: 0, auom_pc_price: e.target.value, item_id: row.id, name: `${row.item_code}-${row.name}` }
+          const newdata = { buom_ctn_price: 0, auom_pc_price: e.target.value, item_id: row?.id, name: `${row?.item_code}-${row?.name}` }
           details.push(newdata)
           setDetails(details)
         }
 
-        // let newdata = {buom_ctn_price:e.target.value,auom_pc_price:0,item_id:row.id,name:`${row.item_code}-${row.name}`}    
+        // let newdata = {buom_ctn_price:e.target.value,auom_pc_price:0,item_id:row?.id,name:`${row.item_code}-${row.name}`}    
         // details.push(newdata)
         // setDetails(details)
       }
       else {
-        const newdata = { buom_ctn_price: 0, auom_pc_price: e.target.value, item_id: row.id, name: `${row.item_code}-${row.name}` }
+        const newdata = { buom_ctn_price: 0, auom_pc_price: e.target.value, item_id: row?.id, name: `${row?.item_code}-${row?.name}` }
         details.push(newdata)
         setDetails(details)
 
@@ -468,6 +468,7 @@ export default function AddPricing() {
           setPromotion((s) => ({
             ...s,
             itemName: res.name || res.title || s.itemName,
+            applicable_for: res.applicable_for || s.applicable_for,
             startDate: res.start_date || s.startDate,
             endDate: res.end_date || s.endDate,
             status: res.status !== undefined ? String(res.status) : s.status,
@@ -627,8 +628,8 @@ export default function AddPricing() {
   const validateStep = (step: number) => {
     if (step === 1) {
       return (
-        keyCombo.Location.length > 0 &&
-        keyCombo.Customer.length > 0 &&
+        // keyCombo.Location.length > 0 &&
+        // keyCombo.Customer.length > 0 &&
         keyCombo.Item.length > 0
       );
     }
@@ -684,8 +685,8 @@ export default function AddPricing() {
     end_date: yup.string().required("End date is required"),
     item: yup.array().of(yup.string()).min(1, "At least one item is required"),
     key: yup.object({
-      Location: yup.array().of(yup.string()).min(1, "Location key required"),
-      Customer: yup.array().of(yup.string()).min(1, "Customer key required"),
+      // Location: yup.array().of(yup.string()).min(1, "Location key required"),
+      // Customer: yup.array().of(yup.string()).min(1, "Customer key required"),
       Item: yup.array().of(yup.string()).min(1, "Item key required"),
     }),
   });
@@ -694,7 +695,6 @@ export default function AddPricing() {
   const clearErrors = () => setErrors({});
 
   const handleSubmit = async () => {
-    console.log(details, "hii496")
     clearErrors();
     const initialKeys = [
       {
@@ -746,6 +746,7 @@ export default function AddPricing() {
     const payload = {
       name: promotion.itemName,
       description, // adjust this as needed
+      applicable_for: promotion.applicable_for,
       start_date: promotion.startDate,
       end_date: promotion.endDate,
       apply_on: 1, // static/mapped as per requirement
@@ -765,6 +766,7 @@ export default function AddPricing() {
       item_id: selectedItemIds.join(","),
       details: details,
     };
+    console.log(payload, "payload567");
 
     try {
       await pricingValidationSchema.validate(payload, { abortEarly: false });
@@ -795,6 +797,7 @@ export default function AddPricing() {
         (err as yup.ValidationError).inner.forEach((e) => {
           if (e.path) formErrors[e.path] = e.message;
         });
+        console.log(formErrors, "formerrors");
         setErrors(formErrors);
         showSnackbar("Please fix validation errors before proceeding", "error");
       } else {
@@ -848,8 +851,8 @@ export default function AddPricing() {
   }>({
     itemName: "",
     applicable_for: "Primary",
-    startDate: "",
-    endDate: "",
+    startDate: new Date().toISOString().split("T")[0],
+    endDate: new Date().toISOString().split("T")[0],
     status: "1",
     orderType: "All",
     offerType: "All",
@@ -1266,6 +1269,7 @@ export default function AddPricing() {
               </div>
               <div>
                 <InputFields
+                  type="select"
                   label="Pricing Type"
                   placeholder="Select Pricing Type"
                   value={promotion.applicable_for}
@@ -1274,6 +1278,7 @@ export default function AddPricing() {
                     { label: "Secondary", value: "Secondary" },
                   ]}
                   onChange={(e) => setPromotion({...promotion, applicable_for: e.target.value})}
+                  error={errors.applicable_for}
                 />
               </div>
               <div>
@@ -1348,8 +1353,8 @@ export default function AddPricing() {
                       //   label: "Price",
                       //   render: (row) => (
                       //     <div className="text-[14px] text-[#181D27] font-semibold space-y-1">
-                      //       {Array.isArray(row?.item_uoms) && row.item_uoms.length > 0 ? (
-                      //         row.item_uoms.map((u) => (
+                      //       {Array.isArray(row?.item_uoms) && row?.item_uoms.length > 0 ? (
+                      //         row?.item_uoms.map((u) => (
                       //           <div key={u?.id}>
                       //             {`${u?.name} - ${u?.uom_price}`}
                       //           </div>
