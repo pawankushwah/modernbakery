@@ -814,6 +814,7 @@ export default function DeliveryAddEditPage() {
                       placeholder="Search Distributor"
                       value={values.warehouse}
                       options={warehouseAllOptions}
+                      showSkeleton={warehouseAllOptions.length === 0}
                       searchable={true}
                       onChange={(e) => {
                         if (values.warehouse !== e.target.value) {

@@ -2171,6 +2171,15 @@ export const workFlowRequest = async (params: Params) => {
   }
 };
 
+export const permissionsForWorkflow = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/approval/workflow/myPermissions`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const workFlowProcessType = async (params?: Params) => {
   try {
     const res = await API.get(`/api/master/approval/workflow/models`, { params });

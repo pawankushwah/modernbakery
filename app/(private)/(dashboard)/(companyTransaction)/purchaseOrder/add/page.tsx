@@ -230,10 +230,16 @@ export default function PurchaseOrderAddEditPage() {
       value: String(item.id),
       label: (item.erp_code ?? item.item_code ?? item.code ?? "") + " - " + (item.name ?? "")
     }));
-    // Merge newly fetched options with existing ones so previously selected items remain available
+    // Set the new options while preserving any items that are currently selected in rows
     setItemsOptions((prev: { label: string; value: string }[] = []) => {
       const map = new Map<string, { label: string; value: string }>();
-      prev.forEach((o) => map.set(o.value, o));
+      // Add currently selected items to preserve them
+      itemData.forEach((row) => {
+        if (row.item_id && row.item_label) {
+          map.set(row.item_id, { value: row.item_id, label: row.item_label });
+        }
+      });
+      // Add new search results
       options.forEach((o: { label: string; value: string }) => map.set(o.value, o));
       return Array.from(map.values());
     });
@@ -276,6 +282,11 @@ export default function PurchaseOrderAddEditPage() {
         item.Price = "";
         item.Quantity = "1";
         item.item_label = "";
+        item.Excise = "0.00";
+        item.Discount = "0.00";
+        item.Net = "0.00";
+        item.Vat = "0.00";
+        item.Total = "0.00";
       } else {
         const selectedOrder = orderData.find((order: FormData) => order.id.toString() === value);
         console.log(selectedOrder);
@@ -352,6 +363,16 @@ export default function PurchaseOrderAddEditPage() {
       validateRow(index, newData[index]);
     }
     setItemData(newData);
+    
+    // // Force component update when clearing an item
+    // if (field === "item_id" && !value) {
+    //   // Clear any validation errors for this row
+    //   setItemErrors((prev) => {
+    //     const copy = { ...prev };
+    //     delete copy[index];
+    //     return copy;
+    //   });
+    // }
   };
 
   const handleAddNewItem = () => {
@@ -747,11 +768,9 @@ export default function PurchaseOrderAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.item_id;
-                          // Optimized: avoid mapping+filtering arrays on every render.
-                          // Find the option for the current row (if still present) and fall back to stored label
-                          // so the selection remains visible even when the option isn't returned by a search.
+                          // Find the option for the current row or use stored label, but only if item_id exists
                           const matchedOption = itemsOptions.find((o) => o.value === row.item_id);
-                          const initialLabel = matchedOption?.label ?? (row.item_label as string) ?? "";
+                          const initialLabel = row.item_id ? (matchedOption?.label ?? (row.item_label as string) ?? "") : "";
                           // console.log(row);
                           return (
                             <div>

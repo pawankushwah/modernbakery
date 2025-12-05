@@ -20,6 +20,7 @@ export default function Home() {
             }
             if (res.code === 200) {
                 localStorage.setItem("role", res?.data?.role?.id);
+                localStorage.setItem("userId", res?.data?.id);
                 localStorage.setItem("country", res?.data?.companies[0]?.selling_currency);
                 router.push("/profile");
             }
