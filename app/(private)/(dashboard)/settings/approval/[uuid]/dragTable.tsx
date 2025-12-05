@@ -439,28 +439,26 @@ export default function ApprovalFlowTable({ roleListData, usersData, steps, setS
                     >
                         <table className="table-auto min-w-max w-full text-sm">
                             <thead>
-                                <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
-                                    <th className="p-2">Step</th>
-                                    <th className="p-2">Form Type</th>
-                                    <th className="p-2">Target Type</th>
-                                    {/* <th className="p-2">Role</th> */}
-                                    <th className="p-2">User</th>
+                               <tr className="relative h-[44px] border-b-[1px] border-[#E9EAEB]">
+                  <th className="p-2">Step</th>
+                  <th className="p-2">Form Type</th>
+                  <th className="p-2">Target Type</th>
+                  <th className="p-2">Role</th>
+                  <th className="p-2">User</th>
 
-                                    {/* <th className="p-2 text-center">Approval</th>
+                  {/* <th className="p-2 text-center">Approval</th>
                   <th className="p-2 text-center">Reject</th>
                   <th className="p-2 text-center">Return</th>
                   <th className="p-2 text-center">Edit Before</th> */}
-                                    <th className="p-2 text-center">Condition</th>
-                                    {/* <th className="p-2">Related Steps</th> */}
-                                    {/* <th className="p-2">Approval Msg</th>
-                                    <th className="p-2">Notification Msg</th> */}
-                                    <th className="p-2 text-center">Action</th>
-                                </tr>
+                  <th className="p-2 text-center">Condition</th>
+                  {/* <th className="p-2">Related Steps</th> */}
+                  <th className="p-2">Approval Msg</th>
+                  <th className="p-2">Notification Msg</th>
+                  <th className="p-2 text-center">Action</th>
+                </tr>
                             </thead>
                             <tbody>
                                 {steps.map((step, idx) => {
-                                    console.log(step,"546hii")
-                                    
                                     return(
                                     <SortableRow
                                         key={step.id}
@@ -509,44 +507,43 @@ function SortableRow({
 
 
     return (
-        roleOptions?<tr className="text-[14px] bg-white text-[#535862]">
-            <td draggable={true} ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
-            {/* <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td> */}
-            <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? "Role" : "User"}</td>
-            <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? <InputFields
-
-                value={step.selectedRole}
-                isSingle={false}
-                options={roleOptions}
-                width="full"
-                                    multiSelectChips={true}
-
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
-            /> : "-"}</td>
-            <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "2" ? <InputFields
-
-                value={step.selectedCustomer}
-                isSingle={false}
-                                    multiSelectChips={true}
-
-                options={userOptions}
-                width="full"
-                onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
-            /> : "-"}</td>
-
-            <td className="px-[24px] py-[12px] bg-white   ">{step.condition}</td>
-            {/* === Related Steps Multi Select === */}
-
-            {/* <td className="px-[24px] py-[12px] bg-white   ">{step.approvalMessage}</td>
-            <td className="px-[24px] py-[12px] bg-white   ">{step.notificationMessage}</td> */}
-            <td className="px-[24px] py-[12px] bg-white    text-center">
-                <SidebarBtn
-                    onClick={() => onEdit(step.id?step?.id:step?.step_id,index)}
-                    className="text-blue-600 hover:text-blue-800"
-                >
-                    <Icon icon="mdi:pencil" width="20" height="20" />
-                </SidebarBtn>
-            </td>
-        </tr>
-    :<><Skeleton/></>)
+        roleOptions ? (
+            <tr className="text-[14px] bg-white text-[#535862]">
+                <td draggable={true} ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
+                <td className="px-[24px] py-[12px] bg-white">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
+                <td className="px-[24px] py-[12px] bg-white">{step.targetType === "1" ? "Role" : "User"}</td>
+                <td className="px-[24px] py-[12px] bg-white">{step.targetType === "1" ? (
+                    <InputFields
+                        value={step.selectedRole}
+                        isSingle={false}
+                        options={roleOptions}
+                        width="full"
+                        multiSelectChips={true}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
+                    />
+                ) : "-"}</td>
+                <td className="px-[24px] py-[12px] bg-white">{step.targetType === "2" ? (
+                    <InputFields
+                        value={step.selectedCustomer}
+                        isSingle={false}
+                        options={userOptions}
+                        width="full"
+                        multiSelectChips={true}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { }}
+                    />
+                ) : "-"}</td>
+                <td className="px-[24px] py-[12px] bg-white">{step.condition}</td>
+                <td className="px-[24px] py-[12px] bg-white">{step.approvalMessage}</td>
+                <td className="px-[24px] py-[12px] bg-white">{step.notificationMessage}</td>
+                <td className="px-[24px] py-[12px] bg-white text-center">
+                    <SidebarBtn
+                        onClick={() => onEdit(step.id ? step.id : step.step_id, index)}
+                        className="text-blue-600 hover:text-blue-800"
+                    >
+                        <Icon icon="mdi:pencil" width="20" height="20" />
+                    </SidebarBtn>
+                </td>
+            </tr>
+        ) : <><Skeleton /></>
+    );
 }
