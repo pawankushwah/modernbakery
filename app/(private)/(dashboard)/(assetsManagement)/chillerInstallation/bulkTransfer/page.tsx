@@ -177,7 +177,7 @@ export default function BulkTransferListPage() {
                                 isActive
                             />,
                             <SidebarBtn
-                                key="add"
+                                key="addAllocate"
                                 href="/chillerInstallation/bulkTransfer/addAllocate"
                                 leadingIcon="lucide:plus"
                                 label="Add Allocate"
