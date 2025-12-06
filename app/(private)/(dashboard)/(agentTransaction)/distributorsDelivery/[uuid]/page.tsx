@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Fragment, useState, useEffect, useRef } from "react";
+import React, { Fragment, useState, useEffect, useRef, useCallback } from "react";
 import ContainerCard from "@/app/components/containerCard";
 import Table from "@/app/components/customTable";
 import Logo from "@/app/components/logo";
@@ -18,6 +18,7 @@ import {
   SalesmanListGlobalSearch,
   saveFinalCode,
   warehouseListGlobalSearch,
+  warehouseStockTopOrders,
 } from "@/app/services/allApi";
 import {
   addAgentOrder,
@@ -103,6 +104,7 @@ interface OrderData {
     header_id: number;
     order_code: string;
     item_id: number;
+    erp_code: string;
     item_code: string;
     item_name: string;
     uom_id: number;
@@ -127,12 +129,30 @@ interface OrderData {
   }[];
 }
 
+interface WarehouseStock {
+  item_id: number;
+  warehouse_id: number;
+  qty: string;
+}
+
+interface ItemUOM {
+  id: number;
+  item_id: number;
+  uom_type: string;
+  name: string;
+  price: string;
+  is_stock_keeping: boolean;
+  upc: string;
+  enable_for: string;
+  uom_id: number;
+}
+
 interface ItemData {
   item_id: string;
   item_name: string;
   // stored human-readable label for a selected item (used when server results don't include it)
   item_label?: string;
-  UOM: { label: string; value: string; price?: string }[];
+  UOM: { label: string; value: string; price?: string; uom_type?: string }[];
   uom_id?: string;
   Quantity: string;
   Price: string;
@@ -141,9 +161,11 @@ interface ItemData {
   Net: string;
   Vat: string;
   Total: string;
+  available_stock?: string;
+  preVat?: string;
   [key: string]:
     | string
-    | { label: string; value: string; price?: string }[]
+    | { label: string; value: string; price?: string; uom_type?: string }[]
     | undefined;
 }
 
@@ -188,9 +210,13 @@ export default function DeliveryAddEditPage() {
     delivery_date: new Date().toISOString().slice(0, 10),
   };
 
-  const { warehouseAllOptions } = useAllDropdownListData();
+  const { warehouseOptions } = useAllDropdownListData();
   const [deliveryData, setDeliveryData] = useState<OrderData[]>([]);
   const [searchedItem, setSearchedItem] = useState<FormData[] | null>(null);
+  const [warehouseStocks, setWarehouseStocks] = useState<Record<string, WarehouseStock[]>>({});
+  const warehouseDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const [orderData, setOrderData] = useState<FormData[]>([]);
+  const [itemsWithUOM, setItemsWithUOM] = useState<Record<string, { uoms: ItemUOM[], stock_qty: string }>>({});
   const [itemsOptions, setItemsOptions] = useState<
     { label: string; value: string }[]
   >([]);
@@ -247,6 +273,17 @@ export default function DeliveryAddEditPage() {
         } catch (e: any) {
           if (e?.message) partialErrors["Quantity"] = e.message;
         }
+        
+        // Additional stock validation
+        if (rowData?.item_id && rowData?.available_stock && rowData?.Quantity) {
+          const availableStock = Number(rowData.available_stock);
+          const requestedQuantity = Number(rowData.Quantity);
+          
+          if (requestedQuantity > availableStock) {
+            partialErrors["Quantity"] = `Quantity cannot exceed available stock (${availableStock})`;
+          }
+        }
+        
         if (Object.keys(partialErrors).length === 0) {
           // clear errors for this row
           setItemErrors((prev) => {
@@ -259,6 +296,20 @@ export default function DeliveryAddEditPage() {
         }
       } else {
         await itemRowSchema.validate(toValidate, { abortEarly: false });
+        
+        // Additional stock validation
+        if (rowData?.item_id && rowData?.available_stock && rowData?.Quantity) {
+          const availableStock = Number(rowData.available_stock);
+          const requestedQuantity = Number(rowData.Quantity);
+          
+          if (requestedQuantity > availableStock) {
+            const validationErrors: Record<string, string> = {};
+            validationErrors["Quantity"] = `Quantity cannot exceed available stock (${availableStock})`;
+            setItemErrors((prev) => ({ ...prev, [index]: validationErrors }));
+            return;
+          }
+        }
+        
         // clear errors for this row
         setItemErrors((prev) => {
           const copy = { ...prev };
@@ -279,64 +330,119 @@ export default function DeliveryAddEditPage() {
     }
   };
 
-  // Function for fetching Item
-  const fetchItem = async (searchTerm: string, values?: FormikValues) => {
-    const res = await itemGlobalSearch({
-      per_page: "10",
-      query: searchTerm,
-      warehouse: values?.warehouse || "",
-    });
-    if (res.error) {
-      showSnackbar(res.data?.message || "Failed to fetch items", "error");
-      setSkeleton({ ...skeleton, item: false });
+  // Debounced function to fetch items when warehouse changes
+  const fetchWarehouseItems = useCallback(async (warehouseId: string, searchTerm: string = "") => {
+    if (!warehouseId) {
+      setItemsOptions([]);
+      setItemsWithUOM({});
+      setWarehouseStocks({});
       return;
     }
-    const data = res?.data || [];
 
-    // sets the price directly in the item_uoms
-    const updatedData = data.map((item: any) => {
-      const item_uoms = item?.item_uoms
-        ? item?.item_uoms?.map((uom: any) => {
-            if (uom?.uom_type === "primary") {
-              return { ...uom, price: item.pricing?.auom_pc_price };
-            } else if (uom?.uom_type === "secondary") {
-              return { ...uom, price: item.pricing?.buom_ctn_price };
-            }
-          })
-        : item?.item_uoms;
-      return { ...item, item_uoms };
-    });
+    try {
+      setSkeleton(prev => ({ ...prev, item: true }));
+      
+      // Fetch warehouse stocks - this API returns all needed data including pricing and UOMs
+      const stockRes = await warehouseStockTopOrders(warehouseId);
+      const stocksArray = stockRes.data?.stocks || stockRes.stocks || [];
 
-    // console.log(updatedData);
+      // Store warehouse stocks for validation
+      setWarehouseStocks(prev => ({
+        ...prev,
+        [warehouseId]: stocksArray
+      }));
 
-    setSearchedItem(updatedData);
-    const options = data.map(
-      (item: {
-        id: number;
-        name: string;
-        code?: string;
-        item_code?: string;
-        erp_code?: string;
-      }) => ({
+      // Filter items based on search term and stock availability
+      const filteredStocks = stocksArray.filter((stock: any) => {
+        if (Number(stock.stock_qty) <= 0) return false;
+        if (!searchTerm) return true;
+        const searchLower = searchTerm.toLowerCase();
+        return stock.item_name?.toLowerCase().includes(searchLower) ||
+               stock.item_code?.toLowerCase().includes(searchLower);
+      });
+
+      // Create items with UOM data map for easy access
+      const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty: string }> = {};
+      
+      const processedItems = filteredStocks.map((stockItem: any) => {
+        // Process UOMs with pricing from warehouseStockTopOrders response
+        const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
+          let price = uom.price;
+          // Override with specific pricing from the API response
+          if (uom?.uom_type === "primary") {
+            price = stockItem.auom_pc_price || uom.price;
+          } else if (uom?.uom_type === "secondary") {
+            price = stockItem.buom_ctn_price || uom.price;
+          }
+          return { 
+            ...uom, 
+            price,
+            id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
+            item_id: stockItem.item_id
+          };
+        }) : [];
+
+        // Store UOM data for this item
+        itemsUOMMap[stockItem.item_id] = {
+          uoms: item_uoms,
+          stock_qty: stockItem.stock_qty
+        };
+
+        return { 
+          id: stockItem.item_id,
+          name: stockItem.item_name,
+          item_code: stockItem.item_code,
+          erp_code: stockItem.erp_code,
+          item_uoms,
+          warehouse_stock: stockItem.stock_qty,
+          pricing: {
+            buom_ctn_price: stockItem.buom_ctn_price,
+            auom_pc_price: stockItem.auom_pc_price
+          }
+        };
+      });
+
+      setItemsWithUOM(itemsUOMMap);
+      setOrderData(processedItems);
+
+      // Create dropdown options
+      const options = processedItems.map((item: any) => ({
         value: String(item.id),
-        label:
-          (item.erp_code ?? item.item_code ?? item.code ?? "") +
-          " - " +
-          (item.name ?? ""),
-      })
-    );
-    // Merge newly fetched options with existing ones so previously selected items remain available
-    setItemsOptions((prev: { label: string; value: string }[] = []) => {
-      const map = new Map<string, { label: string; value: string }>();
-      prev.forEach((o) => map.set(o.value, o));
-      options.forEach((o: { label: string; value: string }) =>
-        map.set(o.value, o)
-      );
-      return Array.from(map.values());
-    });
-    setSkeleton({ ...skeleton, item: false });
-    return options;
-  };
+        label: `${item.erp_code || item.item_code || ''} - ${item.name || ''} (Stock: ${item.warehouse_stock})`
+      }));
+
+      setItemsOptions(options);
+      setSkeleton(prev => ({ ...prev, item: false }));
+      
+      return options;
+    } catch (error) {
+      console.error("Error fetching warehouse items:", error);
+      setSkeleton(prev => ({ ...prev, item: false }));
+      return [];
+    }
+  }, []);
+
+  // Debounced warehouse change handler
+  const handleWarehouseChange = useCallback((warehouseId: string) => {
+    // Clear existing timeout
+    if (warehouseDebounceRef.current) {
+      clearTimeout(warehouseDebounceRef.current);
+    }
+
+    // Set new timeout for debounced API call
+    warehouseDebounceRef.current = setTimeout(() => {
+      fetchWarehouseItems(warehouseId);
+    }, 500); // 500ms debounce delay
+  }, [fetchWarehouseItems]);
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (warehouseDebounceRef.current) {
+        clearTimeout(warehouseDebounceRef.current);
+      }
+    };
+  }, []);
 
   const codeGeneratedRef = useRef(false);
   const [code, setCode] = useState("");
@@ -379,27 +485,70 @@ export default function DeliveryAddEditPage() {
         item.Price = "";
         item.Quantity = "1";
         item.item_label = "";
+        item.available_stock = "";
       } else {
         const selectedOrder =
+          orderData?.find((order: any) => String(order.id) === value) ??
           searchedItem?.find((order: FormData) => String(order.id) === value) ??
           null;
         item.item_id = selectedOrder
           ? String(selectedOrder.id || value)
           : value;
         item.item_name = selectedOrder?.name ?? "";
-        item.UOM =
-          selectedOrder?.item_uoms?.map((uom) => ({
-            label: uom.name,
-            value: uom.id.toString(),
-            price: uom.price,
-          })) || [];
+        
+        // Build UOM options with correct pricing from warehouse stock
+        if (selectedOrder?.item_uoms) {
+          item.UOM = selectedOrder.item_uoms.map((uom: any) => {
+            let price = uom.price;
+            // Apply warehouse stock pricing if available
+            if ((selectedOrder as any)?.pricing) {
+              if (uom.uom_type === "primary") {
+                price = (selectedOrder as any).pricing?.auom_pc_price || uom.price;
+              } else if (uom.uom_type === "secondary") {
+                price = (selectedOrder as any).pricing?.buom_ctn_price || uom.price;
+              }
+            }
+            return {
+              label: uom.name,
+              value: uom.id.toString(),
+              price: String(price),
+              uom_type: uom.uom_type,
+            };
+          });
+        } else {
+          item.UOM = [];
+        }
+        
+        // Set first UOM as default
         item.uom_id = selectedOrder?.item_uoms?.[0]?.id
           ? String(selectedOrder.item_uoms[0].id)
           : "";
-        item.Price = selectedOrder?.item_uoms?.[0]?.price
-          ? String(selectedOrder.item_uoms[0].price)
-          : "";
+        
+        // Set price based on first UOM with warehouse pricing
+        if (selectedOrder?.item_uoms?.[0]) {
+          const firstUom = selectedOrder.item_uoms[0];
+          let price = firstUom.price;
+          if ((selectedOrder as any)?.pricing) {
+            if (firstUom.uom_type === "primary") {
+              price = (selectedOrder as any).pricing?.auom_pc_price || firstUom.price;
+            } else if (firstUom.uom_type === "secondary") {
+              price = (selectedOrder as any).pricing?.buom_ctn_price || firstUom.price;
+            }
+          }
+          item.Price = String(price);
+        } else {
+          item.Price = "";
+        }
+        
         item.Quantity = "1";
+        
+        // Set available stock from warehouse
+        if ((selectedOrder as any)?.warehouse_stock) {
+          item.available_stock = String((selectedOrder as any).warehouse_stock);
+        } else {
+          item.available_stock = "";
+        }
+        
         // persist a readable label
         const computedLabel = selectedOrder
           ? `${selectedOrder.item_code ?? selectedOrder.erp_code ?? ""}${
@@ -417,6 +566,15 @@ export default function DeliveryAddEditPage() {
             ];
           });
         }
+      }
+    }
+    
+    // If user changes UOM, update price based on warehouse pricing
+    if (field === "uom_id" && value) {
+      item.uom_id = value;
+      const selectedUOM = item.UOM.find((uom: any) => uom.value === value);
+      if (selectedUOM?.price) {
+        item.Price = selectedUOM.price;
       }
     }
     const qty = Number(item.Quantity) || 0;
@@ -459,6 +617,7 @@ export default function DeliveryAddEditPage() {
         Net: "0.00",
         Vat: "0.00",
         Total: "0.00",
+        available_stock: "",
       },
     ]);
   };
@@ -479,6 +638,7 @@ export default function DeliveryAddEditPage() {
           Net: "",
           Vat: "",
           Total: "",
+          available_stock: "",
         },
       ]);
       return;
@@ -813,8 +973,8 @@ export default function DeliveryAddEditPage() {
                       name="warehouse"
                       placeholder="Search Distributor"
                       value={values.warehouse}
-                      options={warehouseAllOptions}
-                      showSkeleton={warehouseAllOptions.length === 0}
+                      options={warehouseOptions}
+                      showSkeleton={warehouseOptions.length === 0}
                       searchable={true}
                       onChange={(e) => {
                         if (values.warehouse !== e.target.value) {
@@ -841,6 +1001,7 @@ export default function DeliveryAddEditPage() {
                               ""
                             );
                           })();
+                          handleWarehouseChange(e.target.value);
                         } else {
                           setFieldValue("warehouse", e.target.value);
                         }
@@ -921,8 +1082,8 @@ export default function DeliveryAddEditPage() {
                             return {
                               item_id: String(d.item_id ?? ""),
                               item_name: d.item_name ?? "",
-                              item_label: `${d.item_code ?? ""}${
-                                d.item_code ? " - " : ""
+                              item_label: `${d.erp_code ?? ""}${
+                                d.erp_code ? " - " : ""
                               }${d.item_name ?? ""}`,
                               UOM: d.item_uoms
                                 ? d.item_uoms.map((uom: any) => ({
@@ -1004,6 +1165,7 @@ export default function DeliveryAddEditPage() {
                         const res = await SalesmanListGlobalSearch({
                           query: q,
                           per_page: "10",
+                          warehouse_id: values.warehouse,
                         });
                         const options = res.error
                           ? []
@@ -1016,7 +1178,6 @@ export default function DeliveryAddEditPage() {
                       // selectedOption={}
                       onSelect={(opt) => {
                         setFieldValue("salesman_id", opt.value);
-
                       }}
                       onClear={() => {
                         setFieldValue("salesman_id", "");
@@ -1052,9 +1213,6 @@ export default function DeliveryAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.item_id;
-                          // Optimized: avoid mapping+filtering arrays on every render.
-                          // Find the option for the current row (if still present) and fall back to stored label
-                          // so the selection remains visible even when the option isn't returned by a search.
                           const matchedOption = itemsOptions.find(
                             (o) => o.value === row.item_id
                           );
@@ -1066,34 +1224,24 @@ export default function DeliveryAddEditPage() {
                           // console.log(row);
                           return (
                             <div>
-                              <AutoSuggestion
+                              <InputFields
                                 label=""
                                 name={`item_id_${row.idx}`}
                                 placeholder="Search item"
-                                onSearch={(q) => fetchItem(q, values)}
-                                initialValue={initialLabel}
-                                selectedOption={selectedOpt ?? null}
-                                onSelect={(opt) => {
-                                  if (opt.value !== row.item_id) {
+                                value={row.item_id}
+                                options={itemsOptions}
+                                searchable={true}
+                                onChange={(e) => {
+                                  if (e.target.value !== row.item_id) {
                                     recalculateItem(
                                       Number(row.idx),
                                       "item_id",
-                                      opt.value
+                                      e.target.value
                                     );
                                   }
                                 }}
-                                onClear={() => {
-                                  recalculateItem(
-                                    Number(row.idx),
-                                    "item_id",
-                                    ""
-                                  );
-                                }}
                                 disabled={!values.order_code}
                                 error={err && err}
-                                className="
-                                  w-full
-                                "
                               />
                             </div>
                           );
@@ -1121,20 +1269,12 @@ export default function DeliveryAddEditPage() {
                                 }
                                 showSkeleton={Boolean(itemLoading[idx]?.uom)}
                                 onChange={(e) => {
+                                  // Just recalculate with new UOM ID
+                                  // The recalculateItem function will handle price update
                                   recalculateItem(
                                     Number(row.idx),
                                     "uom_id",
                                     e.target.value
-                                  );
-                                  const price =
-                                    options.find(
-                                      (uom: { value: string }) =>
-                                        String(uom.value) === e.target.value
-                                    )?.price || "0.00";
-                                  recalculateItem(
-                                    Number(row.idx),
-                                    "Price",
-                                    price
                                   );
                                 }}
                                 error={err && err}
@@ -1150,8 +1290,11 @@ export default function DeliveryAddEditPage() {
                         render: (row) => {
                           const idx = Number(row.idx);
                           const err = itemErrors[idx]?.Quantity;
+                          const currentItem = itemData[idx];
+                          const availableStock = currentItem?.available_stock;
+                          
                           return (
-                            <div>
+                            <div className={`${availableStock ? "pt-5" : ""}`}>
                               <InputFields
                                 label=""
                                 type="number"
@@ -1180,9 +1323,15 @@ export default function DeliveryAddEditPage() {
                                   );
                                 }}
                                 min={1}
+                                max={availableStock}
                                 integerOnly={true}
                                 error={err && err}
                               />
+                              {availableStock && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Stock: {availableStock}
+                                </div>
+                              )}
                             </div>
                           );
                         },

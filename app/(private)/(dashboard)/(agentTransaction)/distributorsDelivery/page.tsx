@@ -54,6 +54,7 @@ const columns = [
     {
         key: "route",
         label: "Route Name",
+        showByDefault: true,
         render: (row: TableDataType) => {
             const route = typeof row.route === "string" ? { code: "", name: row.route } : (row.route ?? {});
             const code = route.code ?? "";

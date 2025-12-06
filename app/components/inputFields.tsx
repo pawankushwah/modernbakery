@@ -805,7 +805,7 @@ export default function InputFields({
                   </div>
                 )}
               </div>
-              {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
+              {dropdownOpen && !loading && !disabled && dropdownProperties.width !== "0" && (
                 <>
                   <div
                     style={{
@@ -1033,7 +1033,7 @@ export default function InputFields({
                   </div>
                 )}
               </div>
-              {dropdownOpen && !loading && dropdownProperties.width !== "0" && (
+              {dropdownOpen && !disabled && !loading && dropdownProperties.width !== "0" && (
                 <div
                   style={{
                     left: dropdownProperties.left,
@@ -1072,7 +1072,7 @@ export default function InputFields({
                     </div>
                   )}
                   <div>
-                    {filteredOptions.length === 0 ? (
+                    { filteredOptions.length === 0 ? (
                       <div className="px-3 py-5 text-gray-600 text-center">
                         No options
                       </div>

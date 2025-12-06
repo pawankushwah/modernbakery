@@ -83,6 +83,7 @@ const columns = [
   {
     key: "salesman_name",
     label: "Salesman Name",
+    showByDefault: true,
     render: (row: TableDataType) => {
       const code = row.salesman_code ?? "";
       const name = row.salesman_name ?? "";
@@ -93,6 +94,7 @@ const columns = [
   {
     key: "route_name",
     label: "Route Name",
+    showByDefault: true,
     render: (row: TableDataType) => {
       const code = row.route_code ?? "";
       const name = row.route_name ?? "";

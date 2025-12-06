@@ -348,13 +348,6 @@ export default function AddPricing() {
   const [itemOptions, setItemOptions] = useState<{ label: string; value: string }[]>([]);
   const [selectedItemDetails, setSelectedItemDetails] = useState<ItemDetail[]>([]);
 
-  // Debug selectedItemDetails changes
-  useEffect(() => {
-    console.log("selectedItemDetails updated:", selectedItemDetails);
-  }, [selectedItemDetails]);
-
-  // Removed duplicate dropdown state declarations
-
   // Removed duplicate keyValue declaration
   useEffect(() => {
     async function loadCompanies() {
@@ -607,7 +600,7 @@ export default function AddPricing() {
                 name: item.name,
                 code: item.erp_code,
                 itemName: item.name,
-                item_uoms: item.item_uoms || [] // Include UOMs if available
+                item_uoms: item.uoms || [] // Include UOMs if available
               }));
               console.log("Setting selectedItemDetails:", mappedItems);
               setSelectedItemDetails(mappedItems);
