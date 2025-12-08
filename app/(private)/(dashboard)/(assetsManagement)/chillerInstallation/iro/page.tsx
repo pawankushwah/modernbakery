@@ -432,7 +432,7 @@ export default function CustomerInvoicePage() {
                         {
                             icon: "lucide:eye",
                             onClick: (row: TableDataType) => {
-                                    router.push(`/assetsRequest/view/${row.id}`);
+                                    router.push(`/chillerInstallation/iro/view/${row.id}`);
                             },
                         },
                     ],

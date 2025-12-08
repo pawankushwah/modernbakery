@@ -121,8 +121,8 @@ export default function ProfilePage() {
                                 {/* Email */}
                                 <div className="mb-6">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <div className="w-full sm:flex-1 flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-red-200 rounded-lg">
+                                    <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-3">
+                                        <div className="w-full sm:w-[620px] flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-red-200 rounded-lg">
                                             <Mail className="w-4 h-4 text-red-400 flex-shrink-0" />
                                             <span className="text-gray-700 text-sm truncate">{formData.email}</span>
                                         </div>
@@ -135,16 +135,21 @@ export default function ProfilePage() {
                                 {/* Password */}
                                 <div className="mb-8">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <div className="w-[80%] sm:flex-1 w-[50px]  flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg">
+
+                                    <div className="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-3">
+
+                                        <div className="w-full sm:w-[620px] flex items-center gap-3 px-4 py-2.5 bg-gray-50 border border-gray-300 rounded-lg">
                                             <Lock className="w-4 h-4 text-gray-400 flex-shrink-0" />
                                             <span className="text-gray-700">{formData.password}</span>
                                         </div>
+
                                         <button className="text-sm font-medium text-red-500 hover:text-red-600 whitespace-nowrap px-4 py-2 bg-red-50 rounded-lg">
                                             Change Password
                                         </button>
+
                                     </div>
                                 </div>
+
                             </div>
 
                             {/* Region Section */}
@@ -163,7 +168,7 @@ export default function ProfilePage() {
                                     <select
                                         value={formData.country}
                                         onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                        className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                        className="w-full sm:w-auto px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-gray-500 focus:border-transparent"
                                     >
                                         <option>United Arab Emirates dirham</option>
                                         <option>United States dollar</option>

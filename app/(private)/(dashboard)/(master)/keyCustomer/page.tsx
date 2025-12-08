@@ -256,7 +256,7 @@ export default function CompanyCustomers() {
                   },
                 },
               ]
-            },
+            }, 
             localStorageKey: "company-customers-table",
             footer: { nextPrevBtn: true, pagination: true },
             columns,

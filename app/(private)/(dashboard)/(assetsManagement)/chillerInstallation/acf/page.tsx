@@ -492,7 +492,15 @@ export default function CustomerInvoicePage() {
                                 />
                             ];
                         },
-                        selectedCount: {
+                    },
+                    footer: { nextPrevBtn: true, pagination: true },
+                    columns,
+                    rowSelection: true,
+                    floatingInfoBar: {
+                                  showByDefault: true,
+                                  showSelectedRow: true,
+                                  buttons: [
+                                    {
                             label: "Selected Rows: ",
                             onClick: (data: TableDataType[], selectedRow?: number[]) => {
                                 const ids = selectedRow
@@ -507,11 +515,8 @@ export default function CustomerInvoicePage() {
                                 console.log("Selected Rows:", ids);
                             }
                         },
-                    },
-                    footer: { nextPrevBtn: true, pagination: true },
-                    columns,
-                    rowSelection: true,
-
+                                  ]
+                                },
                     localStorageKey: "invoice-table",
                     rowActions: [
                         {
