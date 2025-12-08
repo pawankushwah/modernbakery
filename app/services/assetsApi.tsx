@@ -466,3 +466,25 @@ export const addAllocate = async (body: object) => {
     return handleError(error);
   }
 };
+
+export const irList = async ( params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/ir/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const callRegisterList = async ( params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/call-register/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
