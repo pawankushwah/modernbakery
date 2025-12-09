@@ -347,7 +347,7 @@ export default function OrderDetailPage() {
                 ))} */}
                 <div className="font-semibold text-[#181D27] py-2 text-[18px] flex justify-between">
                   <span></span>
-                  <span>Total - {CURRENCY} {toInternationalNumber(finalTotal) || 0}</span>
+                  <span>Total - {CURRENCY} {toInternationalNumber(Number(finalTotal)) || 0}</span>
                                     {/* <span>{CURRENCY} {toInternationalNumber(finalTotal) || 0}</span> */}
                   
                 </div>

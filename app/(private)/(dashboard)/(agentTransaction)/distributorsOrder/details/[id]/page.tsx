@@ -182,14 +182,14 @@ export default function OrderDetailPage() {
   const keyValueData = [
     {
       key: "Net Total",
-      value: CURRENCY + " " + toInternationalNumber(netAmount ?? 0),
+      value: CURRENCY + " " + toInternationalNumber(Number(netAmount) || 0),
     },
     // { key: "Gross Total", value: "AED "+toInternationalNumber( grossTotal ?? 0 ) },
     // { key: "Discount", value: "AED "+toInternationalNumber( discount ?? 0 ) },
     // { key: "Excise", value: "AED 0.00" },
     {
       key: "Vat",
-      value: CURRENCY + " " + toInternationalNumber(totalVat ?? 0),
+      value: CURRENCY + " " + toInternationalNumber(Number(totalVat) || 0),
     },
     // { key: "Pre VAT", value: CURRENCY + " " + toInternationalNumber(preVat ?? 0) },
     // { key: "Delivery Charges", value: "AED 0.00" },
@@ -517,7 +517,7 @@ export default function OrderDetailPage() {
             className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]"
           />
         </div>
-{order?.permissions && data?.request_Step_id != null &&
+{order?.permissions && order?.permissions.length > 0 && data?.request_Step_id != null &&
   <div
           style={{ zIndex: 30 }}
           className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-md bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px]"
@@ -800,7 +800,7 @@ export default function OrderDetailPage() {
                   <span>Total</span>
                   {/* <span>AED {toInternationalNumber(finalTotal) || 0}</span> */}
                   <span>
-                    {CURRENCY} {toInternationalNumber(finalTotal) || 0}
+                    {CURRENCY} {toInternationalNumber(Number(finalTotal) || 0)}
                   </span>
                 </div>
               </div>

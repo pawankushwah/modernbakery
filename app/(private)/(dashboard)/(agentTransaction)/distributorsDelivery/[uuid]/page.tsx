@@ -1539,7 +1539,7 @@ export default function DeliveryAddEditPage() {
                       >
                         <span>Total</span>
                         <span>
-                          {CURRENCY} {toInternationalNumber(finalTotal)}
+                          {CURRENCY} {toInternationalNumber(Number(finalTotal))}
                         </span>
                       </div>
                     </div>

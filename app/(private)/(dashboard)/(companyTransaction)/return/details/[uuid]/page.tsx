@@ -270,7 +270,7 @@ export default function OrderDetailPage() {
                                 <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                                     <span>Total</span>
                                     {/* <span>AED {toInternationalNumber(finalTotal) || 0}</span> */}
-                                    <span>{CURRENCY} {toInternationalNumber(finalTotal) || "0.00"}</span>
+                                    <span>{CURRENCY} {toInternationalNumber(Number(finalTotal)) || "0.00"}</span>
                                 </div>
                             </div>
 
