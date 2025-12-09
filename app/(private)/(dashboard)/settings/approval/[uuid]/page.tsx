@@ -12,7 +12,7 @@ import { Icon } from "@iconify-icon/react";
 import Loading from "@/app/components/Loading";
 // import ApprovalFlowTable from "./dragTable";
 import ApprovalFlowTable from "./dragTable";
-import { submenuList, roleList, userList, approvalAdd, singleWorkFlowList, approvalWorkfolowUpdate } from "@/app/services/allApi";
+import { submenuList, roleList, userList, approvalAdd, singleWorkFlowList, approvalWorkfolowUpdate, authUserList } from "@/app/services/allApi";
 // import {VerticalArrow} from "./proccessFlow";
 
 type OldStep = {
@@ -55,88 +55,73 @@ type NewFlow = {
 };
 
 function convertWorkflow(oldData: any) {
-
-
     return {
-        workflow_id:oldData.workflow_id,
+        workflow_id: oldData.workflow_id,
         approvalName: oldData.name,
         description: oldData.description,
         status: oldData.is_active ? "1" : "0",
         steps: oldData.steps.map((step: any) => {
-           
-           const useIds: any = []
- const roleIds: any = []
+            const useIds: any = []
+            const roleIds: any = []
 
-            step.approvers
-                .filter((a: any) => {
-                    if (a.type === "USER") {
-                        useIds.push(a.user_id.toString())
-                    }
+            step.approvers.filter((a: any) => {
+                if (a.type === "USER") {
+                    useIds.push(a.user_id.toString())
+                }
+            })
 
-
-
-                })
-
-                 step.approvers
-                .filter((a: any) => {
-                    if (a.type === "ROLE") {
-                        roleIds.push(a.role_id.toString())
-                    }
-
-
-
-                })
+            step.approvers.filter((a: any) => {
+                if (a.type === "ROLE") {
+                    roleIds.push(a.role_id.toString())
+                }
+            })
 
             return {
                 ...step,
-                id:step.step_order,
+                id: step.step_order,
+                step_id: step.step_id, // Use the actual step_id from API response
                 step_order: step.step_order,
                 title: step.title,
                 condition: step.approval_type,
                 approvalMessage: step.message,
                 notificationMessage: step.notification,
                 targetType: step.approvers.filter((a: any) => a.type === "USER").length > 0 ? "2" : "1",
-                selectedCustomer: step.approvers.filter((a: any) => a.type === "USER").length>0?useIds:[],
-                formType:step.permissions,
-                
-                selectedRole: step.approvers.filter((a: any) => a.type !== "USER").length>0?roleIds:[]
+                selectedCustomer: step.approvers.filter((a: any) => a.type === "USER").length > 0 ? useIds : [],
+                formType: step.permissions,
+                selectedRole: step.approvers.filter((a: any) => a.type !== "USER").length > 0 ? roleIds : []
             }
         })
-
-
     };
 }
 
 
 export function convertToNewFlow(old: any): any {
     return {
-        workflow_id:old.workflow_id,
+        workflow_id: old.workflow_id,
         name: old.approvalName,
         description: old.description,
         is_active: old.status === "1",
 
-        steps: old.steps.map((step:any, index:any) => {
-            // convert permissions
-            const permissions: string[] = step.formType
-            // approval type
+        steps: old.steps.map((step: any, index: any) => {
+            const permissions: string[] = step.formType;
             const approvalType = step.condition || "OR";
-
-            // title logic
-            const title = `Step ${index + 1}`;
-
-            return {
-                ...step,
-
+            const title = step.title || `Step ${index + 1}`;
+            const stepData: any = {
                 step_order: index + 1,
-                id:index + 1,
                 title: title,
                 approval_type: approvalType,
-                message: step.approvalMessage || null,
-                notification: step.notificationMessage || null,
+                message: step.approvalMessage,
+                notification: step.notificationMessage,
                 permissions: permissions,
                 user_ids: (step.selectedCustomer ?? step.customer_id ?? []).map(Number),
                 role_ids: (step.selectedRole ?? step.role_id ?? []).map(Number)
             };
+
+            if (step.step_id) {
+                stepData.step_id = step.step_id;
+            }
+
+            return stepData;
         })
     };
 }
@@ -190,6 +175,7 @@ export default function AddApprovalFlow() {
     ];
     interface ApprovalStep {
         id: string;
+        step_id: string;
         targetType: string;
         roleOrCustomer: string;
         allowApproval: boolean;
@@ -206,7 +192,6 @@ export default function AddApprovalFlow() {
     const [stepsProccess, setStepsProcess] = useState<ApprovalStep[]>([]);
     const params = useParams();
   const uuid = params?.uuid as string;
-    
 
     const [modulesList, setModulesList] = useState<{ value: string; label: string }[]>([]);
     const [roleListData, setRoleListData] = useState<{ value: string; label: string }[]>([]);
@@ -255,7 +240,6 @@ export default function AddApprovalFlow() {
          console.log(store,"hii252")
   const flow: any = convertWorkflow(store)
         console.log(flow,"25")
-       
         setForm(flow)
         console.log(flow.steps, "flow.steps")
         setStepsProcess(flow.steps)
@@ -415,8 +399,8 @@ export default function AddApprovalFlow() {
 
     const fetchUsersList = async () => {
         try {
-
-            const res = await userList();
+            // const res1 = await userList();
+            const res = await authUserList({});
             console.log("role list", res.data);
             const usersDataList: { value: string, label: string }[] = []
             res.data.map((item: { id: number, name: string }) => {

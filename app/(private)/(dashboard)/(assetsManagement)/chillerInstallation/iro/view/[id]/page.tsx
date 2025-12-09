@@ -6,10 +6,10 @@ import Table, {
     TableDataType
 } from "@/app/components/customTable";
 import StatusBtn from "@/app/components/statusBtn2";
-import { iroList } from "@/app/services/assetsApi";
+import { iroViewList } from "@/app/services/assetsApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 // Type definitions for the ACF API response
@@ -132,6 +132,10 @@ export default function CustomerInvoicePage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
+    const params = useParams();
+      const id: string = Array.isArray(params.id)
+        ? params.id[0]
+        : (params.id as string);
     const [threeDotLoading, setThreeDotLoading] = useState({
         csv: false,
         xlsx: false,
@@ -167,9 +171,7 @@ export default function CustomerInvoicePage() {
         try {
             setLoading(true);
 
-            const result = await iroList({
-                ...appliedFilters,   // no pagination params needed
-            });
+            const result = await iroViewList(id);
 
             const mapped =
                 result?.count?.headers?.map((h: any) => {

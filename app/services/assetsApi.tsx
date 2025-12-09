@@ -1,4 +1,4 @@
-import { Params } from "next/dist/server/request/params";
+﻿import { Params } from "next/dist/server/request/params";
 import { API, handleError } from "./allApi";
 
 export const exportServiceTypes = async (params?: Params) => {
@@ -383,7 +383,6 @@ export const deleteChillerRequest = async (uuid: string) => {
 
 
 
-
 // export const getWarehouseStockDetails = async (id: string) => {
 //   try {
 //     const res = await API.get(`/api/settings/warehouse-stocks/${id}/stock-details`);
@@ -426,3 +425,87 @@ export const iroList = async (params: Params) => {
     return handleError(error);
   }
 };
+
+export const iroViewList = async (id: string) => {
+  try {
+    const res = await API.get(`/api/assets/iro/${id}`);
+    console.log(res, "ABCD");
+    return res.data?.count?.headers;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const bulkTransferList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/bulk-transfer/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const addBulkTransfer = async (body: object) => {
+  try {
+    const res = await API.post(`/api/assets/bulk-transfer/add`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const addAllocate = async (body: object) => {
+  try {
+    const res = await API.post(`/api/assets/bulk-transfer/allocate-assets`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const irList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/ir/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const callRegisterList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/call-register/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+export const getBtrByRegion = async (region_id: string,) => {
+  try {
+    const res = await API.get(`/api/assets/bulk-transfer/get-BTR/${region_id}`,
+
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+
+// export const getStockOfWarehouse = async (id?: string, params?: Params) => {
+//   try {
+//     const res = await API.get(`/api/settings/warehouse-stocks/warehouseStockInfo/${id}`, { params });
+//     return res.data;
+//   } catch (error: unknown) {
+//     return handleError(error);
+//   }
+// };
