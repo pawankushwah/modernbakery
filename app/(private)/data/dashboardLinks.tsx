@@ -544,14 +544,14 @@ export const initialLinkData: SidebarDataType[] = [
             isActive: false,
             href: "/customerLoyaltyPoints",
             label: "Customer Loyalty Points",
-            leadingIcon: "guidance:refrigeration",
+            leadingIcon: "mdi:star-circle",
             iconColor: "text-cyan-500",
           },
           {
             isActive: false,
             href: "/pointsAdjustment",
             label: "Points Adjustment",
-            leadingIcon: "si:pull-request-duotone",
+            leadingIcon: "mdi:adjust",
             iconColor: "text-cyan-500",
           },
 

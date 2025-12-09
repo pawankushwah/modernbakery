@@ -1086,7 +1086,7 @@ export default function OrderAddEditPage() {
                       { key: "Net", label: "Net", render: (row) => <span>{toInternationalNumber(row.Net) || "0.00"}</span> },
                       { key: "Vat", label: "VAT", render: (row) => <span>{toInternationalNumber(row.Vat) || "0.00"}</span> },
                       // { key: "gross", label: "Gross", render: (row) => <span>{toInternationalNumber(row.gross) || "0.00"}</span> },
-                      { key: "Total", label: "Total", render: (row) => <span>{toInternationalNumber(row.Total) || "0.00"}</span> },
+                      { key: "Total", label: "Total", render: (row) => <span>{toInternationalNumber(Number(row.Total)) || "0.00"}</span> },
                       {
                         key: "action",
                         label: "Action",
@@ -1153,7 +1153,7 @@ export default function OrderAddEditPage() {
                       ))}
                       <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                         <span>Total</span>
-                        <span>{CURRENCY} {toInternationalNumber(finalTotal)}</span>
+                        <span>{CURRENCY} {toInternationalNumber(Number(finalTotal))}</span>
                       </div>
                     </div>
                   </div>

@@ -618,7 +618,7 @@ export default function OrderDetailPage() {
                   <span>Total</span>
                   {/* <span>AED {toInternationalNumber(finalTotal) || 0}</span> */}
                   <span>
-                    {CURRENCY} {toInternationalNumber(finalTotal) || 0}
+                    {CURRENCY} {toInternationalNumber(Number(finalTotal)) || 0}
                   </span>
                 </div>
               </div>

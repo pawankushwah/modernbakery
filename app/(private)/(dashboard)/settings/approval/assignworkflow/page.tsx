@@ -164,10 +164,11 @@ export default function WorkflowTable() {
       }
 
       if (data.error) {
-        showSnackbar(data.message || "Something went wrong");
+        showSnackbar(data.message || "Something went wrong","error");
         throw new Error(data.message || "Something went wrong");
       }
       showSnackbar(data.message || "Workflow assigned successfully", "success");
+      formik.resetForm();
       setOpen(false);
       setRefreshKey((prev) => prev + 1);
     },
