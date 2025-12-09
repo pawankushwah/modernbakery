@@ -1087,7 +1087,7 @@ export default function PurchaseOrderAddEditPage() {
                       ))}
                       <div className="font-semibold text-[#181D27] text-[18px] flex justify-between">
                         <span>Total</span>
-                        <span>{CURRENCY} {toInternationalNumber(finalTotal)}</span>
+                        <span>{CURRENCY} {toInternationalNumber(Number(finalTotal))}</span>
                       </div>
                     </div>
                   </div>

@@ -1598,7 +1598,7 @@ export default function InvoiceddEditPage() {
                             {
                                 key: "Total",
                                 label: "Total",
-                                render: (row) => toInternationalNumber(row.Total) || "0.00"
+                                render: (row) => toInternationalNumber(Number(row.Total)) || "0.00"
                             },
                             {
                                 key: "action",
@@ -1692,8 +1692,8 @@ export default function InvoiceddEditPage() {
                             {[
                                 // { key: "Gross Total", value: `AED ${grossTotal.toFixed(2)}` },
                                 // { key: "Discount", value: `AED ${discount.toFixed(2)}` },
-                                { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
-                                { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
+                                { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(Number(netAmount))}` },
+                                { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(Number(totalVat))}` },
                                 // { key: "preVAT", value: `AED ${toInternationalNumber(netAmount - totalVat)}` },
                                 // { key: "Delivery Charges", value: "AED 0.00" },
                             ].map((item) => (
@@ -1704,7 +1704,7 @@ export default function InvoiceddEditPage() {
                             ))}
                             <div className="font-semibold text-[#181D27] text-[18px] flex justify-between mt-2 mb-2">
                                 <span>Total</span>
-                                <span>{CURRENCY} {toInternationalNumber(finalTotal)}</span>
+                                <span>{CURRENCY} {toInternationalNumber(Number(finalTotal))}</span>
                             </div>
                         </div>
 

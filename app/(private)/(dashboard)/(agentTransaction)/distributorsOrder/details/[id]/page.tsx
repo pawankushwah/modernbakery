@@ -182,14 +182,14 @@ export default function OrderDetailPage() {
   const keyValueData = [
     {
       key: "Net Total",
-      value: CURRENCY + " " + toInternationalNumber(netAmount ?? 0),
+      value: CURRENCY + " " + toInternationalNumber(Number(netAmount) || 0),
     },
     // { key: "Gross Total", value: "AED "+toInternationalNumber( grossTotal ?? 0 ) },
     // { key: "Discount", value: "AED "+toInternationalNumber( discount ?? 0 ) },
     // { key: "Excise", value: "AED 0.00" },
     {
       key: "Vat",
-      value: CURRENCY + " " + toInternationalNumber(totalVat ?? 0),
+      value: CURRENCY + " " + toInternationalNumber(Number(totalVat) || 0),
     },
     // { key: "Pre VAT", value: CURRENCY + " " + toInternationalNumber(preVat ?? 0) },
     // { key: "Delivery Charges", value: "AED 0.00" },
@@ -800,7 +800,7 @@ export default function OrderDetailPage() {
                   <span>Total</span>
                   {/* <span>AED {toInternationalNumber(finalTotal) || 0}</span> */}
                   <span>
-                    {CURRENCY} {toInternationalNumber(finalTotal) || 0}
+                    {CURRENCY} {toInternationalNumber(Number(finalTotal) || 0)}
                   </span>
                 </div>
               </div>
