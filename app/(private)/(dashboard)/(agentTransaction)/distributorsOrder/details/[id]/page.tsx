@@ -517,7 +517,7 @@ export default function OrderDetailPage() {
             className="!h-[30px] !gap-[3px] !px-[5px] !pl-[10px]"
           />
         </div>
-{order?.permissions && data?.request_Step_id != null &&
+{order?.permissions && order?.permissions.length > 0 && data?.request_Step_id != null &&
   <div
           style={{ zIndex: 30 }}
           className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-md bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px]"
