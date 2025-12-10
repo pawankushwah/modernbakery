@@ -484,8 +484,13 @@ function SortableRow({
     }));
 
   return (
-    <tr className="text-[14px] bg-white text-[#535862]">
-      <td ref={setNodeRef} style={style} {...attributes} {...listeners} className="p-2 text-center font-semibold">{index + 1}</td>
+    <tr ref={setNodeRef} style={style} className="text-[14px] bg-white text-[#535862]">
+      <td className="p-2 text-center font-semibold">
+        <div className="flex items-center justify-center cursor-grab active:cursor-grabbing" {...attributes} {...listeners}>
+          <Icon icon="mdi:drag-horizontal-variant" className="mr-2" width="20" height="20" />
+          {index + 1}
+        </div>
+      </td>
       <td className="px-[24px] py-[12px] bg-white   ">{Array.isArray(step.formType) ? step.formType.join(", ") : step.formType}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.targetType === "1" ? "Role" : "User"}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{(step.selectedCustomer?.label ?? step.selectedRole?.label) || step.roleOrCustomer}</td>
@@ -534,8 +539,7 @@ function SortableRow({
       <td className="px-[24px] py-[12px] bg-white   ">{step.approvalMessage}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.notificationMessage}</td>
       <td className="px-[24px] py-[12px] bg-white   ">{step.confirmationMessage}</td>
-      <td className="px-[24px] py-[12px] bg-white    text-center">
-        <SidebarBtn
+      <td className="px-[24px] py-[12px] bg-white    text-center cursor-pointer">
           onClick={() => onEdit(step.id)}
           className="text-red-600 hover:text-red-800"
         >
