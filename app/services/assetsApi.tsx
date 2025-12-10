@@ -488,6 +488,47 @@ export const callRegisterList = async (params: Params) => {
     return handleError(error);
   }
 };
+
+export const addCallRegister = async (body: object): Promise<any> => {
+  try {
+    const res = await API.post(`/api/assets/call-register/add`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const callRegisterGlobalSearch = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/assets/chiller/get-chiller`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+
+export const callRegisterByUUID = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/assets/call-register/${uuid}`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const updateCallRegister = async (uuid: string, body: chiller) => {
+  try {
+    const res = await API.put(`/api/assets/call-register/update/${uuid}`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 export const getBtrByRegion = async (params: Params) => {
   try {
     const res = await API.get(`/api/assets/bulk-transfer/get-BTR`,
