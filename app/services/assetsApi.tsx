@@ -724,6 +724,17 @@ export const updateServiceTerritory = async (uuid: string, body: object) => {
   }
 };
 
+
+export const assetsStatusList = async (params: Params) => {
+  try {
+    const res = await API.get(`/api/settings/fridge-status/list`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 // export const CallRegisterByUUID = async (uuid: string, params?: Params) => {
 //   try {
 //     const res = await API.get(`/api/assets/call-register/${uuid}`, {
