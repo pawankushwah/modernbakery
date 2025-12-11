@@ -778,3 +778,13 @@ export const serviceVisitByUUID = async (uuid: string, params?: Params) => {
     return handleError(error);
   }
 };
+export const ServiceTerritoryByUUID = async (uuid: string, params?: Params) => {
+  try {
+    const res = await API.get(`/api/assets/service-territory/${uuid}`, {
+      params: params,
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

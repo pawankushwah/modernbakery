@@ -206,14 +206,14 @@ export default function ServiceVisit() {
                         columnFilter: false,
                         searchBar: false,
                         actions: [
-                            <SidebarBtn
-                                key="add"
-                                href="/serviceVisit/add"
-                                leadingIcon="lucide:plus"
-                                label="Add Visit"
-                                labelTw="hidden lg:block"
-                                isActive
-                            />,
+                            // <SidebarBtn
+                            //     key="add"
+                            //     href="/serviceVisit/add"
+                            //     leadingIcon="lucide:plus"
+                            //     label="Add Visit"
+                            //     labelTw="hidden lg:block"
+                            //     isActive
+                            // />,
                         ],
                     },
 
@@ -227,12 +227,12 @@ export default function ServiceVisit() {
                                 router.push(`/serviceVisit/details/${(row as ServiceVisitRow).uuid}`);
                             },
                         },
-                        {
-                            icon: "lucide:edit",
-                            onClick: (row: any) => {
-                                router.push(`/serviceVisit/${(row as ServiceVisitRow).uuid}`);
-                            },
-                        },
+                        // {
+                        //     icon: "lucide:edit",
+                        //     onClick: (row: any) => {
+                        //         router.push(`/serviceVisit/${(row as ServiceVisitRow).uuid}`);
+                        //     },
+                        // },
                     ],
 
                     footer: { nextPrevBtn: true, pagination: true },

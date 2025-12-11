@@ -320,13 +320,13 @@ export default function AddOrEditChiller() {
                             />
 
                             <InputFields
-                                // required
                                 label="Ticket Date"
                                 type="date"
                                 name="ticket_date"
                                 value={values.ticket_date}
+                                min={new Date().toISOString().split("T")[0]}
+                                max={new Date().toISOString().split("T")[0]}
                                 onChange={(e) => setFieldValue("ticket_date", e.target.value)}
-                            // error={touched.assets_category && errors.assets_category}
                             />
 
                             <InputFields

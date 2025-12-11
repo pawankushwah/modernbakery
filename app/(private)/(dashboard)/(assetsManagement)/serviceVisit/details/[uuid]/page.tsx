@@ -10,9 +10,10 @@ import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-
+import Map from "@/app/components/map";
+import ImagePreviewModal from "@/app/components/ImagePreviewModal";
 const title = "Service Visit View";
-const backBtnUrl = "/assetsManagement/callRegister";
+const backBtnUrl = "/serviceVisit";
 
 export default function ViewPage() {
     const params = useParams();
@@ -42,6 +43,31 @@ export default function ViewPage() {
 
 
 
+    const [previewImages, setPreviewImages] = useState<string[]>([]);
+    const [isImagePreviewOpen, setIsImagePreviewOpen] = useState(false);
+
+    const openImage = (url: string) => {
+        if (!url) return;
+        setPreviewImages([url]);
+        setIsImagePreviewOpen(true);
+    };
+
+    const renderViewImageBtn = (url: string | null) => {
+        if (!url) return null;
+        return (
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    openImage(url);
+                }}
+                className="ml-2 inline-flex items-center text-[#EA0A2A] hover:text-[#b4061e] transition-colors"
+                title="View Image"
+            >
+                <Icon icon="mdi:eye" width={18} />
+            </button>
+        );
+    };
+
     return (
 
 
@@ -69,9 +95,6 @@ export default function ViewPage() {
                                 { key: "Time Out", value: data?.time_out || "-" },
                                 { key: "Work Status", value: data?.work_status },
                             ]}
-
-
-
                         />
                     </ContainerCard>
 
@@ -102,7 +125,21 @@ export default function ViewPage() {
                                 { key: "Outlet Name", value: data?.outlet_name || "-" },
                                 { key: "Owner Name", value: data?.owner_name || "-" },
                                 { key: "Landmark", value: data?.landmark || "-" },
-                                { key: "Location", value: data?.location || "-" },
+                                // { key: "Location", value: data?.location || "-" },
+                                {
+                                    key: "Location",
+                                    value: "",
+                                    component: (typeof data?.location === 'string' && data.location.includes(',')) ? (
+                                        <Map
+                                            latitude={data.location.split(',')[0].trim()}
+                                            longitude={data.location.split(',')[1].trim()}
+                                            title="Location"
+                                        />
+                                    ) : (
+                                        data?.location || "-"
+                                    ),
+                                }
+
                             ]}
                         />
                     </ContainerCard>
@@ -123,13 +160,23 @@ export default function ViewPage() {
                 {/* ================= FRIDGE DETAILS ================= */}
                 <h2 className="text-lg font-semibold">Fridge Details</h2>
                 <div className="flex flex-wrap gap-5">
-                    <ContainerCard className="w-full lg:w-[680px]">
+                    <ContainerCard className="w-full lg:w-full">
                         <KeyValueData
                             data={[
                                 { key: "Model Number", value: data?.model_no || "-" },
                                 { key: "Asset Number", value: data?.asset_no || "-" },
                                 { key: "Serial Number", value: data?.serial_no || "-" },
                                 { key: "Branding", value: data?.branding || "-" },
+                                {
+                                    key: "Cooler Image",
+                                    value: data?.cooler_image ? "View Image" : "-",
+                                    component: renderViewImageBtn(data?.cooler_image)
+                                },
+                                {
+                                    key: "Cooler Image 2",
+                                    value: data?.cooler_image2 ? "View Image" : "-",
+                                    component: renderViewImageBtn(data?.cooler_image2)
+                                },
                             ]}
                         />
                     </ContainerCard>
@@ -138,7 +185,7 @@ export default function ViewPage() {
                 {/* ================= WORK DETAILS ================= */}
                 <h2 className="text-lg font-semibold">Work Details</h2>
                 <div className="flex flex-wrap gap-5">
-                    <ContainerCard className="w-full lg:w-[680px]">
+                    <ContainerCard className="w-full lg:w-full">
                         <KeyValueData
                             data={[
                                 { key: "Complaint Type", value: data?.complaint_type || "-" },
@@ -154,7 +201,7 @@ export default function ViewPage() {
                 {/* ================= WORK DONE DETAILS ================= */}
                 <h2 className="text-lg font-semibold">Work Done Details</h2>
                 <div className="flex flex-wrap gap-5">
-                    <ContainerCard className="w-full lg:w-[680px]">
+                    <ContainerCard className="w-full lg:w-full">
                         <KeyValueData
                             data={[
                                 { key: "Work Done Type", value: data?.work_done_type || "-" },
@@ -162,6 +209,11 @@ export default function ViewPage() {
                                 { key: "Spare Details", value: data?.spare_details || "-" },
                                 { key: "Technical Behavior", value: data?.technical_behavior || "-" },
                                 { key: "Service Quality", value: data?.service_quality || "-" },
+                                {
+                                    key: "Customer Signature",
+                                    value: data?.customer_signature ? "View Signature" : "-",
+                                    component: renderViewImageBtn(data?.customer_signature)
+                                },
                             ]}
                         />
                     </ContainerCard>
@@ -170,17 +222,49 @@ export default function ViewPage() {
                 {/* ================= EQUIPMENT CONDITION ================= */}
                 <h2 className="text-lg font-semibold">Equipment Condition</h2>
                 <div className="flex flex-wrap gap-5">
-                    <ContainerCard className="w-full lg:w-[680px]">
+                    <ContainerCard className="w-full lg:w-full">
                         <KeyValueData
                             data={[
-                                { key: "Machine Working", value: data?.is_machine_in_working || "-" },
-                                { key: "Cleanliness", value: data?.cleanliness || "-" },
-                                { key: "Condenser Coil Cleaned", value: data?.condensor_coil_cleand || "-" },
-                                { key: "Gaskets", value: data?.gaskets || "-" },
-                                { key: "Light Working", value: data?.light_working || "-" },
-                                { key: "Proper Ventilation", value: data?.propper_ventilation_available || "-" },
-                                { key: "Leveling Positioning", value: data?.leveling_positioning || "-" },
-                                { key: "Stock Availability %", value: data?.stock_availability_in || "-" },
+                                {
+                                    key: "Machine Working",
+                                    value: data?.is_machine_in_working || "-",
+                                    component: renderViewImageBtn(data?.is_machine_in_working_img)
+                                },
+                                {
+                                    key: "Cleanliness",
+                                    value: data?.cleanliness || "-",
+                                    component: renderViewImageBtn(data?.cleanliness_img)
+                                },
+                                {
+                                    key: "Condenser Coil Cleaned",
+                                    value: data?.condensor_coil_cleand || "-",
+                                    component: renderViewImageBtn(data?.condensor_coil_cleand_img)
+                                },
+                                {
+                                    key: "Gaskets",
+                                    value: data?.gaskets || "-",
+                                    component: renderViewImageBtn(data?.gaskets_img)
+                                },
+                                {
+                                    key: "Light Working",
+                                    value: data?.light_working || "-",
+                                    component: renderViewImageBtn(data?.light_working_img)
+                                },
+                                {
+                                    key: "Proper Ventilation",
+                                    value: data?.propper_ventilation_available || "-",
+                                    component: renderViewImageBtn(data?.propper_ventilation_available_img)
+                                },
+                                {
+                                    key: "Leveling Positioning",
+                                    value: data?.leveling_positioning || "-",
+                                    component: renderViewImageBtn(data?.leveling_positioning_img)
+                                },
+                                {
+                                    key: "Stock Availability %",
+                                    value: data?.stock_availability_in || "-",
+                                    component: renderViewImageBtn(data?.stock_availability_in_img)
+                                },
                             ]}
                         />
                     </ContainerCard>
@@ -196,6 +280,12 @@ export default function ViewPage() {
                 )}
 
             </div>
+
+            <ImagePreviewModal
+                images={previewImages}
+                isOpen={isImagePreviewOpen}
+                onClose={() => setIsImagePreviewOpen(false)}
+            />
         </>
     );
 }
