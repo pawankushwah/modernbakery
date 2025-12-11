@@ -21,7 +21,12 @@ import * as yup from "yup";
 import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 
 export default function AddInstallationReportPage() {
-    const { regionOptions } = useAllDropdownListData();
+    const { regionOptions , ensureRegionLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureRegionLoaded();
+  }, [ensureRegionLoaded]);
     const router = useRouter();
     const { showSnackbar } = useSnackbar();
 

@@ -120,7 +120,7 @@ const StepSchemas = [
 ];
 
 export default function AddEditItem() {
-  const { itemCategoryOptions, uomOptions } = useAllDropdownListData();
+  const { itemCategoryOptions, uomOptions, ensureItemCategoryLoaded, ensureUomLoaded } = useAllDropdownListData();
   const { setLoading } = useLoading();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
@@ -131,6 +131,12 @@ export default function AddEditItem() {
   const [skeleton, setSkeleton] = useState({
     itemSubCategory: false,
   });
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureItemCategoryLoaded();
+    ensureUomLoaded();
+  }, [ensureItemCategoryLoaded, ensureUomLoaded]);
 
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Details" },

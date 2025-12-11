@@ -37,7 +37,12 @@ export default function AddEditRegion() {
   const [loading, setLoading] = useState(false);
   const searchParams = useSearchParams();
   const { showSnackbar } = useSnackbar();
-  const { companyOptions } = useAllDropdownListData();
+  const { companyOptions , ensureCompanyLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureCompanyLoaded();
+  }, [ensureCompanyLoaded]);
 
   // Determine if edit mode (edit if id is present and not 'add')
   const routeId = params?.id ?? "";

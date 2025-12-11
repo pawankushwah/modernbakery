@@ -113,7 +113,12 @@ export default function PurchaseOrderAddEditPage() {
   const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredSalesTeamOptions, setFilteredSalesTeamOptions] = useState<{ label: string; value: string }[]>([]);
   // const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
-  const { warehouseAllOptions } = useAllDropdownListData();
+  const { warehouseAllOptions , ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureWarehouseAllLoaded();
+  }, [ensureWarehouseAllLoaded]);
   const form = {
     warehouse: "",
     route: "",

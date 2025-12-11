@@ -42,7 +42,7 @@ import {
 } from '@/app/services/allApi';
 import { vendorList } from '@/app/services/assetsApi';
 import { shelvesList } from '@/app/services/merchandiserApi';
-import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 
 interface DropdownDataContextType {
   companyList: CompanyItem[];
@@ -137,6 +137,46 @@ interface DropdownDataContextType {
   labelOptions: { value: string; label: string }[];
   roleOptions: { value: string; label: string }[];
   loading: boolean;
+  // Lazy load functions - call these to ensure data is loaded
+  ensureCompanyLoaded: () => void;
+  ensureCountryLoaded: () => void;
+  ensureRegionLoaded: () => void;
+  ensureSurveyLoaded: () => void;
+  ensureRouteLoaded: () => void;
+  ensureWarehouseLoaded: () => void;
+  ensureWarehouseAllLoaded: () => void;
+  ensureRouteTypeLoaded: () => void;
+  ensureAreaLoaded: () => void;
+  ensureCompanyCustomersLoaded: () => void;
+  ensureCompanyCustomersTypeLoaded: () => void;
+  ensureItemCategoryLoaded: () => void;
+  ensureItemSubCategoryLoaded: () => void;
+  ensureChannelLoaded: () => void;
+  ensureCustomerTypeLoaded: () => void;
+  ensureSalesmanTypeLoaded: () => void;
+  ensureVehicleListLoaded: () => void;
+  ensureCustomerCategoryLoaded: () => void;
+  ensureCustomerSubCategoryLoaded: () => void;
+  ensureItemLoaded: () => void;
+  ensureDiscountTypeLoaded: () => void;
+  ensureMenuListLoaded: () => void;
+  ensureVendorLoaded: () => void;
+  ensureSalesmanLoaded: () => void;
+  ensureAgentCustomerLoaded: () => void;
+  ensureShelvesLoaded: () => void;
+  ensureSubmenuLoaded: () => void;
+  ensurePermissionsLoaded: () => void;
+  ensureLabelsLoaded: () => void;
+  ensureRolesLoaded: () => void;
+  ensureProjectLoaded: () => void;
+  ensureCompanyTypeLoaded: () => void;
+  ensureUomLoaded: () => void;
+  ensureLocationLoaded: () => void;
+  ensureAssetsTypeLoaded: () => void;
+  ensureManufacturerLoaded: () => void;
+  ensureAssetsModelLoaded: () => void;
+  ensureBrandLoaded: () => void;
+  ensureBrandingLoaded: () => void;
 }
 
 // Minimal interfaces reflecting the expected fields returned by API for dropdown lists
@@ -451,6 +491,528 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const [brandList, setBrandList] = useState<Brand[]>([]);
   const [brandingListState, setBrandingList] = useState<Branding[]>([]);
   const [loading, setLoading] = useState(false);
+
+  // Track which dropdowns have been fetched using useRef to avoid re-renders
+  const fetchedRef = useRef<Set<string>>(new Set());
+  const fetchingRef = useRef<Set<string>>(new Set());
+
+  // Helper to normalize API responses
+  const normalizeResponse = useCallback((r: unknown): unknown[] => {
+    if (r && typeof r === 'object') {
+      const obj = r as Record<string, unknown>;
+      if (Array.isArray(obj.data)) return obj.data as unknown[];
+    }
+    if (Array.isArray(r)) return r as unknown[];
+    return (r as unknown) ? [r as unknown] : [];
+  }, []);
+
+  // Lazy load functions - only fetch if not already fetched or fetching
+  const ensureCompanyLoaded = useCallback(() => {
+    if (fetchedRef.current.has('company') || fetchingRef.current.has('company')) return;
+    fetchingRef.current.add('company');
+    companyList().then(res => {
+      setCompanyListData(normalizeResponse(res) as CompanyItem[]);
+      fetchedRef.current.add('company');
+      fetchingRef.current.delete('company');
+    }).catch(() => {
+      setCompanyListData([]);
+      fetchingRef.current.delete('company');
+    });
+  }, [normalizeResponse]);
+
+  const ensureCountryLoaded = useCallback(() => {
+    if (fetchedRef.current.has('country') || fetchingRef.current.has('country')) return;
+    fetchingRef.current.add('country');
+    countryList().then(res => {
+      setCountryListData(normalizeResponse(res) as CountryItem[]);
+      fetchedRef.current.add('country');
+      fetchingRef.current.delete('country');
+    }).catch(() => {
+      setCountryListData([]);
+      fetchingRef.current.delete('country');
+    });
+  }, [normalizeResponse]);
+
+  const ensureRegionLoaded = useCallback(() => {
+    if (fetchedRef.current.has('region') || fetchingRef.current.has('region')) return;
+    fetchingRef.current.add('region');
+    regionList().then(res => {
+      setRegionListData(normalizeResponse(res) as RegionItem[]);
+      fetchedRef.current.add('region');
+      fetchingRef.current.delete('region');
+    }).catch(() => {
+      setRegionListData([]);
+      fetchingRef.current.delete('region');
+    });
+  }, [normalizeResponse]);
+
+  const ensureSurveyLoaded = useCallback(() => {
+    if (fetchedRef.current.has('survey') || fetchingRef.current.has('survey')) return;
+    fetchingRef.current.add('survey');
+    SurveyList().then(res => {
+      setSurveyListData(normalizeResponse(res) as SurveyItem[]);
+      fetchedRef.current.add('survey');
+      fetchingRef.current.delete('survey');
+    }).catch(() => {
+      setSurveyListData([]);
+      fetchingRef.current.delete('survey');
+    });
+  }, [normalizeResponse]);
+
+  const ensureRouteLoaded = useCallback(() => {
+    if (fetchedRef.current.has('route') || fetchingRef.current.has('route')) return;
+    fetchingRef.current.add('route');
+    routeList({}).then(res => {
+      setRouteListData(normalizeResponse(res) as RouteItem[]);
+      fetchedRef.current.add('route');
+      fetchingRef.current.delete('route');
+    }).catch(() => {
+      setRouteListData([]);
+      fetchingRef.current.delete('route');
+    });
+  }, [normalizeResponse]);
+
+  const ensureWarehouseLoaded = useCallback(() => {
+    if (fetchedRef.current.has('warehouse') || fetchingRef.current.has('warehouse')) return;
+    fetchingRef.current.add('warehouse');
+    getAllActiveWarehouse().then(res => {
+      setWarehouseListData(normalizeResponse(res) as WarehouseItem[]);
+      fetchedRef.current.add('warehouse');
+      fetchingRef.current.delete('warehouse');
+    }).catch(() => {
+      setWarehouseListData([]);
+      fetchingRef.current.delete('warehouse');
+    });
+  }, [normalizeResponse]);
+
+  const ensureWarehouseAllLoaded = useCallback(() => {
+    if (fetchedRef.current.has('warehouseAll') || fetchingRef.current.has('warehouseAll')) return;
+    fetchingRef.current.add('warehouseAll');
+    warehouseList({ dropdown: 'true' }).then(res => {
+      setWarehouseAllList(normalizeResponse(res) as WarehouseAll[]);
+      fetchedRef.current.add('warehouseAll');
+      fetchingRef.current.delete('warehouseAll');
+    }).catch(() => {
+      setWarehouseAllList([]);
+      fetchingRef.current.delete('warehouseAll');
+    });
+  }, [normalizeResponse]);
+
+  const ensureRouteTypeLoaded = useCallback(() => {
+    if (fetchedRef.current.has('routeType') || fetchingRef.current.has('routeType')) return;
+    fetchingRef.current.add('routeType');
+    routeType({ dropdown: 'true' }).then(res => {
+      setRouteTypeData(normalizeResponse(res) as RouteTypeItem[]);
+      fetchedRef.current.add('routeType');
+      fetchingRef.current.delete('routeType');
+    }).catch(() => {
+      setRouteTypeData([]);
+      fetchingRef.current.delete('routeType');
+    });
+  }, [normalizeResponse]);
+
+  const ensureAreaLoaded = useCallback(() => {
+    if (fetchedRef.current.has('area') || fetchingRef.current.has('area')) return;
+    fetchingRef.current.add('area');
+    getSubRegion().then(res => {
+      setAreaListData(normalizeResponse(res) as AreaItem[]);
+      fetchedRef.current.add('area');
+      fetchingRef.current.delete('area');
+    }).catch(() => {
+      setAreaListData([]);
+      fetchingRef.current.delete('area');
+    });
+  }, [normalizeResponse]);
+
+  const ensureCompanyCustomersLoaded = useCallback(() => {
+    if (fetchedRef.current.has('companyCustomers') || fetchingRef.current.has('companyCustomers')) return;
+    fetchingRef.current.add('companyCustomers');
+    getCompanyCustomers({ dropdown: 'true' }).then(res => {
+      setCompanyCustomersData(normalizeResponse(res) as CustomerItem[]);
+      fetchedRef.current.add('companyCustomers');
+      fetchingRef.current.delete('companyCustomers');
+    }).catch(() => {
+      setCompanyCustomersData([]);
+      fetchingRef.current.delete('companyCustomers');
+    });
+  }, [normalizeResponse]);
+
+  const ensureCompanyCustomersTypeLoaded = useCallback(() => {
+    if (fetchedRef.current.has('companyCustomersType') || fetchingRef.current.has('companyCustomersType')) return;
+    fetchingRef.current.add('companyCustomersType');
+    getCompanyCustomersType().then(res => {
+      setCompanyCustomersTypeData(normalizeResponse(res) as CustomerTypeItem[]);
+      fetchedRef.current.add('companyCustomersType');
+      fetchingRef.current.delete('companyCustomersType');
+    }).catch(() => {
+      setCompanyCustomersTypeData([]);
+      fetchingRef.current.delete('companyCustomersType');
+    });
+  }, [normalizeResponse]);
+
+  const ensureItemCategoryLoaded = useCallback(() => {
+    if (fetchedRef.current.has('itemCategory') || fetchingRef.current.has('itemCategory')) return;
+    fetchingRef.current.add('itemCategory');
+    itemCategory({ dropdown: 'true' }).then(res => {
+      setItemCategoryData(normalizeResponse(res) as ItemCategoryItem[]);
+      fetchedRef.current.add('itemCategory');
+      fetchingRef.current.delete('itemCategory');
+    }).catch(() => {
+      setItemCategoryData([]);
+      fetchingRef.current.delete('itemCategory');
+    });
+  }, [normalizeResponse]);
+
+  const ensureItemSubCategoryLoaded = useCallback(() => {
+    if (fetchedRef.current.has('itemSubCategory') || fetchingRef.current.has('itemSubCategory')) return;
+    fetchingRef.current.add('itemSubCategory');
+    itemSubCategory({ dropdown: 'true' }).then(res => {
+      setItemSubCategoryData(normalizeResponse(res) as ItemSubCategoryItem[]);
+      fetchedRef.current.add('itemSubCategory');
+      fetchingRef.current.delete('itemSubCategory');
+    }).catch(() => {
+      setItemSubCategoryData([]);
+      fetchingRef.current.delete('itemSubCategory');
+    });
+  }, [normalizeResponse]);
+
+  const ensureChannelLoaded = useCallback(() => {
+    if (fetchedRef.current.has('channel') || fetchingRef.current.has('channel')) return;
+    fetchingRef.current.add('channel');
+    channelList().then(res => {
+      setChannelListData(normalizeResponse(res) as ChannelItem[]);
+      fetchedRef.current.add('channel');
+      fetchingRef.current.delete('channel');
+    }).catch(() => {
+      setChannelListData([]);
+      fetchingRef.current.delete('channel');
+    });
+  }, [normalizeResponse]);
+
+  const ensureCustomerTypeLoaded = useCallback(() => {
+    if (fetchedRef.current.has('customerType') || fetchingRef.current.has('customerType')) return;
+    fetchingRef.current.add('customerType');
+    getCustomerType().then(res => {
+      setCustomerTypeData(normalizeResponse(res) as CustomerType[]);
+      fetchedRef.current.add('customerType');
+      fetchingRef.current.delete('customerType');
+    }).catch(() => {
+      setCustomerTypeData([]);
+      fetchingRef.current.delete('customerType');
+    });
+  }, [normalizeResponse]);
+
+  const ensureSalesmanTypeLoaded = useCallback(() => {
+    if (fetchedRef.current.has('salesmanType') || fetchingRef.current.has('salesmanType')) return;
+    fetchingRef.current.add('salesmanType');
+    salesmanTypeList({}).then(res => {
+      setSalesmanTypesData(normalizeResponse(res) as SalesmanType[]);
+      fetchedRef.current.add('salesmanType');
+      fetchingRef.current.delete('salesmanType');
+    }).catch(() => {
+      setSalesmanTypesData([]);
+      fetchingRef.current.delete('salesmanType');
+    });
+  }, [normalizeResponse]);
+
+  const ensureVehicleListLoaded = useCallback(() => {
+    if (fetchedRef.current.has('vehicleList') || fetchingRef.current.has('vehicleList')) return;
+    fetchingRef.current.add('vehicleList');
+    vehicleListData().then(res => {
+      setVehicleList(normalizeResponse(res) as VehicleListItem[]);
+      fetchedRef.current.add('vehicleList');
+      fetchingRef.current.delete('vehicleList');
+    }).catch(() => {
+      setVehicleList([]);
+      fetchingRef.current.delete('vehicleList');
+    });
+  }, [normalizeResponse]);
+
+  const ensureCustomerCategoryLoaded = useCallback(() => {
+    if (fetchedRef.current.has('customerCategory') || fetchingRef.current.has('customerCategory')) return;
+    fetchingRef.current.add('customerCategory');
+    customerCategoryList().then(res => {
+      setCustomerCategory(normalizeResponse(res) as CustomerCategory[]);
+      fetchedRef.current.add('customerCategory');
+      fetchingRef.current.delete('customerCategory');
+    }).catch(() => {
+      setCustomerCategory([]);
+      fetchingRef.current.delete('customerCategory');
+    });
+  }, [normalizeResponse]);
+
+  const ensureCustomerSubCategoryLoaded = useCallback(() => {
+    if (fetchedRef.current.has('customerSubCategory') || fetchingRef.current.has('customerSubCategory')) return;
+    fetchingRef.current.add('customerSubCategory');
+    customerSubCategoryList().then(res => {
+      setCustomerSubCategory(normalizeResponse(res) as CustomerSubCategory[]);
+      fetchedRef.current.add('customerSubCategory');
+      fetchingRef.current.delete('customerSubCategory');
+    }).catch(() => {
+      setCustomerSubCategory([]);
+      fetchingRef.current.delete('customerSubCategory');
+    });
+  }, [normalizeResponse]);
+
+  const ensureItemLoaded = useCallback(() => {
+    if (fetchedRef.current.has('item') || fetchingRef.current.has('item')) return;
+    fetchingRef.current.add('item');
+    itemList().then(res => {
+      setItem(normalizeResponse(res) as Item[]);
+      fetchedRef.current.add('item');
+      fetchingRef.current.delete('item');
+    }).catch(() => {
+      setItem([]);
+      fetchingRef.current.delete('item');
+    });
+  }, [normalizeResponse]);
+
+  const ensureDiscountTypeLoaded = useCallback(() => {
+    if (fetchedRef.current.has('discountType') || fetchingRef.current.has('discountType')) return;
+    fetchingRef.current.add('discountType');
+    getDiscountTypeList().then(res => {
+      setDiscountType(normalizeResponse(res) as DiscountType[]);
+      fetchedRef.current.add('discountType');
+      fetchingRef.current.delete('discountType');
+    }).catch(() => {
+      setDiscountType([]);
+      fetchingRef.current.delete('discountType');
+    });
+  }, [normalizeResponse]);
+
+  const ensureMenuListLoaded = useCallback(() => {
+    if (fetchedRef.current.has('menuList') || fetchingRef.current.has('menuList')) return;
+    fetchingRef.current.add('menuList');
+    getMenuList().then(res => {
+      setMenuList(normalizeResponse(res) as MenuList[]);
+      fetchedRef.current.add('menuList');
+      fetchingRef.current.delete('menuList');
+    }).catch(() => {
+      setMenuList([]);
+      fetchingRef.current.delete('menuList');
+    });
+  }, [normalizeResponse]);
+
+  const ensureVendorLoaded = useCallback(() => {
+    if (fetchedRef.current.has('vendor') || fetchingRef.current.has('vendor')) return;
+    fetchingRef.current.add('vendor');
+    vendorList().then(res => {
+      setVendor(normalizeResponse(res) as VendorList[]);
+      fetchedRef.current.add('vendor');
+      fetchingRef.current.delete('vendor');
+    }).catch(() => {
+      setVendor([]);
+      fetchingRef.current.delete('vendor');
+    });
+  }, [normalizeResponse]);
+
+  const ensureSalesmanLoaded = useCallback(() => {
+    if (fetchedRef.current.has('salesman') || fetchingRef.current.has('salesman')) return;
+    fetchingRef.current.add('salesman');
+    salesmanList().then(res => {
+      setSalesman(normalizeResponse(res) as SalesmanList[]);
+      fetchedRef.current.add('salesman');
+      fetchingRef.current.delete('salesman');
+    }).catch(() => {
+      setSalesman([]);
+      fetchingRef.current.delete('salesman');
+    });
+  }, [normalizeResponse]);
+
+  const ensureAgentCustomerLoaded = useCallback(() => {
+    if (fetchedRef.current.has('agentCustomer') || fetchingRef.current.has('agentCustomer')) return;
+    fetchingRef.current.add('agentCustomer');
+    agentCustomerList().then(res => {
+      setAgentCustomer(normalizeResponse(res) as AgentCustomerList[]);
+      fetchedRef.current.add('agentCustomer');
+      fetchingRef.current.delete('agentCustomer');
+    }).catch(() => {
+      setAgentCustomer([]);
+      fetchingRef.current.delete('agentCustomer');
+    });
+  }, [normalizeResponse]);
+
+  const ensureShelvesLoaded = useCallback(() => {
+    if (fetchedRef.current.has('shelves') || fetchingRef.current.has('shelves')) return;
+    fetchingRef.current.add('shelves');
+    shelvesList().then(res => {
+      setShelves(normalizeResponse(res) as ShelvesList[]);
+      fetchedRef.current.add('shelves');
+      fetchingRef.current.delete('shelves');
+    }).catch(() => {
+      setShelves([]);
+      fetchingRef.current.delete('shelves');
+    });
+  }, [normalizeResponse]);
+
+  const ensureSubmenuLoaded = useCallback(() => {
+    if (fetchedRef.current.has('submenu') || fetchingRef.current.has('submenu')) return;
+    fetchingRef.current.add('submenu');
+    submenuList().then(res => {
+      setSubmenu(normalizeResponse(res) as submenuList[]);
+      fetchedRef.current.add('submenu');
+      fetchingRef.current.delete('submenu');
+    }).catch(() => {
+      setSubmenu([]);
+      fetchingRef.current.delete('submenu');
+    });
+  }, [normalizeResponse]);
+
+  const ensurePermissionsLoaded = useCallback(() => {
+    if (fetchedRef.current.has('permissions') || fetchingRef.current.has('permissions')) return;
+    fetchingRef.current.add('permissions');
+    permissionList().then(res => {
+      setPermissions(normalizeResponse(res) as permissionsList[]);
+      fetchedRef.current.add('permissions');
+      fetchingRef.current.delete('permissions');
+    }).catch(() => {
+      setPermissions([]);
+      fetchingRef.current.delete('permissions');
+    });
+  }, [normalizeResponse]);
+
+  const ensureLabelsLoaded = useCallback(() => {
+    if (fetchedRef.current.has('labels') || fetchingRef.current.has('labels')) return;
+    fetchingRef.current.add('labels');
+    labelList().then(res => {
+      setLabels(normalizeResponse(res) as LabelItem[]);
+      fetchedRef.current.add('labels');
+      fetchingRef.current.delete('labels');
+    }).catch(() => {
+      setLabels([]);
+      fetchingRef.current.delete('labels');
+    });
+  }, [normalizeResponse]);
+
+  const ensureRolesLoaded = useCallback(() => {
+    if (fetchedRef.current.has('roles') || fetchingRef.current.has('roles')) return;
+    fetchingRef.current.add('roles');
+    roleList().then(res => {
+      setRoles(normalizeResponse(res) as Role[]);
+      fetchedRef.current.add('roles');
+      fetchingRef.current.delete('roles');
+    }).catch(() => {
+      setRoles([]);
+      fetchingRef.current.delete('roles');
+    });
+  }, [normalizeResponse]);
+
+  const ensureProjectLoaded = useCallback(() => {
+    if (fetchedRef.current.has('project') || fetchingRef.current.has('project')) return;
+    fetchingRef.current.add('project');
+    projectList({}).then(res => {
+      setProject(normalizeResponse(res) as Project[]);
+      fetchedRef.current.add('project');
+      fetchingRef.current.delete('project');
+    }).catch(() => {
+      setProject([]);
+      fetchingRef.current.delete('project');
+    });
+  }, [normalizeResponse]);
+
+  const ensureCompanyTypeLoaded = useCallback(() => {
+    if (fetchedRef.current.has('companyType') || fetchingRef.current.has('companyType')) return;
+    fetchingRef.current.add('companyType');
+    companyTypeList().then(res => {
+      setComapanyType(normalizeResponse(res) as CompanyType[]);
+      fetchedRef.current.add('companyType');
+      fetchingRef.current.delete('companyType');
+    }).catch(() => {
+      setComapanyType([]);
+      fetchingRef.current.delete('companyType');
+    });
+  }, [normalizeResponse]);
+
+  const ensureUomLoaded = useCallback(() => {
+    if (fetchedRef.current.has('uom') || fetchingRef.current.has('uom')) return;
+    fetchingRef.current.add('uom');
+    uomList().then(res => {
+      setUom(normalizeResponse(res) as UOM[]);
+      fetchedRef.current.add('uom');
+      fetchingRef.current.delete('uom');
+    }).catch(() => {
+      setUom([]);
+      fetchingRef.current.delete('uom');
+    });
+  }, [normalizeResponse]);
+
+  const ensureLocationLoaded = useCallback(() => {
+    if (fetchedRef.current.has('location') || fetchingRef.current.has('location')) return;
+    fetchingRef.current.add('location');
+    locationList().then(res => {
+      setLocation(normalizeResponse(res) as LocationItem[]);
+      fetchedRef.current.add('location');
+      fetchingRef.current.delete('location');
+    }).catch(() => {
+      setLocation([]);
+      fetchingRef.current.delete('location');
+    });
+  }, [normalizeResponse]);
+
+  const ensureAssetsTypeLoaded = useCallback(() => {
+    if (fetchedRef.current.has('assetsType') || fetchingRef.current.has('assetsType')) return;
+    fetchingRef.current.add('assetsType');
+    assetsTypeList().then(res => {
+      setAssetsType(normalizeResponse(res) as AssetsType[]);
+      fetchedRef.current.add('assetsType');
+      fetchingRef.current.delete('assetsType');
+    }).catch(() => {
+      setAssetsType([]);
+      fetchingRef.current.delete('assetsType');
+    });
+  }, [normalizeResponse]);
+
+  const ensureManufacturerLoaded = useCallback(() => {
+    if (fetchedRef.current.has('manufacturer') || fetchingRef.current.has('manufacturer')) return;
+    fetchingRef.current.add('manufacturer');
+    manufacturerList().then(res => {
+      setManufacturer(normalizeResponse(res) as Manufacturer[]);
+      fetchedRef.current.add('manufacturer');
+      fetchingRef.current.delete('manufacturer');
+    }).catch(() => {
+      setManufacturer([]);
+      fetchingRef.current.delete('manufacturer');
+    });
+  }, [normalizeResponse]);
+
+  const ensureAssetsModelLoaded = useCallback(() => {
+    if (fetchedRef.current.has('assetsModel') || fetchingRef.current.has('assetsModel')) return;
+    fetchingRef.current.add('assetsModel');
+    assetsModelList().then(res => {
+      setAssetsModel(normalizeResponse(res) as AssetsModel[]);
+      fetchedRef.current.add('assetsModel');
+      fetchingRef.current.delete('assetsModel');
+    }).catch(() => {
+      setAssetsModel([]);
+      fetchingRef.current.delete('assetsModel');
+    });
+  }, [normalizeResponse]);
+
+  const ensureBrandLoaded = useCallback(() => {
+    if (fetchedRef.current.has('brand') || fetchingRef.current.has('brand')) return;
+    fetchingRef.current.add('brand');
+    BrandList().then(res => {
+      setBrandList(normalizeResponse(res) as Brand[]);
+      fetchedRef.current.add('brand');
+      fetchingRef.current.delete('brand');
+    }).catch(() => {
+      setBrandList([]);
+      fetchingRef.current.delete('brand');
+    });
+  }, [normalizeResponse]);
+
+  const ensureBrandingLoaded = useCallback(() => {
+    if (fetchedRef.current.has('branding') || fetchingRef.current.has('branding')) return;
+    fetchingRef.current.add('branding');
+    brandingList().then(res => {
+      setBrandingList(normalizeResponse(res) as Branding[]);
+      fetchedRef.current.add('branding');
+      fetchingRef.current.delete('branding');
+    }).catch(() => {
+      setBrandingList([]);
+      fetchingRef.current.delete('branding');
+    });
+  }, [normalizeResponse]);
 
   // mapped dropdown options (explicit typed mappings)
   const companyOptions = (Array.isArray(companyListData) ? companyListData : []).map((c: CompanyItem) => ({
@@ -1070,16 +1632,6 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   };
 
-  // normalize helper: accept unknown response and extract array of items from `.data` when present
-  const normalizeResponse = (r: unknown): unknown[] => {
-    if (r && typeof r === 'object') {
-      const obj = r as Record<string, unknown>;
-      if (Array.isArray(obj.data)) return obj.data as unknown[];
-    }
-    if (Array.isArray(r)) return r as unknown[];
-    return (r as unknown) ? [r as unknown] : [];
-  };
-
   // refresh a particular dropdown/list by name. `params` can be provided for APIs that need it.
   const refreshDropdown = async (name: string, params?: any) => {
     setLoading(true);
@@ -1264,9 +1816,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
     }
   };
 
-  useEffect(() => {
-    refreshDropdowns();
-  }, []);
+  // No automatic loading on mount - data loads on demand
 
   return (
     <AllDropdownListDataContext.Provider
@@ -1361,7 +1911,46 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         assetsModelOptions,
         brandOptions,
         brandingOptions,
-        loading
+        loading,
+        ensureCompanyLoaded,
+        ensureCountryLoaded,
+        ensureRegionLoaded,
+        ensureSurveyLoaded,
+        ensureRouteLoaded,
+        ensureWarehouseLoaded,
+        ensureWarehouseAllLoaded,
+        ensureRouteTypeLoaded,
+        ensureAreaLoaded,
+        ensureCompanyCustomersLoaded,
+        ensureCompanyCustomersTypeLoaded,
+        ensureItemCategoryLoaded,
+        ensureItemSubCategoryLoaded,
+        ensureChannelLoaded,
+        ensureCustomerTypeLoaded,
+        ensureSalesmanTypeLoaded,
+        ensureVehicleListLoaded,
+        ensureCustomerCategoryLoaded,
+        ensureCustomerSubCategoryLoaded,
+        ensureItemLoaded,
+        ensureDiscountTypeLoaded,
+        ensureMenuListLoaded,
+        ensureVendorLoaded,
+        ensureSalesmanLoaded,
+        ensureAgentCustomerLoaded,
+        ensureShelvesLoaded,
+        ensureSubmenuLoaded,
+        ensurePermissionsLoaded,
+        ensureLabelsLoaded,
+        ensureRolesLoaded,
+        ensureProjectLoaded,
+        ensureCompanyTypeLoaded,
+        ensureUomLoaded,
+        ensureLocationLoaded,
+        ensureAssetsTypeLoaded,
+        ensureManufacturerLoaded,
+        ensureAssetsModelLoaded,
+        ensureBrandLoaded,
+        ensureBrandingLoaded,
       }}
     >
       {children}

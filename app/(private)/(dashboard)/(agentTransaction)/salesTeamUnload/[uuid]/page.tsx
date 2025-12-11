@@ -30,7 +30,16 @@ export default function AddEditSalesmanUnload() {
     fetchRouteOptions,
     fetchSalesmanByRouteOptions,
     projectOptions,
-  } = useAllDropdownListData();
+   ensureProjectLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureSalesmanTypeLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureProjectLoaded();
+    ensureRouteLoaded();
+    ensureSalesmanLoaded();
+    ensureSalesmanTypeLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureProjectLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureSalesmanTypeLoaded, ensureWarehouseLoaded]);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();

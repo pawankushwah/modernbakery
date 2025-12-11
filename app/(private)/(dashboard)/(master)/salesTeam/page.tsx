@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState,useEffect } from "react";
 
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
@@ -26,7 +26,13 @@ const SalesmanPage = () => {
 
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const { warehouseOptions, routeOptions } = useAllDropdownListData();
+  const { warehouseOptions, routeOptions , ensureRouteLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureRouteLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureRouteLoaded, ensureWarehouseLoaded]);
   const [warehouseId, setWarehouseId] = useState<string>("");
   const [routeId, setRouteId] = useState<string>("");
 

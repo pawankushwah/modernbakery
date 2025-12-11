@@ -179,7 +179,15 @@ export default function AddCompanyCustomer() {
     companyTypeOptions,
     channelOptions,
     fetchAreaOptions,
-  } = useAllDropdownListData();
+   ensureAreaLoaded, ensureChannelLoaded, ensureCompanyTypeLoaded, ensureRegionLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureChannelLoaded();
+    ensureCompanyTypeLoaded();
+    ensureRegionLoaded();
+  }, [ensureAreaLoaded, ensureChannelLoaded, ensureCompanyTypeLoaded, ensureRegionLoaded]);
   const [skeleton, setSkeleton] = useState({
     area_id: false,
   });

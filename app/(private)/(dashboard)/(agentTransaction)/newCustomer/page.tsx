@@ -16,7 +16,15 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function NewCustomer() {
-    const { customerSubCategoryOptions, channelOptions, warehouseOptions, routeOptions } = useAllDropdownListData();
+    const { customerSubCategoryOptions, channelOptions, warehouseOptions, routeOptions , ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureRouteLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureChannelLoaded();
+    ensureCustomerSubCategoryLoaded();
+    ensureRouteLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureRouteLoaded, ensureWarehouseLoaded]);
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [channelId, setChannelId] = useState<string>("");

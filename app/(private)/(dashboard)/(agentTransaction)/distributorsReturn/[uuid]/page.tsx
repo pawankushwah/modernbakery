@@ -139,7 +139,15 @@ export default function OrderAddEditPage() {
     itemOptions: rawItemOptions,
     fetchAgentCustomerOptions,
     routeOptions,
-  } = useAllDropdownListData();
+   ensureAgentCustomerLoaded, ensureCompanyCustomersLoaded, ensureRouteLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAgentCustomerLoaded();
+    ensureCompanyCustomersLoaded();
+    ensureRouteLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureAgentCustomerLoaded, ensureCompanyCustomersLoaded, ensureRouteLoaded, ensureWarehouseLoaded]);
 
   // cast itemOptions coming from context to our ItemOption[] (defensive)
   const itemOptions = (rawItemOptions as unknown as ItemOption[]) ?? [];

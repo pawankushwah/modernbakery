@@ -90,8 +90,16 @@ export default function BulkTransferListPage() {
     const { setLoading } = useLoading();
     const router = useRouter();
 
-    const { warehouseAllOptions, regionOptions, areaOptions, assetsModelOptions } =
+    const { warehouseAllOptions, regionOptions, areaOptions, assetsModelOptions , ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded} =
         useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureAssetsModelLoaded();
+    ensureRegionLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
 

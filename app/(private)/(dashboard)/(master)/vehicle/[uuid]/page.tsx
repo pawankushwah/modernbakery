@@ -106,7 +106,12 @@ export default function AddEditVehicleWithStepper() {
   const params = useParams();
   const uuid = Array.isArray(params?.uuid) ? params.uuid[0] : params?.uuid;
   const isEditMode = uuid !== undefined && uuid !== "add";
-  const { warehouseOptions } = useAllDropdownListData();
+  const { warehouseOptions , ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureWarehouseLoaded();
+  }, [ensureWarehouseLoaded]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [loading, setLoading] = useState(false);
   const [isValidNumberPlate, setIsValidNumberPlate] = useState<boolean>(false);
@@ -512,6 +517,7 @@ export default function AddEditVehicleWithStepper() {
               <div>
                 <InputFields
                   required
+                  type="number"
                   label="Odometer"
                   value={form.odoMeter}
                   onChange={handleChange}
@@ -522,6 +528,7 @@ export default function AddEditVehicleWithStepper() {
               <div>
                 <InputFields
                   required
+                  type="number"
                   label="Capacity"
                   value={form.capacity}
                   onChange={handleChange}

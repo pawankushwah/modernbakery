@@ -142,7 +142,20 @@ export default function CustomerInvoicePage() {
     routeOptions,
     regionOptions,
     areaOptions,
-  } = useAllDropdownListData();
+   ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAgentCustomerLoaded();
+    ensureAreaLoaded();
+    ensureChannelLoaded();
+    ensureCompanyLoaded();
+    ensureCustomerSubCategoryLoaded();
+    ensureRegionLoaded();
+    ensureRouteLoaded();
+    ensureSalesmanLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureAgentCustomerLoaded, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
 
   const fetchDelivery = useCallback(
     async (

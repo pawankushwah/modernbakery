@@ -148,7 +148,16 @@ export default function CustomerInvoicePage() {
         regionOptions,
         areaOptions,
         assetsModelOptions
-    } = useAllDropdownListData();
+    , ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureAssetsModelLoaded();
+    ensureRegionLoaded();
+    ensureRouteLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
     const [showDropdown, setShowDropdown] = useState(false);

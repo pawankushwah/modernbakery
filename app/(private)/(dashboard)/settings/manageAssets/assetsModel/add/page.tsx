@@ -46,7 +46,13 @@ export default function AddEditCustomerSubCategory() {
   const params = useParams<{ id?: string }>();
 
   const [loading, setLoading] = useState(false);
-  const { assetsTypeOptions, manufacturerOptions } = useAllDropdownListData();
+  const { assetsTypeOptions, manufacturerOptions , ensureAssetsTypeLoaded, ensureManufacturerLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAssetsTypeLoaded();
+    ensureManufacturerLoaded();
+  }, [ensureAssetsTypeLoaded, ensureManufacturerLoaded]);
   // Code generation logic
   const [isOpen, setIsOpen] = useState(false);
   const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");

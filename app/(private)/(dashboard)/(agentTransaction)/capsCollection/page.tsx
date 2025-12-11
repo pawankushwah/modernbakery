@@ -17,7 +17,17 @@ import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function SalemanLoad() {
-  const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions } = useAllDropdownListData();
+  const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions , ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureCompanyLoaded();
+    ensureRegionLoaded();
+    ensureRouteLoaded();
+    ensureSalesmanLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded]);
   const columns: configType["columns"] = [
     { key: "code", label: "Code" },
     // { key: "date", label: "Collection Date" },

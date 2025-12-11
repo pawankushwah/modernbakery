@@ -118,7 +118,7 @@ const tableData: TableDataType[] = regions.map((s) => ({
     <>
 
 
-      <div className="h-[calc(100%-60px)]">
+      <div className="flex flex-col h-full">
         <Table
           config={{
             api: {

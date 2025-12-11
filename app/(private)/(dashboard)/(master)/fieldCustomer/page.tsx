@@ -16,7 +16,16 @@ import { useCallback, useEffect, useState } from "react";
 import { getPaymentType } from "../keyCustomer/details/[uuid]/page";
 
 export default function AgentCustomer() {
-    const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseAllOptions, routeOptions } = useAllDropdownListData();
+    const { customerSubCategoryOptions, itemCategoryOptions, channelOptions, warehouseAllOptions, routeOptions , ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureChannelLoaded();
+    ensureCustomerSubCategoryLoaded();
+    ensureItemCategoryLoaded();
+    ensureRouteLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded]);
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState<string>("");
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [channelId, setChannelId] = useState<string>("");

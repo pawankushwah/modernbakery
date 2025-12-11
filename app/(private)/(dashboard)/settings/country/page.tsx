@@ -43,15 +43,17 @@ const columns = [
         {row.country_code}
       </span>
     ),
+    showBydefault: true,
   },
-  { key: "country_name", label: "Country Name" },
-  { key: "currency", label: "Currency" },
+  { key: "country_name", label: "Country Name" ,showBydefault: true,},
+  { key: "currency", label: "Currency",showBydefault: true, },
   {
     key: "status",
     label: "Status",
     render: (row: TableDataType) => (
       <StatusBtn isActive={row.status ? true : false} />
     ),
+    showBydefault: true,
   },
 ];
 

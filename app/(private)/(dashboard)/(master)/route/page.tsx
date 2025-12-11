@@ -24,7 +24,12 @@ import { useCallback, useEffect, useState } from "react";
 
 
 export default function Route() {
-    const { warehouseAllOptions } = useAllDropdownListData();
+    const { warehouseAllOptions , ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureWarehouseAllLoaded();
+  }, [ensureWarehouseAllLoaded]);
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [selectedRowId, setSelectedRowId] = useState<number | undefined>();
     const [showDeletePopup, setShowDeletePopup] = useState(false);

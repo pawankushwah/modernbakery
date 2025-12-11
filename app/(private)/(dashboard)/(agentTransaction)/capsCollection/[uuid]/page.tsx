@@ -133,7 +133,14 @@ export default function AddEditCapsCollection() {
     agentCustomerOptions,
     fetchAgentCustomerOptions,
     itemOptions,
-  } = useAllDropdownListData();
+   ensureAgentCustomerLoaded, ensureItemLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAgentCustomerLoaded();
+    ensureItemLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureAgentCustomerLoaded, ensureItemLoaded, ensureWarehouseLoaded]);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();

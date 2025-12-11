@@ -38,7 +38,17 @@ interface Payment {
 
 export default function PaymentListPage() {
   const [selectedPayment, setSelectedPayment] = useState<string>("");
-      const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions } = useAllDropdownListData();
+      const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions , ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureCompanyLoaded();
+    ensureRegionLoaded();
+    ensureRouteLoaded();
+    ensureSalesmanLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded]);
   
   const columns: configType["columns"] = [
     { key: "osa_code", label: "OSA Code", showByDefault: true },

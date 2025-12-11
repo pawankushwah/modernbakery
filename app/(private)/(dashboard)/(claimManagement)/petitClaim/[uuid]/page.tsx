@@ -8,13 +8,18 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import { createPetitClaim } from "@/app/services/claimManagement";
 import { warehouseListGlobalSearch } from "@/app/services/allApi";
 import * as yup from "yup";
 
 export default function PetitClaimFormPage() {
-  const { warehouseOptions } = useAllDropdownListData();
+  const { warehouseOptions , ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureWarehouseLoaded();
+  }, [ensureWarehouseLoaded]);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const params = useParams();

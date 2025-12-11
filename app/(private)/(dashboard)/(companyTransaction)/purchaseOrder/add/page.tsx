@@ -12,6 +12,7 @@ import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import { agentCustomerGlobalSearch, genearateCode, itemGlobalSearch, itemList, pricingHeaderGetItemPrice, SalesmanListGlobalSearch, saveFinalCode, warehouseList, warehouseListGlobalSearch, warehouseStockTopOrders } from "@/app/services/allApi";
 import { addAgentOrder } from "@/app/services/agentTransaction";
+import {getDirectCustomer} from "@/app/services/companyTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -19,6 +20,7 @@ import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import getExcise from "@/app/(private)/utils/excise";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { label } from "framer-motion/client";
 
 interface FormData {
   id: number,
@@ -131,7 +133,12 @@ export default function PurchaseOrderAddEditPage() {
   const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredSalesTeamOptions, setFilteredSalesTeamOptions] = useState<{ label: string; value: string }[]>([]);
   // const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
-  const { warehouseAllOptions } = useAllDropdownListData();
+  const { warehouseAllOptions , ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureWarehouseAllLoaded();
+  }, [ensureWarehouseAllLoaded]);
   const form = {
     warehouse: "",
     route: "",
@@ -335,6 +342,83 @@ export default function PurchaseOrderAddEditPage() {
     };
   }, []);
 
+  // Function for fetching Items from itemList API
+  const fetchItems = async (searchTerm: string = "") => {
+    try {
+      setSkeleton(prev => ({ ...prev, item: true }));
+      
+      const res = await itemList({
+        query: searchTerm || "",
+        per_page: "50",
+        dropdown: "1"
+      });
+      
+      if (res.error) {
+        showSnackbar(res.data?.message || "Failed to fetch items", "error");
+        setSkeleton({ ...skeleton, item: false });
+        return [];
+      }
+      
+      const data = res?.data || [];
+      
+      // Process items to include UOM data
+      const processedItems = data.map((item: any) => {
+        const item_uoms = item?.item_uoms ? item.item_uoms.map((uom: any) => {
+          let price = uom.price;
+          // Override with specific pricing from the item's pricing object
+          if (uom?.uom_type === "primary") {
+            price = item.pricing?.auom_pc_price || uom.price || "0";
+          } else if (uom?.uom_type === "secondary") {
+            price = item.pricing?.buom_ctn_price || uom.price || "0";
+          }
+          return {
+            ...uom,
+            price,
+            id: uom.id || `${item.id}_${uom.uom_type}`,
+            item_id: item.id
+          };
+        }) : [];
+
+        return {
+          id: item.id,
+          name: item.name,
+          item_code: item.item_code,
+          erp_code: item.erp_code,
+          item_uoms,
+          pricing: {
+            buom_ctn_price: item.pricing?.buom_ctn_price || "0",
+            auom_pc_price: item.pricing?.auom_pc_price || "0"
+          },
+          category: item.category,
+          has_excies: item.has_excies,
+          is_taxable: item.is_taxable
+        };
+      });
+
+      setOrderData(processedItems);
+
+      // Create dropdown options
+      const options = processedItems.map((item: any) => ({
+        value: String(item.id),
+        label: `${item.erp_code || item.item_code || ''} - ${item.name || ''}`
+      }));
+
+      setItemsOptions(options);
+      setSkeleton(prev => ({ ...prev, item: false }));
+      
+      return options;
+    } catch (error) {
+      console.error("Error fetching items:", error);
+      setSkeleton(prev => ({ ...prev, item: false }));
+      return [];
+    }
+  };
+
+  // Load items when component mounts
+  useEffect(() => {
+    fetchItems();
+  }, []);
+
   // Function for fetching Item
   // const fetchItem = async (searchTerm: string, values?: FormikValues) => {
   //   const res = await itemGlobalSearch({ per_page: "10", query: searchTerm, warehouse: values?.warehouse || "" });
@@ -519,7 +603,7 @@ export default function PurchaseOrderAddEditPage() {
         UOM: [],
         uom_id: "",
         Quantity: "1",
-        Price: "",
+        Price: "0.00",
         Excise: "0.00",
         Discount: "0.00",
         Net: "0.00",
@@ -660,22 +744,33 @@ export default function PurchaseOrderAddEditPage() {
     // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
   ];
 
-  const fetchAgentCustomers = async (values: FormikValues, search: string) => {
-    const res = await agentCustomerGlobalSearch({
-      warehouse_id: values.warehouse,
+  const fetchDirectCustomers = async (values: FormikValues, search: string) => {
+    if (!values.type) {
+      showSnackbar("Please select a type first", "error");
+      setSkeleton({ ...skeleton, customer: false });
+      return [];
+    }
+
+    setSkeleton(prev => ({ ...prev, customer: true }));
+    
+    const res = await getDirectCustomer({
+      customer_type: values.type,
       query: search || "",
-      per_page: "10"
+      per_page: "10000"
     });
+    
     if (res.error) {
       showSnackbar(res.data?.message || "Failed to fetch customers", "error");
       setSkeleton({ ...skeleton, customer: false });
-      return;
+      return [];
     }
+    
     const data = res?.data || [];
-    const options = data.map((customer: { id: number; osa_code: string; name: string }) => ({
+    const options = data.map((customer: { id: number; osa_code: string; business_name: string }) => ({
       value: String(customer.id),
-      label: customer.osa_code + " - " + customer.name
+      label: customer.osa_code + " - " + customer.business_name
     }));
+    
     setFilteredCustomerOptions(options);
     setSkeleton({ ...skeleton, customer: false });
     return options;
@@ -783,6 +878,28 @@ export default function PurchaseOrderAddEditPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-10">
                   <div>
                     <InputFields
+                      label="Type"
+                      required
+                      name="type"
+                      placeholder="Select Type"
+                      value={values.type}
+                      options={[{label:"Direct Customer",value:"4"},{label:"Distributor",value:"2"}]}
+                      onChange={(e) => {
+                        const newType = e.target.value;
+                        if (values.type !== newType) {
+                          setFieldValue("type", newType);
+                          // Clear customer when type changes
+                          setFieldValue("customer", "");
+                          setFilteredCustomerOptions([]);
+                          // Clear items when type changes
+                          setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
+                        }
+                      }}
+                      error={touched.type && (errors.type as string)}
+                    />
+                  </div>
+                  {/* <div>
+                    <InputFields
                       required
                       label="distributor"
                       name="warehouse"
@@ -823,14 +940,14 @@ export default function PurchaseOrderAddEditPage() {
                         (errors.warehouse as string)
                       }
                     />
-                  </div>
+                  </div> */}
                   <div>
                     <AutoSuggestion
                       required
                       label="Customer"
                       name="customer"
-                      placeholder="Search customer"
-                      onSearch={(q) => { return fetchAgentCustomers(values, q) }}
+                      placeholder={!values.type ? "Select type first" : "Search customer"}
+                      onSearch={(q) => { return fetchDirectCustomers(values, q) }}
                       initialValue={filteredCustomerOptions.find(o => o.value === String(values?.customer))?.label || ""}
                       onSelect={(opt) => {
                         if (values.customer !== opt.value) {
@@ -843,34 +960,12 @@ export default function PurchaseOrderAddEditPage() {
                         setFieldValue("customer", "");
                         setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
                       }}
-                      disabled={values.warehouse === ""}
+                      disabled={!values.type}
                       error={touched.customer && (errors.customer as string)}
                       className="w-full"
                     />
                   </div>
-                  <div>
-                    <AutoSuggestion
-                      required
-                      label="Sales Team"
-                      name="salesteam"
-                      placeholder="Search Sales Team"
-                      onSearch={(q) => { return fetchSalesTeams(values, q) }}
-                      initialValue={filteredSalesTeamOptions.find(o => o.value === String(values?.salesteam))?.label || ""}
-                      onSelect={(opt) => {
-                        if (values.salesteam !== opt.value) {
-                          setFieldValue("salesteam", opt.value);
-                        } else {
-                          setFieldValue("salesteam", opt.value);
-                        }
-                      }}
-                      onClear={() => {
-                        setFieldValue("salesteam", "");
-                        // setItemData([{ item_id: "", item_name: "", item_label: "", UOM: [], Quantity: "1", Price: "", Excise: "", Discount: "", Net: "", Vat: "", Total: "" }]);
-                      }}
-                      disabled={values.warehouse === ""}
-                      error={touched.salesteam && (errors.salesteam as string)}
-                    />
-                  </div>
+                 
                   <div>
                     <InputFields
                       required
@@ -918,17 +1013,16 @@ export default function PurchaseOrderAddEditPage() {
                                 label=""
                                 name={`item_id_${row.idx}`}
                                 placeholder="Search item"
-                                // onSearch={(q) => fetchItem(q, values)}
-                                // initialValue={initialLabel}
                                 value={row.item_id}
                                 onChange={(e) => {
                                   if (e.target.value !== row.item_id) {
                                     recalculateItem(Number(row.idx), "item_id", e.target.value);
                                   }
                                 }}
+                                onSearch={(q) => fetchItems(q)}
                                 options={itemsOptions}
                                 searchable={true}
-                                showSkeleton={itemsOptions.length === 0}
+                                showSkeleton={skeleton.item}
                                 disabled={!values.customer}
                                 error={err && err}
                                 className="w-full"
@@ -1008,10 +1102,10 @@ export default function PurchaseOrderAddEditPage() {
                           if (loading) {
                             return <span className="text-gray-400 animate-pulse">Loading...</span>;
                           }
-                          if (!price || price === "" || price === "0" || price === "-") {
-                            return <span className="text-gray-400">-</span>;
-                          }
-                          return <span>{price}</span>;
+                          // if (!price || price === "" || price === "0" || price === "-") {
+                          //   return <span className="text-gray-400">-</span>;
+                          // }
+                          return <span>{price || "0.00"}</span>;
                         }
                       },
                       { key: "excise", label: "Excise", render: (row) => <>{toInternationalNumber(row.Excise) || "0.00"}</> },

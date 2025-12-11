@@ -63,7 +63,13 @@ export default function AddShelfDisplay() {
       ID = ID[0] || "";
   }
 
-  const { submenuOptions, menuOptions } = useAllDropdownListData();
+  const { submenuOptions, menuOptions , ensureMenuListLoaded, ensureSubmenuLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureMenuListLoaded();
+    ensureSubmenuLoaded();
+  }, [ensureMenuListLoaded, ensureSubmenuLoaded]);
   console.log(useAllDropdownListData());
   const { showSnackbar } = useSnackbar();
   const router = useRouter();

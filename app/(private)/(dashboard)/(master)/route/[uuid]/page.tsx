@@ -21,8 +21,15 @@ import { useEffect, useRef, useState } from "react";
 import * as yup from "yup";
 
 export default function AddEditRoute() {
-  const { routeTypeOptions, warehouseAllOptions, vehicleListOptions } =
+  const { routeTypeOptions, warehouseAllOptions, vehicleListOptions , ensureRouteTypeLoaded, ensureVehicleListLoaded, ensureWarehouseAllLoaded} =
     useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureRouteTypeLoaded();
+    ensureVehicleListLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureRouteTypeLoaded, ensureVehicleListLoaded, ensureWarehouseAllLoaded]);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const params = useParams();

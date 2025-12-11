@@ -73,7 +73,19 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
-    const { customerSubCategoryOptions, companyOptions, salesmanOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions } = useAllDropdownListData();
+    const { customerSubCategoryOptions, companyOptions, salesmanOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions , ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureChannelLoaded();
+    ensureCompanyLoaded();
+    ensureCustomerSubCategoryLoaded();
+    ensureRegionLoaded();
+    ensureRouteLoaded();
+    ensureSalesmanLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
     const [refreshKey, setRefreshKey] = useState(0);

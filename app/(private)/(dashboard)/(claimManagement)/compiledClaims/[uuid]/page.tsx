@@ -39,8 +39,13 @@ interface CompiledClaimRow {
 };
 
 export default function AddEditRoute() {
-  const { warehouseOptions } =
+  const { warehouseOptions , ensureWarehouseLoaded} =
     useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureWarehouseLoaded();
+  }, [ensureWarehouseLoaded]);
   const { showSnackbar } = useSnackbar();
   const params = useParams();
   const routeId = params?.uuid as string | undefined;

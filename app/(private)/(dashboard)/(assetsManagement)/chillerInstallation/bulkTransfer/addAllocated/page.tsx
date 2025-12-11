@@ -13,12 +13,18 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState,useEffect } from "react";
 import * as yup from "yup";
 import Table, { listReturnType, TableDataType } from "@/app/components/customTable";
 
 export default function AddRoute() {
-  const { regionOptions, warehouseAllOptions } = useAllDropdownListData();
+  const { regionOptions, warehouseAllOptions , ensureRegionLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureRegionLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureRegionLoaded, ensureWarehouseAllLoaded]);
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 

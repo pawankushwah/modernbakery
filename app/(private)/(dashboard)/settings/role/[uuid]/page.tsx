@@ -46,7 +46,12 @@ const RoleSchema = Yup.object().shape({
 });
 
 export default function AddEditRole() {
-  const { labelOptions, permissions } = useAllDropdownListData();
+  const { labelOptions, permissions , ensureLabelsLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureLabelsLoaded();
+  }, [ensureLabelsLoaded]);
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams();

@@ -77,7 +77,14 @@ export default function AddEditAgentCustomer() {
         customerTypeOptions,
         channelOptions,
         // onlyCountryOptions
-    } = useAllDropdownListData();
+     ensureChannelLoaded, ensureCustomerTypeLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureChannelLoaded();
+    ensureCustomerTypeLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureChannelLoaded, ensureCustomerTypeLoaded, ensureWarehouseLoaded]);
     const [isOpen, setIsOpen] = useState(false);
     const [codeMode, setCodeMode] = useState<"auto" | "manual">("auto");
     const [prefix, setPrefix] = useState("");

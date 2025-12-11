@@ -122,12 +122,18 @@ export default function OrderAddEditPage() {
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
-  const { warehouseAllOptions,warehouseOptions } = useAllDropdownListData();
+  const { warehouseAllOptions, warehouseOptions, ensureWarehouseAllLoaded, ensureWarehouseLoaded } = useAllDropdownListData();
   const [skeleton, setSkeleton] = useState({
     route: false,
     customer: false,
     item: false,
   });
+
+  // Load warehouse dropdown data
+  useEffect(() => {
+    ensureWarehouseAllLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureWarehouseAllLoaded, ensureWarehouseLoaded]);
   const CURRENCY = localStorage.getItem("country") || "";
   const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
@@ -142,7 +148,7 @@ export default function OrderAddEditPage() {
   const [orderData, setOrderData] = useState<FormData[]>([]);
   const [itemsOptions, setItemsOptions] = useState<{ label: string; value: string }[]>([]);
   const [warehouseStocks, setWarehouseStocks] = useState<Record<string, WarehouseStock[]>>({});
-  const [itemsWithUOM, setItemsWithUOM] = useState<Record<string, { uoms: ItemUOM[], stock_qty: string }>>({});
+  const [itemsWithUOM, setItemsWithUOM] = useState<Record<string, { uoms: ItemUOM[], stock_qty: string, uomDetails: Record<string, { upc: string }> }>>({});
   const [itemData, setItemData] = useState<ItemData[]>([
     {
       item_id: "",
@@ -198,26 +204,40 @@ export default function OrderAddEditPage() {
         await itemRowSchema.validate(toValidate, { abortEarly: false });
       }
 
-      // Additional stock validation - check total quantity across all rows with same item and UOM
-      if (rowData.item_id && rowData.uom_id && rowData.available_stock && rowData.Quantity) {
-        const availableStock = Number(rowData.available_stock);
-        const requestedQuantity = Number(rowData.Quantity);
-        
-        // Calculate total quantity used for this item+UOM combination in other rows
-        const totalUsedInOtherRows = itemData.reduce((sum, item, i) => {
-          if (i !== index && item.item_id === rowData.item_id && item.uom_id === rowData.uom_id) {
-            return sum + (Number(item.Quantity) || 0);
-          }
-          return sum;
-        }, 0);
-        
-        const totalRequested = requestedQuantity + totalUsedInOtherRows;
-        
-        if (totalRequested > availableStock) {
-          if (totalUsedInOtherRows > 0) {
-            validationErrors["Quantity"] = `Total quantity (${totalRequested}) exceeds available stock (${availableStock}). Already used: ${totalUsedInOtherRows}`;
-          } else {
-            validationErrors["Quantity"] = `Quantity cannot exceed available stock (${availableStock})`;
+      // Additional stock validation - check total quantity in base units across all rows with same item
+      if (rowData.item_id && rowData.uom_id && rowData.Quantity) {
+        const itemUOMData = itemsWithUOM[rowData.item_id];
+        if (itemUOMData) {
+          const totalStockQty = Number(itemUOMData.stock_qty);
+          const currentUomInfo = itemUOMData.uoms.find(u => String(u.id) === String(rowData.uom_id));
+          
+          if (currentUomInfo) {
+            const currentUpc = Number(itemUOMData.uomDetails[String(rowData.uom_id)]?.upc || "1");
+            const requestedQuantity = Number(rowData.Quantity);
+            const requestedInBaseUnits = requestedQuantity * currentUpc;
+            
+            // Calculate total used in base units for this item in other rows
+            let totalUsedInBaseUnits = 0;
+            itemData.forEach((item, i) => {
+              if (i !== index && item.item_id === rowData.item_id && item.uom_id) {
+                const itemUomInfo = itemUOMData.uoms.find(u => String(u.id) === String(item.uom_id));
+                if (itemUomInfo) {
+                  const itemUpc = Number(itemUOMData.uomDetails[String(item.uom_id)]?.upc || "1");
+                  totalUsedInBaseUnits += (Number(item.Quantity) || 0) * itemUpc;
+                }
+              }
+            });
+            
+            const totalRequestedInBaseUnits = requestedInBaseUnits + totalUsedInBaseUnits;
+            
+            if (totalRequestedInBaseUnits > totalStockQty) {
+              const availableInCurrentUom = Math.floor((totalStockQty - totalUsedInBaseUnits) / currentUpc);
+              if (totalUsedInBaseUnits > 0) {
+                validationErrors["Quantity"] = `Quantity exceeds available stock. Available: ${availableInCurrentUom} ${currentUomInfo.name}`;
+              } else {
+                validationErrors["Quantity"] = `Quantity cannot exceed available stock (${availableInCurrentUom} ${currentUomInfo.name})`;
+              }
+            }
           }
         }
       }
@@ -243,25 +263,39 @@ export default function OrderAddEditPage() {
       }
 
       // Additional stock validation even when other validations fail
-      if (rowData.item_id && rowData.uom_id && rowData.available_stock && rowData.Quantity) {
-        const availableStock = Number(rowData.available_stock);
-        const requestedQuantity = Number(rowData.Quantity);
-        
-        // Calculate total quantity used for this item+UOM combination in other rows
-        const totalUsedInOtherRows = itemData.reduce((sum, item, i) => {
-          if (i !== index && item.item_id === rowData.item_id && item.uom_id === rowData.uom_id) {
-            return sum + (Number(item.Quantity) || 0);
-          }
-          return sum;
-        }, 0);
-        
-        const totalRequested = requestedQuantity + totalUsedInOtherRows;
-        
-        if (totalRequested > availableStock) {
-          if (totalUsedInOtherRows > 0) {
-            validationErrors["Quantity"] = `Total quantity (${totalRequested}) exceeds available stock (${availableStock}). Already used: ${totalUsedInOtherRows}`;
-          } else {
-            validationErrors["Quantity"] = `Quantity cannot exceed available stock (${availableStock})`;
+      if (rowData.item_id && rowData.uom_id && rowData.Quantity) {
+        const itemUOMData = itemsWithUOM[rowData.item_id];
+        if (itemUOMData) {
+          const totalStockQty = Number(itemUOMData.stock_qty);
+          const currentUomInfo = itemUOMData.uoms.find(u => String(u.id) === String(rowData.uom_id));
+          
+          if (currentUomInfo) {
+            const currentUpc = Number(itemUOMData.uomDetails[String(rowData.uom_id)]?.upc || "1");
+            const requestedQuantity = Number(rowData.Quantity);
+            const requestedInBaseUnits = requestedQuantity * currentUpc;
+            
+            // Calculate total used in base units for this item in other rows
+            let totalUsedInBaseUnits = 0;
+            itemData.forEach((item, i) => {
+              if (i !== index && item.item_id === rowData.item_id && item.uom_id) {
+                const itemUomInfo = itemUOMData.uoms.find(u => String(u.id) === String(item.uom_id));
+                if (itemUomInfo) {
+                  const itemUpc = Number(itemUOMData.uomDetails[String(item.uom_id)]?.upc || "1");
+                  totalUsedInBaseUnits += (Number(item.Quantity) || 0) * itemUpc;
+                }
+              }
+            });
+            
+            const totalRequestedInBaseUnits = requestedInBaseUnits + totalUsedInBaseUnits;
+            
+            if (totalRequestedInBaseUnits > totalStockQty) {
+              const availableInCurrentUom = Math.floor((totalStockQty - totalUsedInBaseUnits) / currentUpc);
+              if (totalUsedInBaseUnits > 0) {
+                validationErrors["Quantity"] = `Quantity exceeds available stock. Available: ${availableInCurrentUom} ${currentUomInfo.name}`;
+              } else {
+                validationErrors["Quantity"] = `Quantity cannot exceed available stock (${availableInCurrentUom} ${currentUomInfo.name})`;
+              }
+            }
           }
         }
       }
@@ -302,9 +336,11 @@ export default function OrderAddEditPage() {
       });
 
       // Create items with UOM data map for easy access
-      const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty: string }> = {};
+      const itemsUOMMap: Record<string, { uoms: ItemUOM[], stock_qty: string, uomDetails: Record<string, { upc: string }> }> = {};
       
       const processedItems = filteredStocks.map((stockItem: any) => {
+        const uomDetailsMap: Record<string, { upc: string }> = {};
+        
         const item_uoms = stockItem?.uoms ? stockItem.uoms.map((uom: any) => {
           let price = uom.price;
           // Override with specific pricing from the API response
@@ -313,10 +349,15 @@ export default function OrderAddEditPage() {
           } else if (uom?.uom_type === "secondary") {
             price = stockItem.auom_pc_price || "-";
           }
+          
+          // Store UPC for each UOM
+          const uomId = uom.id || `${stockItem.item_id}_${uom.uom_type}`;
+          uomDetailsMap[String(uomId)] = { upc: String(uom.upc || "1") };
+          
           return { 
             ...uom, 
             price,
-            id: uom.id || `${stockItem.item_id}_${uom.uom_type}`,
+            id: uomId,
             item_id: stockItem.item_id
           };
         }) : [];
@@ -324,7 +365,8 @@ export default function OrderAddEditPage() {
         // Store UOM data for this item
         itemsUOMMap[stockItem.item_id] = {
           uoms: item_uoms,
-          stock_qty: stockItem.stock_qty
+          stock_qty: stockItem.stock_qty,
+          uomDetails: uomDetailsMap
         };
 
         return { 
@@ -382,6 +424,54 @@ export default function OrderAddEditPage() {
       }
     };
   }, []);
+
+  // Helper function to calculate available stock for an item based on UOM
+  // Pass currentData to use the latest state during calculations
+  const calculateAvailableStock = (itemId: string, uomId: string, currentRowIndex: number, currentData?: ItemData[]): string => {
+    const itemUOMData = itemsWithUOM[itemId];
+    if (!itemUOMData) return "";
+
+    const totalStockQty = Number(itemUOMData.stock_qty);
+    const uomInfo = itemUOMData.uoms.find(u => String(u.id) === String(uomId));
+    if (!uomInfo) return "";
+
+    const upc = Number(itemUOMData.uomDetails[String(uomId)]?.upc || "1");
+    
+    // Use provided data or fall back to state
+    const dataToUse = currentData || itemData;
+    
+    // Calculate total consumed stock in base units (primary UOM) across all rows except current
+    let totalConsumedInBaseUnits = 0;
+    
+    dataToUse.forEach((row, idx) => {
+      if (idx === currentRowIndex || row.item_id !== itemId) return;
+      
+      const rowUomId = row.uom_id;
+      if (!rowUomId) return;
+      
+      const rowUomInfo = itemUOMData.uoms.find(u => String(u.id) === String(rowUomId));
+      if (!rowUomInfo) return;
+      
+      const rowUpc = Number(itemUOMData.uomDetails[String(rowUomId)]?.upc || "1");
+      const rowQty = Number(row.Quantity) || 0;
+      
+      // Convert to base units
+      totalConsumedInBaseUnits += rowQty * rowUpc;
+    });
+
+    // Calculate remaining stock in base units
+    const remainingBaseUnits = totalStockQty - totalConsumedInBaseUnits;
+    
+    // Convert to the current UOM
+    if (uomInfo.uom_type === "secondary") {
+      // Secondary UOM (e.g., CSE): divide by UPC and floor
+      const availableInSecondary = Math.floor(remainingBaseUnits / upc);
+      return String(availableInSecondary);
+    } else {
+      // Primary UOM (e.g., PCS): show remaining base units
+      return String(Math.floor(remainingBaseUnits));
+    }
+  };
 
   // Function for fetching Item based on warehouse stock
   const fetchItem = async (searchTerm: string, values?: FormikValues) => {
@@ -538,7 +628,14 @@ export default function OrderAddEditPage() {
           }));
           item.uom_id = itemUOMData.uoms[0]?.id ? String(itemUOMData.uoms[0].id) : "";
           item.Price = itemUOMData.uoms[0]?.price ? String(itemUOMData.uoms[0].price) : "";
-          item.available_stock = itemUOMData.stock_qty || "";
+          
+          // Calculate available stock for the first UOM
+          const firstUomId = String(itemUOMData.uoms[0]?.id || "");
+          if (firstUomId) {
+            item.available_stock = calculateAvailableStock(value, firstUomId, index);
+          } else {
+            item.available_stock = itemUOMData.stock_qty || "";
+          }
         } else if (selectedOrder?.item_uoms) {
           // Fallback to selectedOrder UOMs with pricing from selectedOrder.pricing
           item.UOM = selectedOrder.item_uoms.map(uom => {
@@ -600,6 +697,12 @@ export default function OrderAddEditPage() {
       if (selectedUOM?.price) {
         item.Price = selectedUOM.price;
       }
+      
+      // Recalculate available stock based on new UOM
+      if (item.item_id) {
+        const newAvailableStock = calculateAvailableStock(item.item_id, value, index);
+        item.available_stock = newAvailableStock;
+      }
     }
     const qty = Number(item.Quantity) || 0;
     const price = Number(item.Price) || 0;
@@ -619,21 +722,31 @@ export default function OrderAddEditPage() {
     // item.Discount = discount.toFixed(2);
     // item.gross = gross.toFixed(2);
 
-    setItemData(newData);
-
     if (field !== "item_id") {
-      validateRow(index, newData[index]);
-      
-      // If quantity changed, revalidate all other rows with the same item and UOM
-      if (field === "Quantity" && item.item_id && item.uom_id) {
+      // Only recalculate available stock when UOM changes (not when quantity changes)
+      if (field === "uom_id" && item.item_id) {
+        // Recalculate available stock only for the current row when UOM changes
+        newData[index] = item;
+        setItemData(newData);
+        validateRow(index, newData[index]);
+      } else if (field === "Quantity" && item.item_id) {
+        // When quantity changes, just update and validate - don't recalculate available stock
+        newData[index] = item;
+        setItemData(newData);
+        validateRow(index, newData[index]);
+        
+        // Revalidate all other rows with the same item (for validation errors only)
         newData.forEach((otherItem, otherIndex) => {
-          if (otherIndex !== index && 
-              otherItem.item_id === item.item_id && 
-              otherItem.uom_id === item.uom_id) {
+          if (otherIndex !== index && otherItem.item_id === item.item_id) {
             validateRow(otherIndex, newData[otherIndex]);
           }
         });
+      } else {
+        setItemData(newData);
+        validateRow(index, newData[index]);
       }
+    } else {
+      setItemData(newData);
     }
   };
 
@@ -750,21 +863,29 @@ export default function OrderAddEditPage() {
       const itemStockMap = new Map<string, number>();
 
       itemData.forEach((item, index) => {
-        if (!item.item_id || !item.uom_id || !item.available_stock) return;
+        if (!item.item_id || !item.uom_id || !item.Quantity) return;
 
-        const itemKey = `${item.item_id}_${item.uom_id}`;
-        const currentQty = Number(item.Quantity) || 0;
-        const availableStock = Number(item.available_stock);
+        const itemUOMData = itemsWithUOM[item.item_id];
+        if (!itemUOMData) return;
 
-        // Accumulate quantities for the same item+UOM combination
-        const totalQty = (itemStockMap.get(itemKey) || 0) + currentQty;
-        itemStockMap.set(itemKey, totalQty);
+        const totalStockQty = Number(itemUOMData.stock_qty);
+        const uomInfo = itemUOMData.uoms.find(u => String(u.id) === String(item.uom_id));
+        
+        if (!uomInfo) return;
+
+        const upc = Number(itemUOMData.uomDetails[String(item.uom_id)]?.upc || "1");
+        const qtyInBaseUnits = Number(item.Quantity) * upc;
+
+        // Accumulate quantities in base units for the same item
+        const itemKey = item.item_id;
+        const totalQtyInBaseUnits = (itemStockMap.get(itemKey) || 0) + qtyInBaseUnits;
+        itemStockMap.set(itemKey, totalQtyInBaseUnits);
 
         // Check if total quantity exceeds available stock
-        if (totalQty > availableStock) {
+        if (totalQtyInBaseUnits > totalStockQty) {
           const itemName = item.item_name || item.item_label || `Item ${index + 1}`;
           stockViolations.push(
-            `${itemName}: Total quantity (${totalQty}) exceeds available stock (${availableStock})`
+            `${itemName}: Total quantity exceeds available stock (${totalStockQty} base units requested: ${totalQtyInBaseUnits})`
           );
         }
       });
@@ -1106,19 +1227,16 @@ export default function OrderAddEditPage() {
                           const err = itemErrors[idx]?.Quantity;
                           const currentItem = itemData[idx];
                           const availableStock = currentItem?.available_stock;
-                          
-                          // Calculate total quantity used for this item in other rows
                           const itemId = currentItem?.item_id;
                           const uomId = currentItem?.uom_id;
-                          const totalUsedInOtherRows = itemData.reduce((sum, item, i) => {
-                            if (i !== idx && item.item_id === itemId && item.uom_id === uomId) {
-                              return sum + (Number(item.Quantity) || 0);
-                            }
-                            return sum;
-                          }, 0);
                           
-                          const remainingStock = availableStock ? Number(availableStock) - totalUsedInOtherRows : null;
-                          const effectiveMaxStock = remainingStock !== null ? Math.max(0, remainingStock) : null;
+                          // Get UOM name for display
+                          let uomName = "";
+                          if (itemId && uomId) {
+                            const itemUOMData = itemsWithUOM[itemId];
+                            const uomInfo = itemUOMData?.uoms.find(u => String(u.id) === String(uomId));
+                            uomName = uomInfo?.name || "";
+                          }
                           
                           return (
                             <div className={`${ availableStock ? "pt-5" : ""}`}>
@@ -1136,14 +1254,13 @@ export default function OrderAddEditPage() {
                                   recalculateItem(Number(row.idx), "Quantity", sanitized);
                                 }}
                                 min={1}
-                                max={effectiveMaxStock || undefined}
+                                max={availableStock ? Number(availableStock) : undefined}
                                 integerOnly={true}
                                 // error={err && err}
                               />
                               {availableStock && (
                                 <div className="text-xs text-gray-500 mt-1">
-                                  Stock: {availableStock}
-                                  
+                                  Available Stock: {availableStock} 
                                 </div>
                               )}
                             </div>

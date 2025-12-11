@@ -12,7 +12,7 @@ import { salesmanUnloadList } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useState,useEffect } from "react";
 
 export default function SalesmanUnloadPage() {
   const { setLoading } = useLoading();
@@ -25,7 +25,17 @@ export default function SalesmanUnloadPage() {
     channelOptions,
     itemCategoryOptions,
     customerSubCategoryOptions,
-  } = useAllDropdownListData();
+   ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureChannelLoaded();
+    ensureCustomerSubCategoryLoaded();
+    ensureItemCategoryLoaded();
+    ensureRegionLoaded();
+    ensureRouteLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureChannelLoaded, ensureCustomerSubCategoryLoaded, ensureItemCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseLoaded]);
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [isFiltered, setIsFiltered] = useState(false);

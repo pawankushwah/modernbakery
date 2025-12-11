@@ -21,7 +21,14 @@ export default function WarehouseLocationInfo({
   setFieldValue,
   setTouched,
 }: Props) {
-  const { locationOptions, regionOptions, areaOptions, loading, fetchAreaOptions } = useAllDropdownListData();
+  const { locationOptions, regionOptions, areaOptions, loading, fetchAreaOptions , ensureAreaLoaded, ensureLocationLoaded, ensureRegionLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureLocationLoaded();
+    ensureRegionLoaded();
+  }, [ensureAreaLoaded, ensureLocationLoaded, ensureRegionLoaded]);
 
   // Touched tracking for dropdowns
 

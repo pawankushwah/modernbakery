@@ -16,7 +16,15 @@ import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/util
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 export default function SalemanLoad() {
-    const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions } = useAllDropdownListData();
+    const { warehouseOptions, salesmanOptions, routeOptions, agentCustomerOptions , ensureAgentCustomerLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAgentCustomerLoaded();
+    ensureRouteLoaded();
+    ensureSalesmanLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureAgentCustomerLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded]);
     const columns: configType["columns"] = [
         { key: "code", label: "Invoice Code" },
         { key: "collection_no", label: "Collection No." },

@@ -95,8 +95,16 @@ export default function ServiceTerritoryListPage() {
     const { setLoading } = useLoading();
     const router = useRouter();
 
-    const { warehouseAllOptions, regionOptions, areaOptions, assetsModelOptions } =
+    const { warehouseAllOptions, regionOptions, areaOptions, assetsModelOptions , ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded} =
         useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureAssetsModelLoaded();
+    ensureRegionLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -113,32 +121,37 @@ export default function ServiceTerritoryListPage() {
                 setLoading(true);
 
                 const result = await irServiceTerrtList({
-                    page: page.toString(),
+                    current_page: page.toString(),
                     per_page: pageSize.toString(),
                     ...appliedFilters,
                 });
 
-                // console.log("🔍 API Response:", result);
-                // console.log("🔍 Result Type:", typeof result);
-                // console.log("🔍 Is Array?:", Array.isArray(result));
+                // Handle object response with data property (your actual API response)
+                if (result?.data && result?.pagination) {
+                    const totalPages = Math.ceil(result.pagination.total / result.pagination.per_page);
+                    return {
+                        data: Array.isArray(result.data) ? result.data : [],
+                        total: totalPages, // total number of PAGES, not records
+                        currentPage: result.pagination.current_page,
+                        pageSize: result.pagination.per_page,
+                    };
+                }
 
-                // Handle direct array response
+                // Handle direct array response (fallback)
                 if (Array.isArray(result)) {
-                    // console.log("✅ Direct array response detected");
                     return {
                         data: result,
                         total: result.length,
                         currentPage: page,
-                        pageSize: result.length,
+                        pageSize: pageSize,
                     };
                 }
 
-                // Handle object response with data property
+                // Handle object response without pagination
                 if (result?.data) {
-                    console.log("✅ Object response with data property");
                     return {
                         data: Array.isArray(result.data) ? result.data : [],
-                        total: result?.pagination?.total || result.data.length || 0,
+                        total: result?.pagination?.total || (Array.isArray(result.data) ? result.data.length : 0),
                         currentPage: result?.pagination?.current_page || page,
                         pageSize: result?.pagination?.per_page || pageSize,
                     };

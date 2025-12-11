@@ -34,7 +34,14 @@ export default function AddEditServiceTerritory() {
     const { setLoading } = useLoading();
     const router = useRouter();
     const params = useParams();
-    const { regionOptions, areaOptions, warehouseAllOptions } = useAllDropdownListData();
+    const { regionOptions, areaOptions, warehouseAllOptions , ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAreaLoaded();
+    ensureRegionLoaded();
+    ensureWarehouseAllLoaded();
+  }, [ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
 
     // ✅ Safe UUID Extraction
     let uuid = "";

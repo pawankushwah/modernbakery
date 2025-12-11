@@ -1,6 +1,6 @@
 "use client";
 
-import React,{useState} from 'react';
+import React,{useState,useEffect} from 'react';
 import InputFields from "@/app/components/inputFields";
 import IconButton from "@/app/components/iconButton";
 import SettingPopUp from "@/app/components/settingPopUp";
@@ -23,7 +23,14 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             region_id: false,
             area_id: false,
         });
-    const { companyOptions, agentCustomerOptions, companyCustomersOptions, fetchAreaOptions } = useAllDropdownListData();
+    const { companyOptions, agentCustomerOptions, companyCustomersOptions, fetchAreaOptions , ensureAgentCustomerLoaded, ensureCompanyCustomersLoaded, ensureCompanyLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAgentCustomerLoaded();
+    ensureCompanyCustomersLoaded();
+    ensureCompanyLoaded();
+  }, [ensureAgentCustomerLoaded, ensureCompanyCustomersLoaded, ensureCompanyLoaded]);
     const [isOpen, setIsOpen] = React.useState(false);
     const [codeMode, setCodeMode] = React.useState<'auto'|'manual'>('auto');
     const [prefix, setPrefix] = React.useState('');

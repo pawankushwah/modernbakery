@@ -41,7 +41,13 @@ export default function AddWarehouseStockPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const codeGeneratedRef = useRef(false);
-  const { warehouseOptions, itemOptions } = useAllDropdownListData();
+  const { warehouseOptions, itemOptions , ensureItemLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureItemLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureItemLoaded, ensureWarehouseLoaded]);
 
   // ✅ Formik setup
   const formik = useFormik<WarehouseStockFormValues>({

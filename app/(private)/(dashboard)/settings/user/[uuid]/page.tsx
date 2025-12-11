@@ -77,7 +77,13 @@ export default function UserAddEdit() {
   const {
     roleOptions,
     companyOptions
-  } = useAllDropdownListData();
+  , ensureCompanyLoaded, ensureRolesLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureCompanyLoaded();
+    ensureRolesLoaded();
+  }, [ensureCompanyLoaded, ensureRolesLoaded]);
 
   const checkEmail = async (
     type: "email" | "username",

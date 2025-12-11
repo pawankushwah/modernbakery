@@ -27,7 +27,7 @@ export default function AddEditSubRegion() {
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const params = useParams(); // 👈 gets route param
-  const { regionOptions } = useAllDropdownListData();
+  const { regionOptions, ensureRegionLoaded } = useAllDropdownListData();
 
   const [isOpen, setIsOpen] = useState(false);
   const [codeMode, setCodeMode] = useState<'auto'|'manual'>('auto');
@@ -51,6 +51,9 @@ export default function AddEditSubRegion() {
 
   // ✅ Fetch data if editing, or generate code in add mode
   useEffect(() => {
+    // Load region dropdown data
+    ensureRegionLoaded();
+
     if (params?.id && params.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
@@ -87,7 +90,7 @@ export default function AddEditSubRegion() {
         }
       })();
     }
-  }, [params?.id]);
+  }, [params?.id, ensureRegionLoaded]);
 
   // ✅ Handle form submit
   const handleSubmit = async (

@@ -152,7 +152,15 @@ export default function InvoiceddEditPage() {
             .required("Quantity is required"),
     });
 
-    const { warehouseOptions, agentCustomerOptions, routeOptions, itemOptions, fetchAgentCustomerOptions } = useAllDropdownListData();
+    const { warehouseOptions, agentCustomerOptions, routeOptions, itemOptions, fetchAgentCustomerOptions , ensureAgentCustomerLoaded, ensureItemLoaded, ensureRouteLoaded, ensureWarehouseLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAgentCustomerLoaded();
+    ensureItemLoaded();
+    ensureRouteLoaded();
+    ensureWarehouseLoaded();
+  }, [ensureAgentCustomerLoaded, ensureItemLoaded, ensureRouteLoaded, ensureWarehouseLoaded]);
     const [itemsWithUOM, setItemsWithUOM] = useState<Record<string, { uoms: ItemUOM[], stock_qty: string }>>({});
     const [invoiceData, setInvoiceData] = useState<FormData[]>([]);
     const [warehouseStocks, setWarehouseStocks] = useState<Record<string, WarehouseStock[]>>({});

@@ -106,7 +106,16 @@ export default function AddDiscountWithStepper() {
     discountTypeOptions,
     channelOptions,
     agentCustomerOptions,
-  } = useAllDropdownListData();
+   ensureAgentCustomerLoaded, ensureChannelLoaded, ensureDiscountTypeLoaded, ensureItemCategoryLoaded, ensureItemLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAgentCustomerLoaded();
+    ensureChannelLoaded();
+    ensureDiscountTypeLoaded();
+    ensureItemCategoryLoaded();
+    ensureItemLoaded();
+  }, [ensureAgentCustomerLoaded, ensureChannelLoaded, ensureDiscountTypeLoaded, ensureItemCategoryLoaded, ensureItemLoaded]);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();

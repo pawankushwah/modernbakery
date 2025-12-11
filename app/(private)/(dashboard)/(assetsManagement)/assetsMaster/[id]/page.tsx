@@ -75,7 +75,17 @@ export default function AddOrEditChiller() {
     assetsTypeOptions,
     assetsModelOptions,
     brandingOptions,
-  } = useAllDropdownListData();
+   ensureAssetsModelLoaded, ensureAssetsTypeLoaded, ensureBrandingLoaded, ensureCountryLoaded, ensureManufacturerLoaded, ensureVendorLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureAssetsModelLoaded();
+    ensureAssetsTypeLoaded();
+    ensureBrandingLoaded();
+    ensureCountryLoaded();
+    ensureManufacturerLoaded();
+    ensureVendorLoaded();
+  }, [ensureAssetsModelLoaded, ensureAssetsTypeLoaded, ensureBrandingLoaded, ensureCountryLoaded, ensureManufacturerLoaded, ensureVendorLoaded]);
 
   const steps: StepperStep[] = [
     { id: 1, label: "Basic Information" },

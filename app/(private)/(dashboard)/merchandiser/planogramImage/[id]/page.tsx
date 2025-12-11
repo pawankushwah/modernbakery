@@ -65,7 +65,14 @@ export default function Page() {
   }
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
-  const { companyCustomersOptions, salesmanOptions, shelvesOptions } = useAllDropdownListData();
+  const { companyCustomersOptions, salesmanOptions, shelvesOptions , ensureCompanyCustomersLoaded, ensureSalesmanLoaded, ensureShelvesLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureCompanyCustomersLoaded();
+    ensureSalesmanLoaded();
+    ensureShelvesLoaded();
+  }, [ensureCompanyCustomersLoaded, ensureSalesmanLoaded, ensureShelvesLoaded]);
   const [planogramImagesData, setPlanogramImagesData] = useState<PlanogramImageFormValues | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 

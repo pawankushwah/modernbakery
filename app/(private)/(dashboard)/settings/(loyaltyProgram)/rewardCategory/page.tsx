@@ -25,7 +25,12 @@ import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 
 export default function RewardCategory() {
-    const { warehouseAllOptions } = useAllDropdownListData();
+    const { warehouseAllOptions , ensureWarehouseAllLoaded} = useAllDropdownListData();
+
+  // Load dropdown data
+  useEffect(() => {
+    ensureWarehouseAllLoaded();
+  }, [ensureWarehouseAllLoaded]);
     const [warehouseId, setWarehouseId] = useState<string>("");
     const [selectedRowId, setSelectedRowId] = useState<number | undefined>();
     const [showDeletePopup, setShowDeletePopup] = useState(false);
