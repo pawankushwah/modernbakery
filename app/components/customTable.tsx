@@ -528,7 +528,7 @@ function TableHeader() {
                         </div>
 
                         {/* actions */}
-                        <div className="flex justify-right  w-fit gap-[8px]">
+                        <div className="flex justify-end w-fit gap-[8px]">
                             {config.header?.actions?.map((action) => action)}
                             {config.header?.actionsWithData && config.header?.actionsWithData(tableDetails?.data || [], selectedRow).map((action) => action)}
                             {config.header?.columnFilter && <ColumnFilter />}
