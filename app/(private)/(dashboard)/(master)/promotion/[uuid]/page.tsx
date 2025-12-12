@@ -851,14 +851,14 @@ export default function AddPricing() {
           const primaryUom = Array.isArray(uomListOffer) && uomListOffer.length > 0 ? ((uomListOffer as Uom[]).find((uu) => String(uu.uom_type || '').toLowerCase() === 'primary') || (uomListOffer as Uom[])[0]) : undefined;
 
           setOfferItems((prev: OfferItemType[][] | any) => {
-             // Always treat as nested array
-             const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev as OfferItemType[][] : [prev as unknown as OfferItemType[]];
-             
-             return tables.map((arr: OfferItemType[], idx: number) =>
-                idx === tableIdx
-                  ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name, uom: primaryUom ? String((primaryUom as Record<string, unknown>)['name'] ?? '') : (oi.uom ?? '') } : oi))
-                  : arr
-              );
+            // Always treat as nested array
+            const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev as OfferItemType[][] : [prev as unknown as OfferItemType[]];
+
+            return tables.map((arr: OfferItemType[], idx: number) =>
+              idx === tableIdx
+                ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, itemCode: value, itemName: name, uom: primaryUom ? String((primaryUom as Record<string, unknown>)['name'] ?? '') : (oi.uom ?? '') } : oi))
+                : arr
+            );
           });
         }
 
@@ -891,50 +891,50 @@ export default function AddPricing() {
         function selectItemForOrderTable(tableIdx: number, value: string) {
           const providerItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
           const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || providerItems.find((ci) => String((ci as Record<string, unknown>)['id'] ?? '') === String(value));
-          
+
           const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
-          
-           // Get primary UOM
-           const uomList = (foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined) as unknown;
-           let uomName = "CTN";
-           let uomPrice = "";
-           if (Array.isArray(uomList) && uomList.length > 0) {
-              const uomArr = uomList as Uom[];
-              const primary = uomArr.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomArr[0];
-              uomName = String(primary?.name ?? primary?.uom ?? '');
-              uomPrice = primary && (primary.price !== undefined && primary.price !== null) ? String(primary.price) : '';
-           }
+
+          // Get primary UOM
+          const uomList = (foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined) as unknown;
+          let uomName = "CTN";
+          let uomPrice = "";
+          if (Array.isArray(uomList) && uomList.length > 0) {
+            const uomArr = uomList as Uom[];
+            const primary = uomArr.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomArr[0];
+            uomName = String(primary?.name ?? primary?.uom ?? '');
+            uomPrice = primary && (primary.price !== undefined && primary.price !== null) ? String(primary.price) : '';
+          }
 
           setOrderTables((tables) => tables.map((arr, idx) => {
             if (idx !== tableIdx) return arr;
-            
+
             if (arr.length === 0) {
-                 // Create a new row if empty
-                 return [{
-                    promotionGroupName: "", 
-                    itemName: name,
-                    itemCode: value,
-                    quantity: "",
-                    toQuantity: "",
-                    uom: uomName,
-                    price: uomPrice,
-                    free_qty: "",
-                 }];
+              // Create a new row if empty
+              return [{
+                promotionGroupName: "",
+                itemName: name,
+                itemCode: value,
+                quantity: "",
+                toQuantity: "",
+                uom: uomName,
+                price: uomPrice,
+                free_qty: "",
+              }];
             }
 
-            return arr.map((oi) => ({ 
-                ...oi, 
-                itemCode: value, 
-                itemName: name,
-                uom: uomName || oi.uom,
-                price: uomPrice || oi.price
+            return arr.map((oi) => ({
+              ...oi,
+              itemCode: value,
+              itemName: name,
+              uom: uomName || oi.uom,
+              price: uomPrice || oi.price
             }));
           }));
         }
 
         // Render all order tables
-              const renderOrderTables = () => {
-                return orderTables.map((orderItems, tableIdx) => {            
+        const renderOrderTables = () => {
+          return orderTables.map((orderItems, tableIdx) => {
             let itemsData = orderItems.map((orderItem, idx) => ({
               ...orderItem,
               idx: String(idx),
@@ -965,147 +965,148 @@ export default function AddPricing() {
                 )}
                 <div className="mb-6">
                   <div className="mb-4">
-                        <label className="block mb-1 font-medium">Select Item</label>
-                         <InputFields
-                            label=""
-                            type="select"
-                            isSingle={true}
-                            placeholder="Select Item"
-                            options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                            value={currentItemCode}
-                            onChange={e => selectItemForOrderTable(tableIdx, e.target.value)}
-                            width="w-full"
-                          />
+                    <label className="block mb-1 font-medium">Select Item</label>
+                    <InputFields
+                      label=""
+                      type="select"
+                      isSingle={true}
+                      placeholder="Select Item"
+                      options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
+                      value={currentItemCode}
+                      onChange={e => selectItemForOrderTable(tableIdx, e.target.value)}
+                      width="w-full"
+                    />
                   </div>
                   <Table
                     data={paginatedData}
                     config={{
-                                                                  columns: [
-                                                                    {
-                                                                      key: "quantity",
-                                                                      label: (promotion.promotionType === "1") ? "Percentage" : "From Quantity",
-                                                                      width: 120,
-                                                                      render: (row) => (
-                                                                        <InputFields
-                                                                          label=""
-                                                                          type="number"
-                                                                          placeholder={(promotion.promotionType === "1") ? "Percentage" : "From Qty"}
-                                                                          value={String((row as Record<string, unknown>)['quantity'] ?? "")}
-                                                                          onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "quantity", clampPercentInput(e.target.value))}
-                                                                          width="w-full"
-                                                                        />
-                                                                      ),
-                                                                    },
-                                                                    {
-                                                                      key: "toQuantity",
-                                                                      label: (promotion.promotionType === "1") ? "To Percentage" : "To Quantity",
-                                                                      width: 120,
-                                                                      render: (row) => (
-                                                                        <InputFields
-                                                                          label=""
-                                                                          type="number"
-                                                                          placeholder={(promotion.promotionType === "1") ? "To Percentage" : "To Qty"}
-                                                                          value={String((row as Record<string, unknown>)['toQuantity'] ?? "")}
-                                                                          onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "toQuantity", clampPercentInput(e.target.value))}
-                                                                          width="w-full"
-                                                                        />
-                                                                      ),
-                                                                    },
-                                                                    {
-                                                                      key: "uom",
-                                                                      label: "UOM",
-                                                                      width: 150,
-                                                                      render: (row) => {
-                                                                        const uomOptions = getUomOptionsForRow(row);
-                                                                        return (
-                                                                          <InputFields
-                                                                            label=""
-                                                                            type="select"
-                                                                            isSingle={true}
-                                                                            placeholder="Select UOM"
-                                                                            options={[{ label: `Select UOM`, value: "" }, ...uomOptions.map((o: any) => ({ label: o.label, value: o.value }))]}
-                                                                            value={String((row as Record<string, unknown>)['uom'] ?? "")}
-                                                                            onChange={e => {
-                                                                              const val = e.target.value;
-                                                                              updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "uom", val);
-                                                                              const found = uomOptions.find((u: any) => String(u.value) === String(val));
-                                                                              if (found) updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "price", String(found.price ?? ""));
-                                                                            }}
-                                                                            width="w-full"
-                                                                          />
-                                                                        );
-                                                                      }
-                                                                    },
-                                                                    {
-                                                                      key: "free_qty",
-                                                                      label: "Free Qty",
-                                                                      width: 120,
-                                                                      render: (row) => (
-                                                                        <InputFields
-                                                                          label=""
-                                                                          type="number"
-                                                                          placeholder="Free Qty"
-                                                                          value={String((row as Record<string, unknown>)['free_qty'] ?? "")}
-                                                                          onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "free_qty", e.target.value)}
-                                                                          width="w-full"
-                                                                        />
-                                                                      ),
-                                                                    },
-                                                                    {
-                                                                      key: "action",
-                                                                      label: "Action",
-                                                                      width: 20,
-                                                                      render: (row) => (
-                                                                        <button
-                                                                          type="button"
-                                                                          className="text-red-500 flex items-center justify-center w-full h-full"
-                                                                          onClick={() => {
-                                                                            setOrderTables(tables => {
-                                                                              return tables.flatMap((arr, idx) => {
-                                                                                if (idx !== tableIdx) return [arr];
-                                                                                const newArr = arr.filter((oi, i) => String(i) !== String(row.idx));
-                                                                                if (newArr.length === 0 && tables.length > 1) {
-                                                                                  return [];
-                                                                                }
-                                                                                return [newArr];
-                                                                              });
-                                                                            });
-                                                                          }}
-                                                                        >
-                                                                          <Icon icon="lucide:trash-2" width={20} />
-                                                                        </button>
-                                                                      ),
-                                                                    },
-                                                                  ],                      pageSize,
+                      showNestedLoading: false,
+                      columns: [
+                        {
+                          key: "quantity",
+                          label: (promotion.promotionType === "1") ? "Percentage" : "From Quantity",
+                          width: 120,
+                          render: (row) => (
+                            <InputFields
+                              label=""
+                              type="number"
+                              placeholder={(promotion.promotionType === "1") ? "Percentage" : "From Qty"}
+                              value={String((row as Record<string, unknown>)['quantity'] ?? "")}
+                              onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "quantity", clampPercentInput(e.target.value))}
+                              width="w-full"
+                            />
+                          ),
+                        },
+                        {
+                          key: "toQuantity",
+                          label: (promotion.promotionType === "1") ? "To Percentage" : "To Quantity",
+                          width: 120,
+                          render: (row) => (
+                            <InputFields
+                              label=""
+                              type="number"
+                              placeholder={(promotion.promotionType === "1") ? "To Percentage" : "To Qty"}
+                              value={String((row as Record<string, unknown>)['toQuantity'] ?? "")}
+                              onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "toQuantity", clampPercentInput(e.target.value))}
+                              width="w-full"
+                            />
+                          ),
+                        },
+                        {
+                          key: "uom",
+                          label: "UOM",
+                          width: 150,
+                          render: (row) => {
+                            const uomOptions = getUomOptionsForRow(row);
+                            return (
+                              <InputFields
+                                label=""
+                                type="select"
+                                isSingle={true}
+                                placeholder="Select UOM"
+                                options={[{ label: `Select UOM`, value: "" }, ...uomOptions.map((o: any) => ({ label: o.label, value: o.value }))]}
+                                value={String((row as Record<string, unknown>)['uom'] ?? "")}
+                                onChange={e => {
+                                  const val = e.target.value;
+                                  updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "uom", val);
+                                  const found = uomOptions.find((u: any) => String(u.value) === String(val));
+                                  if (found) updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "price", String(found.price ?? ""));
+                                }}
+                                width="w-full"
+                              />
+                            );
+                          }
+                        },
+                        {
+                          key: "free_qty",
+                          label: "Free Qty",
+                          width: 120,
+                          render: (row) => (
+                            <InputFields
+                              label=""
+                              type="number"
+                              placeholder="Free Qty"
+                              value={String((row as Record<string, unknown>)['free_qty'] ?? "")}
+                              onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "free_qty", e.target.value)}
+                              width="w-full"
+                            />
+                          ),
+                        },
+                        {
+                          key: "action",
+                          label: "Action",
+                          width: 20,
+                          render: (row) => (
+                            <button
+                              type="button"
+                              className="text-red-500 flex items-center justify-center w-full h-full"
+                              onClick={() => {
+                                setOrderTables(tables => {
+                                  return tables.flatMap((arr, idx) => {
+                                    if (idx !== tableIdx) return [arr];
+                                    const newArr = arr.filter((oi, i) => String(i) !== String(row.idx));
+                                    if (newArr.length === 0 && tables.length > 1) {
+                                      return [];
+                                    }
+                                    return [newArr];
+                                  });
+                                });
+                              }}
+                            >
+                              <Icon icon="lucide:trash-2" width={20} />
+                            </button>
+                          ),
+                        },
+                      ], pageSize,
                     }}
                   />
                   {itemsData.length > pageSize && renderPaginationBar(totalPages)}
 
                   {/* Add Button */}
                   <div className="mt-4">
-                                        <button
-                                            type="button"
-                                            className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-                                            onClick={() => {
-                                                setOrderTables(tables => tables.map((arr, idx) => {
-                                                    if (idx !== tableIdx) return arr;
-                                                    const first = arr[0];
-                                                    return [
-                                                  ...arr,
-                                                  {
-                                                    promotionGroupName: first?.promotionGroupName || "",
-                                                    itemName: first?.itemName || "",
-                                                    itemCode: first?.itemCode || "",
-                                                    quantity: "",
-                                                    toQuantity: "",
-                                                    uom: first?.uom || "CTN",
-                                                    price: first?.price || "",
-                                                    free_qty: "",
-                                                  }
-                                                ];
-                                            }));
-                                            }}
-                                        >                      <Icon icon="material-symbols:add-circle-outline" width={20} />
+                    <button
+                      type="button"
+                      className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
+                      onClick={() => {
+                        setOrderTables(tables => tables.map((arr, idx) => {
+                          if (idx !== tableIdx) return arr;
+                          const first = arr[0];
+                          return [
+                            ...arr,
+                            {
+                              promotionGroupName: first?.promotionGroupName || "",
+                              itemName: first?.itemName || "",
+                              itemCode: first?.itemCode || "",
+                              quantity: "",
+                              toQuantity: "",
+                              uom: first?.uom || "CTN",
+                              price: first?.price || "",
+                              free_qty: "",
+                            }
+                          ];
+                        }));
+                      }}
+                    >                      <Icon icon="material-symbols:add-circle-outline" width={20} />
                       Add New Item
                     </button>
                   </div>
@@ -1338,19 +1339,19 @@ export default function AddPricing() {
                     offerTables = offerItems as unknown as OfferItemType[][];
                   } else {
                     // Fallback if somehow flat
-                     offerTables = [(offerItems as unknown as OfferItemType[])];
+                    offerTables = [(offerItems as unknown as OfferItemType[])];
                   }
 
                   // Helper to update offerItems by tableIdx and rowIdx
                   function updateOfferItemTable(tableIdx: number, rowIdx: string, key: string, value: string) {
                     setOfferItems((prev: OfferItemType[][] | any) => {
-                       const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev as OfferItemType[][] : [prev as unknown as OfferItemType[]];
-                       
-                        return tables.map((arr: OfferItemType[], idx: number) =>
-                          idx === tableIdx
-                            ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, [key]: value } : oi))
-                            : arr
-                        );
+                      const tables = (Array.isArray(prev) && prev.length > 0 && Array.isArray(prev[0])) ? prev as OfferItemType[][] : [prev as unknown as OfferItemType[]];
+
+                      return tables.map((arr: OfferItemType[], idx: number) =>
+                        idx === tableIdx
+                          ? arr.map((oi, i) => (String(i) === String(rowIdx) ? { ...oi, [key]: value } : oi))
+                          : arr
+                      );
                     });
                   }
 
@@ -1382,8 +1383,10 @@ export default function AddPricing() {
                         )}
                         <div className="mb-6">
                           <Table
+
                             data={paginatedData}
                             config={{
+                              showNestedLoading: false,
                               columns: [
                                 {
                                   key: "selectedItem",
