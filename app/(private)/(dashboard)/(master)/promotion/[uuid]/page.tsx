@@ -201,7 +201,7 @@ export default function AddPricing() {
   const rawParam = (paramsTyped?.uuid ?? paramsTyped?.id) as string | string[] | undefined;
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
   const isEditMode = id !== undefined && id !== "add" && id !== "";
-  const { item, itemOptions, companyOptions, regionOptions, warehouseOptions, areaOptions, routeOptions, customerTypeOptions, channelOptions, customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions, fetchItemOptions } = useAllDropdownListData();
+  const { item, itemOptions, companyOptions, regionOptions, warehouseOptions, areaOptions, routeOptions, customerTypeOptions, channelOptions, customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions, fetchItemOptions, salesmanTypeOptions, projectOptions } = useAllDropdownListData();
   useEffect(() => {
     async function fetchEditData() {
       if (!isEditMode || !id) return;
@@ -383,10 +383,8 @@ export default function AddPricing() {
     from_date: promotion.startDate || "",
     to_date: promotion.endDate || "",
     status: promotion.status || "1",
-    offer_type: promotion.offer_type || "",
-    // type: promotion.type || "",
-    // discount_type: promotion.discount_type || "",
-    discount_apply_on: promotion.discount_apply_on || "",
+    // discount_type: "",
+    promotionType: promotion.promotionType || "",
     bundle_combination: promotion.bundle_combination || "",
     item: selectedItemIds,
     description: description,
@@ -513,12 +511,13 @@ export default function AddPricing() {
     itemName: "",
     startDate: "",
     endDate: "",
-    offer_type: "",
     // type: "",
     // discount_type: "",
-    discount_apply_on : "",
-    bundle_combination:"normal",
+    promotionType : "",
+    bundle_combination:"range",
     status: "1", 
+    salesTeamType: "",
+    projectList: "",
   });
 
   type OrderItemType = {
@@ -701,6 +700,13 @@ export default function AddPricing() {
     }
   }, [keyValue["Item Category"]]);
 
+
+  useEffect(() => {
+    // Clear promotionType if bundle_combination is not 'slab'
+    if (promotion.bundle_combination !== "slab" && promotion.promotionType !== "") {
+      setPromotion(s => ({ ...s, promotionType: "" }));
+    }
+  }, [promotion.bundle_combination, promotion.promotionType]);
 
   const renderStepContent = () => {
   switch (currentStep) {
@@ -894,7 +900,7 @@ export default function AddPricing() {
 
       // Clamp percentage inputs to 0-100 when discount_apply_on is Percentage
       function clampPercentInput(val: string) {
-        if (promotion.discount_apply_on !== "1") return val;
+        if (promotion.promotionType !== "1") return val;
         const n = Number(val);
         if (Number.isNaN(n)) return "";
         const clamped = Math.max(0, Math.min(100, n));
@@ -1004,43 +1010,21 @@ export default function AddPricing() {
                             );
                           }
                         },
-                        // If offer_type is Item Range (0), show Item column populated from Step-2 selected items
-                        ...(promotion.offer_type === "0" ? [
-                          {
-                            key: "selectedItem",
-                            label: "Item",
-                            render: (row: Record<string, unknown>) => (
-                              <InputFields
-                                label=""
-                                type="select"
-                                isSingle={true}
-                                options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                                value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
-                                onChange={e => selectItemForOrder(tableIdx, row, e.target.value)}
-                                width="w-full"
-                              />
-                            ),
-                          }
-                        ] : []),
-
-                        // If offer_type is Category Range (1), show Category column populated from Item Category options
-                        ...(promotion.offer_type === "1" ? [
-                          {
-                            key: "promotionGroupName",
-                            label: "Category",
-                            render: (row: Record<string, unknown>) => (
-                              <InputFields
-                                label=""
-                                type="select"
-                                isSingle={true}
-                                options={[{ label: `Select Category`, value: "" }, ...itemCategoryOptions]}
-                                value={String((row as Record<string, unknown>)['promotionGroupName'] ?? "")}
-                                onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "promotionGroupName", e.target.value)}
-                                width="w-full"
-                              />
-                            ),
-                          }
-                        ] : []),
+                        {
+                          key: "selectedItem",
+                          label: "Item",
+                          render: (row: Record<string, unknown>) => (
+                            <InputFields
+                              label=""
+                              type="select"
+                              isSingle={true}
+                              options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
+                              value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
+                              onChange={e => selectItemForOrder(tableIdx, row, e.target.value)}
+                              width="w-full"
+                            />
+                          ),
+                        },
                         {
                           key: "free_qty",
                           label: "Free Qty",
@@ -1056,42 +1040,21 @@ export default function AddPricing() {
                         },
                       ] : [
                         // Normal mode: simplified order item columns (Qty, UOM)
-                        // If offer_type is Item Range (0), show Item column populated from Step-2 selected items
-                        ...(promotion.offer_type === "0" ? [
-                          {
-                            key: "selectedItem",
-                            label: "Item",
-                            render: (row: Record<string, unknown>) => (
-                              <InputFields
-                                label=""
-                                type="select"
-                                isSingle={true}
-                                options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                                value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
-                                onChange={e => selectItemForOrder(tableIdx, row, e.target.value)}
-                                width="w-full"
-                              />
-                            ),
-                          }
-                        ] : []),
-
-                        ...(promotion.offer_type === "1" ? [
-                          {
-                            key: "promotionGroupName",
-                            label: "Category",
-                            render: (row: Record<string, unknown>) => (
-                              <InputFields
-                                label=""
-                                type="select"
-                                isSingle={false}
-                                options={[{ label: `Select Category`, value: "" }, ...itemCategoryOptions]}
-                                value={String((row as Record<string, unknown>)['promotionGroupName'] ?? "")}
-                                onChange={e => updateOrderItem(tableIdx, String((row as Record<string, unknown>)['idx']), "promotionGroupName", e.target.value)}
-                                width="w-full"
-                              />
-                            ),
-                          }
-                        ] : []),
+                        {
+                          key: "selectedItem",
+                          label: "Item",
+                          render: (row: Record<string, unknown>) => (
+                            <InputFields
+                              label=""
+                              type="select"
+                              isSingle={true}
+                              options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
+                              value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
+                              onChange={e => selectItemForOrder(tableIdx, row, e.target.value)}
+                              width="w-full"
+                            />
+                          ),
+                        },
                         {
                           key: "quantity",
                           label: (promotion.discount_apply_on === "1") ? "Percentage" : "Qty",
@@ -1306,6 +1269,16 @@ export default function AddPricing() {
               />
             </div>
             <div>
+              <label className="block mb-1 font-medium">Mode</label>
+              <InputFields
+                isSingle={true}
+                options={[{ label: "Range", value: "range" }, { label: "Slab", value: "slab" }, { label: "Sequence", value: "sequence" }]}
+                value={promotion.bundle_combination}
+                onChange={e => setPromotion(s => ({ ...s, bundle_combination: e.target.value }))}
+                width="w-full"
+              />
+            </div>
+            <div>
               <label className="block mb-1 font-medium">Start Date<span className="text-red-500 ml-1">*</span></label>
               <InputFields
                 type="date"
@@ -1324,16 +1297,30 @@ export default function AddPricing() {
               />
             </div>
              
+
               <div>
-                <label className="block mb-1 font-medium">Offer Type<span className="text-red-500 ml-1">*</span></label>
+                <label className="block mb-1 font-medium">Sales Team Type<span className="text-red-500 ml-1">*</span></label>
                 <InputFields
                   isSingle={true}
-                  options={[{ label: "Category Range", value: "1" }, { label: "Item Range", value: "0" }]}
-                  value={promotion.offer_type}
-                  onChange={e => setPromotion(s => ({ ...s, offer_type: e.target.value }))}
+                  options={salesmanTypeOptions.map((o: any) => ({ ...o, value: String(o.value) }))}
+                  value={promotion.salesTeamType}
+                  onChange={e => setPromotion(s => ({ ...s, salesTeamType: e.target.value }))}
                   width="w-full"
                 />
               </div>
+              {/* Show Project List only when salesTeamType id = 6 */}
+              {promotion.salesTeamType === "6" && (
+                <div>
+                  <label className="block mb-1 font-medium">Project List</label>
+                  <InputFields
+                    isSingle={true}
+                    options={projectOptions.map((o: any) => ({ ...o, value: String(o.value) }))}
+                    value={promotion.projectList}
+                    onChange={e => setPromotion(s => ({ ...s, projectList: e.target.value }))}
+                    width="w-full"
+                  />
+                </div>
+              )}
               {/* <div>
                 <label className="block mb-1 font-medium">Type<span className="text-red-500 ml-1">*</span></label>
                 <InputFields
@@ -1354,20 +1341,21 @@ export default function AddPricing() {
                   width="w-full"
                 />
               </div> */}
-              <div>
-                <label className="block mb-1 font-medium">Discount Apply On<span className="text-red-500 ml-1">*</span></label>
-                <InputFields
-                  isSingle={true}
-                  options={[ { label: "Quantity", value: "0" },{ label: "Percentage", value: "1" },]}
-                  value={promotion.discount_apply_on}
-                  onChange={e => setPromotion(s => ({ ...s, discount_apply_on: e.target.value }))}
-                  width="w-full"
-                />
-              </div>
+              {promotion.bundle_combination === "slab" && (
+                <div>
+                  <label className="block mb-1 font-medium">Promotion Type<span className="text-red-500 ml-1">*</span></label>
+                  <InputFields
+                    isSingle={true}
+                    options={[ { label: "Quantity", value: "0" },{ label: "Percentage", value: "1" },]}
+                    value={promotion.promotionType}
+                    onChange={e => setPromotion(s => ({ ...s, promotionType: e.target.value }))}
+                    width="w-full"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block mb-1 font-medium">Status<span className="text-red-500 ml-1">*</span></label>
                 <InputFields
-                  type="radio"
                   isSingle={true}
                   options={[{ label: "Active", value: "1" }, { label: "Inactive", value: "0" }]}
                   value={promotion.status}
@@ -1377,17 +1365,6 @@ export default function AddPricing() {
               </div>
           </div>
           <div className="mt-8">
-            <div className="mb-4">
-              <label className="block mb-1 font-medium">Mode</label>
-              <InputFields
-                type="radio"
-                isSingle={true}
-                options={[{ label: "Normal", value: "normal" }, { label: "Slab", value: "slab" }]}
-                value={promotion.bundle_combination}
-                onChange={e => setPromotion(s => ({ ...s, bundle_combination: e.target.value }))}
-                width="w-full"
-              />
-            </div>
             <div className="font-semibold text-lg mb-4">Promotional Order Items</div>
             {renderOrderTables()}
             <div className="font-semibold text-lg mb-4">Promotional Offer Items</div>
@@ -1530,42 +1507,21 @@ export default function AddPricing() {
                           data={paginatedData}
                           config={{
                             columns: (isBundle ? [
-                                  // If offer_type is Item Range (0), show Item column populated from Step-2 selected items
-                                  ...(promotion.offer_type === "0" ? [
-                                    {
-                                      key: "selectedItem",
-                                      label: "Item",
-                                      render: (row: any) => (
-                                        <InputFields
-                                          label=""
-                                          type="select"
-                                          isSingle={true}
-                                          options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                                          value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
-                                          onChange={e => selectItemForOffer(tableIdx, row.idx, e.target.value)}
-                                          width="w-full"
-                                        />
-                                      ),
-                                    }
-                                  ] : []),
-
-                                  ...(promotion.offer_type === "1" ? [
-                                    {
-                                      key: "promotionGroupName",
-                                      label: "Category",
-                                      render: (row: any) => (
-                                        <InputFields
-                                          label=""
-                                          type="select"
-                                          isSingle={false}
-                                          options={[{ label: `Select Category`, value: "" }, ...itemCategoryOptions]}
-                                          value={String((row as Record<string, unknown>)['promotionGroupName'] ?? "")}
-                                          onChange={e => updateOfferItemTable(tableIdx, row.idx, "promotionGroupName", e.target.value)}
-                                          width="w-full"
-                                        />
-                                      ),
-                                    }
-                                  ] : []),
+                              {
+                                key: "selectedItem",
+                                label: "Item",
+                                render: (row: any) => (
+                                  <InputFields
+                                    label=""
+                                    type="select"
+                                    isSingle={true}
+                                    options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
+                                    value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
+                                    onChange={e => selectItemForOffer(tableIdx, row.idx, e.target.value)}
+                                    width="w-full"
+                                  />
+                                ),
+                              },
                               {
                                 key: "itemName",
                                 label: "Item Name",
@@ -1602,42 +1558,21 @@ export default function AddPricing() {
                              
                               
                             ] : [
-                                // If offer_type is Item Range (0), show Item column populated from Step-2 selected items
-                                ...(promotion.offer_type === "0" ? [
-                                  {
-                                    key: "selectedItem",
-                                    label: "Item",
-                                    render: (row: any) => (
-                                      <InputFields
-                                        label=""
-                                        type="select"
-                                        isSingle={true}
-                                        options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
-                                        value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
-                                        onChange={e => selectItemForOffer(tableIdx, row.idx, e.target.value)}
-                                        width="w-full"
-                                      />
-                                    ),
-                                  }
-                                ] : []),
-
-                                ...(promotion.offer_type === "1" ? [
-                                  {
-                                    key: "promotionGroupName",
-                                    label: "Category",
-                                    render: (row: any) => (
-                                      <InputFields
-                                        label=""
-                                        type="select"
-                                        isSingle={true}
-                                        options={[{ label: `Select Category`, value: "" }, ...itemCategoryOptions]}
-                                        value={String((row as Record<string, unknown>)['promotionGroupName'] ?? "")}
-                                        onChange={e => updateOfferItemTable(tableIdx, row.idx, "promotionGroupName", e.target.value)}
-                                        width="w-full"
-                                      />
-                                    ),
-                                  }
-                                ] : []),
+                              {
+                                key: "selectedItem",
+                                label: "Item",
+                                render: (row: any) => (
+                                  <InputFields
+                                    label=""
+                                    type="select"
+                                    isSingle={true}
+                                    options={[{ label: `Select Item`, value: "" }, ...selectedItemOptions]}
+                                    value={String((row as Record<string, unknown>)['itemCode'] ?? "")}
+                                    onChange={e => selectItemForOffer(tableIdx, row.idx, e.target.value)}
+                                    width="w-full"
+                                  />
+                                ),
+                              },
                               // Normal mode: Offer items simplified to Item Name, UOM, Qty
                               {
                                 key: "itemName",
