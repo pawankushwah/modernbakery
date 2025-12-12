@@ -2,6 +2,7 @@ import axios from "axios";
 import { Params } from "next/dist/server/request/params";
 import { APIFormData } from "./merchandiserApi";
 import { useRouter } from "next/navigation";
+import { p } from "framer-motion/client";
 
 
 export const API = axios.create({
@@ -3490,4 +3491,15 @@ export const editBrand = async (uuid: string, payload: object) => {
   } catch (error: unknown) {
     return handleError(error);
   }
+};
+
+
+export const getFilters = async (params?: Params) => {
+  try {
+    const res =await API.post(`/api/filters`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+
 };

@@ -1,594 +1,1053 @@
-// "use client";
-
-// import React, { useState } from "react";
-// import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
-
-// const initialFieldData = {
-//   Company: Array.from({ length: 140 }, (_, i) => `Company Data ${i + 1}`),
-//   Region: Array.from({ length: 20 }, (_, i) => `Region Data ${i + 1}`),
-//   Area: Array.from({ length: 120 }, (_, i) => `Area Data ${i + 1}`),
-//   Warehouse: Array.from({ length: 75 }, (_, i) => `Warehouse Data ${i + 1}`),
-//   Salesman: Array.from({ length: 90 }, (_, i) => `Salesman Data ${i + 1}`),
-//   Route: Array.from({ length: 130 }, (_, i) => `Route Data ${i + 1}`),
-//   "Item Category": Array.from({ length: 200 }, (_, i) => `Item Category Data ${i + 1}`),
-//   Item: Array.from({ length: 300 }, (_, i) => `Item Data ${i + 1}`),
-//   "Customer Category": Array.from({ length: 220 }, (_, i) => `Customer Category Data ${i + 1}`),
-//   "Customer Channel": Array.from({ length: 185 }, (_, i) => `Customer Channel Data ${i + 1}`),
-//   Customer: Array.from({ length: 260 }, (_, i) => `Customer Data ${i + 1}`),
-//   Amount: Array.from({ length: 50 }, (_, i) => `Amount Data ${i + 1}`),
-//   Quantity: Array.from({ length: 50 }, (_, i) => `Quantity Data ${i + 1}`),
-// };
-
-// type FieldId = keyof typeof initialFieldData;
-
-// const mainFields: FieldId[] = ["Company", "Region", "Area", "Warehouse"];
-// const searchTypeFields: FieldId[] = ["Amount", "Quantity"];
-// const searchByFields: FieldId[] = ["Salesman", "Route"];
-// const otherFields: FieldId[] = [
-//   "Item Category", "Item", "Customer Category", "Customer Channel", "Customer",
-// ];
-
-// export default function DragDropReport() {
-//   const [fieldData] = useState(initialFieldData);
-//   const [selectedFields, setSelectedFields] = useState<FieldId[]>([]);
-//   const [expandedSelected, setExpandedSelected] = useState<FieldId[]>([]);
-//   const [pageState, setPageState] = useState<{ [key in FieldId]?: number }>({});
-//   const [chosenItems, setChosenItems] = useState<Record<FieldId, string[]>>({});
-//   const [choosingField, setChoosingField] = useState<FieldId | null>(null);
-//   const [workingSelection, setWorkingSelection] = useState<Set<string>>(new Set());
-//   const [dateFilter, setDateFilter] = useState({ startDate: "", endDate: "", isActive: false });
-//   const [showSearchBy, setShowSearchBy] = useState(false);
-//   const [showSearchType, setShowSearchType] = useState(false);
-
-//   const filteredFieldData = React.useMemo(() => {
-//     if (!dateFilter.isActive || !dateFilter.startDate || !dateFilter.endDate) {
-//       return fieldData;
-//     }
-
-//     const filteredData: Record<FieldId, string[]> = { ...fieldData };
-    
-//     Object.keys(fieldData).forEach((field) => {
-//       const fieldId = field as FieldId;
-//       const originalData = fieldData[fieldId];
-      
-//       const startDateNum = new Date(dateFilter.startDate).getTime();
-//       const endDateNum = new Date(dateFilter.endDate).getTime();
-      
-//       filteredData[fieldId] = originalData.filter((item, index) => {
-//         const simulatedDate = new Date(2024, 0, 1 + index).getTime();
-//         return simulatedDate >= startDateNum && simulatedDate <= endDateNum;
-//       });
-//     });
-
-//     return filteredData;
-//   }, [fieldData, dateFilter]);
-
-//   const handleDragEnd = (result: DropResult) => {
-//     const { source, destination, draggableId } = result;
-//     if (!destination) return;
-
-//     const id = draggableId as FieldId;
-
-//     if (source.droppableId === "fields" && destination.droppableId === "selected") {
-//       if (!selectedFields.includes(id)) {
-//         const defaultSelections = filteredFieldData[id].slice(0, 3);
-        
-//         setSelectedFields(prev => {
-//           const copy = [...prev];
-//           copy.splice(destination.index, 0, id);
-//           return copy;
-//         });
-
-//         setExpandedSelected(prev => prev.includes(id) ? prev : [...prev, id]);
-//         setPageState(prev => ({ ...prev, [id]: 1 }));
-//         setChosenItems(prev => ({ ...prev, [id]: defaultSelections }));
-//       }
-//       return;
-//     }
-
-//     if (source.droppableId === "selected" && destination.droppableId === "selected") {
-//       setSelectedFields(prev => {
-//         const copy = [...prev];
-//         const [removed] = copy.splice(source.index, 1);
-//         copy.splice(destination.index, 0, removed);
-//         return copy;
-//       });
-//       return;
-//     }
-
-//     if (source.droppableId === "selected" && destination.droppableId === "fields") {
-//       setSelectedFields(prev => prev.filter(p => p !== id));
-//       setExpandedSelected(prev => prev.filter(p => p !== id));
-//       setPageState(prev => ({ ...prev, [id]: 1 }));
-//       return;
-//     }
-//   };
-
-//   const openChooser = (field: FieldId) => {
-//     setChoosingField(field);
-//     setWorkingSelection(new Set(chosenItems[field] ?? []));
-//   };
-
-//   const saveChooser = () => {
-//     if (!choosingField) return;
-//     setChosenItems(prev => ({ ...prev, [choosingField]: Array.from(workingSelection) }));
-//     setChoosingField(null);
-//     setWorkingSelection(new Set());
-//   };
-
-//   const closeChooser = () => {
-//     setChoosingField(null);
-//     setWorkingSelection(new Set());
-//   };
-
-//   const toggleWorking = (value: string) => {
-//     setWorkingSelection(prev => {
-//       const copy = new Set(prev);
-//       if (copy.has(value)) copy.delete(value);
-//       else copy.add(value);
-//       return copy;
-//     });
-//   };
-
-//   const handleReset = (field: FieldId) => {
-//     setChosenItems(prev => ({ ...prev, [field]: [] }));
-//   };
-
-//   const handleRemoveField = (field: FieldId) => {
-//     setSelectedFields(prev => prev.filter(f => f !== field));
-//     setExpandedSelected(prev => prev.filter(f => f !== field));
-//   };
-
-//   const handleCancel = () => {
-//     setSelectedFields([]);
-//     setExpandedSelected([]);
-//     setPageState({});
-//     setChosenItems({});
-//     setDateFilter({ startDate: "", endDate: "", isActive: false });
-//   };
-
-//   const handleDateFilterApply = () => {
-//     if (dateFilter.startDate && dateFilter.endDate) {
-//       setDateFilter(prev => ({ ...prev, isActive: true }));
-//     }
-//   };
-
-//   const handleDateFilterClear = () => {
-//     setDateFilter({ startDate: "", endDate: "", isActive: false });
-//   };
-
-//   const chosenSummary = (field: FieldId) => {
-//     const arr = chosenItems[field] ?? [];
-//     if (arr.length === 0) return "No selection";
-//     if (arr.length <= 3) return arr.join(", ");
-//     return `${arr.slice(0, 3).join(", ")} ... (+${arr.length - 3})`;
-//   };
-
-//   return (
-//     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
-//       <div className="bg-white/80 backdrop-blur-sm border-b border-slate-200/80 px-6 py-4 shadow-sm">
-//         <div className="flex justify-between items-center">
-//           <div className="flex items-center gap-3">
-//             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-//               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-//               </svg>
-//             </div>
-//             <div>
-//               <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
-//                 Sales Report Builder
-//               </h1>
-//               <p className="text-sm text-slate-600">Drag and drop to create custom reports</p>
-//             </div>
-//           </div>
-//           <div className="flex gap-3">
-//             <button onClick={handleCancel} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl hover:bg-slate-50 transition-all duration-200 shadow-sm hover:shadow-md font-medium">
-//               Cancel
-//             </button>
-//             <button onClick={() => alert("Navigating to Dashboard...")} className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl hover:from-emerald-600 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl font-medium">
-//               Dashboard
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-
-//       <DragDropContext onDragEnd={handleDragEnd}>
-//         <div className="flex-1 flex flex-col lg:flex-row p-6 gap-6">
-//           <Droppable droppableId="fields">
-//             {(provided) => (
-//               <div className="w-full lg:w-[30%] bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-slate-200/60 overflow-hidden" ref={provided.innerRef} {...provided.droppableProps}>
-//                 <div className="p-6">
-//                   <div className="flex items-center gap-3 mb-6">
-//                     <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-//                       <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-//                       </svg>
-//                     </div>
-//                     <h2 className="text-xl font-bold text-slate-800">Available Fields</h2>
-//                   </div>
-
-//                   <div className="mb-6 p-4 bg-gradient-to-r from-blue-50/80 to-indigo-50/80 border border-blue-200/60 rounded-xl shadow-sm">
-//                     <div className="flex justify-between items-center mb-4">
-//                       <div className="flex items-center gap-2">
-//                         <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-//                         </svg>
-//                         <span className="font-semibold text-blue-800">Date Range Filter</span>
-//                       </div>
-//                       {dateFilter.isActive && <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full font-medium">Active</span>}
-//                     </div>
-                    
-//                     <div className="grid grid-cols-2 gap-3 mb-4">
-//                       <div>
-//                         <label className="block text-sm font-medium text-slate-700 mb-2">Start Date</label>
-//                         <input type="date" value={dateFilter.startDate} onChange={(e) => setDateFilter(prev => ({ ...prev, startDate: e.target.value }))} className="w-full p-3 text-sm border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
-//                       </div>
-//                       <div>
-//                         <label className="block text-sm font-medium text-slate-700 mb-2">End Date</label>
-//                         <input type="date" value={dateFilter.endDate} onChange={(e) => setDateFilter(prev => ({ ...prev, endDate: e.target.value }))} className="w-full p-3 text-sm border border-slate-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" />
-//                       </div>
-//                     </div>
-                    
-//                     <div className="flex gap-3">
-//                       <button onClick={handleDateFilterApply} disabled={!dateFilter.startDate || !dateFilter.endDate} className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-sm font-medium disabled:from-slate-400 disabled:to-slate-500 disabled:cursor-not-allowed hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg">
-//                         Apply Filter
-//                       </button>
-//                       <button onClick={handleDateFilterClear} className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-all duration-200 shadow-sm hover:shadow-md">
-//                         Clear
-//                       </button>
-//                     </div>
-//                   </div>
-
-//                   <div className="space-y-3 mb-6">
-//                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Main Fields</h3>
-//                     {mainFields.map((field, index) => (
-//                       <FieldItem key={field} field={field} index={index} dateFilter={dateFilter} filteredFieldData={filteredFieldData} />
-//                     ))}
-//                   </div>
-
-//                   <div className="mb-6">
-//                     <button className="w-full p-4 bg-gradient-to-r from-purple-50/80 to-pink-50/80 border border-purple-200/60 rounded-xl flex justify-between items-center hover:shadow-md transition-all duration-200 group" onClick={() => setShowSearchType(!showSearchType)}>
-//                       <div className="flex items-center gap-3">
-//                         <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors duration-200">
-//                           <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-//                           </svg>
-//                         </div>
-//                         <span className="font-semibold text-slate-800">Search Type</span>
-//                       </div>
-//                       <span className={`transform transition-transform duration-200 ${showSearchType ? "rotate-180 text-purple-600" : "text-slate-400"}`}>
-//                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-//                         </svg>
-//                       </span>
-//                     </button>
-
-//                     {showSearchType && (
-//                       <div className="mt-3 space-y-2 pl-4">
-//                         {searchTypeFields.map((field, index) => (
-//                           <FieldItem key={field} field={field} index={mainFields.length + index} dateFilter={dateFilter} filteredFieldData={filteredFieldData} />
-//                         ))}
-//                       </div>
-//                     )}
-//                   </div>
-
-//                   <div className="mb-6">
-//                     <button className="w-full p-4 bg-gradient-to-r from-orange-50/80 to-amber-50/80 border border-orange-200/60 rounded-xl flex justify-between items-center hover:shadow-md transition-all duration-200 group" onClick={() => setShowSearchBy(!showSearchBy)}>
-//                       <div className="flex items-center gap-3">
-//                         <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors duration-200">
-//                           <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-//                           </svg>
-//                         </div>
-//                         <span className="font-semibold text-slate-800">Search By</span>
-//                       </div>
-//                       <span className={`transform transition-transform duration-200 ${showSearchBy ? "rotate-180 text-orange-600" : "text-slate-400"}`}>
-//                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-//                         </svg>
-//                       </span>
-//                     </button>
-
-//                     {showSearchBy && (
-//                       <div className="mt-3 space-y-2 pl-4">
-//                         {searchByFields.map((field, index) => (
-//                           <FieldItem key={field} field={field} index={mainFields.length + searchTypeFields.length + index} dateFilter={dateFilter} filteredFieldData={filteredFieldData} />
-//                         ))}
-//                       </div>
-//                     )}
-//                   </div>
-
-//                   <div className="space-y-3">
-//                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-2">Additional Fields</h3>
-//                     {otherFields.map((field, index) => (
-//                       <FieldItem key={field} field={field} index={mainFields.length + searchTypeFields.length + searchByFields.length + index} dateFilter={dateFilter} filteredFieldData={filteredFieldData} />
-//                     ))}
-//                   </div>
-
-//                   {provided.placeholder}
-//                 </div>
-//               </div>
-//             )}
-//           </Droppable>
-
-//           <Droppable droppableId="selected">
-//             {(provided, snapshot) => (
-//               <div className={`w-full lg:w-[65%] rounded-2xl shadow-lg overflow-hidden transition-all duration-300 ${snapshot.isDraggingOver ? "bg-gradient-to-br from-blue-50/80 to-indigo-50/80 border-2 border-dashed border-blue-300" : "bg-white/80 backdrop-blur-sm border border-slate-200/60"}`} ref={provided.innerRef} {...provided.droppableProps}>
-//                 <div className="p-6">
-//                   <div className="flex items-center justify-between mb-6">
-//                     <div className="flex items-center gap-3">
-//                       <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-//                         <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-//                         </svg>
-//                       </div>
-//                       <h2 className="text-xl font-bold text-slate-800">Selected for Report</h2>
-//                     </div>
-//                     {selectedFields.length > 0 && (
-//                       <span className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-//                         {selectedFields.length} field{selectedFields.length !== 1 ? 's' : ''} selected
-//                       </span>
-//                     )}
-//                   </div>
-
-//                   {selectedFields.length === 0 && (
-//                     <div className="text-center py-16">
-//                       <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-//                         <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16l2.879-2.879m0 0a3 3 0 104.243-4.242 3 3 0 00-4.243 4.242zM21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-//                         </svg>
-//                       </div>
-//                       <h3 className="text-lg font-semibold text-slate-600 mb-2">No fields selected</h3>
-//                       <p className="text-slate-500 max-w-md mx-auto">Drag fields from the left panel to build your custom report</p>
-//                     </div>
-//                   )}
-
-//                   <div className="space-y-4">
-//                     {selectedFields.map((field, index) => (
-//                       <SelectedFieldItem
-//                         key={field}
-//                         field={field}
-//                         index={index}
-//                         expandedSelected={expandedSelected}
-//                         pageState={pageState}
-//                         chosenSummary={chosenSummary}
-//                         filteredFieldData={filteredFieldData}
-//                         dateFilter={dateFilter}
-//                         chosenItems={chosenItems}
-//                         onOpenChooser={openChooser}
-//                         onResetField={handleReset}
-//                         onRemoveField={handleRemoveField}
-//                         onPageChange={(field, page) => setPageState(prev => ({ ...prev, [field]: page }))}
-//                       />
-//                     ))}
-//                   </div>
-
-//                   {provided.placeholder}
-//                 </div>
-//               </div>
-//             )}
-//           </Droppable>
-//         </div>
-//       </DragDropContext>
-
-//       {choosingField && (
-//         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-//           <div className="bg-white w-full max-w-4xl max-h-[85vh] rounded-2xl shadow-2xl flex flex-col">
-//             <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-2xl">
-//               <div className="flex justify-between items-center">
-//                 <div className="flex items-center gap-3">
-//                   <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-//                     <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-//                     </svg>
-//                   </div>
-//                   <div>
-//                     <h3 className="text-xl font-bold text-slate-800">Select {choosingField}</h3>
-//                     <p className="text-sm text-slate-600">Choose the data items for this field</p>
-//                   </div>
-//                 </div>
-//                 <div className="flex gap-2">
-//                   <button className="px-4 py-2 bg-emerald-100 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-200 transition-colors duration-200" onClick={() => setWorkingSelection(new Set(filteredFieldData[choosingField]))}>
-//                     Select All
-//                   </button>
-//                   <button className="px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-200 transition-colors duration-200" onClick={() => setWorkingSelection(new Set())}>
-//                     Clear
-//                   </button>
-//                   <button className="px-4 py-2 bg-red-100 text-red-700 rounded-lg text-sm font-medium hover:bg-red-200 transition-colors duration-200" onClick={closeChooser}>
-//                     Close
-//                   </button>
-//                 </div>
-//               </div>
-//             </div>
-
-//             <div className="flex-1 overflow-auto p-6 bg-slate-50">
-//               <div className="grid gap-3">
-//                 {filteredFieldData[choosingField].map((item, index) => (
-//                   <label key={item} className={`flex items-center gap-4 p-4 border rounded-xl cursor-pointer transition-all duration-200 ${workingSelection.has(item) ? 'bg-blue-50 border-blue-300 shadow-md' : 'bg-white border-slate-200 hover:bg-slate-50 hover:shadow-sm'}`}>
-//                     <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all duration-200 ${workingSelection.has(item) ? 'bg-blue-500 border-blue-500' : 'bg-white border-slate-300'}`}>
-//                       {workingSelection.has(item) && (
-//                         <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-//                         </svg>
-//                       )}
-//                     </div>
-//                     <span className="flex-1 text-slate-700 font-medium">{item}</span>
-//                     <input type="checkbox" checked={workingSelection.has(item)} onChange={() => toggleWorking(item)} className="hidden" />
-//                   </label>
-//                 ))}
-//               </div>
-//             </div>
-
-//             <div className="p-6 border-t border-slate-200 bg-white rounded-b-2xl flex justify-end gap-4">
-//               <button className="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl font-medium hover:bg-slate-200 transition-all duration-200 shadow-sm hover:shadow-md" onClick={closeChooser}>
-//                 Cancel
-//               </button>
-//               <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl" onClick={saveChooser}>
-//                 Save Selection
-//               </button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-// const FieldItem: React.FC<{
-//   field: FieldId;
-//   index: number;
-//   dateFilter: { isActive: boolean };
-//   filteredFieldData: Record<FieldId, string[]>;
-// }> = ({ field, index, dateFilter, filteredFieldData }) => (
-//   <Draggable draggableId={field} index={index}>
-//     {(prov, snapshot) => (
-//       <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps} className={`p-4 bg-white border-2 rounded-xl cursor-grab active:cursor-grabbing transition-all duration-200 ${snapshot.isDragging ? 'shadow-2xl border-blue-400 bg-blue-50 transform rotate-2' : 'border-slate-200 hover:border-blue-300 hover:shadow-lg hover:bg-blue-50'}`}>
-//         <div className="flex justify-between items-center">
-//           <div className="flex items-center gap-3">
-//             <div className="w-8 h-8 bg-gradient-to-r from-blue-100 to-indigo-100 rounded-lg flex items-center justify-center">
-//               <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-//               </svg>
-//             </div>
-//             <span className="font-medium text-slate-800">{field}</span>
-//           </div>
-//           {dateFilter.isActive && (
-//             <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-medium shadow-sm">
-//               {filteredFieldData[field].length} items
-//             </span>
-//           )}
-//         </div>
-//       </div>
-//     )}
-//   </Draggable>
-// );
-
-// const SelectedFieldItem: React.FC<{
-//   field: FieldId;
-//   index: number;
-//   expandedSelected: FieldId[];
-//   pageState: { [key in FieldId]?: number };
-//   chosenSummary: (field: FieldId) => string;
-//   filteredFieldData: Record<FieldId, string[]>;
-//   dateFilter: { isActive: boolean };
-//   chosenItems: Record<FieldId, string[]>;
-//   onOpenChooser: (field: FieldId) => void;
-//   onResetField: (field: FieldId) => void;
-//   onRemoveField: (field: FieldId) => void;
-//   onPageChange: (field: FieldId, page: number) => void;
-// }> = ({
-//   field,
-//   index,
-//   expandedSelected,
-//   pageState,
-//   chosenSummary,
-//   filteredFieldData,
-//   dateFilter,
-//   chosenItems,
-//   onOpenChooser,
-//   onResetField,
-//   onRemoveField,
-//   onPageChange,
-// }) => {
-//   const allItems = filteredFieldData[field];
-//   const selectedItems = chosenItems[field] ?? [];
-//   const unselectedItems = allItems.filter(item => !selectedItems.includes(item));
-  
-//   const page = pageState[field] || 1;
-//   const pageSize = 50;
-//   const end = page * pageSize;
-//   const displayItems = unselectedItems.slice(0, end);
-
-//   return (
-//     <Draggable draggableId={field} index={index}>
-//       {(prov, snapshot) => (
-//         <div ref={prov.innerRef} {...prov.draggableProps} className={`border-2 rounded-xl transition-all duration-300 ${snapshot.isDragging ? 'shadow-2xl border-emerald-400 bg-emerald-50 transform rotate-1' : 'border-slate-200 bg-white hover:shadow-lg'}`}>
-//           <div {...prov.dragHandleProps} className="flex justify-between items-center bg-gradient-to-r from-slate-50 to-white p-6 cursor-grab active:cursor-grabbing rounded-t-xl">
-//             <div className="flex items-center gap-4 flex-1 min-w-0">
-//               <div className="w-10 h-10 bg-gradient-to-r from-emerald-100 to-green-100 rounded-lg flex items-center justify-center">
-//                 <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
-//                 </svg>
-//               </div>
-//               <div className="flex-1 min-w-0">
-//                 <h4 className="font-bold text-slate-800 text-lg mb-1">{field}</h4>
-//                 <p className={`text-sm truncate ${chosenSummary(field) === "No selection" ? "text-amber-600 font-medium" : "text-slate-600"}`}>
-//                   {chosenSummary(field)}
-//                 </p>
-//               </div>
-//             </div>
-
-//             <div className="flex gap-2 flex-wrap">
-//               <button className="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg" onClick={() => onOpenChooser(field)}>
-//                 Update
-//               </button>
-//               <button className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg text-sm font-medium hover:from-amber-600 hover:to-orange-700 transition-all duration-200 shadow-md hover:shadow-lg" onClick={() => onResetField(field)}>
-//                 Reset
-//               </button>
-//               <button className="px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg text-sm font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-md hover:shadow-lg" onClick={() => onRemoveField(field)}>
-//                 Remove
-//               </button>
-//             </div>
-//           </div>
-
-//           {expandedSelected.includes(field) && (
-//             <div className="bg-slate-50 p-6 border-t border-slate-200 rounded-b-xl">
-//               {dateFilter.isActive && (
-//                 <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-//                   <div className="flex items-center gap-2 text-blue-800 font-medium">
-//                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-//                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-//                     </svg>
-//                     Showing {allItems.length} items after date filter
-//                     {selectedItems.length > 0 && ` (${selectedItems.length} selected, ${unselectedItems.length} available)`}
-//                   </div>
-//                 </div>
-//               )}
-
-//               <div className="space-y-2 max-h-96 overflow-y-auto mb-4">
-//                 {displayItems.map((child) => (
-//                   <div key={child} className="p-3 bg-white border border-slate-200 rounded-lg hover:bg-blue-50 transition-colors duration-200">
-//                     <div className="flex items-center gap-3">
-//                       <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-//                       <span className="text-slate-700">{child}</span>
-//                     </div>
-//                   </div>
-//                 ))}
-//               </div>
-
-//               {unselectedItems.length > 50 && (
-//                 <div className="flex gap-3 items-center justify-between bg-white p-4 rounded-xl border border-slate-200">
-//                   <button disabled={page === 1} className="px-4 py-2.5 border border-slate-300 rounded-lg bg-white disabled:opacity-40 text-sm font-medium hover:bg-slate-50 transition-all duration-200 disabled:cursor-not-allowed" onClick={() => onPageChange(field, Math.max(1, page - 1))}>
-//                     Previous
-//                   </button>
-
-//                   <span className="text-sm text-slate-600 font-medium text-center">
-//                     Showing {Math.min(displayItems.length, pageSize)} of {unselectedItems.length} available items
-//                     {selectedItems.length > 0 && <span className="text-emerald-600 ml-2">({selectedItems.length} selected)</span>}
-//                   </span>
-
-//                   <button disabled={end >= unselectedItems.length} className="px-4 py-2.5 border border-slate-300 rounded-lg bg-white disabled:opacity-40 text-sm font-medium hover:bg-slate-50 transition-all duration-200 disabled:cursor-not-allowed" onClick={() => onPageChange(field, page + 1)}>
-//                     Load More
-//                   </button>
-//                 </div>
-//               )}
-//             </div>
-//           )}
-//         </div>
-//       )}
-//     </Draggable>
-//   );
-// };
+import React, { useState, useEffect } from 'react';
+import { ChevronDown, Calendar, BarChart3, Table } from 'lucide-react';
+import { Icon } from "@iconify/react";
+import axios from 'axios';
+import TopBar from '../(private)/(dashboard)/topBar';
+import SalesCharts from './SalesCharts';
+import ExportButtons from './ExportButtons';
 
 
-
-
-import React from 'react'
-
-const drag = () => {
-  return (
-    <div>drag</div>
-  )
+// Define TypeScript interfaces
+interface FilterChildItem {
+  id: string;
+  name: string;
 }
 
-export default drag
+interface Filter {
+  id: string;
+  name: string;
+  icon: string;
+  childData: FilterChildItem[];
+}
+
+interface SelectedChildItems {
+  [key: string]: string[];
+}
+
+interface SearchTerms {
+  [key: string]: string;
+}
+
+const SalesReportDashboard = () => {
+  const [viewType, setViewType] = useState('graph');
+  const [dateRange, setDateRange] = useState('dd-mm-yyyy - dd-mm-yyyy');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [searchbyopen, setSearchbyclose] = useState(false);
+
+  
+  const [draggedFilter, setDraggedFilter] = useState<Filter | null>(null);
+  const [droppedFilters, setDroppedFilters] = useState<Filter[]>([]);
+  const [selectedChildItems, setSelectedChildItems] = useState<SelectedChildItems>({});
+  const [searchTerms, setSearchTerms] = useState<SearchTerms>({});
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  
+  // API states
+  const [availableFilters, setAvailableFilters] = useState<Filter[]>([]);
+  const [isLoadingFilters, setIsLoadingFilters] = useState(false);
+  const [filterError, setFilterError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [tableData, setTableData] = useState<any>(null);
+  const [isLoadingTable, setIsLoadingTable] = useState(false);
+  const [selectedDataview, setSelectedDataview] = useState('default');
+  const [searchType, setSearchType] = useState(''); // 'amount' or 'quantity'
+  const [displayQuantity, setDisplayQuantity] = useState(''); // 'Free-Good' or 'Without-Free-Good'
+  
+  // Dashboard API states
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [isLoadingDashboard, setIsLoadingDashboard] = useState(false);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+
+  // Filter metadata (static)
+  const filterMetadata: Record<string, { name: string; icon: string }> = {
+    route: { name: 'Route', icon: 'mdi:routes' },
+    salesman: { name: 'Salesman', icon: 'mdi:account-tie' },
+    company: { name: 'Company', icon: 'mdi:company' },
+    region: { name: 'Region', icon: 'mingcute:location-line' },
+    warehouse: { name: 'Warehouse', icon: 'hugeicons:warehouse' },
+    area: { name: 'Area', icon: 'mdi:map-marker-radius' },
+    'item-category': { name: 'Item Category', icon: 'mdi:category' },
+    items: { name: 'Items', icon: 'mdi:package-variant' },
+    'channel-categories': { name: 'Customer Channel', icon: 'mdi:account-group' },
+    'customer-category': { name: 'Customer Category', icon: 'mdi:account-supervisor' },
+    customer: { name: 'Customer', icon: 'mdi:account' },
+    'display-quantity': { name: 'Display Quantity', icon: 'mdi:numeric' },
+    amount: { name: 'Amount', icon: 'mdi:currency-usd' }
+  };
+
+  // Filter hierarchy - defines which filters should be cleared when parent changes
+  const filterHierarchy: Record<string, string[]> = {
+    'company': ['region', 'area', 'warehouse', 'route', 'salesman', 'item-category', 'items', 'channel-categories', 'customer-category', 'customer'],
+    'region': ['area', 'warehouse', 'route', 'salesman', 'customer-category', 'customer'],
+    'area': ['warehouse', 'route', 'salesman', 'customer'],
+    'warehouse': ['route', 'salesman'],
+    'route': ['salesman'],
+    'item-category': ['items'],
+    'channel-categories': [ 'customer'],
+    'customer-category': ['customer']
+  };
+
+  // Fetch dashboard data from API
+  const fetchDashboardData = async () => {
+    // Validate required fields
+    if (!startDate || !endDate) {
+      alert('Please select a date range before loading dashboard data');
+      return;
+    }
+
+    if (!searchType) {
+      alert('Please select the search type (Amount or Quantity)');
+      return;
+    }
+
+    if (!displayQuantity) {
+      alert('Please select the display quantity (With Free Good or Without Free Good)');
+      return;
+    }
+
+    // Check if at least one filter is selected
+    const hasFilterSelections = Object.values(selectedChildItems).some(items => items.length > 0);
+    if (!hasFilterSelections) {
+      alert('Please select at least one filter (Company, Region, Area, etc.) before loading dashboard data');
+      return;
+    }
+
+    setIsLoadingDashboard(true);
+    setDashboardError(null);
+
+    try {
+      // Build the payload with all filter types
+      const payload: any = {
+        from_date: startDate,
+        to_date: endDate,
+        search_type: searchType,
+        display_quantity: displayQuantity,
+        company_ids: selectedChildItems['company']?.map(id => parseInt(id)) || [],
+        region_ids: selectedChildItems['region']?.map(id => parseInt(id)) || [],
+        area_ids: selectedChildItems['area']?.map(id => parseInt(id)) || [],
+        warehouse_ids: selectedChildItems['warehouse']?.map(id => parseInt(id)) || [],
+        route_ids: selectedChildItems['route']?.map(id => parseInt(id)) || [],
+        salesman_ids: selectedChildItems['salesman']?.map(id => parseInt(id)) || [],
+        item_category_ids: selectedChildItems['item-category']?.map(id => parseInt(id)) || [],
+        item_ids: selectedChildItems['items']?.map(id => parseInt(id)) || [],
+        channel_category_ids: selectedChildItems['channel-categories']?.map(id => parseInt(id)) || [],
+        customer_category_ids: selectedChildItems['customer-category']?.map(id => parseInt(id)) || [],
+        customer_ids: selectedChildItems['customer']?.map(id => parseInt(id)) || []
+      };
+
+      console.log('Dashboard API Payload:', payload);
+
+      const response = await axios.post(
+        'http://172.16.6.205:8001/api/dashboard',
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+          }
+        }
+      );
+
+      console.log('Dashboard API Response:', response.data);
+      setDashboardData(response.data);
+    } catch (error) {
+      console.error('Dashboard fetch failed:', error);
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.detail || error.message
+        : 'Failed to load dashboard data';
+      setDashboardError(errorMessage);
+      alert(errorMessage);
+    } finally {
+      setIsLoadingDashboard(false);
+    }
+  };
+
+  // Fetch filters from API
+  const fetchFiltersData = async () => {
+    setIsLoadingFilters(true);
+    setFilterError(null);
+
+    try {
+      // Build query params
+      const params = new URLSearchParams();
+      
+      if (selectedChildItems['company']?.length) {
+        params.append('company_ids', selectedChildItems['company'].join(','));
+      }
+      if (selectedChildItems['region']?.length) {
+        params.append('region_ids', selectedChildItems['region'].join(','));
+      }
+      if (selectedChildItems['area']?.length) {
+        params.append('area_ids', selectedChildItems['area'].join(','));
+      }
+      if (selectedChildItems['warehouse']?.length) {
+        params.append('warehouse_ids', selectedChildItems['warehouse'].join(','));
+      }
+      if (selectedChildItems['route']?.length || selectedChildItems['salesman']?.length) {
+        const searchBy = [...(selectedChildItems['route'] || []), ...(selectedChildItems['salesman'] || [])].join(',');
+        if (searchBy) params.append('search_by', searchBy);
+      }
+      if (selectedChildItems['item-category']?.length) {
+        params.append('item_category_ids', selectedChildItems['item-category'].join(','));
+      }
+      if (selectedChildItems['channel-categories']?.length) {
+        const channelIds = selectedChildItems['channel-categories'].join(',');
+        params.append('channel_category_ids', channelIds);
+        params.append('customer_channel_ids', channelIds); // Send both parameters for channel-based customer filtering
+      }
+      if (selectedChildItems['customer-category']?.length) {
+        params.append('customer_category_ids', selectedChildItems['customer-category'].join(','));
+      }
+
+   const queryString = params.toString();
+const url = `http://172.16.6.205:8001/api/filters${queryString ? `?${queryString}` : ''}`;
+
+const response = await fetch(url, {
+  method: 'GET',
+  // ❌ DO NOT SEND HEADERS in GET unless needed
+});
+
+if (!response.ok) {
+  throw new Error(`HTTP error! status: ${response.status}`);
+}
+
+const data = await response.json();
+
+
+      // Transform API response to Filter format
+      const transformedFilters: Filter[] = [];
+      
+      const apiKeyMap: Record<string, string> = {
+        companies: 'company',
+        regions: 'region',
+        areas: 'area',
+        warehouses: 'warehouse',
+      
+        item_categories: 'item-category',
+        items: 'items',
+          routes: 'route',
+        salesmen: 'salesman',
+        channel_categories: 'channel-categories',
+        customer_categories: 'customer-category',
+        customers: 'customer'
+      };
+
+      Object.entries(data).forEach(([apiKey, items]: [string, any]) => {
+        const filterId = apiKeyMap[apiKey] || apiKey;
+        const metadata = filterMetadata[filterId];
+        
+        if (metadata && Array.isArray(items)) {
+          // Debug logging for route, salesman and channel categories data
+          if (apiKey === 'routes' || apiKey === 'salesmen' || apiKey === 'channel_categories') {
+            console.log(`${apiKey} data from API:`, items.slice(0, 2)); // Log first 2 items
+          }
+          
+          transformedFilters.push({
+            id: filterId,
+            name: metadata.name,
+            icon: metadata.icon,
+            childData: items.map((item: any) => {
+              // Extract ID from various possible field names
+              const id = item.company_id || item.region_id || item.area_id || item.warehouse_id || 
+                         item.route_id || item.salesman_id || item.item_category_id || item.item_id ||
+                         item.channel_category_id || item.customer_category_id || item.customer_id ||
+                         item.id || item.code || item.route_code || item.salesman_code;
+              
+              // Extract Name/Label with comprehensive field checking
+              let name = item.company_name || item.region_name || item.area_name || item.warehouse_name ||
+                         item.route_name || item.route_label || item.route_title || 
+                         item.salesman_name || item.salesman_label || item.salesman_title ||
+                         item.category_name || item.item_name || 
+                         item.outlet_channel || item.channel_category_name || item.channel_name || 
+                         item.customer_category_name || item.customer_name || 
+                         item.name || item.label || item.title;
+              
+              // Additional fallback for route/salesman/channel_categories
+              if (!name && (apiKey === 'routes' || apiKey === 'salesmen' || apiKey === 'channel_categories')) {
+                name = item.description || item.full_name || item.display_name;
+                console.warn(`${apiKey} missing standard name field, using fallback:`, item);
+              }
+              
+              return {
+                id: String(id || item),
+                name: String(name || id || item)
+              };
+            })
+          });
+        }
+      });
+
+    
+
+      setAvailableFilters(transformedFilters);
+    } catch (error) {
+      console.error('Failed to fetch filters:', error);
+      setFilterError(error instanceof Error ? error.message : 'Failed to load filters');
+      setAvailableFilters([]);
+    } finally {
+      setIsLoadingFilters(false);
+    }
+  };
+
+  // Fetch Table Data function
+  const handleTableView = async () => {
+    if (!startDate || !endDate) {
+      alert('Please select a date range before loading table data');
+      return;
+    }
+
+    // Validate search type selection
+    if (!searchType) {
+      alert('Please select the search type (Type by Price or Type by Quantity)');
+      return;
+    }
+
+    // Validate display quantity selection
+    if (!displayQuantity) {
+      alert('Please select the display quantity (Free-Good or Without-Free-Good)');
+      return;
+    }
+
+    setIsLoadingTable(true);
+    try {
+      // Get only the lowest-level filter for table data
+      const lowestLevelFilters = getLowestLevelFilters();
+      
+      // Build the request payload with dates and only the lowest filter
+      const payload = {
+        from_date: startDate,
+        to_date: endDate,
+        search_type: searchType,
+        display_quantity: displayQuantity,
+        ...lowestLevelFilters // Spread only the lowest-level filter IDs
+      };
+
+      const response = await fetch('http://172.16.6.205:8001/api/table', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch table data: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setTableData(data);
+    } catch (error) {
+      console.error('Table fetch failed:', error);
+      alert(error instanceof Error ? error.message : 'Failed to load table data');
+    } finally {
+      setIsLoadingTable(false);
+    }
+  };
+
+  // Export XLSX function
+  const handleExportXLSX = async (selectedSearchType: string, selectedDisplayQuantity: string, dataview: string) => {
+    if (!startDate || !endDate) {
+      alert('Please select a date range before exporting');
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Get only the lowest-level filter for export data
+      const lowestLevelFilters = getLowestLevelFilters();
+      
+      // Build the request payload with dates, dataview and only the lowest filter
+      const payload = {
+        from_date: startDate,
+        to_date: endDate,
+        search_type: selectedSearchType,
+        dataview: dataview, // 'default', 'daily', 'weekly', 'monthly', 'yearly'
+        display_quantity: selectedDisplayQuantity,
+        ...lowestLevelFilters // Spread only the lowest-level filter IDs
+      };
+
+      console.log('Export Payload (lowest-level filter only):', payload);
+
+      const response = await fetch('http://172.16.6.205:8001/api/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+        console.error('Export API Error:', errorData);
+        throw new Error(errorData.detail || `Export failed: ${response.statusText}`);
+      }
+
+      // Download the file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `sales-report-${startDate}-to-${endDate}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert(error instanceof Error ? error.message : 'Failed to export data');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Helper function to get the dynamic column configuration for the table
+  const getDynamicFilterColumn = () => {
+    const hierarchyOrder = [
+      'company',
+      'region', 
+      'area',
+      'warehouse',
+      'route',
+      'salesman',
+      'item-category',
+      'items',
+      'channel-categories',
+      'customer-category',
+      'customer'
+    ];
+
+    // Find the lowest filter
+    let lowestFilter = null;
+    for (let i = hierarchyOrder.length - 1; i >= 0; i--) {
+      const filterId = hierarchyOrder[i];
+      if (selectedChildItems[filterId]?.length > 0) {
+        lowestFilter = filterId;
+        break;
+      }
+    }
+
+    // Special handling for customer-related filters - show only selected columns
+    if (lowestFilter && ['channel-categories', 'customer-category', 'customer'].includes(lowestFilter)) {
+      const columns = [];
+      
+      // Only add columns for filters that have selections
+      if (selectedChildItems['channel-categories']?.length > 0) {
+        columns.push({ label: 'Channel Name', field: 'channel_name' });
+      }
+      if (selectedChildItems['customer-category']?.length > 0) {
+        columns.push({ label: 'Customer Category', field: 'customer_category' });
+      }
+      if (selectedChildItems['customer']?.length > 0) {
+        columns.push({ label: 'Customer Name', field: 'customer_name' });
+      }
+      
+      return {
+        type: 'customer-group',
+        columns: columns
+      };
+    }
+
+    // Map filter ID to column name and field name in the API response
+    const filterColumnMap: Record<string, { label: string; field: string }> = {
+      'company': { label: 'Company Name', field: 'company_name' },
+      'region': { label: 'Region Name', field: 'region_name' },
+      'area': { label: 'Area Name', field: 'area_name' },
+      'warehouse': { label: 'Warehouse Name', field: 'warehouse_name' },
+      'route': { label: 'Route Name', field: 'route_name' },
+      'salesman': { label: 'Salesman Name', field: 'salesman_name' },
+      'item-category': { label: 'Item Category', field: 'item_category' },
+      'items': { label: 'Item Name', field: 'item_name' }
+    };
+
+    const singleColumn = lowestFilter ? filterColumnMap[lowestFilter] : { label: 'Filter Name', field: 'name' };
+    return {
+      type: 'single',
+      columns: [singleColumn]
+    };
+  };
+
+  // Helper function to get only the lowest-level filter for table/export APIs
+  const getLowestLevelFilters = () => {
+    // Define hierarchy order from highest to lowest level
+    const hierarchyOrder = [
+      'company',
+      'region', 
+      'area',
+      'warehouse',
+      'route',
+      'salesman',
+      'item-category',
+      'items',
+      'channel-categories',
+      'customer-category',
+      'customer'
+    ];
+
+    // Find the lowest (most granular) filter that has selections
+    let lowestFilter = null;
+    for (let i = hierarchyOrder.length - 1; i >= 0; i--) {
+      const filterId = hierarchyOrder[i];
+      if (selectedChildItems[filterId]?.length > 0) {
+        lowestFilter = filterId;
+        break;
+      }
+    }
+
+    // Build payload with only the lowest filter
+    const payload: any = {};
+    
+    if (lowestFilter) {
+      switch (lowestFilter) {
+        case 'company':
+          payload.company_ids = selectedChildItems['company'].map(id => parseInt(id));
+          break;
+        case 'region':
+          payload.region_ids = selectedChildItems['region'].map(id => parseInt(id));
+          break;
+        case 'area':
+          payload.area_ids = selectedChildItems['area'].map(id => parseInt(id));
+          break;
+        case 'warehouse':
+          payload.warehouse_ids = selectedChildItems['warehouse'].map(id => parseInt(id));
+          break;
+        case 'route':
+          payload.route_ids = selectedChildItems['route'].map(id => parseInt(id));
+          break;
+        case 'salesman':
+          payload.salesman_ids = selectedChildItems['salesman'].map(id => parseInt(id));
+          break;
+        case 'item-category':
+          payload.item_category_ids = selectedChildItems['item-category'].map(id => parseInt(id));
+          break;
+        case 'items':
+          payload.item_ids = selectedChildItems['items'].map(id => parseInt(id));
+          break;
+        case 'channel-categories':
+          payload.customer_channel_ids = selectedChildItems['channel-categories'].map(id => parseInt(id));
+          break;
+        case 'customer-category':
+          payload.customer_category_ids = selectedChildItems['customer-category'].map(id => parseInt(id));
+          break;
+        case 'customer':
+          payload.customer_ids = selectedChildItems['customer'].map(id => parseInt(id));
+          break;
+      }
+    }
+
+    return payload;
+  };
+
+  // Fetch on mount
+  useEffect(() => {
+    fetchFiltersData();
+  }, []);
+
+  // Refetch when selections change with hierarchical logic
+  useEffect(() => {
+    if (droppedFilters.length > 0) {
+      // Only refetch if there are actual selections
+      const hasSelections = Object.values(selectedChildItems).some(items => items.length > 0);
+      if (hasSelections) {
+        const timer = setTimeout(() => fetchFiltersData(), 300);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [selectedChildItems, droppedFilters.length]);
+
+  const chartData = {
+    salesTrend: Array.from({length: 5}, (_, i) => ({ year: `${2021+i}`, sales: [2, 6, 3, 8, 6][i] })),
+    companies: Array.from({length: 5}, (_, i) => ({ name: `Company ${i+1}`, sales: [400000, 280000, 220000, 150000, 80000][i], color: ['#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'][i] })),
+    region: Array.from({length: 3}, (_, i) => ({ name: `Region ${i+1}`, value: [35, 30, 35][i], color: ['#1e3a8a', '#3b82f6', '#38bdf8'][i] })),
+    brand: Array.from({length: 5}, (_, i) => ({ brand: `Brand ${i+1}`, sales: [8, 7, 5, 4, 3.5][i] }))
+  };
+
+  const handleDateSelect = () => {
+    if (startDate && endDate) {
+      const format = (date: string) => new Date(date).toLocaleDateString('en-GB').replace(/\//g, '-');
+      setDateRange(`${format(startDate)} - ${format(endDate)}`);
+      setShowDatePicker(false);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, filter: Filter) => {
+    setDraggedFilter(filter);
+    e.dataTransfer.setData('text/plain', filter.id);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (draggedFilter) {
+      // setAvailableFilters(prev => prev.filter(f => f.id !== draggedFilter.id));
+      
+      setDroppedFilters(prev => [...prev, draggedFilter]);
+      setSelectedChildItems(prev => ({ ...prev, [draggedFilter.id]: [] }));
+      setSearchTerms(prev => ({ ...prev, [draggedFilter.id]: '' }));
+      setDraggedFilter(null);
+      
+      // Close the dropdowns after dropping
+      setShowMoreFilters(false);
+      setSearchbyclose(false);
+    }
+  };
+
+  const handleRemoveFilter = (filterToRemove: Filter) => {
+    setDroppedFilters(prev => prev.filter(f => f.id !== filterToRemove.id));
+    // setAvailableFilters(prev => [...prev, filterToRemove]);
+    
+    // Clear this filter and all its dependent filters
+    setSelectedChildItems(prev => {
+      const newObj = {...prev};
+      delete newObj[filterToRemove.id];
+      
+      // Also clear dependent filters
+      const dependentFilters = filterHierarchy[filterToRemove.id] || [];
+      dependentFilters.forEach(dependentId => {
+        if (newObj[dependentId]) {
+          newObj[dependentId] = [];
+        }
+      });
+      
+      return newObj;
+    });
+    
+    setSearchTerms(prev => { const newObj = {...prev}; delete newObj[filterToRemove.id]; return newObj; });
+    if (openDropdown === filterToRemove.id) setOpenDropdown(null);
+  };
+
+  const handleClearAllFilters = () => {
+    setAvailableFilters([...availableFilters, ...droppedFilters]);
+    setDroppedFilters([]);
+    setSelectedChildItems({});
+    setSearchTerms({});
+    setOpenDropdown(null);
+  };
+
+  const handleChildItemToggle = (filterId: string, childItemId: string) => {
+    setSelectedChildItems(prev => {
+      const current = prev[filterId] || [];
+      const newValue = current.includes(childItemId) ? current.filter(id => id !== childItemId) : [...current, childItemId];
+      
+      // Create new state with updated filter
+      const newState = { ...prev, [filterId]: newValue };
+      
+      // Clear all dependent filters based on hierarchy
+      const dependentFilters = filterHierarchy[filterId] || [];
+      dependentFilters.forEach(dependentId => {
+        if (newState[dependentId]) {
+          newState[dependentId] = [];
+        }
+      });
+      
+      return newState;
+    });
+  };
+
+  const getFilterChildData = (filterId: string): FilterChildItem[] => {
+    const filter = [...availableFilters, ...droppedFilters].find(f => f.id === filterId);
+    return filter?.childData || [];
+  };
+
+  const getFilteredChildData = (filterId: string): FilterChildItem[] => {
+    const data = getFilterChildData(filterId);
+    const searchTerm = searchTerms[filterId] || '';
+    return !searchTerm ? data : data.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  };
+
+  const getSelectedCount = (filterId: string): number => (selectedChildItems[filterId] || []).length;
+
+  // Organize filters into groups
+  const visibleFilters = availableFilters.filter(f => ['company', 'region', 'area', 'warehouse'].includes(f.id));
+  const searchby = availableFilters.filter(f => ['salesman', 'route'].includes(f.id));
+  // const searchtype = availableFilters.filter(f => ['display-quantity', 'amount'].includes(f.id));
+  const moreFilters = availableFilters.filter(f => 
+    !['company', 'region', 'area', 'warehouse', 'salesman', 'route', 'display-quantity', 'amount'].includes(f.id)
+  );
+
+  const sidebarIcons = [
+    'ri:home-smile-2-line', 'proicons:person', 'streamline:transfer-van', 'pajamas:package',
+    'lucide:network', 'bx:file', 'proicons:bookmark', 'solar:dollar-broken'
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200">
+        <div className="h-[60px] flex items-center">
+          <div className="w-[80px] lg:w-[80px] h-[60px] border-r border-b border-[#E9EAEB] flex items-center justify-center">
+            <img src="img1.png" alt="Logo" className="w-[44px] h-[44px] object-contain" />
+          </div>
+          <TopBar />
+        </div>
+      </header>
+
+      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
+        {/* Sidebar - Hidden on mobile, visible on desktop */}
+        <section className="hidden lg:flex lg:w-[80px] h-auto lg:h-[1050px] border-r border-[#E9EAEB] bg-white border-b pt-5">
+          <div className="flex flex-col items-center gap-6 w-full">
+            {sidebarIcons.map((icon, i) => (
+              <Icon key={i} icon={icon} width="24" height="24" style={{color: "#414651"}} />
+            ))}
+          </div>
+        </section>
+
+        {/* Mobile sidebar - Bottom navigation */}
+        <section className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
+          <div className="flex justify-around py-3">
+            {sidebarIcons.slice(0, 5).map((icon, i) => (
+              <Icon key={i} icon={icon} width="24" height="24" style={{color: "#414651"}} />
+            ))}
+          </div>
+        </section>
+
+        <section className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
+          <div className="mb-6">
+            <h1 className="text-xl lg:text-2xl flex gap-2 lg:gap-4 font-semibold items-center text-gray-900">
+              <Icon icon="lucide:arrow-left" width="20" height="20" className="lg:w-6 lg:h-6" />
+              Sales Report Dashboard
+            </h1>
+          </div>
+
+          {/* Controls Section */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full lg:w-auto">
+              <div className="relative w-full sm:w-auto">
+                <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer w-full sm:w-auto" onClick={() => setShowDatePicker(!showDatePicker)}>
+                  <Calendar size={18} className="text-gray-600" />
+                  <input type="text" value={dateRange} className="border-none outline-none text-sm cursor-pointer bg-transparent w-full" readOnly />
+                </div>
+                {showDatePicker && (
+                  <div className="absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 w-full sm:w-80">
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={handleDateSelect} className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Apply</button>
+                        <button onClick={() => setShowDatePicker(false)} className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">Cancel</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="relative w-full gap-3 flex sm:w-auto">
+                <div className="relative w-full sm:w-auto">
+                  <select
+                    value={searchType}
+                    onChange={(e) => setSearchType(e.target.value)}
+                    className="px-4 py-2 pr-10 bg-white border border-gray-200 rounded-lg appearance-none cursor-pointer text-sm w-full sm:w-auto"
+                  >
+                    <option value="">Search Type</option>
+                    <option value="amount"> Amount</option>
+                    <option value="quantity"> Quantity</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
+                </div>  
+                <div className="relative w-full sm:w-auto">
+                  <select
+                    value={displayQuantity}
+                    onChange={(e) => setDisplayQuantity(e.target.value)}
+                    className="px-4 py-2 pr-10 bg-white border border-gray-200 rounded-lg appearance-none cursor-pointer text-sm w-full sm:w-auto"
+                  >
+                    <option value=""> Display Quantity</option>
+                    <option value="with_free_good"> With Free Good</option>
+                    <option value="without_free_good">Without Free Good</option>
+                  </select>
+                  <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 pointer-events-none" />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <button 
+                onClick={() => {
+                  setViewType('graph');
+                  fetchDashboardData();
+                }} 
+                disabled={isLoadingDashboard}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg flex-1 sm:flex-none justify-center ${viewType === 'graph' ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isLoadingDashboard ? (
+                  <Icon icon="eos-icons:loading" width="18" height="18" />
+                ) : (
+                  <BarChart3 size={18} />
+                )}
+                <span className="text-sm">Dashboard</span>
+              </button>
+              <button 
+                onClick={() => {
+                  setViewType('table');
+                  handleTableView();
+                }} 
+                disabled={isLoadingTable}
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg flex-1 sm:flex-none justify-center ${viewType === 'table' ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
+              >
+                {isLoadingTable ? (
+                  <Icon icon="eos-icons:loading" width="18" height="18" />
+                ) : (
+                  <Table size={18} />
+                )}
+                <span className="text-sm">Table</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="bg-white w-full rounded-lg shadow-sm">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 border-b border-[#E9EAEB] gap-3">
+              <h2 className="font-semibold text-lg text-[#181D27]">Sales Reports</h2>
+              <ExportButtons 
+                onExportXLSX={handleExportXLSX}
+                isLoading={isExporting}
+                searchType={searchType}
+                displayQuantity={displayQuantity}
+              />
+            </div>
+
+            <div className="p-4 border border-[#E9EAEB]">
+              {/* Loading & Error States */}
+          
+
+              {/* Filter Section */}
+              <div>
+                <div className="flex flex-wrap min-h-[44px] items-center justify-start gap-2 sm:gap-3 px-3 py-2 border rounded-[10px] bg-[#F5F5F5] border-[#E9EAEB]">
+                  <span className="font-semibold text-gray-800 text-sm sm:text-base whitespace-nowrap">Drag & Drop Filter</span>
+                  
+                 <div className="flex h-auto sm:h-[28px] justify-center items-center w-full sm:w-auto">
+  {isLoadingFilters && (
+    <div className="h-auto sm:h-[28px] px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg text-xs sm:text-sm text-blue-700 flex items-center gap-2">
+      <div className="animate-spin w-3 h-3 rounded-full border-b-2 border-blue-700"></div>
+      <span className="whitespace-nowrap">Loading filters...</span>
+    </div>
+  )}
+
+  {filterError && (
+    <div className="h-auto sm:h-[28px] flex justify-center items-center px-3 py-1 bg-red-50 border border-red-200 rounded-lg text-xs sm:text-sm text-red-700">
+      <span className="truncate">{filterError}</span>
+      <button
+        onClick={fetchFiltersData}
+        className="ml-2 underline hover:text-red-900 font-medium whitespace-nowrap"
+      >
+        Retry
+      </button>
+    </div>
+  )}
+</div>
+
+                  <div className="flex flex-wrap gap-2 flex-1 w-full">
+                    {visibleFilters.map(filter => (
+                      <div key={filter.id} draggable onDragStart={(e) => handleDragStart(e, filter)} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#D1D5DB] rounded-[8px] cursor-grab hover:bg-gray-50">
+                        <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                        <span className="text-xs sm:text-sm font-medium text-[#414651] whitespace-nowrap">{filter.name}</span>
+                        <Icon icon="ph:dots-six-vertical-bold" width="14" height="14" className="sm:w-4 sm:h-4" style={{color: '#A4A7AE'}} />
+                      </div>
+                    ))}
+                 
+
+                
+                           {searchby.length > 0 && (
+                      <div className="relative">
+                        <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setSearchbyclose(!searchbyopen)}>
+                          Search by <ChevronDown size={14} />
+                        </button>
+                        {searchbyopen && (
+                          <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+                            <div className="p-2">
+                              {searchby.map(filter => (
+                                <div key={filter.id} draggable onDragStart={(e) => handleDragStart(e, filter)} className="flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 cursor-grab">
+                                  <div className='flex gap-2 sm:gap-4 items-center'>
+                                    <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                                    <span className="text-xs sm:text-sm text-gray-700">{filter.name}</span>
+                                  </div>
+                                  <Icon icon="ph:dots-six-vertical-bold" width="14" height="14" className="sm:w-4 sm:h-4" style={{color: '#A4A7AE'}} />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+ {moreFilters.length > 0 && (
+                      <div className="relative">
+                        <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setShowMoreFilters(!showMoreFilters)}>
+                          More <ChevronDown size={14} />
+                        </button>
+                        {showMoreFilters && (
+                          <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
+                            <div className="p-2">
+                              {moreFilters.map(filter => {
+                                const isUndraggable = viewType === 'table' && ['items', 'item-category'].includes(filter.id);
+                                return (
+                                  <div 
+                                    key={filter.id} 
+                                    draggable={!isUndraggable} 
+                                    onDragStart={!isUndraggable ? (e) => handleDragStart(e, filter) : undefined} 
+                                    className={`flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 ${isUndraggable ? 'cursor-not-allowed opacity-50' : 'cursor-grab'}`}
+                                  >
+                                    <div className='flex gap-2 sm:gap-4 items-center'>
+                                      <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                                      <span className="text-xs sm:text-sm text-gray-700">{filter.name}</span>
+                                    </div>
+                                    <Icon icon="ph:dots-six-vertical-bold" width="14" height="14" className="sm:w-4 sm:h-4" style={{color: '#A4A7AE'}} />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 sm:p-4 border border-dashed border-[#D1D5DB] rounded-[10px]" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
+                  {droppedFilters.length === 0 ? (
+                    <div className="flex justify-center items-center py-6 sm:py-4">
+                      <Icon icon="basil:add-outline" width="20" height="20" className="sm:w-6 sm:h-6" style={{color: '#717680'}} />
+                      <span className="text-xs sm:text-sm text-gray-400 ml-2">Drop Filter Here</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 items-start sm:items-center justify-between">
+                        <div className="flex flex-wrap gap-2 flex-1 w-full">
+                          {droppedFilters.map(filter => {
+                            const selectedCount = getSelectedCount(filter.id);
+                            return (
+                              <div key={filter.id} className="relative w-full sm:w-auto">
+                                <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#414651] rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => setOpenDropdown(openDropdown === filter.id ? null : filter.id)}>
+                                  <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                                  <span className="text-xs sm:text-sm font-medium text-[#414651] whitespace-nowrap">
+                                    {filter.name}
+                                    {selectedCount > 0 && <span className="bg-[#252B37] text-white text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded-full ml-1">{selectedCount}</span>}
+                                  </span>
+                                  <ChevronDown size={12} className={`sm:w-[14px] sm:h-[14px] text-[#414651] ${openDropdown === filter.id ? 'rotate-180' : ''}`} />
+                                  <button onClick={(e) => { e.stopPropagation(); handleRemoveFilter(filter); }} className="text-[#414651] hover:text-red-600 ml-1">
+                                    <Icon icon="mdi:close" width="14" height="14" className="sm:w-4 sm:h-4" />
+                                  </button>
+                                </div>
+
+                                {openDropdown === filter.id && (
+                                  <div className="absolute top-full left-0 mt-1 w-full min-w-[200px] sm:w-[240px] bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                                    <div className="p-3">
+                                      <input type="text" placeholder="Search here..." value={searchTerms[filter.id] || ''} onChange={(e) => setSearchTerms(prev => ({ ...prev, [filter.id]: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                                    </div>
+                                    <div className="max-h-60 overflow-y-auto">
+                                      {getFilteredChildData(filter.id).length === 0 ? (
+                                        <div className="text-center text-sm text-gray-500 py-4">No items found</div>
+                                      ) : (
+                                        <div className="space-y-1 p-2">
+                                          {getFilteredChildData(filter.id).map(childItem => {
+                                            const isSelected = (selectedChildItems[filter.id] || []).includes(childItem.id);
+                                            return (
+                                              <label key={childItem.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                                <input type="checkbox" checked={isSelected} onChange={() => handleChildItemToggle(filter.id, childItem.id)} className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500" />
+                                                <span className="text-sm text-gray-700">{childItem.name}</span>
+                                              </label>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {droppedFilters.length > 0 && (
+                          <button onClick={handleClearAllFilters} className="text-[#252B37] italic text-xs sm:text-sm underline hover:text-red-600 whitespace-nowrap mt-2 sm:mt-0 self-start sm:self-auto">Clear Filter</button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Charts Grid or Table View */}
+              {viewType === 'graph' ? (
+                 <SalesCharts 
+                  chartData={chartData} 
+                  dashboardData={dashboardData}
+                  isLoading={isLoadingDashboard}
+                  error={dashboardError}
+                />
+              ) : (
+                <div className="mt-4">
+                  {isLoadingTable ? (
+                    <div className="flex justify-center items-center py-12">
+                      <Icon icon="eos-icons:loading" width="40" height="40" className="text-blue-600" />
+                      <span className="ml-3 text-gray-600">Loading table data...</span>
+                    </div>
+                  ) : tableData && (tableData.data || tableData.rows)?.length > 0 ? (
+                    (() => {
+                      const dynamicColumn = getDynamicFilterColumn();
+                      return (
+                        <div className="overflow-x-auto">
+                          <table className="w-full border-collapse">
+                            <thead>
+                              <tr className="bg-gray-100 border-b border-gray-200">
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Code</th>
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Category</th>
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Invoice Date</th>
+                                {dynamicColumn.columns.map((col: any, idx: number) => (
+                                  <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{col.label}</th>
+                                ))}
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Total Quantity</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {(tableData.data || tableData.rows)?.map((row: any, rowIdx: number) => (
+                                <tr key={rowIdx} className="border-b border-gray-200 hover:bg-gray-50">
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_code || '-'}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_name || '-'}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_category || '-'}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.invoice_date || '-'}</td>
+                                  {dynamicColumn.columns.map((col: any, idx: number) => (
+                                    <td key={idx} className="px-4 py-3 text-sm text-gray-700">{row[col.field] || '-'}</td>
+                                  ))}
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.total_quantity || '-'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="flex flex-col justify-center items-center py-12 text-gray-500">
+                      <Table size={48} className="mb-4 opacity-30" />
+                      <p className="text-lg font-medium">No table data available</p>
+                      <p className="text-sm mt-2">Select filters and date range, then click the Table button</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+export default SalesReportDashboard;
+
+
+
+
+
+
+
+
+
+
