@@ -2266,6 +2266,14 @@ export const itemList = async (params?: Params) => {
     return handleError(error);
   }
 };
+export const itemListCategoryWise = async (params?: Params) => {
+  try {
+    const res = await API.get("api/master/items/category-wise-items", { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
 
 
 export const itemGlobalSearch = async (params?: Params) => {

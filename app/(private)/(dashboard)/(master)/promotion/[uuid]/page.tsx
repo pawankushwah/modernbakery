@@ -14,6 +14,7 @@ import Table from "@/app/components/customTable";
 import { useRouter } from "next/navigation";
 import CustomCheckbox from "@/app/components/customCheckbox";
 import * as yup from "yup";
+import { Item } from "@/app/(private)/utils/excise";
 
 type KeyComboType = {
   Location: string;
@@ -198,7 +199,7 @@ export default function AddPricing() {
   const rawParam = (paramsTyped?.uuid ?? paramsTyped?.id) as string | string[] | undefined;
   const id = Array.isArray(rawParam) ? rawParam[0] : rawParam;
   const isEditMode = id !== undefined && id !== "add" && id !== "";
-  const { item, itemOptions, companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions, customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions, fetchItemOptions, salesmanTypeOptions, projectOptions } = useAllDropdownListData();
+  const { item, companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions, customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchRoutebySalesmanOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions, fetchItemsCategoryWise, salesmanTypeOptions, projectOptions } = useAllDropdownListData();
   useEffect(() => {
     async function fetchEditData() {
       if (!isEditMode || !id) return;
@@ -242,7 +243,7 @@ export default function AddPricing() {
     isLastStep
   } = useStepperForm(steps.length);
   const { showSnackbar } = useSnackbar();
-
+  const [itemOptions, setItemOptions] = useState<Item>([])
   const [loading, setLoading] = useState(false);
   const validateStep = (step: number) => {
     if (step === 1) {
@@ -307,9 +308,27 @@ export default function AddPricing() {
 
   const router = useRouter();
   const pricingValidationSchema = yup.object().shape({
-    // Only validate selected items at payload level. The stricter rule for Item Category
-    // and Item selections in Key Value step is enforced separately in the UI validation
-    // (validateStep and pre-submit checks).
+    promotion_name: yup.string().required("Promotion Name is required"),
+    from_date: yup.string().required("Start Date is required"),
+    to_date: yup.string()
+      .required("End Date is required")
+      .test(
+        'is-after-start',
+        'End Date must be after Start Date',
+        function (value) {
+          const { from_date } = this.parent;
+          if (!from_date || !value) {
+            return true; // Don't validate if either date is missing (handled by .required)
+          }
+          return new Date(value) > new Date(from_date);
+        }
+      ),
+    sales_team_type: yup.string().required("Sales Team Type is required"),
+    project_list: yup.string().when("sales_team_type", {
+      is: "6",
+      then: (schema) => schema.required("Project List is required"),
+      otherwise: (schema) => schema.notRequired(),
+    }),
     item: yup.array().of(yup.string()).min(1, "At least one item is required"),
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -345,12 +364,12 @@ export default function AddPricing() {
       },
     ];
 
-    function getKeyId(type: string, label: string): string {
-      const group = initialKeys.find(g => g.type === type);
-      if (!group) return "";
-      const found = group.options.find(opt => opt.label === label);
-      return found ? found.id : label;
-    }
+    // function getKeyId(type: string, label: string): string {
+    //   const group = initialKeys.find(g => g.type === type);
+    //   if (!group) return "";
+    //   const found = group.options.find(opt => opt.label === label);
+    //   return found ? found.id : label;
+    // }
 
     // ✅ Fix: Join description IDs properly as comma-separated string
     // const descriptionIds = [
@@ -398,9 +417,10 @@ export default function AddPricing() {
       sales_team_type: promotion.salesTeamType || "",
       project_list: promotion.projectList || "",
       item: selectedItemIds,
+      item_category: keyValue["Item Category"] || [],
       uom: selectedUom || "CTN",
-      location:keyValue[keyCombo.Location],
-      customer:keyValue[keyCombo.Customer],
+      location: keyValue[keyCombo.Location],
+      customer: keyValue[keyCombo.Customer],
       // description: description,
       // ✅ Fix: Map promotion_details with correct field names
       promotion_details: (promotionDetails || []).map(detail => ({
@@ -435,6 +455,12 @@ export default function AddPricing() {
           missingErrors[keyCombo.Item] = `${keyCombo.Item} is required`;
         }
       }
+      if (keyCombo.Location) {
+        if (!keyValue[keyCombo.Location] || keyValue[keyCombo.Location].length === 0) {
+          missingErrors[keyCombo.Location] = `${keyCombo.Location} is required`;
+        }
+      }
+
       if (Object.keys(missingErrors).length > 0) {
         setErrors(missingErrors);
         showSnackbar(`Please fill ${Object.keys(missingErrors).join(", ")} before submitting`, "error");
@@ -513,7 +539,9 @@ export default function AddPricing() {
   });
 
   const [selectedUom, setSelectedUom] = useState("");
-
+  const [itemLoading, setItemLoading] = useState(false);
+  console.log(itemLoading, "itemLoading")
+  console.log(selectedUom, "selectedUom")
   type OrderItemType = {
     promotionGroupName: string;
     itemName: string;
@@ -682,16 +710,28 @@ export default function AddPricing() {
   }, [keyValue["Customer Category"], fetchCompanyCustomersOptions]);
 
   // When Item Category selection changes, fetch items for the selected categories.
+  async function fetchItemsCategory(itemCategories: string[]) {
+    setItemLoading(true)
+    try {
+      const result = await fetchItemsCategoryWise(itemCategories.toString())
+      setItemOptions(result);
+    } catch (error) {
+      console.warn(error)
+    } finally {
+      setItemLoading(false)
+    }
+  }
   useEffect(() => {
     const itemCategories = keyValue["Item Category"];
     if (Array.isArray(itemCategories) && itemCategories.length > 0) {
       try {
-        fetchItemOptions(itemCategories);
+        fetchItemsCategory(itemCategories ?? [])
       } catch (err) {
         console.error("Failed to fetch item options for category", itemCategories, err);
+      } finally {
       }
     }
-  }, [keyValue["Item Category"], fetchItemOptions]);
+  }, [keyValue["Item Category"], fetchItemsCategoryWise]);
 
   // When Item Category selection changes, prefill category on existing table rows
   useEffect(() => {
@@ -899,65 +939,65 @@ export default function AddPricing() {
         }
         // Build UOM options for a given table row using selectedItemDetails or provider `item`.
         // Always returns an array of options so the UI can render a select dropdown.
-        function getUomOptionsForRow(row: Record<string, unknown>) {
-          const codeOrName = String((row as Record<string, unknown>)['itemCode'] ?? (row as Record<string, unknown>)['itemName'] ?? "");
-          let itemObj: ItemDetail | undefined = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === codeOrName || String(it.name || it.itemName || it.label) === codeOrName);
-          if (!itemObj && Array.isArray(item)) {
-            itemObj = (item as ItemDetail[]).find((ci) => String((ci as Record<string, unknown>)['id'] ?? (ci as Record<string, unknown>)['code'] ?? '') === codeOrName || String((ci as Record<string, unknown>)['label'] ?? (ci as Record<string, unknown>)['name'] ?? '') === codeOrName);
-          }
-          const uoms = (itemObj ? ((itemObj as Record<string, unknown>)['uomSummary'] ?? (itemObj as Record<string, unknown>)['uom']) : undefined) ?? [];
-          // If no uoms available return a single placeholder option (so dropdown always shows)
-          if (!Array.isArray(uoms) || uoms.length === 0) {
-            const fallback = String(row.uom || "");
-            if (fallback) return [{ label: fallback, value: fallback, price: undefined }];
-            return [{ label: "-", value: "", price: undefined }];
-          }
-          return (uoms as Uom[]).map((u) => ({ label: `${u.name ?? u.uom ?? ""}${u.uom_type ? ` (${u.uom_type})` : ""}${u.price ? ` - ${u.price}` : ""}`, value: String(u.name ?? u.uom ?? ""), price: u.price }));
-        }
+        // function getUomOptionsForRow(row: Record<string, unknown>) {
+        //   const codeOrName = String((row as Record<string, unknown>)['itemCode'] ?? (row as Record<string, unknown>)['itemName'] ?? "");
+        //   let itemObj: ItemDetail | undefined = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === codeOrName || String(it.name || it.itemName || it.label) === codeOrName);
+        //   if (!itemObj && Array.isArray(item)) {
+        //     itemObj = (item as ItemDetail[]).find((ci) => String((ci as Record<string, unknown>)['id'] ?? (ci as Record<string, unknown>)['code'] ?? '') === codeOrName || String((ci as Record<string, unknown>)['label'] ?? (ci as Record<string, unknown>)['name'] ?? '') === codeOrName);
+        //   }
+        //   const uoms = (itemObj ? ((itemObj as Record<string, unknown>)['uomSummary'] ?? (itemObj as Record<string, unknown>)['uom']) : undefined) ?? [];
+        //   // If no uoms available return a single placeholder option (so dropdown always shows)
+        //   if (!Array.isArray(uoms) || uoms.length === 0) {
+        //     const fallback = String(row.uom || "");
+        //     if (fallback) return [{ label: fallback, value: fallback, price: undefined }];
+        //     return [{ label: "-", value: "", price: undefined }];
+        //   }
+        //   return (uoms as Uom[]).map((u) => ({ label: `${u.name ?? u.uom ?? ""}${u.uom_type ? ` (${u.uom_type})` : ""}${u.price ? ` - ${u.price}` : ""}`, value: String(u.name ?? u.uom ?? ""), price: u.price }));
+        // }
         // Helper to set item for the whole order table
-        function selectItemForOrderTable(tableIdx: number, value: string) {
-          const providerItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
-          const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || providerItems.find((ci) => String((ci as Record<string, unknown>)['id'] ?? '') === String(value));
+        // function selectItemForOrderTable(tableIdx: number, value: string) {
+        //   const providerItems: ItemDetail[] = Array.isArray(item) ? (item as ItemDetail[]) : [];
+        //   const foundItem = selectedItemDetails.find(it => String(it.code || it.itemCode || it.label) === String(value) || String(it.name || it.itemName || it.label) === String(value)) || providerItems.find((ci) => String((ci as Record<string, unknown>)['id'] ?? '') === String(value));
 
-          const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
+        //   const name = foundItem ? String(foundItem.name || foundItem.itemName || foundItem.label || "") : "";
 
-          // Get primary UOM
-          const uomList = (foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined) as unknown;
-          let uomName = "CTN";
-          let uomPrice = "";
-          if (Array.isArray(uomList) && uomList.length > 0) {
-            const uomArr = uomList as Uom[];
-            const primary = uomArr.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomArr[0];
-            uomName = String(primary?.name ?? primary?.uom ?? '');
-            uomPrice = primary && (primary.price !== undefined && primary.price !== null) ? String(primary.price) : '';
-          }
+        //   // Get primary UOM
+        //   const uomList = (foundItem ? ((foundItem as Record<string, unknown>)['uomSummary'] ?? (foundItem as Record<string, unknown>)['uom']) : undefined) as unknown;
+        //   let uomName = "CTN";
+        //   let uomPrice = "";
+        //   if (Array.isArray(uomList) && uomList.length > 0) {
+        //     const uomArr = uomList as Uom[];
+        //     const primary = uomArr.find(u => String(u.uom_type || '').toLowerCase() === 'primary') || uomArr[0];
+        //     uomName = String(primary?.name ?? primary?.uom ?? '');
+        //     uomPrice = primary && (primary.price !== undefined && primary.price !== null) ? String(primary.price) : '';
+        //   }
 
-          setOrderTables((tables) => tables.map((arr, idx) => {
-            if (idx !== tableIdx) return arr;
+        //   setOrderTables((tables) => tables.map((arr, idx) => {
+        //     if (idx !== tableIdx) return arr;
 
-            if (arr.length === 0) {
-              // Create a new row if empty
-              return [{
-                promotionGroupName: "",
-                itemName: name,
-                itemCode: value,
-                quantity: "",
-                toQuantity: "",
-                uom: uomName,
-                price: uomPrice,
-                free_qty: "",
-              }];
-            }
+        //     if (arr.length === 0) {
+        //       // Create a new row if empty
+        //       return [{
+        //         promotionGroupName: "",
+        //         itemName: name,
+        //         itemCode: value,
+        //         quantity: "",
+        //         toQuantity: "",
+        //         uom: uomName,
+        //         price: uomPrice,
+        //         free_qty: "",
+        //       }];
+        //     }
 
-            return arr.map((oi) => ({
-              ...oi,
-              itemCode: value,
-              itemName: name,
-              uom: uomName || oi.uom,
-              price: uomPrice || oi.price
-            }));
-          }));
-        }
+        //     return arr.map((oi) => ({
+        //       ...oi,
+        //       itemCode: value,
+        //       itemName: name,
+        //       uom: uomName || oi.uom,
+        //       price: uomPrice || oi.price
+        //     }));
+        //   }));
+        // }
 
         // Render all order tables
         const renderOrderTables = () => {
@@ -1053,12 +1093,14 @@ export default function AddPricing() {
                           render: (row) => (
                             <button
                               type="button"
-                              className="text-red-500 flex items-center justify-center w-full h-full"
+                              disabled={String((row as Record<string, unknown>)['idx']) === "0"}
+                              className={`flex items-center justify-center w-full h-full ${String((row as Record<string, unknown>)['idx']) === "0" ? "text-gray-300 cursor-not-allowed" : "text-red-500"}`}
                               onClick={() => {
+                                if (String((row as Record<string, unknown>)['idx']) === "0") return;
                                 setOrderTables(tables => {
                                   return tables.flatMap((arr, idx) => {
                                     if (idx !== tableIdx) return [arr];
-                                    const newArr = arr.filter((oi, i) => String(i) !== String(row.idx));
+                                    const newArr = arr.filter((oi, i) => String(i) !== String((row as Record<string, unknown>)['idx']));
                                     if (newArr.length === 0 && tables.length > 1) {
                                       return [];
                                     }
@@ -1077,33 +1119,35 @@ export default function AddPricing() {
                   {itemsData.length > pageSize && renderPaginationBar(totalPages)}
 
                   {/* Add Button */}
-                  <div className="mt-4">
-                    <button
-                      type="button"
-                      className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
-                      onClick={() => {
-                        setOrderTables(tables => tables.map((arr, idx) => {
-                          if (idx !== tableIdx) return arr;
-                          const first = arr[0];
-                          return [
-                            ...arr,
-                            {
-                              promotionGroupName: first?.promotionGroupName || "",
-                              itemName: first?.itemName || "",
-                              itemCode: first?.itemCode || "",
-                              quantity: "",
-                              toQuantity: "",
-                              uom: first?.uom || "CTN",
-                              price: first?.price || "",
-                              free_qty: "",
-                            }
-                          ];
-                        }));
-                      }}
-                    >                      <Icon icon="material-symbols:add-circle-outline" width={20} />
-                      Add New Item
-                    </button>
-                  </div>
+                  {promotion.bundle_combination === "range" && (
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        className="text-[#E53935] font-medium text-[16px] flex items-center gap-2"
+                        onClick={() => {
+                          setOrderTables(tables => tables.map((arr, idx) => {
+                            if (idx !== tableIdx) return arr;
+                            const first = arr[0];
+                            return [
+                              ...arr,
+                              {
+                                promotionGroupName: first?.promotionGroupName || "",
+                                itemName: first?.itemName || "",
+                                itemCode: first?.itemCode || "",
+                                quantity: "",
+                                toQuantity: "",
+                                uom: first?.uom || "CTN",
+                                price: first?.price || "",
+                                free_qty: "",
+                              }
+                            ];
+                          }));
+                        }}
+                      >                      <Icon icon="material-symbols:add-circle-outline" width={20} />
+                        Add New Item
+                      </button>
+                    </div>
+                  )}
 
                 </div>
               </React.Fragment>
@@ -1231,7 +1275,14 @@ export default function AddPricing() {
                   isSingle={true}
                   options={[{ label: "Range", value: "range" }, { label: "Slab", value: "slab" }, { label: "Normal", value: "normal" }]}
                   value={promotion.bundle_combination}
-                  onChange={e => setPromotion(s => ({ ...s, bundle_combination: e.target.value }))}
+                  onChange={e => {
+                    const val = e.target.value;
+                    setPromotion(s => ({ ...s, bundle_combination: val }));
+                    if (val !== "range") {
+                      // Reset to single row if not range
+                      setOrderTables(tables => tables.map(arr => [arr[0]]));
+                    }
+                  }}
                   width="w-full"
                 />
               </div>
@@ -1240,6 +1291,7 @@ export default function AddPricing() {
                 <InputFields
                   type="date"
                   value={promotion.startDate}
+                  max={promotion.endDate}
                   onChange={e => setPromotion(s => ({ ...s, startDate: e.target.value }))}
                   width="w-full"
                 />
@@ -1249,6 +1301,7 @@ export default function AddPricing() {
                 <InputFields
                   type="date"
                   value={promotion.endDate}
+                  min={promotion.startDate}
                   onChange={e => setPromotion(s => ({ ...s, endDate: e.target.value }))}
                   width="w-full"
                 />
@@ -1268,7 +1321,7 @@ export default function AddPricing() {
               {/* Show Project List only when salesTeamType id = 6 */}
               {promotion.salesTeamType === "6" && (
                 <div>
-                  <label className="block mb-1 font-medium">Project List</label>
+                  <label className="block mb-1 font-medium">Project List<span className="text-red-500 ml-1">*</span></label>
                   <InputFields
                     isSingle={true}
                     options={projectOptions.map((o: any) => ({ ...o, value: String(o.value) }))}
@@ -1348,7 +1401,7 @@ export default function AddPricing() {
                               selectedValues = val ? [String(val)] : [];
                             }
                             setKeyValue(s => ({ ...s, "Item Category": selectedValues.filter(v => v !== "") }));
-                            fetchItemOptions(selectedValues);
+                            // fetchItemsCategoryWise(selectedValues.toString());
                           }}
                           width="w-full"
                         />
@@ -1364,6 +1417,7 @@ export default function AddPricing() {
                           isSingle={false}
                           options={itemDropdownMap["Item"] ? [{ label: `Select Item`, value: "" }, ...itemDropdownMap["Item"]] : [{ label: `Select Item`, value: "" }]}
                           value={keyValue["Item"] || []}
+                          showSkeleton={itemLoading}
                           onChange={e => {
                             const val = e.target.value;
                             let selectedValues: string[];
@@ -1391,6 +1445,7 @@ export default function AddPricing() {
                         isSingle={false}
                         options={itemDropdownMap["Item"] ? [{ label: `Select Item`, value: "" }, ...itemDropdownMap["Item"]] : [{ label: `Select Item`, value: "" }]}
                         value={keyValue["Item"] || []}
+                        showSkeleton={itemLoading}
                         onChange={e => {
                           const val = e.target.value;
                           let selectedValues: string[];
@@ -1419,6 +1474,7 @@ export default function AddPricing() {
                       options={uomOptions}
                       value={selectedUom}
                       onChange={e => {
+                        console.log(e)
                         const val = e.target.value;
                         setSelectedUom(val);
                       }}
@@ -1524,7 +1580,6 @@ export default function AddPricing() {
                                 label: "UOM",
                                 width: 150,
                                 render: (row) => {
-                                  const uomOptions = getUomOptionsForRow(row);
                                   return (
                                     <InputFields
                                       label=""
