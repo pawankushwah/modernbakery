@@ -321,11 +321,20 @@ export default function AddInstallationReportPage() {
                 schedule_date: form.schedule_date,
                 warehouse_id: Number(form.warehouse_id),
                 status: Number(form.status),
+
                 details: selectedRows.map((row) => ({
-                    fridge_id: row.id,
+                    fridge_id: row.fridge_id || row.id || row.asset_id || row.chiller_id
                 })),
             };
 
+            const invalidRow = selectedRows.find(
+                (row) => !row.fridge_id && !row.id && !row.asset_id && !row.chiller_id
+            );
+
+            if (invalidRow) {
+                showSnackbar("Invalid chiller selection detected", "error");
+                return;
+            }
             // console.log("📤 Submitting payload:", payload);
 
             await addInstallationReport(payload);

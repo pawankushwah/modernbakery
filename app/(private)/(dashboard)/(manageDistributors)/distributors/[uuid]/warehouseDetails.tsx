@@ -32,10 +32,10 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
     ensureCompanyLoaded();
   }, [ensureAgentCustomerLoaded, ensureCompanyCustomersLoaded, ensureCompanyLoaded]);
     const [isOpen, setIsOpen] = React.useState(false);
-    const [codeMode, setCodeMode] = React.useState<'auto'|'manual'>('auto');
+    const [codeMode, setCodeMode] = React.useState<'auto' | 'manual'>('auto');
     const [prefix, setPrefix] = React.useState('');
-    console.log("Values",values);
-    console.log("Values",values.warehouse_name);
+    console.log("Values", values);
+    console.log("Values", values.warehouse_name);
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -49,35 +49,6 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     disabled={codeMode === 'auto'}
                     error={errors?.warehouse_code && touched?.warehouse_code ? errors.warehouse_code : false}
                 />
-                
-                {/* {!isEditMode && (
-                    <>
-                        <IconButton
-                            bgClass="white"
-                            className="  cursor-pointer text-[#252B37] pt-12"
-                            icon="mi:settings"
-                            onClick={() => setIsOpen(true)}
-                        />
-                        <SettingPopUp
-                            isOpen={isOpen}
-                            onClose={() => setIsOpen(false)}
-                            title="Warehouse Code"
-                            prefix={prefix}
-                            setPrefix={setPrefix}
-                            onSave={(mode, code) => {
-                                setCodeMode(mode);
-                                if (mode === 'auto' && code) {
-                                    setFieldValue('warehouse_code', code);
-                                } else if (mode === 'manual') {
-                                    setFieldValue('warehouse_code', '');
-                                }
-                            }}
-                        />
-                    </>
-                )}
-                {errors?.warehouse_code && touched?.warehouse_code && (
-                    <div className="text-xs text-red-500 mt-1">{errors.warehouse_code}</div>
-                )} */}
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
@@ -111,11 +82,11 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                     name="agent_customer"
                     value={values.agent_customer}
                     options={companyCustomersOptions}
-                    onChange={async(e) => {
+                    onChange={async (e) => {
                         const val = (e.target as HTMLSelectElement).value;
                         handleChange(e);
-                        const name = companyCustomersOptions.filter((option:{label:string,value:string}) => {
-                            return option.value === e.target.value  
+                        const name = companyCustomersOptions.filter((option: { label: string, value: string }) => {
+                            return option.value === e.target.value
                         })[0].label;
                         setFieldValue("warehouse_name", name);
                         await getCompanyCustomerById(val).then((res) => {
@@ -123,7 +94,7 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
                                 const customer = res.data;
                                 setFieldValue('region_id', String(customer.get_region.id) || '');
                                 setFieldValue('area_id', String(customer.get_area.id) || '');
-                                
+
                             }
                         });
                     }}
@@ -164,14 +135,29 @@ export default function WarehouseDetails({ values, errors, touched, handleChange
             </div>
             <div className="flex flex-col gap-2">
                 <InputFields
-                type='number'
+                    type="number"
                     name="tin_no"
                     label="TIN NO."
                     value={values.tin_no}
-                    onChange={(e) => setFieldValue('tin_no', e.target.value)}
+                    onChange={(e) => {
+                        const val = e.target.value;
+
+                        // Prevent negative values
+                        if (Number(val) < 0) return;
+
+                        setFieldValue("tin_no", val);
+                    }}
                     placeholder="Enter TIN No."
+                    min={0}                // ← prevents negative input
+                    onKeyDown={(e) => {
+                        // Block "-" key
+                        if (e.key === "-" || e.key === "e") {
+                            e.preventDefault();
+                        }
+                    }}
                 />
             </div>
+
             <div className="flex flex-col gap-2">
                 <InputFields
                     required

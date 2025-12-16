@@ -121,27 +121,30 @@ export default function BulkTransferListPage() {
                     ...appliedFilters,
                 });
 
-                // console.log("🔍 API Response:", result);
-                // console.log("🔍 Result Type:", typeof result);
-                // console.log("🔍 Is Array?:", Array.isArray(result));
+                if (result?.data && result?.pagination) {
+                    const totalPages = Math.ceil(result.pagination.total / result.pagination.per_page);
+                    return {
+                        data: Array.isArray(result.data) ? result.data : [],
+                        total: totalPages, // total number of PAGES, not records
+                        currentPage: result.pagination.current_page,
+                        pageSize: result.pagination.per_page,
+                    };
+                }
 
-                // Handle direct array response
                 if (Array.isArray(result)) {
-                    // console.log("✅ Direct array response detected");
                     return {
                         data: result,
                         total: result.length,
                         currentPage: page,
-                        pageSize: result.length,
+                        pageSize: pageSize,
                     };
                 }
 
-                // Handle object response with data property
+                // Handle object response without pagination
                 if (result?.data) {
-                    // console.log("✅ Object response with data property");
                     return {
                         data: Array.isArray(result.data) ? result.data : [],
-                        total: result?.pagination?.total || result.data.length || 0,
+                        total: result?.pagination?.total || (Array.isArray(result.data) ? result.data.length : 0),
                         currentPage: result?.pagination?.current_page || page,
                         pageSize: result?.pagination?.per_page || pageSize,
                     };
@@ -251,14 +254,14 @@ export default function BulkTransferListPage() {
                     columns,
 
                     rowSelection: true,
-                    rowActions: [
-                        {
-                            icon: "lucide:eye",
-                            onClick: (row: any) => {
-                                router.push(`/chillerInstallation/bulkTransfer/view/${row.uuid}`);
-                            },
-                        },
-                    ],
+                    // rowActions: [
+                    //     {
+                    //         icon: "lucide:eye",
+                    //         onClick: (row: any) => {
+                    //             router.push(`/chillerInstallation/bulkTransfer/view/${row.uuid}`);
+                    //         },
+                    //     },
+                    // ],
 
                     pageSize: 20,
                     localStorageKey: "bulk-transfer-table",

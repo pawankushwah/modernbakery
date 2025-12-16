@@ -34,6 +34,18 @@ export type FilterField = {
     inputProps?: Record<string, any>;
 };
 
+export type FilterRendererProps = {
+    payload: Record<string, string | number | null | (string | number)[]>;
+    setPayload: React.Dispatch<React.SetStateAction<Record<string, string | number | null | (string | number)[]>>>;
+    submit: (payload?: Record<string, string | number | null | (string | number)[]>) => Promise<void>;
+    clear: () => Promise<void>;
+    activeFilterCount: number;
+    appliedFilters: boolean;
+    close: () => void;
+    isApplying: boolean;
+    isClearing: boolean;
+};
+
 export type configType = {
     api?: {
         search?: (
@@ -63,6 +75,7 @@ export type configType = {
         }; // yet to implement
         columnFilter?: boolean;
         filterByFields?: FilterField[];
+        filterRenderer?: (props: FilterRendererProps) => React.ReactNode;
         threeDot?: {
             label: string;
             labelTw?: string;
@@ -99,6 +112,7 @@ export type configType = {
     pageSize?: number;
     pageSizeOptions?: number[]; // yet to implement
     rowSelection?: boolean;
+    onRowSelectionChange?: (selectedRows: number[]) => void;
     dragableColumn?: boolean;
     floatingInfoBar?: {
         showByDefault?: boolean;
@@ -178,7 +192,7 @@ const Config = createContext<configContextType>({
 });
 
 export type TableDataType = {
-    [key: string]: string;
+    [key: string]: any;
 };
 
 type tableDetailsContextType = {
@@ -261,6 +275,21 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
     const [columnOrder, setColumnOrder] = useState<number[]>(
         () => (config.columns || []).map((_, i) => i)
     );
+
+    const columnsSignature = useMemo(() => (config.columns || []).map(c => c.key).join(','), [config.columns]);
+
+    useEffect(() => {
+        const newOrder = (config.columns || []).map((_, i) => i);
+        setColumnOrder(newOrder);
+
+        const allByDefault = config.columns.map((data, index) => { return data.showByDefault ? index : -1 });
+        const filtered = allByDefault.filter((n) => n !== -1);
+        if (filtered.length > 0) {
+            setSelectedColumns(filtered);
+        } else {
+            setSelectedColumns(newOrder);
+        }
+    }, [columnsSignature]);
 
     async function checkForData() {
         // if data is passed, use default values
@@ -361,6 +390,12 @@ function TableContainer({ refreshKey, data, config }: TableProps) {
         setSelectedRow([]);
     }, [data, refreshKey]);
 
+
+    useEffect(() => {
+        if (config.onRowSelectionChange) {
+            config.onRowSelectionChange(selectedRow);
+        }
+    }, [selectedRow, config.onRowSelectionChange]);
 
     const orderedColumns = (columnOrder || []).map((i) => config.columns[i]).filter(Boolean);
 
@@ -495,8 +530,8 @@ function TableHeader() {
                                 </div>
                             )}
 
-                            {/* header filter panel button (shows configurable fields) */}
-                            {config.header?.filterByFields && config.header.filterByFields.length > 0 && (
+                            {/* header filter panel button (shows configurable fields or custom renderer) */}
+                            {(config.header?.filterByFields?.length || config.header?.filterRenderer) && (
                                 <div className="ml-2">
                                     <FilterBy />
                                 </div>
@@ -515,7 +550,7 @@ function TableHeader() {
                         </div>
 
                         {/* actions */}
-                        <div className="flex justify-right  w-fit gap-[8px]">
+                        <div className="flex justify-end w-fit gap-[8px]">
                             {config.header?.actions?.map((action) => action)}
                             {config.header?.actionsWithData && config.header?.actionsWithData(tableDetails?.data || [], selectedRow).map((action) => action)}
                             {config.header?.columnFilter && <ColumnFilter />}
@@ -1518,30 +1553,54 @@ function FilterBy() {
     // filters can be single string values or arrays for multi-select fields
     const [filters, setFilters] = useState<Record<string, string | string[]>>({});
     const [appliedFilters, setAppliedFilters] = useState(false);
+    const hasCustomRenderer = typeof config.header?.filterRenderer === "function";
+    const [customPayload, setCustomPayload] = useState<Record<string, string | number | null | (string | number)[]>>({});
+    const [isApplyingCustom, setIsApplyingCustom] = useState(false);
+    const [isClearingCustom, setIsClearingCustom] = useState(false);
 
-    // initialize filters when fields change
+    // initialize filters when fields change (only for built-in filterByFields)
     useEffect(() => {
+        if (hasCustomRenderer) return;
         const initial: Record<string, string | string[]> = {};
         (config.header?.filterByFields || []).forEach((f: FilterField) => {
             initial[f.key] = f.isSingle === false ? [] : "";
         });
         setFilters(initial);
-    }, [config.header?.filterByFields]);
+    }, [config.header?.filterByFields, hasCustomRenderer]);
 
-    const activeFilterCount = Object.keys(filters || {}).reduce((acc, k) => {
-        const v = filters[k];
-        const hasValue = Array.isArray(v) ? v.length > 0 : String(v ?? '').trim().length > 0;
+    const sourcePayload = hasCustomRenderer ? customPayload : filters;
+    const activeFilterCount = Object.keys(sourcePayload || {}).reduce((acc, k) => {
+        const v = (sourcePayload as any)[k];
+        const hasValue = Array.isArray(v)
+            ? v.length > 0
+            : String(v ?? '').trim().length > 0;
         if (!hasValue) return acc;
-        // respect applyWhen predicate if provided on the field
-        const field = (config.header?.filterByFields || []).find((f: FilterField) => f.key === k);
-        try {
-            if (field?.applyWhen && !field.applyWhen(filters)) return acc;
-        } catch (err) {
-            // if predicate throws, treat as not applicable
-            return acc;
+
+        // For built-in filters, respect applyWhen; custom renderer handles its own logic
+        if (!hasCustomRenderer) {
+            const field = (config.header?.filterByFields || []).find((f: FilterField) => f.key === k);
+            try {
+                if (field?.applyWhen && !field.applyWhen(filters)) return acc;
+            } catch (err) {
+                return acc;
+            }
         }
+
         return acc + 1;
     }, 0);
+
+    const toApiPayload = (payload: Record<string, any>) => {
+        const payloadForApi: Record<string, string | number | null> = {};
+        Object.keys(payload || {}).forEach((k) => {
+            const v = payload[k];
+            if (Array.isArray(v)) {
+                payloadForApi[k] = v.length > 0 ? v.join(',') : "";
+            } else {
+                payloadForApi[k] = v as string;
+            }
+        });
+        return payloadForApi;
+    };
     const applyFilter = async () => {
         if (activeFilterCount === 0) return;
         setShowDropdown(false);
@@ -1641,6 +1700,63 @@ function FilterBy() {
         setShowDropdown(false);
     };
 
+    const applyCustomPayload = async (payload?: Record<string, string | number | null | (string | number)[]>) => {
+        const effectivePayload = payload || customPayload || {};
+        if (Object.keys(effectivePayload || {}).length === 0) return;
+        setIsApplyingCustom(true);
+        try {
+            const payloadForApi = toApiPayload(effectivePayload);
+
+            try {
+                setFilterState({ applied: true, payload: payloadForApi });
+            } catch (err) { /* ignore */ }
+
+            if (config.api?.filterBy) {
+                const res = await config.api.filterBy(payloadForApi, config.pageSize || defaultPageSize);
+                const resolved = res instanceof Promise ? await res : res;
+                const { currentPage, totalRecords, pageSize, total, data } = resolved as any;
+                const totalRecordsValue = totalRecords ?? total ?? 0;
+                const pageSizeValue = pageSize || config.pageSize || defaultPageSize;
+                const totalPages = pageSizeValue > 0 ? Math.max(1, Math.ceil(totalRecordsValue / pageSizeValue)) : (total ?? 1);
+                setTableDetails({
+                    data: data || [],
+                    total: totalPages,
+                    totalRecords: totalRecords,
+                    currentPage: currentPage - 1 || 0,
+                    pageSize: pageSize,
+                });
+            } else {
+                // client-side fallback using payload keys
+                const all = tableDetails.data || [];
+                const filtered = all.filter((row) => {
+                    return Object.keys(effectivePayload || {}).every((k) => {
+                        const val = (effectivePayload as any)[k];
+                        if (val === "" || val == null) return true;
+                        const cell = String((row as TableDataType)[k] ?? "").toLowerCase();
+                        if (Array.isArray(val)) {
+                            return val.some(v => cell.includes(String(v).toLowerCase()));
+                        }
+                        return cell.includes(String(val).toLowerCase());
+                    });
+                });
+                setTableDetails({
+                    data: filtered,
+                    total: Math.max(1, Math.ceil(filtered.length / (config.pageSize || defaultPageSize))),
+                    currentPage: 0,
+                    pageSize: config.pageSize || defaultPageSize,
+                });
+            }
+
+            setCustomPayload(effectivePayload);
+            setAppliedFilters(true);
+            setShowDropdown(false);
+        } catch (err) {
+            console.error("Filter API error", err);
+        } finally {
+            setIsApplyingCustom(false);
+        }
+    };
+
     const clearAll = async () => {
         if (activeFilterCount === 0) return;
 
@@ -1652,10 +1768,8 @@ function FilterBy() {
         setFilters(cleared);
         setAppliedFilters(false);
 
-        // clear global applied filter flag via context so pagination uses list API
         try { setFilterState({ applied: false, payload: {} }); } catch (err) { }
 
-        // If list API exists, reload the default (unfiltered) first page using it.
         if (config.api?.list) {
             const pageSize = config.pageSize || defaultPageSize;
             try {
@@ -1676,12 +1790,51 @@ function FilterBy() {
                 setNestedLoading(false);
             }
         } else if (initialTableData) {
-            // Fallback: restore initial snapshot if available (client-side mode)
             try {
                 setTableDetails(initialTableData as any);
             } catch (err) {
                 // ignore
             }
+        }
+    };
+
+    const clearAllCustom = async () => {
+        if (activeFilterCount === 0) return;
+        setIsClearingCustom(true);
+        setCustomPayload({});
+        setAppliedFilters(false);
+        try { setFilterState({ applied: false, payload: {} }); } catch (err) { }
+
+        if (config.api?.list) {
+            const pageSize = config.pageSize || defaultPageSize;
+            try {
+                setNestedLoading(true);
+                const result = await config.api.list(1, pageSize);
+                const resolved = result instanceof Promise ? await result : result;
+                const { data, total, currentPage, pageSize: resPageSize, totalRecords } = resolved as any;
+                setTableDetails({
+                    data: data || [],
+                    total: total || 1,
+                    totalRecords: totalRecords,
+                    currentPage: (currentPage ? currentPage - 1 : 0),
+                    pageSize: resPageSize || pageSize,
+                });
+            } catch (err) {
+                console.error("List API error while clearing filters", err);
+            } finally {
+                setNestedLoading(false);
+                setIsClearingCustom(false);
+            }
+        } else if (initialTableData) {
+            try {
+                setTableDetails(initialTableData as any);
+            } catch (err) {
+                // ignore
+            } finally {
+                setIsClearingCustom(false);
+            }
+        } else {
+            setIsClearingCustom(false);
         }
     };
 
@@ -1692,6 +1845,7 @@ function FilterBy() {
             cleared[f.key] = f.isSingle === false ? [] : "";
         });
         setFilters(cleared);
+        setCustomPayload({});
         setAppliedFilters(false);
     };
 
@@ -1748,66 +1902,84 @@ function FilterBy() {
                         onEnterPress={applyFilter}
                         dimensions={{ width: 700 }}
                     >
-                        <div className="p-4 grid grid-cols-2 gap-4">
-                            {(config.header?.filterByFields || []).map((f: FilterField) => (
-                                <div key={f.key} className="flex flex-col gap-2">
-                                    {/* Use the project's InputFields component for consistent UI */}
-                                    <InputFields
-                                        label={f.label || f.key}
-                                        name={f.key}
-                                        // pass array for multi-select fields, string for single
-                                        value={filters[f.key] ?? (f.isSingle === false ? [] : "")}
-                                        onChange={(e) => {
-                                            const ev = e as any;
-                                            const raw = ev && ev.target ? ev.target.value : e;
-                                            if (f.isSingle === false) {
-                                                // ensure we store an array for multi-select
-                                                if (Array.isArray(raw)) {
-                                                    setFilters(prev => ({ ...prev, [f.key]: raw }));
-                                                } else if (typeof raw === 'string' && raw.length === 0) {
-                                                    setFilters(prev => ({ ...prev, [f.key]: [] }));
-                                                } else {
-                                                    // try to coerce comma-separated string into array
-                                                    const arr = typeof raw === 'string' ? raw.split(',').filter(Boolean) : [];
-                                                    setFilters(prev => ({ ...prev, [f.key]: arr }));
-                                                }
-                                            } else {
-                                                setFilters(prev => ({ ...prev, [f.key]: String(raw) }));
-                                            }
-                                        }}
-                                        placeholder={f.placeholder}
-                                        // map type (support dateChange)
-                                        type={f.type === 'dateChange' ? 'dateChange' : f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : f.type === 'select' ? 'select' : 'text'}
-                                        options={f.options}
-                                        width="w-full"
-                                        isSingle={typeof f.isSingle === 'boolean' ? f.isSingle : true}
-                                        multiSelectChips={!!f.multiSelectChips}
-                                        filters={filters}
-                                        {...(f.inputProps || {})}
+                        {hasCustomRenderer && config.header?.filterRenderer ? (
+                            <div className="p-4">
+                                {config.header.filterRenderer({
+                                    payload: customPayload,
+                                    setPayload: setCustomPayload,
+                                    submit: applyCustomPayload,
+                                    clear: clearAllCustom,
+                                    activeFilterCount,
+                                    appliedFilters,
+                                    close: () => setShowDropdown(false),
+                                    isApplying: isApplyingCustom,
+                                    isClearing: isClearingCustom,
+                                })}
+                            </div>
+                        ) : (
+                            <>
+                                <div className="p-4 grid grid-cols-2 gap-4">
+                                    {(config.header?.filterByFields || []).map((f: FilterField) => (
+                                        <div key={f.key} className="flex flex-col gap-2">
+                                            {/* Use the project's InputFields component for consistent UI */}
+                                            <InputFields
+                                                label={f.label || f.key}
+                                                name={f.key}
+                                                // pass array for multi-select fields, string for single
+                                                value={filters[f.key] ?? (f.isSingle === false ? [] : "")}
+                                                onChange={(e) => {
+                                                    const ev = e as any;
+                                                    const raw = ev && ev.target ? ev.target.value : e;
+                                                    if (f.isSingle === false) {
+                                                        // ensure we store an array for multi-select
+                                                        if (Array.isArray(raw)) {
+                                                            setFilters(prev => ({ ...prev, [f.key]: raw }));
+                                                        } else if (typeof raw === 'string' && raw.length === 0) {
+                                                            setFilters(prev => ({ ...prev, [f.key]: [] }));
+                                                        } else {
+                                                            // try to coerce comma-separated string into array
+                                                            const arr = typeof raw === 'string' ? raw.split(',').filter(Boolean) : [];
+                                                            setFilters(prev => ({ ...prev, [f.key]: arr }));
+                                                        }
+                                                    } else {
+                                                        setFilters(prev => ({ ...prev, [f.key]: String(raw) }));
+                                                    }
+                                                }}
+                                                placeholder={f.placeholder}
+                                                // map type (support dateChange)
+                                                type={f.type === 'dateChange' ? 'dateChange' : f.type === 'date' ? 'date' : f.type === 'number' ? 'number' : f.type === 'select' ? 'select' : 'text'}
+                                                options={f.options}
+                                                width="w-full"
+                                                isSingle={typeof f.isSingle === 'boolean' ? f.isSingle : true}
+                                                multiSelectChips={!!f.multiSelectChips}
+                                                filters={filters}
+                                                {...(f.inputProps || {})}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="p-4 flex items-center justify-end gap-4">
+                                    <SidebarBtn
+                                        isActive={false}
+                                        type="button"
+                                        onClick={() => appliedFilters === false ? resetLocalFilters() : clearAll()}
+                                        label="Clear All"
+                                        buttonTw="px-3 py-2 h-9"
+                                        disabled={activeFilterCount === 0}
+                                        className="text-sm"
+                                    />
+                                    <SidebarBtn
+                                        isActive={true}
+                                        type="button"
+                                        onClick={() => applyFilter()}
+                                        label="Apply Filter"
+                                        buttonTw={`px-4 py-2 h-9`}
+                                        disabled={activeFilterCount === 0}
+                                        className="text-sm"
                                     />
                                 </div>
-                            ))}
-                        </div>
-                        <div className="p-4 flex items-center justify-end gap-4">
-                            <SidebarBtn
-                                isActive={false}
-                                type="button"
-                                onClick={() => appliedFilters === false ? resetLocalFilters() : clearAll()}
-                                label="Clear All"
-                                buttonTw="px-3 py-2 h-9"
-                                disabled={activeFilterCount === 0}
-                                className="text-sm"
-                            />
-                            <SidebarBtn
-                                isActive={true}
-                                type="button"
-                                onClick={() => applyFilter()}
-                                label="Apply Filter"
-                                buttonTw={`px-4 py-2 h-9`}
-                                disabled={activeFilterCount === 0}
-                                className="text-sm"
-                            />
-                        </div>
+                            </>
+                        )}
                     </FilterDropdown>
                 }
             />
@@ -1818,7 +1990,11 @@ function FilterBy() {
                     <button
                         type="button"
                         onClick={async () => {
-                            await clearAll(); setShowDropdown(false);
+                            if (hasCustomRenderer) {
+                                await clearAllCustom();
+                            } else {
+                                await clearAll();
+                            }
                             if (config.api?.list) {
                                 try {
                                     setNestedLoading(true);

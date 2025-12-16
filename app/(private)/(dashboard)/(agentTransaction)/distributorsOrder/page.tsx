@@ -11,15 +11,18 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import {
   agentOrderExport,
+  // agentOrderExport,
   agentOrderList,
   changeStatusAgentOrder,
   // agentOrderExport 
 } from "@/app/services/agentTransaction";
 import OrderStatus from "@/app/components/orderStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
-import { downloadFile, workFlowRequest } from "@/app/services/allApi";
+import { downloadFile, workFlowRequest, regionList, subRegionList, warehouseList, routeList } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/utils/formatDate";
 import ApprovalStatus from "@/app/components/approvalStatus";
+import InputFields from "@/app/components/inputFields";
+import FilterComponent from "@/app/components/filterComponent";
 // import { useLoading } from "@/app/services/loadingContext";
 
 const columns = [
@@ -272,7 +275,7 @@ export default function CustomerInvoicePage() {
 
   useEffect(() => {
     const res = async () => {
-      const res = await workFlowRequest({ model: "order"});
+      const res = await workFlowRequest({ model: "order" });
       localStorage.setItem("workflow.order", JSON.stringify(res.data[0]))
     };
     res();
@@ -293,9 +296,7 @@ export default function CustomerInvoicePage() {
 
   return (
     <>
-      <div
-        className="flex flex-col h-full"
-      >
+      <div className="flex flex-col h-full">
         <Table
           refreshKey={refreshKey}
           config={{
@@ -322,78 +323,8 @@ export default function CustomerInvoicePage() {
                   onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
                 },
               ],
-              filterByFields: [
-                {
-                  key: "start_date",
-                  label: "Start Date",
-                  type: "date",
-                  applyWhen: (filters) =>
-                    !!filters.start_date && !!filters.end_date,
-                },
-                {
-                  key: "end_date",
-                  label: "End Date",
-                  type: "date",
-                  applyWhen: (filters) =>
-                    !!filters.start_date && !!filters.end_date,
-                },
-                {
-                  key: "company_id",
-                  label: "Company",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(companyOptions) ? companyOptions : [],
-                },
-                {
-                  key: "warehouse_id",
-                  label: "Warehouse",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(warehouseAllOptions)
-                    ? warehouseAllOptions
-                    : [],
-                },
-                {
-                  key: "region_id",
-                  label: "Region",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(regionOptions) ? regionOptions : [],
-                },
-                {
-                  key: "sub_region_id",
-                  label: "Sub Region",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(areaOptions) ? areaOptions : [],
-                },
-                {
-                  key: "route_id",
-                  label: "Route",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(routeOptions) ? routeOptions : [],
-                },
-                {
-                  key: "salesman_id",
-                  label: "Sales Team",
-                  isSingle: false,
-                  multiSelectChips: true,
-                  options: Array.isArray(salesmanOptions)
-                    ? salesmanOptions
-                    : [],
-                },
-              ],
+              filterRenderer: FilterComponent,
               actions: [
-                // <SidebarBtn
-                //     key={0}
-                //     href="#"
-                //     isActive
-                //     leadingIcon="mdi:download"
-                //     label="Download"
-                //     labelTw="hidden lg:block"
-                //     onClick={() => exportFile("csv")}
-                // />,
                 <SidebarBtn
                   key={1}
                   href="/distributorsOrder/add"

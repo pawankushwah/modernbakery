@@ -9,15 +9,15 @@ import Table, {
 } from "@/app/components/customTable";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
-import { agentOrderExport, agentOrderList, changeStatusAgentOrder } from "@/app/services/agentTransaction";
+import { agentOrderExport, agentOrderList } from "@/app/services/agentTransaction";
 import OrderStatus from "@/app/components/orderStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/utils/formatDate";
 
 const columns = [
-    { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
-    { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="font-bold cursor-pointer">{row.order_code}</span> },
+    { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
+    { key: "order_code", label: "Order Number", showByDefault: true, render: (row: TableDataType) => <span className="">{row.order_code}</span> },
     {
         key: "warehouse_name",
         label: "Distributor",

@@ -132,6 +132,7 @@ interface DropdownDataContextType {
   fetchCustomerCategoryOptions: (outlet_channel_id: string | number) => Promise<void>;
   fetchCompanyCustomersOptions: (category_id: string | number) => Promise<void>;
   fetchItemOptions: (category_id: string | number) => Promise<void>;
+  fetchItemsCategoryWise: (category_id?: string | number) => Promise<Item[]>;
   getItemUoms: (item_id: string | number) => { id?: string; name?: string; uom_type?: string; price?: string; upc?: string }[];
   getPrimaryUom: (item_id: string | number) => { id?: string; name?: string; uom_type?: string; price?: string; upc?: string } | null;
   labelOptions: { value: string; label: string }[];
@@ -1022,7 +1023,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const countryOptions = (Array.isArray(countryListData) ? countryListData : []).map((c: CountryItem) => ({
     value: String(c.id ?? ''),
-    label: c.country_code && c.country_name ? `${c.country_code} - ${c.country_name}` : (c.country_name ?? '')
+    label: c.country_name ? `${c.country_name}` : (c.country_name ?? '')
   }));
   const onlyCountryOptions = (Array.isArray(countryListData) ? countryListData : []).map((c: CountryItem) => ({
     value: String(c.id ?? ''),
@@ -1036,7 +1037,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const regionOptions = (Array.isArray(regionListData) ? regionListData : []).map((c: RegionItem) => ({
     value: String(c.id ?? ''),
-    label: c.region_code && c.region_name ? `${c.region_code} - ${c.region_name}` : (c.region_name ?? '')
+    label: c.region_name ? `${c.region_name}` : (c.region_name ?? '')
   }));
   const surveyOptions = (Array.isArray(surveyListData) ? surveyListData : []).map((c: SurveyItem) => ({
     value: String(c.id ?? ''),
@@ -1069,7 +1070,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const areaOptions = (Array.isArray(areaListData) ? areaListData : []).map((c: AreaItem) => ({
     value: String(c.id ?? ''),
-    label: c.area_code && c.area_name ? `${c.area_code} - ${c.area_name}` : (c.area_name ?? ''),
+    label: c.area_name ? `${c.area_name}` : (c.area_name ?? ''),
     region_id: Number(c.region_id ?? '')
   }));
 
@@ -1085,31 +1086,31 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const companyTypeOptions = (Array.isArray(companyType) ? companyType : []).map((c: CompanyType) => ({
     value: String(c.id ?? ''),
-    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+    label: c.name ? `${c.name}` : (c.name ?? '')
   }));
 
   const itemCategoryOptions = (Array.isArray(itemCategoryData) ? itemCategoryData : []).map((c: ItemCategoryItem) => ({
     value: String(c.id ?? ''),
-    label: c.category_code && c.category_name ? `${c.category_name}` : (c.category_name ?? '')
+    label: c.category_name ? `${c.category_name}` : (c.category_name ?? '')
   }));
 
   const itemSubCategoryOptions = (Array.isArray(itemSubCategoryData) ? itemSubCategoryData : []).map((c: ItemSubCategoryItem) => ({
     value: String(c.id ?? ''),
-    label: c.sub_category_code && c.sub_category_name ? `${c.sub_category_name}` : (c.sub_category_name ?? '')
+    label: c.sub_category_name ? `${c.sub_category_name}` : (c.sub_category_name ?? '')
   }));
 
   const channelOptions = (Array.isArray(channelListData) ? channelListData : []).map((c: ChannelItem) => ({
     value: String(c.id ?? ''),
-    label: c.outlet_channel_code && c.outlet_channel ? `${c.outlet_channel}` : (c.outlet_channel ?? '')
+    label: c.outlet_channel ? `${c.outlet_channel}` : (c.outlet_channel ?? '')
   }));
   const customerTypeOptions = (Array.isArray(customerTypeData) ? customerTypeData : []).map((c: CustomerType) => ({
     value: String(c.id ?? ''),
-    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+    label: c.name ? `${c.name}` : (c.name ?? '')
   }));
 
   const salesmanTypeOptions = (Array.isArray(salesmanTypesData) ? salesmanTypesData : []).map((c: SalesmanType) => ({
     value: String(c.id ?? ''),
-    label: c.salesman_type_code && c.salesman_type_name ? `${c.salesman_type_code} - ${c.salesman_type_name}` : (c.salesman_type_name ?? '')
+    label: c.salesman_type_name ? `${c.salesman_type_name}` : (c.salesman_type_name ?? '')
   }));
 
   const vehicleListOptions = (Array.isArray(VehicleList) ? VehicleList : []).map((c: VehicleListItem) => ({
@@ -1119,37 +1120,37 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const customerCategoryOptions = (Array.isArray(customerCategory) ? customerCategory : []).map((c: CustomerCategory) => ({
     value: String(c.id ?? ''),
-    label: c.customer_category_code && c.customer_category_name ? `${c.customer_category_code} - ${c.customer_category_name}` : (c.customer_category_name ?? '')
+    label: c.customer_category_name ? `${c.customer_category_name}` : (c.customer_category_name ?? '')
   }));
 
   const customerSubCategoryOptions = (Array.isArray(customerSubCategory) ? customerSubCategory : []).map((c: CustomerSubCategory) => ({
     value: String(c.id ?? ''),
-    label: c.customer_sub_category_code && c.customer_sub_category_name ? `${c.customer_sub_category_code} - ${c.customer_sub_category_name}` : (c.customer_sub_category_name ?? '')
+    label: c.customer_sub_category_name ? `${c.customer_sub_category_name}` : (c.customer_sub_category_name ?? '')
   }));
 
   const projectOptions = (Array.isArray(project) ? project : []).map((c: Project) => ({
     value: String(c.id ?? ''),
-    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+    label: c.name ? `${c.name}` : (c.name ?? '')
   }))
 
   const assetsTypeOptions = (Array.isArray(assetsType) ? assetsType : []).map((c: AssetsType) => ({
     value: String(c.id ?? ''),
-    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+    label: c.name ? `${c.name}` : (c.name ?? '')
   }));
 
   const manufacturerOptions = (Array.isArray(manufacturer) ? manufacturer : []).map((c: Manufacturer) => ({
     value: String(c.id ?? ''),
-    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+    label: c.name ? `${c.name}` : (c.name ?? '')
   }))
 
   const assetsModelOptions = (Array.isArray(assetsModel) ? assetsModel : []).map((c: AssetsModel) => ({
     value: String(c.id ?? ''),
-    label: c.code && c.name ? `${c.code} - ${c.name}` : (c.name ?? '')
+    label: c.name ? `${c.name}` : (c.name ?? '')
   }))
 
   const brandOptions = (Array.isArray(brandList) ? brandList : []).map((c: Brand) => ({
     value: String(c.id ?? ''),
-    label: c.osa_code && c.name ? `${c.osa_code} - ${c.name}` : (c.name ?? '')
+    label: c.name ? `${c.name}` : (c.name ?? '')
   }))
 
   const brandingOptions = (Array.isArray(brandingListState) ? brandingListState : []).map((c: Branding) => ({
@@ -1203,7 +1204,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
 
   const discountTypeOptions = (Array.isArray(discountType) ? discountType : []).map((c: DiscountType) => ({
     value: String(c.id ?? ''),
-    label: c.discount_code && c.discount_name ? `${c.discount_code} - ${c.discount_name}` : (c.discount_name ?? '')
+    label: c.discount_name ? `${c.discount_name}` : (c.discount_name ?? '')
   }));
 
   const menuOptions = (Array.isArray(menuList) ? menuList : []).map((c: MenuList) => ({
@@ -1324,6 +1325,48 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
       setLoading(false);
     }
   }, []);
+
+  const fetchItemsCategoryWise = useCallback(async (category_id?: string | number) => {
+    setLoading(false);
+    try {
+      // call itemList with category_id to fetch items for this category
+      const res = await itemList({ category_id: String(category_id) ?? "" });
+      const normalize = (r: unknown): Item[] => {
+        if (r && typeof r === 'object') {
+          const obj = r as Record<string, unknown>;
+          if (Array.isArray(obj.data)) return obj.data as Item[];
+        }
+        if (Array.isArray(r)) return r as Item[];
+        return [];
+      };
+      const filterNecessaryOject = (item: any) => {
+        return (Array.isArray(item) ? item : []).map((c: Item) => ({
+          value: String(c.id ?? ""),
+          label:
+            (c.item_code || (c as any).code) && c.name
+              ? `${c.item_code || (c as any).code} - ${c.name}`
+              : c.name ?? "",
+          uom: Array.isArray((c as any).uom)
+            ? (c as any).uom.map((u: any) => ({
+              id: Number(u.id ?? 0),
+              name: String(u.name ?? ""),
+              uom_type: String(u.uom_type ?? ""),
+              price: Number(u.price ?? 0),
+              upc: String(u.upc ?? ""),
+            }))
+            : [],
+        }));
+      }
+      const normalizeResult = normalize(res)
+      const result = filterNecessaryOject(normalizeResult)
+      return result
+    } catch (error) {
+      // setItem([]);
+      return []
+    } finally {
+      setLoading(false);
+    }
+  }, [])
 
   const fetchItemOptions = useCallback(async (category_id: string | number) => {
     // Keep loading false here to avoid flipping global loading unexpectedly; caller may manage UI.
@@ -1898,6 +1941,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
         fetchCustomerCategoryOptions,
         fetchCompanyCustomersOptions,
         fetchItemOptions,
+        fetchItemsCategoryWise,
         fetchWarehouseOptions,
         roleOptions,
         projectOptions,

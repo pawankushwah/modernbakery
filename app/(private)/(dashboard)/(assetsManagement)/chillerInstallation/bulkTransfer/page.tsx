@@ -127,15 +127,34 @@ export default function BulkTransferListPage() {
                     ...appliedFilters,
                 });
 
-                return {
-                    data: Array.isArray(result?.data) ? result.data : [],
-                    total: result?.pagination?.total || 1,
-                    currentPage: result?.pagination?.current_page || 1,
-                    pageSize: result?.pagination?.per_page || pageSize,
-                };
-            } catch (error) {
-                console.error(error);
-                showSnackbar("Failed to fetch bulk transfer list", "error");
+                if (result?.data && result?.pagination) {
+                    const totalPages = Math.ceil(result.pagination.total / result.pagination.per_page);
+                    return {
+                        data: Array.isArray(result.data) ? result.data : [],
+                        total: totalPages, // total number of PAGES, not records
+                        currentPage: result.pagination.current_page,
+                        pageSize: result.pagination.per_page,
+                    };
+                }
+
+                if (Array.isArray(result)) {
+                    return {
+                        data: result,
+                        total: result.length,
+                        currentPage: page,
+                        pageSize: pageSize,
+                    };
+                }
+
+                // Handle object response without pagination
+                if (result?.data) {
+                    return {
+                        data: Array.isArray(result.data) ? result.data : [],
+                        total: result?.pagination?.total || (Array.isArray(result.data) ? result.data.length : 0),
+                        currentPage: result?.pagination?.current_page || page,
+                        pageSize: result?.pagination?.per_page || pageSize,
+                    };
+                }
 
                 return {
                     data: [],

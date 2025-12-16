@@ -101,11 +101,11 @@ function LayoutSelector({ children }: { children: React.ReactNode }) {
             if(!localStorage.getItem("token")){
                 return router.push("/");
             }
-            const res = await isVerify();
-            if(res.error) {
-                // localStorage.removeItem("token");
-                // return router.push("/");
-            }
+            // const res = await isVerify();
+            // if(res.error) {
+            //     // localStorage.removeItem("token");
+            //     // return router.push("/");
+            // }
             try {
                 await preload();
             } catch (e) {

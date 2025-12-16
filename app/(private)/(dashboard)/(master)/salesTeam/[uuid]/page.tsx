@@ -94,6 +94,7 @@ export default function AddEditSalesman() {
   
   const [filteredRouteOptions, setFilteredRouteOptions] =
     useState(routeOptions);
+  const [extraTypeOption, setExtraTypeOption] = useState<{ value: string; label: string } | null>(null);
 
   // Load dropdown data
   useEffect(() => {
@@ -222,11 +223,18 @@ export default function AddEditSalesman() {
   } = useStepperForm(steps.length);
 
   const fetchRoutes = async (value: string | string[]) => {
-    const warehouseParam = Array.isArray(value) ? value.join(",") : value;
+    const warehouseId = Array.isArray(value) ? value[0] : value;
+
+    // 🛑 STOP if no warehouse selected
+    if (!warehouseId) {
+      setFilteredRouteOptions([]);  // or keep it empty
+      return;
+    }
+
     const filteredOptions = await routeList({
-      // dropdown:"true",
-      warehouse_id: warehouseParam,
+      warehouse_id: warehouseId,
     });
+
     if (filteredOptions.error) {
       showSnackbar(
         filteredOptions.data?.message || "Failed to fetch routes",
@@ -234,15 +242,17 @@ export default function AddEditSalesman() {
       );
       return;
     }
+
     const options = filteredOptions?.data || [];
 
-    const newroutesOptions: { value: string, label: string }[] = []
-    options.map((route: { id: number; route_name: string }) => {
-      newroutesOptions.push({ value: route.id.toString(), label: route.route_name })
+    const newroutesOptions = options.map((route: { id: number; route_name: string }) => ({
+      value: route.id.toString(),
+      label: route.route_name,
+    }));
 
-    })
     setFilteredRouteOptions(newroutesOptions);
   };
+
 
   // ✅ Fetch data
   useEffect(() => {
@@ -252,18 +262,26 @@ export default function AddEditSalesman() {
           const res = await getSalesmanById(salesmanId as string);
           if (res && !res.error && res.data) {
             const d = res.data;
-            console.log(d, "data")
+            const derivedType = d.salesman_type?.id?.toString() || d.type?.toString() || d.salesman_type_id?.toString() || "";
+            
+            if (d.salesman_type?.id && d.salesman_type?.salesman_type_name) {
+                setExtraTypeOption({
+                    value: d.salesman_type.id.toString(),
+                    label: d.salesman_type.salesman_type_name
+                });
+            }
+
             const idsWareHouses: string[] = []
             d.warehouses?.map((dta: any) => {
               console.log(dta.id, "warehouse id")
               idsWareHouses.push(dta.id.toString());
             })
-            console.log(d.salesman_type?.id?.toString(), "project type id")
+
             setInitialValues({
               osa_code: d.osa_code || "",
               name: d.name || "",
-              type: d.salesman_type?.id?.toString() || "",
-              sub_type: d.project_type?.id?.toString() || "",
+              type: derivedType,
+              sub_type: d.project_type?.id?.toString() || d.sub_type?.toString() || d.project_type_id?.toString() || "",
               designation: d.designation || "",
               route_id: d.route?.id?.toString() || "",
               password: "", // password is not returned from API → leave empty
@@ -355,26 +373,26 @@ export default function AddEditSalesman() {
 
       await SalesmanSchema.validate(values, { abortEarly: false });
 
-      // const formData = new FormData();
-      // (Object.keys({ ...values, warehouse_id: [values.warehouse_id] }) as (keyof SalesmanFormValues)[]).forEach((key) => {
-      //   const val = values[key];
+      const formData = new FormData();
+      (Object.keys({...values,warehouse_id:[values.warehouse_id]}) as (keyof SalesmanFormValues)[]).forEach((key) => {
+        const val = values[key];
 
-      //   if (Array.isArray(val)) {
-      //     console.log("Submitting form data: 2", Array.from(formData.entries()));
+        if (Array.isArray(val)) {
+      console.log("Submitting form data: 2", Array.from(formData.entries()));
 
-      //     // For arrays (like warehouse_id when multiple selected)
-      //     val.forEach((v) => formData.append(`${key}[]`, v));
-      //   } else if (val !== undefined && val !== null) {
-      //     console.log("Submitting form data: 3", Array.from(formData.entries()));
+          // For arrays (like warehouse_id when multiple selected)
+          val.forEach((v) => formData.append(`${key}[]`, v));
+        } else if (val !== undefined && val !== null) {
+      console.log("Submitting form data: 3", Array.from(formData.entries()));
 
-      //     // Normal string or single value
-      //     formData.append(key, val.toString());
-      //   } else {
-      //     console.log("Submitting form data: 4", Array.from(formData.entries()));
+          // Normal string or single value
+          formData.append(key, val.toString());
+        } else {
+      console.log("Submitting form data: 4", Array.from(formData.entries()));
 
-      //     formData.append(key, "");
-      //   }
-      // });
+          formData.append(key, "");
+        }
+      });
       // console.log("Submitting form data: 5", formData);
 
       const payload = {
@@ -388,7 +406,7 @@ export default function AddEditSalesman() {
         is_block: values.is_block,
         password: values.password,
         contact_no: values.contact_no,
-        warehouse_id: Number(values.warehouse_id),
+        warehouse_id: values.warehouse_id.toString(),
         status: values.status,
         cashier_description_block: values.cashier_description_block,
         invoice_block: values.invoice_block,
@@ -398,8 +416,6 @@ export default function AddEditSalesman() {
         email: values.email,
         is_take: Number(values.is_take),
       };
-
-
 
       let res;
       if (isEditMode) {
@@ -423,14 +439,14 @@ export default function AddEditSalesman() {
             reserved_code: values.osa_code,
             model_name: "salesman",
           });
-        } catch { }
+        } catch { /** */ }
       }
     } catch {
       showSnackbar("Validation failed, please check your inputs", "error");
     } finally {
       setSubmitting(false);
     }
-  };
+  }
 
   // ✅ Step content renderer
   const renderStepContent = (
@@ -473,8 +489,19 @@ export default function AddEditSalesman() {
                   label="Sales Team Type"
                   name="type"
                   value={values.type}
-                  options={salesmanTypeOptions}
-                  onChange={(e) => setFieldValue("type", e.target.value)}
+                  options={[
+                    ...salesmanTypeOptions.map((o: any) => ({ ...o, value: String(o.value) })),
+                    ...(extraTypeOption && !salesmanTypeOptions.find((o: any) => String(o.value) === extraTypeOption.value) ? [extraTypeOption] : [])
+                  ]}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setFieldValue("type", value);
+
+                    // Reset fields when type changes
+                    setFieldValue("sub_type", "");
+                    setFieldValue("is_take", "");
+                  }}
+
                   error={touched.type && errors.type}
                 />
               </div>
@@ -486,7 +513,15 @@ export default function AddEditSalesman() {
                     label="Project List"
                     value={values.sub_type}
                     options={projectOptions}
-                    onChange={(e) => setFieldValue("sub_type", e.target.value)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFieldValue("sub_type", value);
+
+                      if (value !== "1") {
+                        setFieldValue("is_take", "");
+                      }
+                    }}
+
                     error={touched.sub_type && errors.sub_type}
                   />
                 </div>
@@ -534,18 +569,48 @@ export default function AddEditSalesman() {
                   options={isEditMode ? warehouseAllOptions : warehouseOptions}
                   disabled={isEditMode ? warehouseAllOptions.length === 0 : warehouseOptions.length === 0}
                   isSingle={false}
-                  onChange={(e) => {
-                    const selectedValues = Array.from(
-                      e.target.selectedOptions,
-                      (opt: any) => opt.value
-                    );
+                  onChange={(e: any) => {
+                    if (values.type === "6") {
+                      let selectedValues: string[] = [];
 
-                    setFieldValue("warehouse_id", selectedValues);
+                      // Case 1: Real browser event
+                      if (e?.target?.selectedOptions) {
+                        selectedValues = Array.from(
+                          e.target.selectedOptions,
+                          (opt: any) => opt.value
+                        );
+                      }
 
-                    if (values.warehouse_id?.toString() !== selectedValues.toString()) {
+                      // Case 2: Your InputFields sends array directly
+                      else if (Array.isArray(e)) {
+                        selectedValues = e.map((v: any) => v?.value ?? v);
+                      }
+
+                      // Case 3: InputFields sends array inside target.value (MultiSelect)
+                      else if (e?.target && Array.isArray(e.target.value)) {
+                        selectedValues = e.target.value;
+                      }
+
+                      // Case 4: InputFields sends just a value (Single Select fallback or weird case)
+                      else if (e?.target?.value) {
+                        selectedValues = [e.target.value];
+                      }
+
+                      setFieldValue("warehouse_id", selectedValues);
                       fetchRoutes(selectedValues);
+                    } else {
+                      // SINGLE SELECT
+                      const val =
+                        e?.target?.value ??
+                        e?.value ??
+                        (Array.isArray(e) ? e[0]?.value : "");
+
+                      setFieldValue("warehouse_id", val);
+                      fetchRoutes(val);
                     }
                   }}
+
+
                 />
 
                 <ErrorMessage
@@ -580,7 +645,8 @@ export default function AddEditSalesman() {
                   value={values.route_id?.toString() ?? ""}
                   onChange={(e) => setFieldValue("route_id", e.target.value)}
                   options={filteredRouteOptions}
-                  disabled={!!values.sub_type}
+                  disabled={!!values.sub_type || !values.warehouse_id}
+                  showSkeleton={loading}
                   error={touched.route_id && errors.route_id}
                 />
               </div> : ""}

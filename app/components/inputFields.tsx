@@ -42,7 +42,8 @@ type Props = {
     | "radio"
     | "number"
     | "textarea"
-    | "contact";
+    | "contact"
+    | "contact2";
   /** If provided, used to determine whether the date was changed compared to original value */
   originalValue?: string | null;
   id?: string;
@@ -95,7 +96,7 @@ export default function InputFields({
   loading = false,
   searchable = false,
   showSearchInDropdown = false,
-  onSearch = () => {},
+  onSearch = () => { },
   multiSelectChips = false,
   originalValue = null,
   placeholder,
@@ -246,13 +247,13 @@ export default function InputFields({
     if (typeof (setSelectedCountry as any) === "function") {
       (setSelectedCountry as any)(
         found ??
-          (country
-            ? {
-                name: country.name ?? "",
-                code: country.code ?? "",
-                flag: country.flag,
-              }
-            : undefined)
+        (country
+          ? {
+            name: country.name ?? "",
+            code: country.code ?? "",
+            flag: country.flag,
+          }
+          : undefined)
       );
     }
 
@@ -531,12 +532,12 @@ export default function InputFields({
                     leadingElement ? "pl-10" : "pl-3"
                   } ${
                     trailingElement ? "pr-10" : "pr-3"
-                  } mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${
+                  } mt-0 text-gray-900 placeholder:text-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${
                     error ? "border-red-500" : "border-gray-300"
                   }`}
-                  placeholder={placeholder || `Enter ${label}`}
-                  {...props}
-                />
+                placeholder={placeholder || `Enter ${label}`}
+                {...props}
+              />
               {(leadingElement || trailingElement) && (
                 <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 pointer-events-none">
                   {leadingElement ? (
@@ -578,7 +579,7 @@ export default function InputFields({
                   showBorder === true && "border"
                 } h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 flex items-center cursor-pointer w-full ${
                   error ? "border-red-500" : "border-gray-300"
-                } ${disabled ? "bg-gray-100" : "bg-white"}`}
+                } ${disabled ? "cursor-not-allowed bg-gray-100" : "bg-white"}`}
                 onClick={() => {
                   if (!loading && !isSearchable) {
                     computeDropdownProps();
@@ -588,95 +589,55 @@ export default function InputFields({
               >
                 {isSearchable
                   ? (() => {
-                      const selected =
-                        options
-                          ?.filter((opt) => selectedValues.includes(opt.value))
-                          .map((o) => ({ value: o.value, label: o.label })) ||
-                        [];
-                      const displayValue =
-                        search ||
-                        (selected.length > 0
-                          ? selected
-                              .slice(0, 2)
-                              .map((s) => s.label)
-                              .join(", ")
-                          : "");
-                      const hasSelection = !search && selected.length > 0;
-                      // If multiSelectChips is enabled, render chips before the input
-                      if (multiSelectChips) {
-                        return (
-                          <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
-                            {selected.length === 0 && (
-                              <span className="text-gray-400">{`Search ${label}`}</span>
-                            )}
-                            {selected.map((s, idx) => {
-                              if (idx >= 2) return null;
-                              return (
-                                <span
-                                  key={s.value}
-                                  className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate"
-                                >
-                                  <span className="truncate block max-w-[100px]">
-                                    {s.label}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!disabled) handleCheckbox(s.value);
-                                    }}
-                                    className="ml-2 text-gray-500 hover:text-gray-700"
-                                  >
-                                    ×
-                                  </button>
+                    const selected =
+                      options
+                        ?.filter((opt) => selectedValues.includes(opt.value))
+                        .map((o) => ({ value: o.value, label: o.label })) ||
+                      [];
+                    const displayValue =
+                      search ||
+                      (selected.length > 0
+                        ? selected
+                          .slice(0, 2)
+                          .map((s) => s.label)
+                          .join(", ")
+                        : "");
+                    const hasSelection = !search && selected.length > 0;
+                    // If multiSelectChips is enabled, render chips before the input
+                    if (multiSelectChips) {
+                      return (
+                        <div className="flex flex-1 items-center gap-2 flex-nowrap overflow-hidden min-w-0">
+                          {selected.length === 0 && (
+                            <span className="text-gray-400">{`Search ${label}`}</span>
+                          )}
+                          {selected.map((s, idx) => {
+                            if (idx >= 2) return null;
+                            return (
+                              <span
+                                key={s.value}
+                                className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate"
+                              >
+                                <span className="truncate block max-w-[100px]">
+                                  {s.label}
                                 </span>
-                              );
-                            })}
-                            {selected.length > 2 && (
-                              <span className="text-sm text-gray-700 ml-1">
-                                +{selected.length - 2}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!disabled) handleCheckbox(s.value);
+                                  }}
+                                  className="ml-2 text-gray-500 hover:text-gray-700"
+                                >
+                                  ×
+                                </button>
                               </span>
-                            )}
-                            <input
-                              type="text"
-                              placeholder={
-                                selected.length === 0
-                                  ? `Search ${label}`
-                                  : undefined
-                              }
-                              value={displayValue}
-                              onChange={(e) => {
-                                const v = (e.target as HTMLInputElement).value;
-                                console.log("Search input changed:", v);
-                                setSearch(v);
-                                // onSearch(v);
-                                if (!dropdownOpen) setDropdownOpen(true);
-                                if (v === "") {
-                                  // user cleared the input -> clear selected values for multi-select
-                                  safeOnChange(createMultiSelectEvent([]));
-                                }
-                              }}
-                              onFocus={() => setDropdownOpen(true)}
-                              className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${
-                                hasSelection ? "text-gray-900" : "text-gray-400"
-                              }`}
-                              style={
-                                hasSelection ? { color: "#111827" } : undefined
-                              }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  if (!loading && filteredOptions.length > 0) {
-                                    // select first match for searchable Enter
-                                    handleCheckbox(filteredOptions[0].value);
-                                  }
-                                }
-                              }}
-                            />
-                          </div>
-                        );
-                      } else {
-                        return (
+                            );
+                          })}
+                          {selected.length > 2 && (
+                            <span className="text-sm text-gray-700 ml-1">
+                              +{selected.length - 2}
+                            </span>
+                          )}
                           <input
                             type="text"
                             placeholder={
@@ -687,9 +648,9 @@ export default function InputFields({
                             value={displayValue}
                             onChange={(e) => {
                               const v = (e.target as HTMLInputElement).value;
+                              console.log("Search input changed:", v);
                               setSearch(v);
-                              onSearch(v);
-                              // console.log("Search input changed:", v);
+                              // onSearch(v);
                               if (!dropdownOpen) setDropdownOpen(true);
                               if (v === "") {
                                 // user cleared the input -> clear selected values for multi-select
@@ -697,9 +658,8 @@ export default function InputFields({
                               }
                             }}
                             onFocus={() => setDropdownOpen(true)}
-                            className={`flex-1 truncate outline-none border-none h-full placeholder-gray-400 ${
-                              hasSelection ? "text-gray-900" : "text-gray-400"
-                            }`}
+                            className={`flex-1 truncate text-sm outline-none border-none min-w-0 ${hasSelection ? "text-gray-900" : "text-gray-400"
+                              }`}
                             style={
                               hasSelection ? { color: "#111827" } : undefined
                             }
@@ -713,74 +673,112 @@ export default function InputFields({
                               }
                             }}
                           />
-                        );
-                      }
-                    })()
-                  : (() => {
-                      const selected =
-                        options
-                          ?.filter((opt) => selectedValues.includes(opt.value))
-                          .map((o) => ({ value: o.value, label: o.label })) ||
-                        [];
-                      if (multiSelectChips) {
-                        return (
-                          <div className="flex-1 flex items-center gap-2 flex-nowrap overflow-hidden min-w-0">
-                            {selected.length === 0 && (
-                              <span className="text-gray-400">{`Select ${label}`}</span>
-                            )}
-                            {selected.map((s, idx) => {
-                              if (idx >= 2) return null;
-                              return (
-                                <span
-                                  key={s.value}
-                                  className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate"
-                                >
-                                  <span className="truncate block max-w-[100px]">
-                                    {s.label}
-                                  </span>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!disabled) handleCheckbox(s.value);
-                                    }}
-                                    className="ml-2 text-gray-500 hover:text-gray-700"
-                                  >
-                                    ×
-                                  </button>
-                                </span>
-                              );
-                            })}
-                            {selected.length > 2 && (
-                              <span className="text-sm text-gray-700 ml-1">
-                                +{selected.length - 2}
-                              </span>
-                            )}
-                          </div>
-                        );
-                      } else {
-                        return (
-                          <span
-                            className={`truncate flex-1 ${
-                              selected.length === 0
-                                ? "text-gray-400"
-                                : "text-gray-900"
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <input
+                          type="text"
+                          placeholder={
+                            selected.length === 0
+                              ? `Search ${label}`
+                              : undefined
+                          }
+                          value={displayValue}
+                          onChange={(e) => {
+                            const v = (e.target as HTMLInputElement).value;
+                            setSearch(v);
+                            onSearch(v);
+                            // console.log("Search input changed:", v);
+                            if (!dropdownOpen) setDropdownOpen(true);
+                            if (v === "") {
+                              // user cleared the input -> clear selected values for multi-select
+                              safeOnChange(createMultiSelectEvent([]));
+                            }
+                          }}
+                          onFocus={() => setDropdownOpen(true)}
+                          className={`flex-1 truncate outline-none border-none h-full placeholder-gray-400 ${hasSelection ? "text-gray-900" : "text-gray-400"
                             }`}
-                          >
-                            {(() => {
-                              if (selected.length === 0)
-                                return `Select ${label}`;
-                              if (selected.length <= 2)
-                                return selected.map((s) => s.label).join(", ");
-                              return selected
-                                .slice(0, 2)
-                                .map((s) => s.label)
-                                .join(", ");
-                            })()}
-                          </span>
-                        );
-                      }
-                    })()}
+                          style={
+                            hasSelection ? { color: "#111827" } : undefined
+                          }
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              if (!loading && filteredOptions.length > 0) {
+                                // select first match for searchable Enter
+                                handleCheckbox(filteredOptions[0].value);
+                              }
+                            }
+                          }}
+                        />
+                      );
+                    }
+                  })()
+                  : (() => {
+                    const selected =
+                      options
+                        ?.filter((opt) => selectedValues.includes(opt.value))
+                        .map((o) => ({ value: o.value, label: o.label })) ||
+                      [];
+                    if (multiSelectChips) {
+                      return (
+                        <div className="flex-1 flex items-center gap-2 flex-nowrap overflow-hidden min-w-0">
+                          {selected.length === 0 && (
+                            <span className="text-gray-400">{`Select ${label}`}</span>
+                          )}
+                          {selected.map((s, idx) => {
+                            if (idx >= 2) return null;
+                            return (
+                              <span
+                                key={s.value}
+                                className="inline-flex items-center bg-gray-100 rounded-full px-2 py-1 text-sm text-gray-800 max-w-[140px] truncate"
+                              >
+                                <span className="truncate block max-w-[100px]">
+                                  {s.label}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (!disabled) handleCheckbox(s.value);
+                                  }}
+                                  className="ml-2 text-gray-500 hover:text-gray-700"
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            );
+                          })}
+                          {selected.length > 2 && (
+                            <span className="text-sm text-gray-700 ml-1">
+                              +{selected.length - 2}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    } else {
+                      return (
+                        <span
+                          className={`truncate flex-1 ${selected.length === 0
+                            ? "text-gray-400"
+                            : "text-gray-900"
+                            }`}
+                        >
+                          {(() => {
+                            if (selected.length === 0)
+                              return `Select ${label}`;
+                            if (selected.length <= 2)
+                              return selected.map((s) => s.label).join(", ");
+                            return selected
+                              .slice(0, 2)
+                              .map((s) => s.label)
+                              .join(", ");
+                          })()}
+                        </span>
+                      );
+                    }
+                  })()}
                 {!disabled && (
                   <div
                     onClick={(e) => {
@@ -860,7 +858,7 @@ export default function InputFields({
                               label="Select All"
                               checked={
                                 selectedValues.length ===
-                                  filteredOptions.length &&
+                                filteredOptions.length &&
                                 filteredOptions.length > 0
                               }
                               onChange={() => {
@@ -876,9 +874,8 @@ export default function InputFields({
                           {filteredOptions.map((opt, idx) => (
                             <div
                               key={opt.value + idx}
-                              className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                                disabled ? "opacity-50 cursor-not-allowed" : ""
-                              }`}
+                              className={`flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer ${disabled ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
                               onClick={(e) => {
                                 e.preventDefault();
                                 if (!disabled) handleCheckbox(opt.value);
@@ -921,7 +918,7 @@ export default function InputFields({
               )}
             </div>
           ) : (
-            <div className={`relative select-none`} ref={dropdownRef}>
+            <div className={`relative select-none`} style={{ width }} ref={dropdownRef}>
               <div
                 tabIndex={0}
                 onMouseDown={() => {
@@ -940,7 +937,7 @@ export default function InputFields({
                   showBorder === true && "border"
                 } h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0 flex items-center cursor-pointer min-w-0 ${
                   error ? "border-red-500" : "border-gray-300"
-                } ${disabled ? "bg-gray-200" : "bg-white"}`}
+                } ${disabled ? "cursor-not-allowed bg-gray-100" : "bg-white"}`}
                 onClick={() => {
                   if (!loading && !isSearchable && !disabled) {
                     computeDropdownProps();
@@ -976,9 +973,8 @@ export default function InputFields({
                           }
                         }}
                         onFocus={() => setDropdownOpen(true)}
-                        className={`w-full truncate outline-none border-none px-3 h-full placeholder:text-gray-400 ${
-                          hasSelection ? "text-gray-900" : "text-gray-400"
-                        }`}
+                        className={`w-full truncate outline-none border-none px-3 h-full placeholder:text-gray-400 ${hasSelection ? "text-gray-900" : "text-gray-400"
+                          }`}
                         style={hasSelection ? { color: "#111827" } : undefined}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
@@ -1000,9 +996,8 @@ export default function InputFields({
                   })()
                 ) : (
                   <span
-                    className={`truncate flex-1 px-3 ${
-                      !value ? "text-gray-400" : "text-gray-900"
-                    }`}
+                    className={`truncate flex-1 px-3 ${!value ? "text-gray-400" : "text-gray-900"
+                      }`}
                   >
                     {!value
                       ? `Select ${label}`
@@ -1072,7 +1067,7 @@ export default function InputFields({
                     </div>
                   )}
                   <div>
-                    { filteredOptions.length === 0 ? (
+                    {filteredOptions.length === 0 ? (
                       <div className="px-3 py-5 text-gray-600 text-center">
                         No options
                       </div>
@@ -1080,9 +1075,8 @@ export default function InputFields({
                       filteredOptions.map((opt, idx) => (
                         <div
                           key={opt.value + idx}
-                          className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${
-                            value === opt.value ? "bg-gray-50" : ""
-                          }`}
+                          className={`px-3 py-2 hover:bg-gray-100 cursor-pointer ${value === opt.value ? "bg-gray-50" : ""
+                            }`}
                           onClick={() => {
                             safeOnChange(createSingleSelectEvent(opt.value));
                             setDropdownOpen(false);
@@ -1111,9 +1105,8 @@ export default function InputFields({
             onChange={safeOnChange}
             onBlur={onBlur}
             autoComplete="off"
-            className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 py-1 mt-0 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${
-              error ? "border-red-500" : "border-gray-300"
-            }`}
+            className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 py-1 mt-0 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold ${error ? "border-red-500" : "border-gray-300"
+              }`}
           />
         );
 
@@ -1123,9 +1116,8 @@ export default function InputFields({
             {(() => {
               return (
                 <div
-                  className={`mx-auto border-[1px] ${
-                    error ? "border-red-500" : "border-gray-300"
-                  } rounded-md`}
+                  className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"
+                    } rounded-md`}
                   ref={dropdownRef}
                 >
                   <div className="flex items-center relative">
@@ -1146,17 +1138,17 @@ export default function InputFields({
                           width: dropdownProperties.width,
                           maxHeight: dropdownProperties.maxHeight,
                         }}
-                        className="inputfields-dropdown-content fixed overflow-y-scroll z-10 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75 mt-[6px]"
+                        className="inputfields-dropdown-content fixed overflow-y-scroll z-30 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75 mt-[6px]"
                       >
                         <ul className="py-2 text-sm text-gray-700">
                           {countries.map(
                             (
                               country:
                                 | {
-                                    name?: string;
-                                    code?: string;
-                                    flag?: string;
-                                  }
+                                  name?: string;
+                                  code?: string;
+                                  flag?: string;
+                                }
                                 | undefined,
                               index
                             ) => (
@@ -1206,6 +1198,113 @@ export default function InputFields({
           </div>
         );
 
+      case "contact2":
+        return (
+          <div className="relative mt-0 w-full">
+            {(() => {
+              // Parse combined value: "+256-712345678" or fallback to defaults
+              const parseCombined = (v?: string) => {
+                if (!v || typeof v !== "string") return { code: "+256", number: "" };
+                if (v.includes("-")) {
+                  const [code, number] = v.split("-");
+                  return { code: code || "+256", number: number || "" };
+                }
+                // If only number provided, default country code
+                return { code: "+256", number: v };
+              };
+
+              const combined = typeof value === "string" ? value : "";
+              const { code: parsedCode, number: parsedNumber } = parseCombined(combined);
+              const selected = countries.find((c) => c.code === parsedCode) || { name: "Uganda", code: "+256", flag: "🇺🇬" };
+
+              const handleSelect2 = (country?: { name?: string; code?: string; flag?: string }) => {
+                const newCode = country?.code || selected.code || "+256";
+                const newCombined = `${newCode}-${parsedNumber || ""}`;
+                safeOnChange({ target: { value: newCombined, name } } as any);
+                setDropdownOpen(false);
+              };
+
+              const handlePhoneChange2 = (e: React.ChangeEvent<HTMLInputElement>) => {
+                const cleaned = e.target.value.replace(/\D/g, "");
+                const newCombined = `${parsedCode || "+256"}-${cleaned}`;
+                safeOnChange({ target: { value: newCombined, name } } as any);
+              };
+
+              return (
+                <div
+                  className={`mx-auto border-[1px] ${
+                    error ? "border-red-500" : "border-gray-300"
+                  } rounded-md`}
+                  ref={dropdownRef}
+                >
+                  <div className="flex items-center relative">
+                    {/* Dropdown Button */}
+                    <button
+                      type="button"
+                      onClick={() => setDropdownOpen(!dropdownOpen)}
+                      className="shrink-0 z-10 h-[44px] inline-flex items-center py-2.5 px-4 pr-[3px] text-sm font-medium text-gray-900 rounded-s-lg focus:outline-none"
+                      disabled={disabled}
+                    >
+                      {selected?.flag} {selected?.code}
+                    </button>
+                    {/* Dropdown List */}
+                    {dropdownOpen && (
+                      <div
+                        style={{
+                          left: dropdownProperties.left,
+                          top: dropdownProperties.top,
+                          width: dropdownProperties.width,
+                          maxHeight: dropdownProperties.maxHeight,
+                        }}
+                        className="inputfields-dropdown-content fixed overflow-y-scroll z-30 bg-white divide-y divide-gray-100 rounded-lg shadow-sm w-75 mt-[6px]"
+                      >
+                        <ul className="py-2 text-sm text-gray-700">
+                          {countries.map((country, index) => (
+                            <li key={`${country?.code}-${index}`}>
+                              <button
+                                type="button"
+                                onClick={() => handleSelect2(country)}
+                                className="inline-flex w-full px-4 py-2 text-sm"
+                                disabled={disabled}
+                              >
+                                <span className="inline-flex items-center">
+                                  {country?.flag} {country?.name} ({country?.code})
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {/* Input Field */}
+                    <label
+                      htmlFor="phone-input2"
+                      className="mb-2 text-sm font-medium text-gray-900 sr-only"
+                    >
+                      Phone number:
+                    </label>
+                    <div className="relative w-full">
+                      <input
+                        type="tel"
+                        id="phone-input2"
+                        placeholder={placeholder || "Enter phone number"}
+                        className="tracking-[1px] block p-2.5 pl-[5px] w-full z-20 h-[44px] text-sm text-gray-900 rounded-e-lg outline-none shadow-[0px_1px_2px_0px_#0A0D120D]"
+                        value={parsedNumber}
+                        onChange={handlePhoneChange2}
+                        disabled={disabled}
+                        required={required}
+                        onBlur={onBlur}
+                        minLength={9}
+                        maxLength={10}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        );
+
       case "dateChange":
         return (
           <DateRangePicker
@@ -1235,19 +1334,17 @@ export default function InputFields({
             onBlur={onBlur}
             min={min as any}
             max={max as any}
-            className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${
-              error ? "border-red-500" : "border-gray-300"
-            }`}
+            className={`border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-3 mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"
+              }`}
             placeholder={`Enter ${label}`}
           />
         );
 
       case "number":
         return (
-          <div 
-            className={`flex border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0  ${
-              error ? "border-red-500" : "border-gray-300"
-            } overflow-hidden`}
+          <div
+            className={`flex border h-[44px] w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] mt-0  ${error ? "border-red-500" : "border-gray-300"
+              } overflow-hidden`}
           >
             <input
               id={id ?? name}
@@ -1282,9 +1379,8 @@ export default function InputFields({
             value={value ?? ""}
             onChange={safeOnChange}
             disabled={disabled}
-            className={`border w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-[14px] py-[10px] mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${
-              error ? "border-red-500" : "border-gray-300"
-            }`}
+            className={`border w-full rounded-md shadow-[0px_1px_2px_0px_#0A0D120D] px-[14px] py-[10px] mt-0 text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 ${error ? "border-red-500" : "border-gray-300"
+              }`}
             placeholder={placeholder || `Enter ${label}`}
             cols={textareaCols}
             rows={textareaRows}
@@ -1299,7 +1395,7 @@ export default function InputFields({
   }
 
   return (
-    <div className={`flex flex-col gap-[6px] w-full ${width} relative`}>
+    <div className={`flex flex-col gap-[6px] min-w-0 ${width} relative`}>
       {showSkeleton && (
         <div className="absolute h-[90px] w-full rounded-[5px] bg-white z-40 flex flex-col gap-[5px]">
           {label && <Skeleton variant="rounded" width={"50%"} height={"20%"} />}

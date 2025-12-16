@@ -12,29 +12,29 @@ import {
     serviceTerritoryByUUID,
     getTechicianList,
     updateServiceTerritory,
+    ServiceTerritoryByUUID,
 } from "@/app/services/assetsApi";
 import { useEffect, useRef, useState } from "react";
 import { useLoading } from "@/app/services/loadingContext";
 import { genearateCode, saveFinalCode } from "@/app/services/allApi";
-import ContainerCard from "@/app/components/containerCard";
 import Loading from "@/app/components/Loading";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
 // ✅ Validation Schema
 const validationSchema = Yup.object().shape({
     osa_code: Yup.string().required("Code is required"),
-    warehouse_id: Yup.number().required("Warehouse is required"),
-    region_id: Yup.number().required("Region is required"),
-    area_id: Yup.number().required("Area is required"),
-    technician_id: Yup.number().required("Technician is required"),
+    warehouses: Yup.array().min(1, "Warehouse is required"),
+    regions: Yup.array().min(1, "Region is required"),
+    areas: Yup.array().min(1, "Area is required"),
+    technician: Yup.number().min(1, "Technician is required").required("Technician is required"),
 });
 
 export default function AddEditServiceTerritory() {
-    const { showSnackbar } = useSnackbar();
-    const { setLoading } = useLoading();
     const router = useRouter();
     const params = useParams();
-    const { regionOptions, areaOptions, warehouseAllOptions , ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    const { showSnackbar } = useSnackbar();
+    const { setLoading } = useLoading();
+    const { regionOptions, areaOptions, warehouseAllOptions , ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded, warehouseOptions, fetchAreaOptions, fetchWarehouseOptions } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -43,48 +43,40 @@ export default function AddEditServiceTerritory() {
     ensureWarehouseAllLoaded();
   }, [ensureAreaLoaded, ensureRegionLoaded, ensureWarehouseAllLoaded]);
 
-    // ✅ Safe UUID Extraction
+    // Get UUID safely
     let uuid = "";
-    if (params?.uuid) {
-        uuid = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid;
-    }
+    if (params?.uuid) uuid = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid;
 
     const isAddMode = uuid === "add" || !uuid;
     const isEditMode = !isAddMode;
 
-    // ✅ Local State
     const [localLoading, setLocalLoading] = useState(false);
-    const [technicianOptions, setTechnicianOptions] = useState<
-        { value: string; label: string }[]
-    >([]);
+    const [technicianOptions, setTechnicianOptions] = useState<{ value: string; label: string }[]>([]);
     const codeGeneratedRef = useRef(false);
 
-    // ✅ Formik Setup
+    // -------------------------------
+    //     FORMIK INITIALIZATION
+    // -------------------------------
     const formik = useFormik({
         initialValues: {
             osa_code: "",
-            warehouse_id: 0,
-            region_id: 0,
-            area_id: 0,
-            technician_id: 0,
+            warehouses: [] as string[],
+            regions: [] as string[],
+            areas: [] as string[],
+            technician: 0,
         },
         validationSchema,
-
         onSubmit: async (values, { setSubmitting, resetForm }) => {
             setLoading(true);
 
-            // ✅ Base Payload (Shared)
-            const basePayload = {
-                warehouse_id: Number(values.warehouse_id),
-                region_id: Number(values.region_id),
-                area_id: Number(values.area_id),
-                technician_id: Number(values.technician_id),
+            const payload: any = {
+                warehouse_id: values.warehouses.join(","),
+                region_id: values.regions.join(","),
+                area_id: values.areas.join(","),
+                technician_id: Number(values.technician),
             };
 
-            // ✅ Conditional Payload
-            const payload = isEditMode
-                ? basePayload // ✅ Edit → No osa_code
-                : { ...basePayload, osa_code: values.osa_code }; // ✅ Add → With osa_code
+            if (isAddMode) payload.osa_code = values.osa_code;
 
             try {
                 const res = isEditMode
@@ -92,26 +84,20 @@ export default function AddEditServiceTerritory() {
                     : await addServiceTerritory(payload);
 
                 if (res?.error) {
-                    showSnackbar(res?.data?.message || "Failed to save Service Territory", "error");
+                    showSnackbar("Failed to save Service Territory", "error");
                 } else {
                     showSnackbar(
-                        res?.message ||
-                        (isEditMode
+                        isEditMode
                             ? "Service Territory updated successfully"
-                            : "Service Territory added successfully"),
+                            : "Service Territory added successfully",
                         "success"
                     );
 
-                    // ✅ Save Code Only in ADD Mode
-                    if (!isEditMode) {
-                        try {
-                            await saveFinalCode({
-                                reserved_code: values.osa_code,
-                                model_name: "service_territory",
-                            });
-                        } catch (e) {
-                            console.warn("Code finalization failed:", e);
-                        }
+                    if (isAddMode) {
+                        await saveFinalCode({
+                            reserved_code: values.osa_code,
+                            model_name: "service_territory",
+                        });
                     }
 
                     resetForm();
@@ -126,65 +112,117 @@ export default function AddEditServiceTerritory() {
         },
     });
 
-    // ✅ Fetch Technicians
+    // ------------------------------------
+    //     Fetch Technician List
+    // ------------------------------------
     useEffect(() => {
-        const fetchTechnicians = async () => {
+        (async () => {
             try {
                 const response = await getTechicianList();
-                const techData = response?.data?.data || response?.data || [];
+                const techData = Array.isArray(response?.data)
+                    ? response.data
+                    : (response?.data?.data || []);
 
-                const options = techData.map((item: any) => ({
+                const options = techData.map((item: { id: string | number; osa_code: string; name: string }) => ({
                     value: String(item.id),
                     label: `${item.osa_code} - ${item.name}`,
                 }));
 
                 setTechnicianOptions(options);
-            } catch {
+            } catch (error) {
                 showSnackbar("Failed to fetch technician data", "error");
             }
-        };
+        })();
+    }, []);
 
-        fetchTechnicians();
-    }, [showSnackbar]);
-
-    // ✅ Load Edit Data OR Generate Code
+    // ------------------------------------
+    //     Load Edit Data OR Generate Code
+    // ------------------------------------
     useEffect(() => {
-        const fetchDataOrGenerate = async () => {
-            if (isEditMode && uuid) {
+        const load = async () => {
+            if (isEditMode) {
                 setLocalLoading(true);
                 try {
-                    const res = await serviceTerritoryByUUID(uuid);
-                    if (res?.data) {
+                    const res = await ServiceTerritoryByUUID(uuid);
+
+                    if (res) {
+                        const data = res.data || res;
+
+                        const regions = data.regions || [];
+                        const areas = data.regions?.flatMap((r: any) => r.areas || []) || [];
+                        const warehouses = areas.flatMap((a: any) => a.warehouses || []) || [];
+
+                        const regionIds = regions.map((r: any) => String(r.region_id));
+                        const areaIds = areas.map((a: any) => String(a.area_id));
+                        const warehouseIds = warehouses.map((w: any) => String(w.warehouse_id));
+
+                        // ✅ Load all dropdown options for edit mode (NO cascading fetch)
+                        // We load ALL available options so user can see them
+                        // The values will be pre-selected based on API data
+
                         formik.setValues({
-                            osa_code: res.data.osa_code || "",
-                            warehouse_id: res.data.warehouse_id || 0,
-                            region_id: res.data.region_id || 0,
-                            area_id: res.data.area_id || 0,
-                            technician_id: res.data.technician?.id || 0,
+                            osa_code: data.osa_code,
+                            regions: regionIds,
+                            areas: areaIds,
+                            warehouses: warehouseIds,
+                            technician: data.technician?.id ? Number(data.technician.id) : 0,
                         });
                     }
                 } catch {
-                    showSnackbar("Failed to fetch service territory details", "error");
+                    showSnackbar("Failed to load details", "error");
                 } finally {
                     setLocalLoading(false);
                 }
-            } else if (isAddMode && !codeGeneratedRef.current) {
-                codeGeneratedRef.current = true;
-                try {
+            } else {
+                if (!codeGeneratedRef.current) {
+                    codeGeneratedRef.current = true;
                     const res = await genearateCode({ model_name: "service_territory" });
-                    if (res?.code) {
-                        formik.setFieldValue("osa_code", res.code);
-                    }
-                } catch {
-                    showSnackbar("Failed to generate service territory code", "error");
+                    formik.setFieldValue("osa_code", res?.code || "");
                 }
             }
         };
 
-        fetchDataOrGenerate();
+        load();
     }, [uuid]);
 
-    // ✅ UI
+    // ------------------------------------
+    //     CASCADING HANDLERS (ADD MODE ONLY)
+    // ------------------------------------
+
+    const handleRegionChange = async (e: any) => {
+        const values = e.target.value;
+        formik.setFieldValue("regions", values);
+
+        // ✅ Only cascade in ADD mode
+        if (isAddMode) {
+            formik.setFieldValue("areas", []);
+            formik.setFieldValue("warehouses", []);
+
+            if (Array.isArray(values) && values.length > 0) {
+                await fetchAreaOptions(values.join(","));
+            }
+        }
+    };
+
+    const handleAreaChange = async (e: any) => {
+        const values = e.target.value;
+        formik.setFieldValue("areas", values);
+
+        // ✅ Only cascade in ADD mode
+        if (isAddMode) {
+            formik.setFieldValue("warehouses", []);
+
+            if (Array.isArray(values) && values.length > 0) {
+                await fetchWarehouseOptions(values.join(","));
+            }
+        }
+    };
+
+    const handleWarehouseChange = (e: any) => {
+        const values = e.target.value;
+        formik.setFieldValue("warehouses", values);
+    };
+
     return (
         <div className="p-6">
             <div className="flex items-center gap-4 mb-6">
@@ -201,104 +239,90 @@ export default function AddEditServiceTerritory() {
                     <Loading />
                 ) : (
                     <form onSubmit={formik.handleSubmit}>
-                        <div>
-                            <h2 className="text-lg font-semibold mb-6">
-                                Service Territory Details
-                            </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                {/* ST Code */}
-                                <InputFields
-                                    label="ST Code"
-                                    name="osa_code"
-                                    value={formik.values.osa_code}
-                                    onChange={formik.handleChange}
-                                    disabled={isEditMode}
-                                    error={
-                                        formik.touched.osa_code && formik.errors.osa_code
-                                            ? formik.errors.osa_code
-                                            : ""
-                                    }
-                                />
+                            {/* ST CODE */}
+                            <InputFields
+                                label="ST Code"
+                                name="osa_code"
+                                value={formik.values.osa_code}
+                                disabled={isEditMode}
+                                onChange={formik.handleChange}
+                                error={
+                                    formik.touched.osa_code && formik.errors.osa_code
+                                        ? String(formik.errors.osa_code)
+                                        : ""
+                                }
+                            />
 
-                                {/* Region */}
-                                <InputFields
-                                    label="Region"
-                                    name="region_id"
-                                    value={String(formik.values.region_id)}
-                                    onChange={(e) =>
-                                        formik.setFieldValue(
-                                            "region_id",
-                                            Number(e.target.value)
-                                        )
-                                    }
-                                    options={regionOptions}
-                                    error={
-                                        formik.touched.region_id && formik.errors.region_id
-                                            ? String(formik.errors.region_id)
-                                            : ""
-                                    }
-                                />
+                            {/* REGION MULTI SELECT */}
+                            <InputFields
+                                label="Region"
+                                name="regions"
+                                isSingle={false}
+                                multiSelectChips={true}
+                                value={formik.values.regions}
+                                options={regionOptions}
+                                onChange={handleRegionChange}
+                                error={
+                                    formik.touched.regions && formik.errors.regions
+                                        ? String(formik.errors.regions)
+                                        : ""
+                                }
+                            />
 
-                                {/* Area */}
-                                <InputFields
-                                    label="Area"
-                                    name="area_id"
-                                    value={String(formik.values.area_id)}
-                                    onChange={(e) =>
-                                        formik.setFieldValue(
-                                            "area_id",
-                                            Number(e.target.value)
-                                        )
-                                    }
-                                    options={areaOptions}
-                                    error={
-                                        formik.touched.area_id && formik.errors.area_id
-                                            ? String(formik.errors.area_id)
-                                            : ""
-                                    }
-                                />
+                            {/* AREA MULTI SELECT */}
+                            <InputFields
+                                label="Area"
+                                name="areas"
+                                isSingle={false}
+                                multiSelectChips={true}
+                                value={formik.values.areas}
+                                options={areaOptions}
+                                disabled={!formik.values.regions || formik.values.regions.length === 0}
+                                showSkeleton={localLoading}
+                                onChange={handleAreaChange}
+                                error={
+                                    formik.touched.areas && formik.errors.areas
+                                        ? String(formik.errors.areas)
+                                        : ""
+                                }
+                            />
 
-                                {/* Warehouse */}
-                                <InputFields
-                                    label="Warehouse"
-                                    name="warehouse_id"
-                                    value={String(formik.values.warehouse_id)}
-                                    onChange={(e) =>
-                                        formik.setFieldValue(
-                                            "warehouse_id",
-                                            Number(e.target.value)
-                                        )
-                                    }
-                                    options={warehouseAllOptions}
-                                    error={
-                                        formik.touched.warehouse_id &&
-                                            formik.errors.warehouse_id
-                                            ? String(formik.errors.warehouse_id)
-                                            : ""
-                                    }
-                                />
+                            {/* WAREHOUSE MULTI SELECT */}
+                            <InputFields
+                                label="Warehouse"
+                                name="warehouses"
+                                isSingle={false}
+                                multiSelectChips={true}
+                                value={formik.values.warehouses}
+                                disabled={!formik.values.areas || formik.values.areas.length === 0}
+                                showSkeleton={localLoading}
+                                options={warehouseOptions}
+                                onChange={handleWarehouseChange}
+                                error={
+                                    formik.touched.warehouses && formik.errors.warehouses
+                                        ? String(formik.errors.warehouses)
+                                        : ""
+                                }
+                            />
 
-                                {/* Technician */}
-                                <InputFields
-                                    label="Technician"
-                                    name="technician_id"
-                                    value={String(formik.values.technician_id)}
-                                    onChange={(e) =>
-                                        formik.setFieldValue(
-                                            "technician_id",
-                                            Number(e.target.value)
-                                        )
-                                    }
-                                    options={technicianOptions}
-                                    error={
-                                        formik.touched.technician_id &&
-                                            formik.errors.technician_id
-                                            ? String(formik.errors.technician_id)
-                                            : ""
-                                    }
-                                />
-                            </div>
+                            {/* TECHNICIAN */}
+                            <InputFields
+                                label="Technician"
+                                name="technician"
+                                isSingle={true}
+                                value={formik.values.technician ? String(formik.values.technician) : ""}
+                                options={technicianOptions}
+                                onChange={(e) => {
+                                    formik.setFieldValue("technician", Number(e.target.value));
+                                }}
+                                error={
+                                    formik.touched.technician && formik.errors.technician
+                                        ? String(formik.errors.technician)
+                                        : ""
+                                }
+                            />
                         </div>
 
                         <div className="flex justify-end gap-4 mt-6">
@@ -314,8 +338,6 @@ export default function AddEditServiceTerritory() {
                                 type="submit"
                                 label={isEditMode ? "Update" : "Submit"}
                                 isActive
-                                leadingIcon="mdi:check"
-                                disabled={formik.isSubmitting}
                             />
                         </div>
                     </form>

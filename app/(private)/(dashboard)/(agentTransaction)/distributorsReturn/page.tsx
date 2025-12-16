@@ -19,6 +19,8 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import { downloadFile } from "@/app/services/allApi";
 import toInternationalNumber, { FormatNumberOptions } from "@/app/(private)/utils/formatNumber";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import FilterComponent from "@/app/components/filterComponent";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 const dropdownDataList = [
     // { icon: "lucide:layout", label: "SAP", iconWidth: 20 },
@@ -69,6 +71,12 @@ const columns = [
                 maximumFractionDigits: 2,
             } as FormatNumberOptions);
         },
+    },
+    {
+        key: "approval_status",
+        label: "Approval Status",
+        showByDefault: true,
+        render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
     // {
     //     key: "status",
@@ -266,43 +274,8 @@ export default function CustomerInvoicePage() {
                                 }
                             },
                         ],
-                        filterByFields: [
-                            {
-                                key: "date_change",
-                                label: "Date Range",
-                                type: "dateChange"
-                            },
-                            {
-                                key: "warehouse",
-                                label: "Warehouse",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-                            },
-                            {
-                                key: "salesman",
-                                label: "Sales Team",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(salesmanOptions) ? salesmanOptions : [],
-                            },
-                            {
-                                key: "route_id",
-                                label: "Route",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(routeOptions) ? routeOptions : [],
-                            },
-                            {
-                                key: "customer",
-                                label: "Customer",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: Array.isArray(agentCustomerOptions) ? agentCustomerOptions : [],
-                            },
-
-                        ],
-                        wholeTableActions: [
+                            filterRenderer: FilterComponent,
+                            wholeTableActions: [
                             <div key={0} className="flex gap-[12px] relative">
                                 <DismissibleDropdown
                                     isOpen={showDropdown}

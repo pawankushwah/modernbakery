@@ -13,7 +13,11 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { downloadFile } from "@/app/services/allApi";
+import { useFormik } from "formik";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import InputFields from "@/app/components/inputFields";
+// import { Icon } from "lucide-react";
+import { Icon } from "@iconify-icon/react";
 
 // Type definitions for the ACF API response
 interface ChillerRequest {
@@ -96,7 +100,7 @@ const renderCombinedField = (data: TableDataType, field: string) => {
     } else if (code !== "-") {
         return code;
     }
-    return "-";99999999999
+    return "-"; 99999999999
 };
 
 // 🔹 Table Columns
@@ -105,44 +109,20 @@ const columns = [
     {
         key: "osa_code",
         label: "OSA Code",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return (
-                    <div>
-                        <p>{data.chiller_request.osa_code || "-"}</p>
-                    </div>
-                );
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "osa_code"),
     },
     {
         key: "owner_name",
         label: "Owner Name",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return (
-                    <div>
-                        <p>{data.chiller_request.owner_name || "-"}</p>
-                    </div>
-                );
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "owner_name"),
     },
     {
         key: "contact_number",
         label: "Contact Number",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return (
-                    <div>
-                        <p>{data.chiller_request.contact_number || "-"}</p>
-                    </div>
-                );
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "contact_number"),
     },
 
     // Combined Relationship Fields
@@ -175,58 +155,34 @@ const columns = [
     {
         key: "machine_number",
         label: "Machine No",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return <div><p>{data.chiller_request.machine_number || "-"}</p></div>;
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "machine_number"),
     },
     {
         key: "asset_number",
         label: "Asset No",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return <div><p>{data.chiller_request.asset_number || "-"}</p></div>;
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "asset_number"),
     },
     {
         key: "model",
         label: "Model",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return <div><p>{data.chiller_request.model || "-"}</p></div>;
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "model"),
     },
     {
         key: "brand",
         label: "Brand",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return <div><p>{data.chiller_request.brand || "-"}</p></div>;
-            }
-            return <div><p>-</p></div>;
-        }
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "brand"),
     },
 
     // Status
     {
         key: "status",
         label: "Status",
-        render: (data: TableDataType) => {
-            if (hasChillerRequest(data)) {
-                return (
-                    <StatusBtn
-                        isActive={data.chiller_request.status === 1}
-                    />
-                );
-            }
-            return <StatusBtn isActive={false} />;
-        },
+        render: (data: TableDataType) =>
+            renderCombinedField(data, "status"),
     },
 ]
 
@@ -234,6 +190,18 @@ export default function CustomerInvoicePage() {
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();
     const router = useRouter();
+    const [selectedRowsData, setSelectedRowsData] = useState<any[]>([]);
+    const { values, setFieldValue } = useFormik({
+        initialValues: {
+            oldPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+        },
+        onSubmit: (values) => {
+            console.log(values);
+        },
+    });
+    const [showSidebar, setShowSidebar] = useState(false);
     const [threeDotLoading, setThreeDotLoading] = useState({
         csv: false,
         xlsx: false,
@@ -244,6 +212,7 @@ export default function CustomerInvoicePage() {
         region: "",
         routeCode: "",
     });
+
     const {
         warehouseAllOptions,
         routeOptions,
@@ -262,6 +231,7 @@ export default function CustomerInvoicePage() {
   }, [ensureAreaLoaded, ensureAssetsModelLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureWarehouseAllLoaded]);
 
     const [refreshKey, setRefreshKey] = useState(0);
+    const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
     const [showDropdown, setShowDropdown] = useState(false);
 
     const handleChange = (name: string, value: string) => {
@@ -404,7 +374,7 @@ export default function CustomerInvoicePage() {
                 config={{
                     api: { filterBy: filterBy },
                     header: {
-                        title: "ACF",
+                        title: "Approve Chiller Request",
                         columnFilter: true,
                         searchBar: false,
                         // threeDot: [
@@ -506,26 +476,22 @@ export default function CustomerInvoicePage() {
                     columns,
                     rowSelection: true,
                     floatingInfoBar: {
-                                  showByDefault: true,
-                                  showSelectedRow: true,
-                                  buttons: [
-                                    {
-                            label: "Selected Rows: ",
-                            onClick: (data: TableDataType[], selectedRow?: number[]) => {
-                                const ids = selectedRow
-                                    ?.map((id) => {
-                                        const row = data[id];
-                                        if (hasChillerRequest(row)) {
-                                            return row.chiller_request.id;
-                                        }
-                                        return null;
-                                    })
-                                    .filter((id): id is number => id !== null);
-                                console.log("Selected Rows:", ids);
+                        showByDefault: true,
+                        showSelectedRow: true,
+                        buttons: [
+                            {
+                                label: "Selected Rows",
+                                onClick: (data, selectedRow) => {
+                                    const rows = selectedRow?.map(i => data[i]) || [];
+                                    console.log('Selected rows:', rows);
+                                    setSelectedRowsData(rows);
+                                    setSidebarRefreshKey(k => k + 1);
+                                    setShowSidebar(true);
+                                }
                             }
-                        },
-                                  ]
-                                },
+                        ]
+                    },
+
                     localStorageKey: "invoice-table",
                     rowActions: [
                         {
@@ -542,6 +508,58 @@ export default function CustomerInvoicePage() {
                     pageSize: 10,
                 }}
             />
+            {showSidebar && (
+                <>
+                    {/* Overlay */}
+                    <div
+                        className="h-full fixed inset-0 bg-black/40 backdrop-blur-sm z-40"
+                        onClick={() => setShowSidebar(false)}
+                    />
+
+                    {/* Sidebar */}
+                    <div className="fixed top-0 right-0 h-full w-1/3 bg-white z-50 shadow-lg transform transition-transform duration-300">
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-5 border-b">
+                            <h2 className="text-lg font-semibold">Selected Chiller</h2>
+                            <button onClick={() => setShowSidebar(false)}>
+                                <Icon icon="lucide:x" width={22} />
+                            </button>
+                        </div>
+
+                        {/* TABLE INSIDE SIDEBAR */}
+                        <div className="p-5">
+                            <Table
+                                refreshKey={sidebarRefreshKey}
+                                data={selectedRowsData && selectedRowsData.length > 0 ? selectedRowsData : []}
+                                config={{
+                                    columns: [
+                                        {
+                                            key: "osa_code",
+                                            label: "Code",
+                                            render: (row: any) =>
+                                                row?.chiller_request?.osa_code || row?.osa_code || "-",
+                                        },
+                                        {
+                                            key: "model",
+                                            label: "Model Code",
+                                            render: (row: any) =>
+                                                row?.chiller_request?.model || row?.model || "-",
+                                        },
+                                    ],
+                                    pageSize: 5,
+                                    rowSelection: false,
+                                    footer: { pagination: false },
+                                    header: { title: "", searchBar: false },
+                                }}
+                            />
+
+                        </div>
+                    </div>
+                </>
+            )}
+
+
         </div>
     );
 }

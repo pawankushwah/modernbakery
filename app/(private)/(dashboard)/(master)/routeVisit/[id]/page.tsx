@@ -223,11 +223,11 @@ export default function AddEditRouteVisit() {
       from_date: validationSchema.fields.from_date,
       to_date: validationSchema.fields.to_date,
       status: validationSchema.fields.status,
-  }) as yup.ObjectSchema<Record<string, unknown>>,
+    }) as yup.ObjectSchema<Record<string, unknown>>,
     // Step 2: Customer Schedule validation
     yup.object().shape({
       salesman_type: validationSchema.fields.salesman_type,
-  }) as yup.ObjectSchema<Record<string, unknown>>,
+    }) as yup.ObjectSchema<Record<string, unknown>>,
   ];
 
   // Build dynamic schema for step 1 based on salesman_type
@@ -241,7 +241,7 @@ export default function AddEditRouteVisit() {
         from_date: validationSchema.fields.from_date,
         to_date: validationSchema.fields.to_date,
         status: validationSchema.fields.status,
-  }) as yup.ObjectSchema<Record<string, unknown>>;
+      }) as yup.ObjectSchema<Record<string, unknown>>;
     }
 
     // Agent customer (default) - require company, region, area, warehouse, route
@@ -254,7 +254,7 @@ export default function AddEditRouteVisit() {
       from_date: validationSchema.fields.from_date,
       to_date: validationSchema.fields.to_date,
       status: validationSchema.fields.status,
-  }) as yup.ObjectSchema<Record<string, unknown>>;
+    }) as yup.ObjectSchema<Record<string, unknown>>;
   };
 
   // ✅ Fetch dropdowns
@@ -322,7 +322,7 @@ export default function AddEditRouteVisit() {
 
         setForm({
           salesman_type: existing.customer_type || "1",
-          merchandiser:String(existing.merchandiser_id),
+          merchandiser: String(existing.merchandiser_id),
           region: existing.region?.map((r: Region) => String(r.id)) || [],
           area: existing.area?.map((a: Area) => String(a.id)) || [],
           warehouse:
@@ -352,7 +352,7 @@ export default function AddEditRouteVisit() {
           setCustomerSchedules(schedule);
         }
 
-       
+
       } else {
         showSnackbar("Route visit not found", "error");
       }
@@ -607,7 +607,7 @@ export default function AddEditRouteVisit() {
   // ✅ Step navigation
   const handleNext = async () => {
     try {
-  let schema: yup.ObjectSchema<Record<string, unknown>> | undefined;
+      let schema: yup.ObjectSchema<Record<string, unknown>> | undefined;
       if (currentStep === 1) {
         schema = getStep1Schema(form.salesman_type);
       } else if (currentStep === 2) {
@@ -703,7 +703,7 @@ export default function AddEditRouteVisit() {
 
       console.log("Submitting payload:", JSON.stringify(payload, null, 2));
 
-  let res: ApiResponse<Record<string, unknown>>;
+      let res: ApiResponse<Record<string, unknown>>;
       if (isEditMode && visitId) {
         console.log("Updating existing route visit...");
         res = await updateRouteVisitDetails(payload);
@@ -780,49 +780,49 @@ export default function AddEditRouteVisit() {
                   error={errors.to_date}
                 />
               </div>
- {/* {!isEditMode && ( */}
-                  {/* Salesman Type */}
-                  <div>
-                    <InputFields
-                      required
-                      label="Customer Type"
-                      value={form.salesman_type}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          salesman_type: e.target.value,
-                        }))
-                      }
-                      options={[
-                        { value: "1", label: "Field Customer" },
-                        { value: "2", label: "Merchandiser" },
-                      ]}
-                      error={errors.salesman_type}
-                    />
-                  </div>
+              {/* {!isEditMode && ( */}
+              {/* Salesman Type */}
+              <div>
+                <InputFields
+                  required
+                  label="Customer Type"
+                  value={form.salesman_type}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      salesman_type: e.target.value,
+                    }))
+                  }
+                  options={[
+                    { value: "1", label: "Field Customer" },
+                    { value: "2", label: "Merchandiser" },
+                  ]}
+                  error={errors.salesman_type}
+                />
+              </div>
 
-                  {/* Merchandiser select shown when Salesman Type = Merchandiser */}
-                  {form.salesman_type === "2" && (
-                    <div>
-                      <InputFields
-                        required
-                        label="Merchandiser"
-                        value={form.merchandiser}
-                        // InputFields is single-select here; normalize value to string
-                        onChange={(e) => {
-                          const raw = (e as any).target?.value;
-                          const val = Array.isArray(raw) ? raw[0] : raw;
-                          const normalized = val == null ? "" : String(val).trim().replace(/^"+|"+$/g, "");
-                          setForm((prev) => ({ ...prev, merchandiser: normalized }));
-                        }}
-                        showSkeleton={skeleton.merchandiser}
-                        options={merchandiserOptions}
-                        isSingle={true}
-                        error={errors.merchandiser}
-                      />
-                     
-                    </div>
-                  )}
+              {/* Merchandiser select shown when Salesman Type = Merchandiser */}
+              {form.salesman_type === "2" && (
+                <div>
+                  <InputFields
+                    required
+                    label="Merchandiser"
+                    value={form.merchandiser}
+                    // InputFields is single-select here; normalize value to string
+                    onChange={(e) => {
+                      const raw = (e as any).target?.value;
+                      const val = Array.isArray(raw) ? raw[0] : raw;
+                      const normalized = val == null ? "" : String(val).trim().replace(/^"+|"+$/g, "");
+                      setForm((prev) => ({ ...prev, merchandiser: normalized }));
+                    }}
+                    showSkeleton={skeleton.merchandiser}
+                    options={merchandiserOptions}
+                    isSingle={true}
+                    error={errors.merchandiser}
+                  />
+
+                </div>
+              )}
               {/* )} */}
               {/* Company - Multi Select */}
               <div>
@@ -867,71 +867,71 @@ export default function AddEditRouteVisit() {
 
               {/* Area - Multi Select */}
               {form.salesman_type !== "2" && (
-              <div>
-                <InputFields
-                  required
-                  disabled={form.region.length === 0}
-                  label="Area"
-                  multiSelectChips={true}
-                  value={form.area}
-                  onChange={(e) =>
-                    handleMultiSelectChange(
-                      "area",
-                      Array.isArray(e.target.value) ? e.target.value : []
-                    )
-                  }
-                  showSkeleton={skeleton.area}
-                  options={areaOptions}
-                  isSingle={false}
-                  error={errors.area}
-                />
-              </div>
+                <div>
+                  <InputFields
+                    required
+                    disabled={form.region.length === 0}
+                    label="Area"
+                    multiSelectChips={true}
+                    value={form.area}
+                    onChange={(e) =>
+                      handleMultiSelectChange(
+                        "area",
+                        Array.isArray(e.target.value) ? e.target.value : []
+                      )
+                    }
+                    showSkeleton={skeleton.area}
+                    options={areaOptions}
+                    isSingle={false}
+                    error={errors.area}
+                  />
+                </div>
               )}
 
               {/* Warehouse - Multi Select */}
               {form.salesman_type !== "2" && (
-              <div>
-                <InputFields
-                  required
-                  disabled={form.area.length === 0 || areaOptions.length === 0}
-                  label="Distributor"
-                  multiSelectChips={true}
-                  value={form.warehouse}
-                  onChange={(e) =>
-                    handleMultiSelectChange(
-                      "warehouse",
-                      Array.isArray(e.target.value) ? e.target.value : []
-                    )
-                  }
-                  showSkeleton={skeleton.warehouse}
-                  options={warehouseOptions}
-                  isSingle={false}
-                  error={errors.warehouse}
-                />
-              </div>
+                <div>
+                  <InputFields
+                    required
+                    disabled={form.area.length === 0 || areaOptions.length === 0}
+                    label="Distributors"
+                    multiSelectChips={true}
+                    value={form.warehouse}
+                    onChange={(e) =>
+                      handleMultiSelectChange(
+                        "warehouse",
+                        Array.isArray(e.target.value) ? e.target.value : []
+                      )
+                    }
+                    showSkeleton={skeleton.warehouse}
+                    options={warehouseOptions}
+                    isSingle={false}
+                    error={errors.warehouse}
+                  />
+                </div>
               )}
 
               {/* Route - Multi Select */}
               {form.salesman_type !== "2" && (
-              <div>
-                <InputFields
-                  required
-                  disabled={form.warehouse.length === 0}
-                  label="Route"
-                  multiSelectChips={true}
-                  value={form.route}
-                  onChange={(e) =>
-                    handleMultiSelectChange(
-                      "route",
-                      Array.isArray(e.target.value) ? e.target.value : []
-                    )
-                  }
-                  showSkeleton={skeleton.route}
-                  options={routeOptions}
-                  isSingle={false}
-                  error={errors.route}
-                />
-              </div>
+                <div>
+                  <InputFields
+                    required
+                    disabled={form.warehouse.length === 0}
+                    label="Route"
+                    multiSelectChips={true}
+                    value={form.route}
+                    onChange={(e) =>
+                      handleMultiSelectChange(
+                        "route",
+                        Array.isArray(e.target.value) ? e.target.value : []
+                      )
+                    }
+                    showSkeleton={skeleton.route}
+                    options={routeOptions}
+                    isSingle={false}
+                    error={errors.route}
+                  />
+                </div>
               )}
 
               {/* Status */}
@@ -958,7 +958,7 @@ export default function AddEditRouteVisit() {
         return (
           <div className="bg-white rounded-2xl shadow divide-y divide-gray-200 mb-6">
             <div className="p-6">
-             
+
 
               <h3 className="text-lg font-medium text-gray-900 mb-4">
                 Customer Schedule
