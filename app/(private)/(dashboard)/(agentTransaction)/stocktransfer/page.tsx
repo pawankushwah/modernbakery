@@ -117,10 +117,12 @@ export default function StockTransferPage() {
         {
             key: "transfer_date",
             label: "Transfer Date",
+            showByDefault: true,
         },
         {
             key: "source_warehouse",
             label: "Source Warehouse",
+            showByDefault: true,
             render: (row: TableDataType) =>
                 row.source_warehouse
                     ? `${row.source_warehouse.code} - ${row.source_warehouse.name}`
@@ -129,6 +131,7 @@ export default function StockTransferPage() {
         {
             key: "destiny_warehouse",
             label: "Destination Warehouse",
+            showByDefault: true,
             render: (row: TableDataType) =>
                 row.destiny_warehouse
                     ? `${row.destiny_warehouse.code} - ${row.destiny_warehouse.name}`
@@ -143,6 +146,7 @@ export default function StockTransferPage() {
         {
             key: "status",
             label: "Status",
+            showByDefault: true,
             render: (row: TableDataType) => (
                 <StatusBtn isActive={row.status === 1} />
             ),

@@ -10,6 +10,7 @@ import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 const title = "Stock Transfer Details";
 const backBtnUrl = "/stockTransfer";
@@ -56,7 +57,7 @@ export default function ViewPage() {
             <WorkflowApprovalActions
                 requestStepId={transferData?.request_step_id}
                 redirectPath={backBtnUrl}
-                model=""
+                model="Distributor_Stock_Transfer"
             />
 
             {/* SUMMARY CARDS */}

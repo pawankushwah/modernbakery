@@ -2174,6 +2174,15 @@ export const workFlowAssignmentList = async () => {
   }
 };
 
+export const workFlowAssignmentStatusChange = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/approval/workflow/assignment/toggle`, body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const workFlowRequest = async (params: Params) => {
   try {
     const res = await API.get(`/api/master/approval/workflow/requests`, { params });

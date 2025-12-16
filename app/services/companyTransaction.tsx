@@ -21,7 +21,7 @@ export const purchaseOrderById = async (uuid: string) => {
 
 export const purchaseOrderAdd = async (body: object) => {
   try {
-    const res = await API.get(`/api/hariss_transaction/po_orders/create`, body);
+    const res = await API.post(`/api/hariss_transaction/po_orders/create`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -304,9 +304,9 @@ export const capsByUUID = async (uuid: string, params?: Params) => {
   }
 };
 
-export const capsCreate = async (params?: Params) => {
+export const capsCreate = async (body: object) => {
   try {
-    const res = await API.post(`/api/hariss_transaction/ht_caps/create`, { params });
+    const res = await API.post(`/api/hariss_transaction/ht_caps/create`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

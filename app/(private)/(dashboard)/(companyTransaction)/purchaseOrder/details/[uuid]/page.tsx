@@ -88,6 +88,7 @@ export default function OrderDetailPage() {
     const UUID = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid ?? "";
     const CURRENCY = localStorage.getItem("country") || "";
     const PATH = `/purchaseOrder/details/`;
+    const backBtnUrl = "/purchaseOrder";
 
     const fetchOrder = async () => {
         setLoading(true);
@@ -157,18 +158,18 @@ export default function OrderDetailPage() {
 
     return (
         <>
-        <WorkflowApprovalActions
+            <WorkflowApprovalActions
                 requestStepId={data?.request_step_id}
-                redirectPath={"/purchaseOrder"}
-                model="Distributor_Advance_Payment"
-              />
+                redirectPath={backBtnUrl}
+                model="Po_Order_Header"
+            />
             {/* ---------- Header ---------- */}
             <div className="flex justify-between items-center mb-[20px]">
                 <div className="flex items-center gap-[16px]">
                     <Icon
                         icon="lucide:arrow-left"
                         width={24}
-                        onClick={() => router.push("/purchaseOrder")}
+                        onClick={() => router.push(backBtnUrl)}
                         className="cursor-pointer"
                     />
                     <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">

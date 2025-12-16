@@ -13,6 +13,7 @@ import {
   updateWorkFlowsToSubmenu,
   workFlowAssignList,
   workFlowAssignmentList,
+  workFlowAssignmentStatusChange,
   workFlowList,
   workFlowProcessType,
   workFlowRequest,
@@ -27,6 +28,8 @@ import InputFields from "@/app/components/inputFields";
 import { Icon } from "@iconify-icon/react";
 import { useRouter } from "next/navigation";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import ToggleButton from "@mui/material/ToggleButton";
+import Toggle from "@/app/components/toggle";
 
 // ---- Your JSON pasted here ----
 // const WORKFLOW_DATA:any = [
@@ -218,6 +221,28 @@ export default function WorkflowTable() {
       key: "display_name",
       label: "Assigned To",
     },
+    {
+      key: "is_active",
+      label: "Status",
+      render: (row: TableDataType) => {
+        async function handleClick() {
+          console.log("Clicked Row:", row);
+          const res = await workFlowAssignmentStatusChange({
+            process_type: row.process_type,
+            workflow_id: row.workflow_id,
+            is_active: row.is_active === true ? false : true
+          });
+          if (res.error) {
+            showSnackbar(res.message || "Something went wrong","error");
+            return;
+          }
+          showSnackbar(res.message || "Status updated successfully", "success");
+          setRefreshKey((prev) => prev + 1);
+        }
+        return <div className="cursor-pointer select-none">
+          <Toggle isChecked={row.is_active === true} onChange={handleClick} />
+        </div>
+    }}
   ];
 
   // ------------------ LOCAL LIST FUNCTION -----------------
