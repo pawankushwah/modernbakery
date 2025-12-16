@@ -36,7 +36,7 @@ const LoginPage = () => {
                         onSubmit={async (values, { setErrors }) => {
 
                             const res = await login({
-                                username: values.userId, // Can be email or username
+                                email: values.userId, // Can be email or username
                                 password: values.password,
                             });
                             

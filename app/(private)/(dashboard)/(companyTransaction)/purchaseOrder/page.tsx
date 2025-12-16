@@ -257,12 +257,12 @@ export default function CustomerInvoicePage() {
                                         `/purchaseOrder/details/${row.uuid}`
                                     ),
                             },
-                            {
-                                icon: "uil:process",
-                                onClick: (row: TableDataType) => {
-                                    router.push(`/settings/processFlow?order_code=${row.order_code}`);
-                                }
-                            }
+                            // {
+                            //     icon: "uil:process",
+                            //     onClick: (row: TableDataType) => {
+                            //         router.push(`/settings/processFlow?order_code=${row.order_code}`);
+                            //     }
+                            // }
                         ],
                         pageSize: 10,
                     }}
