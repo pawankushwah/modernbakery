@@ -1198,7 +1198,7 @@ export default function InputFields({
           </div>
         );
 
-      case "contact2":
+      case "contact":
         return (
           <div className="relative mt-0 w-full">
             {(() => {
@@ -1232,9 +1232,8 @@ export default function InputFields({
 
               return (
                 <div
-                  className={`mx-auto border-[1px] ${
-                    error ? "border-red-500" : "border-gray-300"
-                  } rounded-md`}
+                  className={`mx-auto border-[1px] ${error ? "border-red-500" : "border-gray-300"
+                    } rounded-md`}
                   ref={dropdownRef}
                 >
                   <div className="flex items-center relative">
