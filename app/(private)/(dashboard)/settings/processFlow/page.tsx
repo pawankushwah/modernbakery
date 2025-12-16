@@ -5,6 +5,8 @@ import { ArrowLeft, FileText, Truck, Receipt, Calculator } from "lucide-react";
 import { useRouter,useSearchParams  } from "next/navigation";
 import { VerticalArrow } from "../approval/proccessFlow";
 import { orderProcessFlow } from "@/app/services/settingsAPI";
+import { useState } from "react";
+
 interface ProcessStep {
   id: string;
   title: string;
@@ -15,33 +17,86 @@ interface ProcessStep {
 interface ProcessCard {
   type: string;
   number: string;
-rowType?: string;
-verticalHeight?: string;
-horizontalHeight?: string;
+  rowType?: string;
+  verticalHeight?: string;
+  horizontalHeight?: string;
   status: "Completed" | "Shipped" | "Not Cleared";
   date: string;
   dateLabel: string;
-  additionalInfo?: string;
+  additionalInfo?: any;
+  netValue?: string;
 }
 
 const ProcessFlow = () => {
   const router = useRouter();
-    const searchParams = useSearchParams();
+  const searchParams = useSearchParams();
   const order_code = searchParams.get("order_code") || undefined;
+
+  const [processData, setProcessData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchProcessFlow = async () => {
+      setLoading(true);
       try {
         const data = await orderProcessFlow({ order_code });
-        console.log("Process Flow Data:", data);
+        setProcessData(data?.data || null);
       } catch (error) {
-        console.error("Error fetching process flow:", error);
+        setProcessData(null);
+      } finally {
+        setLoading(false);
       }
     };
-
     if (order_code) fetchProcessFlow();
   }, [order_code]);
-  const processSteps: ProcessStep[] = [
+
+  // Map API response to ProcessCard[] for each column
+  const orderProcessingCards: ProcessCard[] = processData?.order && Array.isArray(processData.order.steps)
+    ? [...processData.order.steps].reverse().map((step: any, idx: number): ProcessCard => ({
+        type: `Order`,
+        number: processData.order.order_code,
+        status: step.status === "APPROVED" ? "Completed" : "Not Cleared",
+        rowType: "both",
+        verticalHeight: "100px",
+        horizontalHeight: "100px",
+        date: "",
+        dateLabel: step.title,
+        additionalInfo: step.message,
+      }))
+    : [];
+
+  const deliveryProcessingCards: ProcessCard[] = processData?.deliveries
+    ? processData.deliveries.flatMap((d: any) =>
+        Array.isArray(d.steps)
+          ? [...d.steps].reverse().map((step: any, idx: number): ProcessCard => ({
+              type: "Delivery",
+              number: d.delivery.delivery_code,
+              status: step.status === "APPROVED" ? "Shipped" : "Not Cleared",
+              date: "",
+              dateLabel: step.title,
+              additionalInfo: step.message,
+            }))
+          : []
+      )
+    : [];
+
+  const invoicingCards: ProcessCard[] = processData?.invoices
+    ? processData.invoices.flatMap((inv: any) =>
+        Array.isArray(inv.steps)
+          ? [...inv.steps].reverse().map((step: any, idx: number): ProcessCard => ({
+              type: "Tax Invoice",
+              number: inv.invoice.invoice_code,
+              status: step.status === "APPROVED" ? "Completed" : "Not Cleared",
+              date: "",
+              dateLabel: step.title,
+              additionalInfo: `${step.message}${inv.invoice.amount ? ` | Net Value ${inv.invoice.amount} UGX` : ''}`,
+            }))
+          : []
+      )
+    : [];
+
+  const accountingCards: ProcessCard[] = [];
+    const processSteps: ProcessStep[] = [
     {
       id: "order",
       title: "Order Processing",
@@ -68,77 +123,7 @@ const ProcessFlow = () => {
     },
   ];
 
-  const orderProcessingCards: ProcessCard[] = [
-    {
-      type: "Standard Ordr-Credit",
-      number: "30077651",
-      status: "Completed",
-      date: "09.09.2025",
-      rowType: "both",
-      verticalHeight: "200px",
-      horizontalHeight: "100px",
-      dateLabel: "Requested Delivery on",
-      additionalInfo: "Completely Invoiced",
-    },
-  ];
 
-  const deliveryProcessingCards: ProcessCard[] = [
-    {
-      type: "Delivery",
-      number: "800179398",
-      status: "Shipped",
-      rowType: "right",
-      
-      date: "09.09.2025",
-      dateLabel: "Shipped on",
-    },
-    {
-      type: "Delivery",
-      number: "800179359",
-      status: "Shipped",
-      rowType: "right",
-      date: "09.09.2025",
-      dateLabel: "Shipped on",
-    },
-  ];
-
-  const invoicingCards: ProcessCard[] = [
-    {
-      type: "Tax Invoice",
-      number: "9000129232",
-      status: "Completed",
-      rowType: "right",
-      date: "09.09.2025",
-      dateLabel: "Billed on",
-      additionalInfo: "Net Value 22881355.20 UGX",
-    },
-    {
-      type: "Tax Invoice",
-      number: "9000129226",
-      status: "Completed",
-      rowType: "right",
-      date: "09.09.2025",
-      dateLabel: "Billed on",
-      additionalInfo: "Net Value 50349153.32 UGX",
-    },
-  ];
-
-  const accountingCards: ProcessCard[] = [
-    {
-      type: "Journal Entry",
-      number: "9000129232",
-      status: "Not Cleared",
-      date: "09.09.2025",
-      dateLabel: "Posted on",
-    },
-    {
-      type: "Journal Entry",
-      number: "9000129326",
-      status: "Not Cleared",
-      date: "09.09.2025",
-      dateLabel: "Posted on",
-    },
-  ];
 
   const renderCard = (card: ProcessCard) => {
     const getStatusColor = (status: string) => {
@@ -173,33 +158,25 @@ const ProcessFlow = () => {
           className="group bg-white border border-gray-200 hover:border-blue-500 transition-colors duration-200 p-4 shadow-sm min-w-[200px] min-h-[200px] relative"
           style={{ clipPath: "polygon(0 0, 100% 0, 100% 90%, 90% 100%, 0 100%)" }}
         >
-        <div className="mb-3">
-          <div className="font-medium text-gray-800 text-sm">
-            {card.type} {card.number}
+          <div className="mb-3">
+            <div className="font-medium text-gray-800 text-sm">
+              {card.type} {card.number}
+            </div>
+          </div>
+          <div className={`flex items-center gap-2 mb-2 ${getStatusColor(card.status)}`}>
+            <span className="text-lg">{getStatusIcon(card.status)}</span>
+            <span className="font-medium text-sm">{card.status}</span>
+          </div>
+          <div className="text-gray-600 text-xs mb-1">{card.dateLabel}</div>
+          <div className="text-gray-700 text-xs mb-2">{card.additionalInfo}</div>
+          <div className="absolute bottom-0 right-0 w-0 h-0 
+            transform rotate-270 bg-[#fbf9fa]
+            border-l-[18px] border-l-transparent
+            border-t-[18px] border-t-gray-500 group-hover:border-t-blue-500 transition-colors duration-200" >
           </div>
         </div>
-        
-        <div className={`flex items-center gap-2 mb-2 ${getStatusColor(card.status)}`}>
-          <span className="text-lg">{getStatusIcon(card.status)}</span>
-          <span className="font-medium text-sm">{card.status}</span>
-        </div>
-
-        <div className="text-gray-600 text-xs mb-1">{card.dateLabel}</div>
-        <div className="text-gray-800 text-xs font-medium mb-2">{card.date}</div>
-
-        {card.additionalInfo && (
-          <div className="text-gray-700 text-xs">{card.additionalInfo}</div>
-        )}
-<div className="absolute bottom-0 right-0 w-0 h-0 
-        transform rotate-270 bg-[#fbf9fa]
-      border-l-[18px] border-l-transparent
-      border-t-[18px] border-t-gray-500 group-hover:border-t-blue-500 transition-colors duration-200" >
-    </div>
-        {/* Arrow tail for card */}
+        <VerticalArrow rowType={card.rowType}  verticalHeight={card.verticalHeight}  horizontalHeight={card.horizontalHeight} />
       </div>
-       <VerticalArrow rowType={card.rowType}  verticalHeight={card.verticalHeight}  horizontalHeight={card.horizontalHeight} />
-      
-       </div>
     );
   };
 
@@ -230,7 +207,7 @@ const ProcessFlow = () => {
         <div className="mb-8 flex items-center gap-4">
           <button
             onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className=" transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-6 h-6" />
           </button>
@@ -259,7 +236,7 @@ const ProcessFlow = () => {
             {/* Order Processing Column */}
             <div className="flex-1 min-w-[250px]">
               <div className="space-y-4">
-                {orderProcessingCards.map((card, index) => (
+                {orderProcessingCards.map((card: ProcessCard, index: number) => (
                   <div key={index} className="flex">
                     {renderCard(card)}
                   </div>
@@ -270,7 +247,7 @@ const ProcessFlow = () => {
             {/* Delivery Processing Column */}
             <div className="flex-1 min-w-[250px]">
               <div className="space-y-4">
-                {deliveryProcessingCards.map((card, index) => (
+                {deliveryProcessingCards.map((card: ProcessCard, index: number) => (
                   <div key={index} className="flex">
                     {renderCard(card)}
                   </div>
@@ -281,7 +258,7 @@ const ProcessFlow = () => {
             {/* Invoicing Column */}
             <div className="flex-1 min-w-[250px]">
               <div className="space-y-4">
-                {invoicingCards.map((card, index) => (
+                {invoicingCards.map((card: ProcessCard, index: number) => (
                   <div key={index} className="flex">
                     {renderCard(card)}
                   </div>

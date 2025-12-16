@@ -13,7 +13,7 @@ import CardForLoginPage from "../../components/cardForLoginPage";
 import { login } from "@/app/services/allApi";
 
 const LoginSchema = Yup.object().shape({
-    userId: Yup.string().required("Email or Username is required"),
+    userId: Yup.string().required("User ID is required"),
     password: Yup.string()
         .min(6, "Password too short")
         .required("Password is required"),
@@ -36,7 +36,7 @@ const LoginPage = () => {
                         onSubmit={async (values, { setErrors }) => {
 
                             const res = await login({
-                                username: values.userId, // Can be email or username
+                                email: values.userId,
                                 password: values.password,
                             });
                             
@@ -66,15 +66,15 @@ const LoginPage = () => {
 
                                 <div className="flex flex-col gap-[24px] m-[20px] lg:m-0">
                                     <div className="flex flex-col gap-[20px]">
-                                        {/* User ID / Email */}
+                                        {/* User ID */}
                                         <div>
                                             <CustomTextInput
-                                                label="Email or Username"
+                                                label="User ID"
                                                 value={values.userId}
                                                 onChange={handleChange(
                                                     "userId"
                                                 )}
-                                                placeholder="Enter email or username"
+                                                placeholder="User ID"
                                             />
                                             <ErrorMessage
                                                 name="userId"
