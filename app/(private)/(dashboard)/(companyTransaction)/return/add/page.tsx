@@ -655,7 +655,7 @@ export default function PurchaseOrderAddEditPage() {
           // Optionally handle error, but don't block success
         }
         showSnackbar("Order created successfully", "success");
-        router.push("/purchaseOrder");
+        router.push("/return");
       }
     } catch (err) {
       console.error(err);
@@ -667,15 +667,7 @@ export default function PurchaseOrderAddEditPage() {
     }
   };
 
-  const keyValueData = [
-    // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
-    // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
-    // { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
-    // { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
-    // { key: "Excise", value: `${CURRENCY} ${toInternationalNumber(totalExcise)}` },
-    // { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
-    // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
-  ];
+
 
   const fetchAgentCustomers = async (values: FormikValues, search: string) => {
     const res = await companyCustomersGlobalSearch({
