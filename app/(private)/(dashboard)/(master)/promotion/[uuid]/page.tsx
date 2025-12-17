@@ -1540,6 +1540,7 @@ export default function AddPricing() {
                   onChange={e => {
                     const val = e.target.value;
                     setPromotion(s => ({ ...s, bundle_combination: val }));
+                    setPercentageDiscounts([{ key: "", percentage: "", idx: "0" }]);
                     if (val !== "range") {
                       // Reset to single row if not range
                       setOrderTables(tables => tables.map(arr => [arr[0]]));
@@ -1655,7 +1656,10 @@ export default function AddPricing() {
                     isSingle={true}
                     options={[{ label: "Quantity", value: "quantity" }, { label: "Percentage", value: "percentage" },]}
                     value={promotion.promotionType}
-                    onChange={e => setPromotion(s => ({ ...s, promotionType: e.target.value }))}
+                    onChange={e => {
+                      setPromotion(s => ({ ...s, promotionType: e.target.value }));
+                      setPercentageDiscounts([{ key: "", percentage: "", idx: "0" }]);
+                    }}
                     width="w-full"
                   />
                 </div>
