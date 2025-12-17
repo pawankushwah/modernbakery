@@ -274,6 +274,13 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
+            href: "/salesTeamTracking",
+            label: "Sales Team Tracking",
+            leadingIcon: "mdi:package-variant",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
             href: "/salesTeamRecosite",
             label: "Sales Team Reconsite",
             leadingIcon: "mdi:package-variant",

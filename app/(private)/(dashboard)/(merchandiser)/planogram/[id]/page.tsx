@@ -31,7 +31,6 @@ import {
 
 // ---------------- TYPES ----------------
 type ShelfImage = {
-  shelf_id: number;
   image: File | null;
 };
 
@@ -41,7 +40,6 @@ type PlanogramFormValues = {
   valid_to: string;
   merchendiser_ids: number[];
   customer_ids: number[];
-  shelf_id: number[];
   images: Record<string, Record<string, ShelfImage[]>>;
 };
 
@@ -138,7 +136,6 @@ export default function Planogram() {
     valid_to: "",
     merchendiser_ids: [],
     customer_ids: [],
-    shelf_id: [],
     images: {},
   });
 
@@ -228,7 +225,6 @@ export default function Planogram() {
                 : "",
               merchendiser_ids: merchIds,
               customer_ids: custIds,
-              shelf_id: shelfIds,
               images: {},
             });
           }
@@ -333,36 +329,22 @@ export default function Planogram() {
 
   // ---------------- IMAGE HANDLING ----------------
   const handleImageUpload = (
-    shelfId: number,
     file: File | null,
     setFieldValue: (field: keyof PlanogramFormValues, value: unknown) => void,
     values: PlanogramFormValues
   ) => {
-    const shelfOption = shelfOptions.find((s) => s.shelf_id === shelfId);
-    if (!shelfOption?.merch_id || !shelfOption?.cust_id) return;
 
     const updatedImages = { ...values.images };
 
-    if (!updatedImages[shelfOption.merch_id]) {
-      updatedImages[shelfOption.merch_id] = {};
-    }
-    if (!updatedImages[shelfOption.merch_id][shelfOption.cust_id]) {
-      updatedImages[shelfOption.merch_id][shelfOption.cust_id] = [];
-    }
-
-    const existingIndex = updatedImages[shelfOption.merch_id][
-      shelfOption.cust_id
-    ].findIndex((item: ShelfImage) => item.shelf_id === shelfId);
+    const existingIndex = updatedImages[values.merchendiser_ids[0]][values.customer_ids[0]].findIndex((item: ShelfImage) => item.image === file);
 
     if (existingIndex >= 0) {
-      updatedImages[shelfOption.merch_id][shelfOption.cust_id][existingIndex] =
+      updatedImages[values.merchendiser_ids[0]][values.customer_ids[0]][existingIndex] =
       {
-        shelf_id: shelfId,
         image: file,
       };
     } else {
-      updatedImages[shelfOption.merch_id][shelfOption.cust_id].push({
-        shelf_id: shelfId,
+      updatedImages[values.merchendiser_ids[0]][values.customer_ids[0]].push({
         image: file,
       });
     }
@@ -384,31 +366,16 @@ export default function Planogram() {
       formData.append("code", `PLN-${Date.now()}`);
 
       values.merchendiser_ids.forEach((id) =>
-        formData.append("merchendisher_id[]", String(id))
+        formData.append("merchendisher_id", String(id))
       );
       values.customer_ids.forEach((id) =>
-        formData.append("customer_id[]", String(id))
+        formData.append("customer_id", String(id))
       );
-
-      // Append images in the correct format
-      for (const merchId in values.images) {
-        for (const custId in values.images[merchId]) {
-          values.images[merchId][custId].forEach(
-            (imgObj: ShelfImage, index: number) => {
-              if (imgObj.image instanceof File) {
-                formData.append(
-                  `images[${merchId}][${custId}][${index}][shelf_id]`,
-                  String(imgObj.shelf_id)
-                );
-                formData.append(
-                  `images[${merchId}][${custId}][${index}][image]`,
-                  imgObj.image
-                );
-              }
-            }
-          );
-        }
-      }
+      // values.images[values.merchendiser_ids[0]][values.customer_ids[0]].forEach((image: ShelfImage) => {
+      //   if (image.image) {
+      //     formData.append("image", image.image);
+      //   }
+      // });
 
       const res = isEditMode
         ? await updatePlanogramById(String(id), formData)
