@@ -253,7 +253,7 @@ export default function AddPricing() {
           const newKeyCombo = {
             Location: keys.Location?.[0] || "",
             Customer: keys.Customer?.[0] || "",
-            Item: newKeyComboItem,
+            Item: keys.Item?.[0] || "",
           };
           setKeyCombo(newKeyCombo);
 
@@ -274,6 +274,11 @@ export default function AddPricing() {
           // Item/Item Category for keyValue is populated via sync effect from percentageDiscounts
           // or directly from data.item_category / data.items if not percentage promotion.
           const isPercentageDriven = Array.isArray(data.percentage_discounts) && data.percentage_discounts.length > 0;
+          
+          if (isPercentageDriven && newKeyCombo.Item === "Item" && data.item_category?.length > 0) {
+             newKeyValue["Item Category"] = data.item_category.map(String);
+          }
+
           if (!isPercentageDriven) { // Only set if not percentage_discounts driven
             if (newKeyCombo.Item === "Item Category") {
               const categories = data.item_category?.map(String) || [];
@@ -287,6 +292,10 @@ export default function AddPricing() {
             }
             if (newKeyCombo.Item === "Item") {
               newKeyValue["Item"] = data.items?.map(String) || [];
+              const categories = data.item_category?.map(String) || [];
+              if (categories.length > 0) {
+                newKeyValue["Item Category"] = categories;
+              }
             }
           }
           setKeyValue(newKeyValue);
@@ -1771,10 +1780,10 @@ export default function AddPricing() {
                   )}
                   {keyCombo.Item === "Item" && promotion.bundle_combination !== "slab" && (
                     <div>
-                      <div className="mb-2 text-base font-medium">
+                      {/* <div className="mb-2 text-base font-medium">
                         Item
                         <span className="text-red-500 ml-1">*</span>
-                      </div>
+                      </div> */}
                       <InputFields
                         label="Item"
                         required={true}
