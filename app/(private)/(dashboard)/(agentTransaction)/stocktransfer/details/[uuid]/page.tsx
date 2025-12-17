@@ -57,7 +57,7 @@ export default function ViewPage() {
             <WorkflowApprovalActions
                 requestStepId={transferData?.request_step_id}
                 redirectPath={backBtnUrl}
-                model=""
+                model="Distributor_Stock_Transfer"
             />
 
             {/* SUMMARY CARDS */}

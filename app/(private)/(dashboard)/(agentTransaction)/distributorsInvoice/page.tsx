@@ -87,7 +87,6 @@ const columns = [
         showByDefault: true,
         render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
     },
-
 ];
 
 export default function CustomerInvoicePage() {

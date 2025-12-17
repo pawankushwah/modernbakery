@@ -16,6 +16,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { isValidDate } from "@/app/utils/formatDate";
 import { downloadFile } from "@/app/services/allApi";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 const columns = [
     { key: "index", label: "#" },
@@ -38,6 +39,7 @@ interface CapsDetail {
     salesman_id: number,
     truck_no: string,
     contact_no: number,
+    request_step_id: number,
     claim_no: string,
     claim_date: string,
     claim_amount: number,
@@ -73,6 +75,7 @@ export default function CapsDetailPage() {
     const UUID = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid ?? "";
     const CURRENCY = localStorage.getItem("country") || "";
     const PATH = `/caps/details/`;
+    const backBtnUrl = "/caps";
 
     const fetchOrder = async () => {
         setLoading(true);
@@ -135,6 +138,12 @@ export default function CapsDetailPage() {
                 <div className="flex gap-[12px] relative">
                 </div>
             </div>
+
+            <WorkflowApprovalActions 
+                requestStepId={data?.request_step_id}
+                redirectPath={backBtnUrl}
+                model="Ht_Caps_Header"
+            />
 
             <div ref={targetRef}>
                 <ContainerCard className="rounded-[10px] space-y-[40px]">

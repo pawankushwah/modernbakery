@@ -11,14 +11,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 export default function StockTransfer() {
-    const { warehouseOptions = [], ensureWarehouseLoaded } = useAllDropdownListData();
-    const router = useRouter();
-    const { showSnackbar } = useSnackbar();
-    const { setLoading } = useLoading();
-
+    const { warehouseOptions, ensureWarehouseLoaded } = useAllDropdownListData();
     useEffect(() => {
         ensureWarehouseLoaded();
     }, [ensureWarehouseLoaded]);
+    const router = useRouter();
+    const { showSnackbar } = useSnackbar();
+    const { setLoading } = useLoading();
 
     const [form, setForm] = useState({
         source_warehouse: "",
@@ -220,7 +219,9 @@ export default function StockTransfer() {
                         },
                     ],
                     pageSize: itemData.length || 10,
+                    showNestedLoading: false
                 }}
+                
             />
 
             {/* SUBMIT */}
