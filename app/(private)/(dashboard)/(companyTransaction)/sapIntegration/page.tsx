@@ -15,7 +15,6 @@ import { useAllDropdownListData } from "@/app/components/contexts/allDropdownLis
 import { downloadFile } from "@/app/services/allApi";
 import { formatWithPattern } from "@/app/utils/formatDate";
 import { orderExportCollapse, orderExportHeader, orderList } from "@/app/services/companyTransaction";
-import ApprovalStatus from "@/app/components/approvalStatus";
 
 const columns = [
     { key: "created_at", label: "Order Date", showByDefault: true, render: (row: TableDataType) => <span className="">{formatWithPattern(new Date(row.created_at), "DD MMM YYYY", "en-GB").toLowerCase()}</span> },
@@ -66,12 +65,6 @@ const columns = [
     // { key: "order_source", label: "Order Source", render: (row: TableDataType) => row.order_source || "-" },
     { key: "delivery_date", label: "Delivery Date", showByDefault: true, render: (row: TableDataType) => formatWithPattern(new Date(row.delivery_date), "DD MMM YYYY", "en-GB").toLowerCase() || "-" },
     { key: "comment", label: "Comment", render: (row: TableDataType) => row.comment || "-" },
-    // {
-    //     key: "approval_status",
-    //     label: "Approval Status",
-    //     showByDefault: true,
-    //     render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
-    // },
     {
         key: "status", label: "Status", showByDefault: true, render: (row: TableDataType) => (
             <OrderStatus order_flag={row.status} />
@@ -80,19 +73,19 @@ const columns = [
 ];
 
 export default function CustomerInvoicePage() {
-    const { customerSubCategoryOptions, companyOptions, salesmanOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions , ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded} = useAllDropdownListData();
+    const { customerSubCategoryOptions, companyOptions, salesmanOptions, channelOptions, warehouseAllOptions, routeOptions, regionOptions, areaOptions, ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
-  // Load dropdown data
-  useEffect(() => {
-    ensureAreaLoaded();
-    ensureChannelLoaded();
-    ensureCompanyLoaded();
-    ensureCustomerSubCategoryLoaded();
-    ensureRegionLoaded();
-    ensureRouteLoaded();
-    ensureSalesmanLoaded();
-    ensureWarehouseAllLoaded();
-  }, [ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
+    // Load dropdown data
+    useEffect(() => {
+        ensureAreaLoaded();
+        ensureChannelLoaded();
+        ensureCompanyLoaded();
+        ensureCustomerSubCategoryLoaded();
+        ensureRegionLoaded();
+        ensureRouteLoaded();
+        ensureSalesmanLoaded();
+        ensureWarehouseAllLoaded();
+    }, [ensureAreaLoaded, ensureChannelLoaded, ensureCompanyLoaded, ensureCustomerSubCategoryLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseAllLoaded]);
     const { showSnackbar } = useSnackbar();
     const router = useRouter();
     const [refreshKey, setRefreshKey] = useState(0);

@@ -115,7 +115,7 @@ export default function PurchaseOrderAddEditPage() {
       .test("is-date", "Delivery date must be a valid date", (val) => {
         return Boolean(val && !Number.isNaN(new Date(val).getTime()));
       }),
-    note: Yup.string().max(1000, "Note is too long"),
+    note: Yup.string().required("Note is required").max(1000, "Note is too long"),
     items: Yup.array().of(itemRowSchema),
   });
 
@@ -626,7 +626,7 @@ export default function PurchaseOrderAddEditPage() {
       net_amount: Number(netAmount.toFixed(2)),
       total: Number(finalTotal.toFixed(2)),
       discount: Number(discount.toFixed(2)),
-      comment: values?.note || "",
+      sap_msg: values?.note || "",
       status: 1,
       details: itemData
         .filter((item) => item.item_id && item.uom_id && item.Quantity) // Only include valid items
@@ -1031,6 +1031,7 @@ export default function PurchaseOrderAddEditPage() {
                       </div>
                       <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
                         <InputFields
+                          required
                           label="Note"
                           type="textarea"
                           name="note"

@@ -1,6 +1,5 @@
 "use client";
 
-import ApprovalStatus from "@/app/components/approvalStatus";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import Table, {
     configType,
@@ -9,24 +8,20 @@ import Table, {
 } from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import StatusBtn from "@/app/components/statusBtn2";
-import { StockTransferList } from "@/app/services/agentTransaction";
+import { StockTransferList, salesTeamRecontionOrdersList } from "@/app/services/agentTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
+// import 
 
-export default function StockTransferPage() {
+export default function SalesTeamReconciliationPage() {
     const router = useRouter();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
 
     const {
-        regionOptions,
         warehouseOptions,
-        routeOptions,
-        channelOptions,
-        itemCategoryOptions,
-        customerSubCategoryOptions,
     } = useAllDropdownListData();
 
     const [refreshKey, setRefreshKey] = useState(0);
@@ -34,7 +29,7 @@ export default function StockTransferPage() {
     /* -------------------------------------------------------
        FETCH LIST (TABLE API)
     ------------------------------------------------------- */
-    const fetchStockTransferList = useCallback(
+    const fetchList = useCallback(
         async (
             page: number = 1,
             pageSize: number = 50
@@ -47,7 +42,7 @@ export default function StockTransferPage() {
                     per_page: String(pageSize),
                 };
 
-                const res = await StockTransferList(params);
+                const res = await salesTeamRecontionOrdersList(params);
 
                 return {
                     data: Array.isArray(res?.data) ? res.data : [],
@@ -57,7 +52,7 @@ export default function StockTransferPage() {
                     pageSize: res?.meta?.per_page || pageSize,
                 };
             } catch (error) {
-                showSnackbar("Failed to load stock transfer list", "error");
+                showSnackbar("Failed to load list", "error");
                 return {
                     data: [],
                     total: 0,
@@ -97,7 +92,7 @@ export default function StockTransferPage() {
                 }
             });
 
-            const res = await StockTransferList(params);
+            const res = await salesTeamRecontionOrdersList(params);
 
             return {
                 data: res?.data || [],
@@ -115,55 +110,57 @@ export default function StockTransferPage() {
     ------------------------------------------------------- */
     const columns: configType["columns"] = [
         {
-            key: "transfer_date",
-            label: "Transfer Date",
-            showByDefault: true,
+            key: "reconsile_date",
+            label: "Date",
+            render: (row: any) => {
+                const date = row.reconsile_date ? new Date(row.reconsile_date) : null;
+                return date ? date.toLocaleDateString() : "-";
+            }
         },
         {
-            key: "source_warehouse",
-            label: "Source Warehouse",
-            showByDefault: true,
-            render: (row: TableDataType) =>
-                row.source_warehouse
-                    ? `${row.source_warehouse.code} - ${row.source_warehouse.name}`
-                    : "-",
+            key: "warehouse_name",
+            label: "Warehouse",
+            render: (row: any) =>
+                row.warehouse_code && row.warehouse_name
+                    ? `${row.warehouse_code} - ${row.warehouse_name}`
+                    : row.warehouse_name || "-",
         },
         {
-            key: "destiny_warehouse",
-            label: "Destination Warehouse",
-            showByDefault: true,
-            render: (row: TableDataType) =>
-                row.destiny_warehouse
-                    ? `${row.destiny_warehouse.code} - ${row.destiny_warehouse.name}`
-                    : "-",
+            key: "salesman_name",
+            label: "Salesman",
+            render: (row: any) =>
+                row.salesman_code && row.salesman_name
+                    ? `${row.salesman_code} - ${row.salesman_name}`
+                    : row.salesman_name || "-",
         },
         {
-            key: "approval_status",
-            label: "Approval Status",
-            showByDefault: true,
-            render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
+            key: "cash_amount",
+            label: "Cash Amount",
+            render: (row: any) => row.cash_amount || "0",
         },
         {
-            key: "status",
-            label: "Status",
-            showByDefault: true,
-            render: (row: TableDataType) => (
-                <StatusBtn isActive={row.status === 1} />
-            ),
+            key: "credit_amount",
+            label: "Credit Amount",
+            render: (row: any) => row.credit_amount || "0",
+        },
+        {
+            key: "grand_total_amount",
+            label: "Total Amount",
+            render: (row: any) => row.grand_total_amount || "0",
         },
     ];
 
     return (
         <div className="flex flex-col h-full">
             <div className="mb-4">
-                <h1 className="text-lg font-semibold">Stock Transfer</h1>
+                <h1 className="text-lg font-semibold">Sales Team Reconciliation</h1>
             </div>
 
             <Table
                 refreshKey={refreshKey}
                 config={{
                     api: {
-                        list: fetchStockTransferList,
+                        list: fetchList,
                         filterBy,
                     },
                     header: {
@@ -173,31 +170,17 @@ export default function StockTransferPage() {
                             { key: "start_date", label: "From Date", type: "date" },
                             { key: "end_date", label: "To Date", type: "date" },
                             {
-                                key: "source_warehouse",
-                                label: "Source Warehouse",
+                                key: "warehouse_id",
+                                label: "Warehouse",
                                 isSingle: false,
                                 multiSelectChips: true,
                                 options: warehouseOptions || [],
-                            },
-                            {
-                                key: "destiny_warehouse",
-                                label: "Destination Warehouse",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: warehouseOptions || [],
-                            },
-                            {
-                                key: "region_id",
-                                label: "Region",
-                                isSingle: false,
-                                multiSelectChips: true,
-                                options: regionOptions || [],
                             },
                         ],
                         actions: [
                             <SidebarBtn
                                 key="add"
-                                href="/stocktransfer/add"
+                                href="/salesTeamRecosite/add"
                                 isActive
                                 leadingIcon="lucide:plus"
                                 label="Add"
@@ -205,7 +188,7 @@ export default function StockTransferPage() {
                             />,
                         ],
                     },
-                    localStorageKey: "stock-transfer-table",
+                    localStorageKey: "sales-team-reconciliation-table",
                     footer: { pagination: true, nextPrevBtn: true },
                     columns,
                     rowSelection: true,
@@ -214,11 +197,12 @@ export default function StockTransferPage() {
                             icon: "lucide:eye",
                             onClick: (row) => {
                                 if (row.uuid) {
-                                    router.push(`/stocktransfer/details/${row.uuid}`);
+                                    router.push(`/salesTeamRecosite/details/${row.uuid}`);
                                 }
                             },
                         },
                     ],
+                    // rowActions: [], 
                     pageSize: 50,
                 }}
             />
