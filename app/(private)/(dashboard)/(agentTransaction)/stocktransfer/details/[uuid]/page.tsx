@@ -10,6 +10,7 @@ import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 const title = "Stock Transfer Details";
 const backBtnUrl = "/stockTransfer";
@@ -52,6 +53,12 @@ export default function ViewPage() {
                 </Link>
                 <h1 className="text-xl font-semibold">{title}</h1>
             </div>
+
+            <WorkflowApprovalActions
+                requestStepId={transferData?.request_step_id}
+                redirectPath={backBtnUrl}
+                model="Distributor_Stock_Transfer"
+            />
 
             {/* SUMMARY CARDS */}
             <div className="flex flex-wrap gap-5">

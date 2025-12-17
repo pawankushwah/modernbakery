@@ -22,7 +22,7 @@ interface PaymentData {
   recipt_no: string;
   recipt_date: string;
   recipt_image: string | null;
-  request_step_id?: number;
+  request_step_id: number;
   status: string;
 }
 
@@ -69,6 +69,7 @@ const PaymentDetails = () => {
             recipt_no: responseData.recipt_no || "",
             recipt_date: responseData.recipt_date || "",
             recipt_image: receiptImageUrl,
+            request_step_id: responseData.request_step_id || 0,
             status: responseData.status === 1 ? "active" : "inactive",
           };
 
@@ -102,7 +103,7 @@ const PaymentDetails = () => {
       <WorkflowApprovalActions
         requestStepId={data?.request_step_id}
         redirectPath={backBtnUrl}
-        model="Load_Header"
+        model="Distributor_Advance_Payment"
       />
       {/* Header */}
       <div className="flex items-center gap-4 mb-8">

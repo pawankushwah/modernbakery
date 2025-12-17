@@ -159,7 +159,7 @@ export default function PurchaseOrderAddEditPage() {
   const [filteredCustomerOptions, setFilteredCustomerOptions] = useState<{ label: string; value: string }[]>([]);
   const [filteredSalesTeamOptions, setFilteredSalesTeamOptions] = useState<{ label: string; value: string }[]>([]);
   // const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
-  const { warehouseAllOptions , ensureWarehouseAllLoaded} = useAllDropdownListData();
+  const { warehouseAllOptions, ensureWarehouseAllLoaded } = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -196,7 +196,7 @@ export default function PurchaseOrderAddEditPage() {
 
   // per-row loading (for UOM / price) so UI can show skeletons while fetching
   const [itemLoading, setItemLoading] = useState<Record<number, { uom?: boolean; price?: boolean, Batch?: boolean }>>({});
-  
+
   // Ref to track debounce timeouts for quantity changes per row
   const quantityDebounceRef = useRef<Record<number, NodeJS.Timeout>>({});
 
@@ -207,12 +207,12 @@ export default function PurchaseOrderAddEditPage() {
     const item: ItemData = newData[index] as ItemData;
     (item as any)["Quantity"] = value;
     setItemData(newData);
-    
+
     // Clear any existing timeout for this row
     if (quantityDebounceRef.current[index]) {
       clearTimeout(quantityDebounceRef.current[index]);
     }
-    
+
     // Set a new debounced timeout (300ms delay)
     quantityDebounceRef.current[index] = setTimeout(() => {
       recalculateItem(index, "Quantity", value, values);
@@ -394,13 +394,13 @@ export default function PurchaseOrderAddEditPage() {
       }
     }
 
-    if(field === "uom_id" || field === "item_id") {
+    if (field === "uom_id" || field === "item_id") {
       const res = await returnWarehouseStockByCustomer({ customer_id: values?.customer, item_id: item.item_id, quantity: "1", uom: item.uom_id });
       if (res.error) {
         showSnackbar(res.data?.message || "Failed to fetch warehouse", "error");
         return;
       }
-      if(res.data.in_stock === false){
+      if (res.data.in_stock === false) {
         item.in_stock = "0";
         showSnackbar("Selected item is not in stock", "error");
         return;
@@ -409,11 +409,11 @@ export default function PurchaseOrderAddEditPage() {
     }
 
     if (field === "Expiry" || field === "Quantity" || (field === "uom_id" && item.Expiry)) {
-      if(!value) return;
-      if(item.in_stock === "0") return;
-      if(!item.Quantity || !item.Expiry) return;
-      if(field === "Expiry" && !isValidDate(new Date(value))) return;
-      if(field === "Quantity" && Number(value) <= 0) return;
+      if (!value) return;
+      if (item.in_stock === "0") return;
+      if (!item.Quantity || !item.Expiry) return;
+      if (field === "Expiry" && !isValidDate(new Date(value))) return;
+      if (field === "Quantity" && Number(value) <= 0) return;
 
       setItemLoading((prev) => ({
         ...prev,
@@ -440,15 +440,15 @@ export default function PurchaseOrderAddEditPage() {
 
     }
 
-    if(field === "Batch") {
+    if (field === "Batch") {
       const selectedBatch = item.Batchs?.find(b => b.value === value);
-      if(selectedBatch) {
+      if (selectedBatch) {
         item.Price = String(selectedBatch.price / 100);
-        item.Total = (String((Number(item.Quantity) || 0) * selectedBatch.price/100)).toString();
+        item.Total = (String((Number(item.Quantity) || 0) * selectedBatch.price / 100)).toString();
         setFinalTotal(Number(item.Total));
       }
     }
-    
+
     // const qty = Number(item.Quantity) || 0;
     // const price = Number(item.Price) || 0;
     // const total = qty * price;
@@ -570,8 +570,31 @@ export default function PurchaseOrderAddEditPage() {
   // };
 
   const generatePayload = (values?: FormikValues) => {
-    // const { grossTotal, totalVat, netAmount, totalExcise, discount, finalTotal: computedFinalTotal } = computeTotals();
-
+    // Use the VAT formula from the order: vat = total - total / 1.18
+    
+    // Calculate total VAT and net for the payload
+    let totalVat = 0;
+    let totalNet = 0;
+    const details = itemData.map((item) => {
+      const total = Number(item.Total) || 0;
+      const vat = +(total - total / 1.18).toFixed(2);
+      const net = +(total - vat).toFixed(2);
+      totalVat += vat;
+      totalNet += net;
+      return {
+        item_id: Number(item.item_id) || null,
+        item_price: Number(item.Price) || 0,
+        quantity: Number(item.Quantity) || 0,
+        vat,
+        uom_id: Number(item.uom_id) || null,
+        net_total: net,
+        total,
+        batch_number: (item as any).Batch ?? "",
+        expiry_date: (item as any).Expiry ?? "",
+        type: (item as any).Type ?? "",
+        reason: (item as any).Reason ?? "",
+      };
+    });
     return {
       order_code: code,
       customer_id: Number(values?.customer) || null,
@@ -581,21 +604,11 @@ export default function PurchaseOrderAddEditPage() {
       contact_no: values?.contactNo || "",
       return_no: values?.returnNo || "",
       total: finalTotal,
+      vat: +totalVat.toFixed(2),
+      net: +totalNet.toFixed(2),
       comment: values?.note || "",
       status: 1,
-      details: itemData.map((item) => ({
-        item_id: Number(item.item_id) || null,
-        item_price: Number(item.Price) || 0,
-        quantity: Number(item.Quantity) || 0,
-        vat: Number(item.Vat) || 0,
-        uom_id: Number(item.uom_id) || null,
-        net_total: Number(item.Net) || 0,
-        total: Number(item.Total) || 0,
-        batch_number: (item as any).Batch ?? "",
-        expiry_date: (item as any).Expiry ?? "",
-        type: (item as any).Type ?? "",
-        reason: (item as any).Reason ?? "",
-      })),
+      details,
     };
   };
 
@@ -642,7 +655,7 @@ export default function PurchaseOrderAddEditPage() {
           // Optionally handle error, but don't block success
         }
         showSnackbar("Order created successfully", "success");
-        router.push("/purchaseOrder");
+        router.push("/return");
       }
     } catch (err) {
       console.error(err);
@@ -654,15 +667,7 @@ export default function PurchaseOrderAddEditPage() {
     }
   };
 
-  const keyValueData = [
-    // { key: "Gross Total", value: `AED ${toInternationalNumber(grossTotal)}` },
-    // { key: "Discount", value: `AED ${toInternationalNumber(discount)}` },
-    // { key: "Net Total", value: `${CURRENCY} ${toInternationalNumber(netAmount)}` },
-    // { key: "VAT", value: `${CURRENCY} ${toInternationalNumber(totalVat)}` },
-    // { key: "Excise", value: `${CURRENCY} ${toInternationalNumber(totalExcise)}` },
-    // { key: "Pre VAT", value: `AED ${toInternationalNumber(preVat)}` },
-    // { key: "Delivery Charges", value: `AED ${toInternationalNumber(0.00)}` },
-  ];
+
 
   const fetchAgentCustomers = async (values: FormikValues, search: string) => {
     const res = await companyCustomersGlobalSearch({
@@ -856,7 +861,7 @@ export default function PurchaseOrderAddEditPage() {
                     <InputFields
                       required
                       label="Contact Number"
-                      type="contact2"
+                      type="contact"
                       name="contactNo"
                       value={values.contactNo}
                       error={touched.contactNo && (errors.contactNo as string)}
@@ -1013,7 +1018,7 @@ export default function PurchaseOrderAddEditPage() {
                                 value={row.Expiry}
                                 disabled={!row.uom_id || !values.customer || row.in_stock === "0"}
                                 onChange={(e) => {
-                                  if(e.target.value && !isValidDate(new Date(e.target.value))) {
+                                  if (e.target.value && !isValidDate(new Date(e.target.value))) {
                                     return;
                                   }
                                   recalculateItem(Number(row.idx), "Expiry", e.target.value, values);
@@ -1076,8 +1081,8 @@ export default function PurchaseOrderAddEditPage() {
                               value={row.Type}
                               disabled={!row.uom_id || !values.customer || row.in_stock === "0"}
                               options={[
-                                {label: "Good", value: "good"},
-                                {label: "Bad", value: "bad"}
+                                { label: "Good", value: "good" },
+                                { label: "Bad", value: "bad" }
                               ]}
                               onChange={(e) => {
                                 recalculateItem(Number(row.idx), "Type", e.target.value);
@@ -1107,14 +1112,14 @@ export default function PurchaseOrderAddEditPage() {
                               value={row.Reason}
                               disabled={!row.uom_id || !values.customer || row.in_stock === "0"}
                               options={row.Type === "good" ? [
-                                {label: "Short Expiry", value: "1"},
-                                {label: "Non Moving", value: "2"},
-                                {label: "Replacement", value: "3"},
+                                { label: "Short Expiry", value: "1" },
+                                { label: "Non Moving", value: "2" },
+                                { label: "Replacement", value: "3" },
                               ] : [
-                                {label: "Damaged", value: "1"},
-                                {label: "Quality Issue", value: "2"},
-                                {label: "Expired", value: "3"},
-                                {label: "Packing Issue", value: "4"},
+                                { label: "Damaged", value: "1" },
+                                { label: "Quality Issue", value: "2" },
+                                { label: "Expired", value: "3" },
+                                { label: "Packing Issue", value: "4" },
                               ]}
                               onChange={(e) => {
                                 recalculateItem(Number(row.idx), "Reason", e.target.value);

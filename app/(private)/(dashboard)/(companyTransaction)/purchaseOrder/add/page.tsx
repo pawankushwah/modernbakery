@@ -11,8 +11,7 @@ import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import {  genearateCode, itemList, SalesmanListGlobalSearch, saveFinalCode, warehouseStockTopOrders } from "@/app/services/allApi";
-import { addAgentOrder } from "@/app/services/agentTransaction";
-import {getDirectCustomer} from "@/app/services/companyTransaction";
+import {getDirectCustomer,purchaseOrderAdd} from "@/app/services/companyTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
 import { useSnackbar } from "@/app/services/snackbarContext";
@@ -116,7 +115,7 @@ export default function PurchaseOrderAddEditPage() {
       .test("is-date", "Delivery date must be a valid date", (val) => {
         return Boolean(val && !Number.isNaN(new Date(val).getTime()));
       }),
-    note: Yup.string().max(1000, "Note is too long"),
+    note: Yup.string().required("Note is required").max(1000, "Note is too long"),
     items: Yup.array().of(itemRowSchema),
   });
 
@@ -627,7 +626,7 @@ export default function PurchaseOrderAddEditPage() {
       net_amount: Number(netAmount.toFixed(2)),
       total: Number(finalTotal.toFixed(2)),
       discount: Number(discount.toFixed(2)),
-      comment: values?.note || "",
+      sap_msg: values?.note || "",
       status: 1,
       details: itemData
         .filter((item) => item.item_id && item.uom_id && item.Quantity) // Only include valid items
@@ -664,7 +663,7 @@ export default function PurchaseOrderAddEditPage() {
       formikHelpers.setSubmitting(true);
       const payload = generatePayload(values);
       // console.log("Submitting payload:", payload);
-      const res = await addAgentOrder(payload);
+      const res = await purchaseOrderAdd(payload);
       if (res.error) {
         showSnackbar(res.data.message || "Failed to create purchase order", "error");
         console.error("Create Purchase order error:", res);
@@ -1032,6 +1031,7 @@ export default function PurchaseOrderAddEditPage() {
                       </div>
                       <div className="flex flex-col justify-end gap-[20px] w-full lg:w-[400px]">
                         <InputFields
+                          required
                           label="Note"
                           type="textarea"
                           name="note"

@@ -56,7 +56,8 @@ export const downloadFile = (fileurl: string, type?: string): void => {
 };
 
 export const login = async (credentials: {
-  email: string;
+  email?: string;
+  username?: string;
   password: string;
 }) => {
   try {
@@ -2167,6 +2168,15 @@ export const workFlowAssignList = async () => {
 export const workFlowAssignmentList = async () => {
   try {
     const res = await API.get(`/api/master/approval/workflow/assignments`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const workFlowAssignmentStatusChange = async (body: object) => {
+  try {
+    const res = await API.post(`/api/master/approval/workflow/assignment/toggle`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

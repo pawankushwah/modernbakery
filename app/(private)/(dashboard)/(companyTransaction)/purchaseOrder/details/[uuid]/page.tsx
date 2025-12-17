@@ -18,6 +18,7 @@ import { downloadFile } from "@/app/services/allApi";
 import { purchaseOrderById, exportPurposeOrderViewPdf } from "@/app/services/companyTransaction";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
 
 const columns = [
     { key: "index", label: "#" },
@@ -39,6 +40,7 @@ interface OrderData {
     customer_code: string,
     customer_name: string,
     customer_email: string,
+    request_step_id: number,
     customer_town: string,
     customer_contact: string,
     customer_district: string,
@@ -86,6 +88,7 @@ export default function OrderDetailPage() {
     const UUID = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid ?? "";
     const CURRENCY = localStorage.getItem("country") || "";
     const PATH = `/purchaseOrder/details/`;
+    const backBtnUrl = "/purchaseOrder";
 
     const fetchOrder = async () => {
         setLoading(true);
@@ -155,13 +158,18 @@ export default function OrderDetailPage() {
 
     return (
         <>
+            <WorkflowApprovalActions
+                requestStepId={data?.request_step_id}
+                redirectPath={backBtnUrl}
+                model="Po_Order_Header"
+            />
             {/* ---------- Header ---------- */}
             <div className="flex justify-between items-center mb-[20px]">
                 <div className="flex items-center gap-[16px]">
                     <Icon
                         icon="lucide:arrow-left"
                         width={24}
-                        onClick={() => router.push("/purchaseOrder")}
+                        onClick={() => router.push(backBtnUrl)}
                         className="cursor-pointer"
                     />
                     <h1 className="text-[20px] font-semibold text-[#181D27] flex items-center leading-[30px]">

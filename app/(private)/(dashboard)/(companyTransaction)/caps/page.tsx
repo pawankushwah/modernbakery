@@ -17,6 +17,7 @@ import {
   tempReturnList,
 } from "@/app/services/companyTransaction";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import ApprovalStatus from "@/app/components/approvalStatus";
 
 const columns = [
   { key: "osa_code", label: "Code", showByDefault: true },
@@ -52,6 +53,12 @@ const columns = [
       if (!code && !name) return "-";
       return `${code}${code && name ? " - " : ""}${name}`;
     },
+  },
+  {
+    key: "approval_status",
+    label: "Approval Status",
+    showByDefault: true,
+    render: (row: TableDataType) => <ApprovalStatus status={row.approval_status || "-"} />,
   },
 ];
 
@@ -182,14 +189,14 @@ export default function CapsPage() {
                 },
               ],
               actions: [
-                // <SidebarBtn
-                //   key={1}
-                //   href="caps/add"
-                //   isActive
-                //   leadingIcon="mdi:plus"
-                //   label="Add"
-                //   labelTw="hidden lg:block"
-                // />,
+                <SidebarBtn
+                  key={1}
+                  href="/caps/add"
+                  isActive
+                  leadingIcon="mdi:plus"
+                  label="Add"
+                  labelTw="hidden lg:block"
+                />,
               ],
             },
             rowSelection: false,
