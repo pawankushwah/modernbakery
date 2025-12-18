@@ -791,12 +791,12 @@ export default function PurchaseOrderAddEditPage() {
             return (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-10">
-                  {/* <div>
+                  <div>
                     <InputFields
                       required
                       label="distributor"
                       name="warehouse"
-                      placeholder="Search distributors."
+                      placeholder="Search distributors"
                       value={values.warehouse}
                       options={warehouseAllOptions}
                       searchable={true}
@@ -809,7 +809,7 @@ export default function PurchaseOrderAddEditPage() {
                         (errors.warehouse as string)
                       }
                     />
-                  </div> */}
+                  </div>
                   <div>
                     <AutoSuggestion
                       required

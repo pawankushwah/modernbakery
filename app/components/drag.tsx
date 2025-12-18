@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { ChevronDown, Calendar, BarChart3, Table } from 'lucide-react';
 import { Icon } from "@iconify/react";
 import axios from 'axios';
-import TopBar from '../(private)/(dashboard)/topBar';
 import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';
+import TopBar from '../(private)/(dashboard)/topBar';
 
 
 // Define TypeScript interfaces
@@ -716,17 +716,16 @@ const data = await response.json();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200">
+      {/* <header className="bg-white border-b border-gray-200">
         <div className="h-[60px] flex items-center">
           <div className="w-[80px] lg:w-[80px] h-[60px] border-r border-b border-[#E9EAEB] flex items-center justify-center">
             <img src="shortLogo.png" alt="Logo" className="w-[44px] h-[44px] object-contain" />
           </div>
           <TopBar />
         </div>
-      </header>
+      </header> */}
 
-      <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
-        {/* Sidebar - Hidden on mobile, visible on desktop */}
+      {/* <div className="flex flex-col lg:flex-row min-h-screen bg-gray-50">
         <section className="hidden lg:flex lg:w-[80px] h-auto lg:h-[1050px] border-r border-[#E9EAEB] bg-white border-b pt-5">
           <div className="flex flex-col items-center gap-6 w-full">
             {sidebarIcons.map((icon, i) => (
@@ -735,14 +734,13 @@ const data = await response.json();
           </div>
         </section>
 
-        {/* Mobile sidebar - Bottom navigation */}
         <section className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
           <div className="flex justify-around py-3">
             {sidebarIcons.slice(0, 5).map((icon, i) => (
               <Icon key={i} icon={icon} width="24" height="24" style={{color: "#414651"}} />
             ))}
           </div>
-        </section>
+        </section> */}
 
         <section className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
           <div className="mb-6">
@@ -1077,7 +1075,7 @@ const data = await response.json();
             </div>
           </div>
         </section>
-      </div>
+      {/* </div> */}
     </div>
   );
 };

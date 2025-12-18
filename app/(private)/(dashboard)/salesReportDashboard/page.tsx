@@ -1,12 +1,12 @@
 "use client"
+import SalesReportDashboard from '@/app/components/drag'
 import React from 'react'
-import Drag from "../components/drag"
 // import Drag from '../components/dragdrop/index'
 
 const page = () => {
   return (
     <div>
-        <Drag />
+        <SalesReportDashboard />
     </div>
   )
 }
