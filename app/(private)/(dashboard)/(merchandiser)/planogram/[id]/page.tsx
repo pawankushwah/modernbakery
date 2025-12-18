@@ -28,6 +28,7 @@ import {
   shelvesDropdown,
   updatePlanogramById,
 } from "@/app/services/merchandiserApi";
+import ImagePreviewModal from "@/app/components/ImagePreviewModal";
 
 // ---------------- TYPES ----------------
 type ShelfImage = {
@@ -40,7 +41,7 @@ type PlanogramFormValues = {
   valid_to: string;
   merchendisher_ids: number[];
   customer_ids: number[];
-  images: File[] | string[] | null;
+  images: File | string | null;
 };
 
 type MerchandiserResponse = { id: number; name: string };
@@ -119,6 +120,8 @@ export default function Planogram() {
   const [existingImages, setExistingImages] = useState<Record<number, string | File>>(
     {}
   );
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [planogramImageError, setPlanogramImageError] = useState<string | null>(null);
   const ALLOWED_LOGO_TYPES = [
     "image/png",
@@ -136,7 +139,7 @@ export default function Planogram() {
     valid_to: "",
     merchendisher_ids: [],
     customer_ids: [],
-    images: [],
+    images: null,
   });
 
   const {
@@ -195,19 +198,12 @@ export default function Planogram() {
 
             // Store existing images for display
             const imagesMap: Record<number, string | File> = {};
-            if (planogramData.images && Array.isArray(planogramData.images)) {
-              planogramData.images.forEach((merchGroup: MerchGroup) => {
-                console.log(merchGroup);
-
-                merchGroup.forEach((custGroup: CustGroup) => {
-                  console.log(custGroup);
-
-                  custGroup.forEach((imgObj: ImageObject) => {
-                    imagesMap[imgObj.shelf_id] = imgObj.image;
-                  });
-                });
+            if (Array.isArray(planogramData.images)) {
+              planogramData.images.forEach((imgObj: ImageObject) => {
+                imagesMap[imgObj.shelf_id] = imgObj.image;
               });
             }
+
 
             setExistingImages(imagesMap);
 
@@ -225,7 +221,7 @@ export default function Planogram() {
                 : "",
               merchendisher_ids: merchIds,
               customer_ids: custIds,
-              images: [],
+              images: null,
             });
           }
         } else {
@@ -267,6 +263,16 @@ export default function Planogram() {
       showSnackbar("Unable to fetch customers", "error");
     }
   };
+
+  useEffect(() => {
+    if (isEditMode && Object.values(existingImages)[0]) {
+      const img = Object.values(existingImages)[0];
+      if (typeof img === "string") {
+        setLogoPreview(img);
+      }
+    }
+  }, [existingImages, isEditMode]);
+
 
 
   // ---------------- STEP NAVIGATION ----------------
@@ -318,22 +324,7 @@ export default function Planogram() {
     values: PlanogramFormValues
   ) => {
 
-    const updatedImages = { ...values.images };
-
-    // const existingIndex = updatedImages[values.merchendisher_ids[]][values.customer_ids[0]].findIndex((item: ShelfImage) => item.image === file);
-
-    // if (existingIndex >= 0) {
-    //   updatedImages[values.merchendisher_ids[0]][values.customer_ids[0]][existingIndex] =
-    //   {
-    //     image: file,
-    //   };
-    // } else {
-    //   updatedImages[values.merchendisher_ids[0]][values.customer_ids[0]].push({
-    //     image: file,
-    //   });
-    // }
-
-    setFieldValue("images", updatedImages);
+    setFieldValue("images", file);
   };
 
   // ---------------- SUBMIT ----------------
@@ -349,20 +340,18 @@ export default function Planogram() {
       formData.append("valid_to", values.valid_to);
       formData.append("code", `PLN-${Date.now()}`);
 
-      formData.append(
-        "merchendisher_id",
-        JSON.stringify(values.merchendisher_ids)
-      );
+      values.merchendisher_ids.forEach((id) => {
+        formData.append("merchendisher_id[]", id.toString());
+      });
 
-      formData.append(
-        "customer_id",
-        JSON.stringify(values.customer_ids)
-      );
-      // values.images[values.merchendisher_ids[0]][values.customer_ids[0]].forEach((image: ShelfImage) => {
-      //   if (image.image) {
-      //     formData.append("image", image.image);
-      //   }
-      // });
+      values.customer_ids.forEach((id) => {
+        formData.append("customer_id[]", id.toString());
+      });
+
+      if (values.images) {
+        formData.append("images[]", values.images);
+      }
+
 
       const res = isEditMode
         ? await updatePlanogramById(String(id), formData)
@@ -537,28 +526,62 @@ export default function Planogram() {
                   label="Planogram Image"
                   name="images"
                   type="file"
-                  value={typeof values.images === 'string' ? values.images : ''}
                   onChange={(e) => {
-                    const input = e.target as HTMLInputElement;
-                    const file = input.files?.[0] ?? null;
+                    const file = (e.target as HTMLInputElement).files?.[0] ?? null;
                     setPlanogramImageError(null);
-                    if (file) {
-                      if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
-                        setPlanogramImageError('Unsupported file type. Please upload png, jpeg, webp or svg.');
-                        setFieldValue('images', null as any);
-                        return;
-                      }
-                      if (file.size > MAX_LOGO_SIZE) {
-                        setPlanogramImageError('File too large. Maximum size is 1MB.');
-                        setFieldValue('images', null as any);
-                        return;
-                      }
-                      setFieldValue('images', file as any);
 
+                    // user removed file
+                    if (!file) {
+                      setFieldValue("images", null);
+                      setLogoPreview(null);
+                      return;
                     }
-                  }
-                  }
+
+                    // type validation
+                    if (!ALLOWED_LOGO_TYPES.includes(file.type)) {
+                      setPlanogramImageError("Unsupported file type");
+                      setFieldValue("images", null);
+                      setLogoPreview(null);
+                      return;
+                    }
+
+                    // size validation
+                    if (file.size > MAX_LOGO_SIZE) {
+                      setPlanogramImageError("File too large. Max 1MB");
+                      setFieldValue("images", null);
+                      setLogoPreview(null);
+                      return;
+                    }
+
+                    // valid file
+                    setFieldValue("images", file);
+
+                    try {
+                      if (logoPreview?.startsWith("blob:")) {
+                        URL.revokeObjectURL(logoPreview);
+                      }
+                      setLogoPreview(URL.createObjectURL(file));
+                    } catch {
+                      setLogoPreview(null);
+                    }
+                  }}
+
                 />
+
+                {logoPreview && (
+                  <button
+                    type="button"
+                    onClick={() => setIsImageModalOpen(true)}
+                    className="absolute right-1 top-0 p-1 hover:text-blue-600 hover:cursor-pointer"
+                    aria-label="View logo"
+                  >
+                    <div className="flex items-center gap-[2px]">
+                      <span className="text-[10px]">View Logo</span>
+                      <Icon icon="mdi:eye" width={18} />
+                    </div>
+                  </button>
+                )}
+
                 {planogramImageError && <div className="text-xs text-red-500 mt-1">{planogramImageError}</div>}
               </div>
             </div>
@@ -601,31 +624,41 @@ export default function Planogram() {
             setTouched,
             isSubmitting,
           }) => (
-            <Form>
-              <StepperForm
-                steps={steps.map((step) => ({
-                  ...step,
-                  isCompleted: isStepCompleted(step.id),
-                }))}
-                currentStep={currentStep}
-                onBack={prevStep}
-                onNext={() =>
-                  handleNext(values, {
-                    setErrors,
-                    setTouched,
-                  } as FormikHelpers<PlanogramFormValues>)
-                }
-                onSubmit={() => formikSubmit()}
-                showSubmitButton={isLastStep}
-                showNextButton={!isLastStep}
-                nextButtonText="Save & Next"
-                submitButtonText={isSubmitting ? "Submitting..." : "Submit"}
-              >
-                {renderStepContent(values, setFieldValue, errors, touched)}
-              </StepperForm>
-            </Form>
+            <>
+              <Form>
+                <StepperForm
+                  steps={steps.map((step) => ({
+                    ...step,
+                    isCompleted: isStepCompleted(step.id),
+                  }))}
+                  currentStep={currentStep}
+                  onBack={prevStep}
+                  onNext={() =>
+                    handleNext(values, {
+                      setErrors,
+                      setTouched,
+                    } as FormikHelpers<PlanogramFormValues>)
+                  }
+                  onSubmit={() => formikSubmit()}
+                  showSubmitButton={isLastStep}
+                  showNextButton={!isLastStep}
+                  nextButtonText="Save & Next"
+                  submitButtonText={isSubmitting ? "Submitting..." : "Submit"}
+                >
+                  {renderStepContent(values, setFieldValue, errors, touched)}
+                </StepperForm>
+              </Form>
+
+              {/* ✅ modal MUST live inside render-prop */}
+              <ImagePreviewModal
+                images={logoPreview ? [logoPreview] : []}
+                isOpen={isImageModalOpen}
+                onClose={() => setIsImageModalOpen(false)}
+              />
+            </>
           )}
         </Formik>
+
       )}
     </div>
   );
