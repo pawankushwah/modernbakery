@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Calendar, BarChart3, Table } from 'lucide-react';
-import { Icon } from "@iconify/react";
+import { Icon } from "@iconify-icon/react";
 import axios from 'axios';
 import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';
-import TopBar from '../(private)/(dashboard)/topBar';
-import { useSnackbar } from '../services/snackbarContext';
+import { useSnackbar } from '@/app/services/snackbarContext';
 
 
 // Define TypeScript interfaces
@@ -56,6 +55,8 @@ const SalesReportDashboard = () => {
   const [selectedDataview, setSelectedDataview] = useState('default');
   const [searchType, setSearchType] = useState(''); // 'amount' or 'quantity'
   const [displayQuantity, setDisplayQuantity] = useState(''); // 'Free-Good' or 'Without-Free-Good'
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 50; // pagination size
   
   // Dashboard API states
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -585,6 +586,16 @@ const data = await response.json();
     return undefined;
   };
 
+  // Determine display value for total column depending on selected search type
+  const getTotalValue = (row: any) => {
+    if (!row) return '-';
+    const amountCandidates = [row.total_amount, row.total_value, row.total_quantity, row.total_qty];
+    const quantityCandidates = [row.total_quantity, row.total_qty, row.total_amount, row.total_value];
+    const candidates = searchType === 'amount' ? amountCandidates : quantityCandidates;
+    const found = candidates.find(v => v !== undefined && v !== null && v !== '');
+    return found !== undefined ? found : '-';
+  };
+
   // Fetch on mount
   useEffect(() => {
     fetchFiltersData();
@@ -1033,36 +1044,65 @@ const data = await response.json();
                   ) : tableData && (tableData.data || tableData.rows)?.length > 0 ? (
                     (() => {
                       const dynamicColumn = getDynamicFilterColumn();
+                      const rows = tableData.data || tableData.rows || [];
+                      const totalRows = rows.length;
+                      const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+                      const startIdx = (currentPage - 1) * rowsPerPage;
+                      const endIdx = Math.min(startIdx + rowsPerPage, totalRows);
+                      const paginated = rows.slice(startIdx, endIdx);
+
+                      const changePage = (page: number) => {
+                        if (page < 1) page = 1;
+                        if (page > totalPages) page = totalPages;
+                        setCurrentPage(page);
+                      };
+
                       return (
-                        <div className="overflow-x-auto">
-                          <table className="w-full border-collapse">
-                            <thead>
-                              <tr className="bg-gray-100 border-b border-gray-200">
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Code</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Category</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Invoice Date</th>
-                                {dynamicColumn.columns.map((col: any, idx: number) => (
-                                  <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{col.label}</th>
-                                ))}
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Total Quantity</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(tableData.data || tableData.rows)?.map((row: any, rowIdx: number) => (
-                                <tr key={rowIdx} className="border-b border-gray-200 hover:bg-gray-50">
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_code || '-'}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_name || '-'}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_category || '-'}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.invoice_date || '-'}</td>
-                                      {dynamicColumn.columns.map((col: any, idx: number) => (
-                                        <td key={idx} className="px-4 py-3 text-sm text-gray-700">{resolveRowValue(row, col.field) || '-'}</td>
-                                        ))}
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.total_quantity || '-'}</td>
+                        <div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                              <thead>
+                                <tr className="bg-gray-100 border-b border-gray-200">
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Code</th>
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Category</th>
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Invoice Date</th>
+                                  {dynamicColumn.columns.map((col: any, idx: number) => (
+                                    <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{col.label}</th>
+                                  ))}
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Total Quantity</th>
                                 </tr>
+                              </thead>
+                              <tbody>
+                                {paginated.map((row: any, rowIdx: number) => (
+                                  <tr key={startIdx + rowIdx} className="border-b border-gray-200 hover:bg-gray-50">
+                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_code || '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_name || '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_category || '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700">{row.invoice_date || '-'}</td>
+                                    {dynamicColumn.columns.map((col: any, idx: number) => (
+                                      <td key={idx} className="px-4 py-3 text-sm text-gray-700">{resolveRowValue(row, col.field) || '-'}</td>
+                                    ))}
+                                    <td className="px-4 py-3 text-sm text-gray-700">{getTotalValue(row)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Pagination controls */}
+                          <div className="flex items-center justify-between mt-3 px-2">
+                            <div className="text-sm text-gray-600">Showing {startIdx + 1} - {endIdx} of {totalRows}</div>
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => changePage(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1 bg-white border rounded disabled:opacity-50">Prev</button>
+                              {/* Simple page buttons */}
+                              {Array.from({ length: totalPages }).slice(0, 10).map((_, i) => (
+                                <button key={i} onClick={() => changePage(i + 1)} className={`px-3 py-1 border rounded ${currentPage === i + 1 ? 'bg-gray-900 text-white' : 'bg-white'}`}>{i + 1}</button>
                               ))}
-                            </tbody>
-                          </table>
+                              {totalPages > 10 && <span className="px-2">...</span>}
+                              <button onClick={() => changePage(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1 bg-white border rounded disabled:opacity-50">Next</button>
+                            </div>
+                          </div>
                         </div>
                       );
                     })()

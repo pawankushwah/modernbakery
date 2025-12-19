@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, AreaChart, Area, Legend } from 'recharts';
 import { Maximize2, Loader2, AlertCircle, BarChart3, X } from 'lucide-react';
-import { Icon } from "@iconify/react";
+import { Icon } from "@iconify-icon/react";
 import Highcharts from 'highcharts';
-import Highcharts3D from 'highcharts/highcharts-3d';
 import HighchartsReact from 'highcharts-react-official';
 import { useSnackbar } from '../services/snackbarContext';
 
@@ -108,7 +107,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   ];
 
   const warehouseColors = [
-    '#00ffd5','#c77dff',  '#00c2ff', '#2979ff', '#7c4dff', '#ff6ec7'
+    '#00ff33ff','#fe5305ff','#7c07d5ff',  '#00c2ff', '#fc0511ff', '#e5f904ff',  '#2802ffff', '#eb0a85ff'
   ];
 
   const salesmanColors = [

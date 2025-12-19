@@ -3792,31 +3792,23 @@ export const editBrand = async (uuid: string, payload: object) => {
     return handleError(error);
   }
 };
-
 export const getWarehouseStockDetails = async (id: string) => {
   try {
     const res = await API.get(`/api/settings/warehouse-stocks/${id}/stock-details`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
   }
-  catch(err){
-    console.log(err)
+};
+
+export const getFilters = async (params?: Params) => {
+  try {
+    const res =await API.post(`/api/filters`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
   }
-}
-
-
-    export const getFilters = async (params?: Params) => {
-      try {
-        const res = await API.post(`/api/filters`, { params: params });
-
-        return res.data;
-      } catch (error: unknown) {
-        return handleError(error);
-      }
-    }
-  
-
-
-
-//project
+};
 
 export const addProject = async (body: object) => {
   try {
