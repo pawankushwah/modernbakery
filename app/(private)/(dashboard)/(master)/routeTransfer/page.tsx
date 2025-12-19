@@ -122,7 +122,7 @@ export default function StockTransfer() {
             <div className="flex justify-end mt-6">
                 <button
                     onClick={handleSubmit}
-                    className="bg-[#2563EB] text-white px-8 py-2 rounded-md hover:bg-[#1D4ED8]"
+                    className="px-6 py-2 rounded-lg bg-red-600 border border-black-300 text-black-700 hover:bg-red-400"
                 >
                     Submit
                 </button>
