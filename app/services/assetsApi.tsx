@@ -653,14 +653,9 @@ export const getIROTable = async (iroId: string, warehouseId: string, params = {
 
   try {
     const url = `/api/assets/iro/${iroId}/${warehouseId}`;
-    console.log("🔍 Calling getIROTable with URL:", url);
-
     const res = await API.get(url, { params });
-
-    console.log("✅ getIROTable response:", res);
     return res.data;
   } catch (error: unknown) {
-    console.error("❌ getIROTable error:", error);
     return handleError(error);
   }
 };
@@ -670,7 +665,6 @@ export const getTechicianList = async (params?: any) => {
   try {
     const res = await API.get(`/api/assets/ir/salesman`,
       { params }
-
     );
     return res.data;
   } catch (error: unknown) {
@@ -799,6 +793,8 @@ export const serviceTerritoryExport = async (uuid: string, params?: Params) => {
     return handleError(error);
   }
 };
+
+
 export const serviceTerritoryExportAll = async (params?: Params) => {
   try {
     const res = await API.get(`/api/assets/service-territory/export`, { params });

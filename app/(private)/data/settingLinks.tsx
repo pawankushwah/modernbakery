@@ -36,6 +36,20 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
+            href: "/settings/audittrail",
+            label: "Audit Trail",
+            leadingIcon: "mdi:account",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
+            href: "/settings/user",
+            label: "Users",
+            leadingIcon: "mdi:account",
+            iconColor: "text-green-500",
+          },
+          {
+            isActive: false,
             href: "/settings/role",
             label: "Roles",
             leadingIcon: "mdi:account-tie",
@@ -273,13 +287,13 @@ export const initialLinkData: SidebarDataType[] = [
         leadingIcon: "wpf:approval",
         iconColor: "text-green-500",
       },
-      {
-        isActive: false,
-        href: "/settings/processFlow",
-        label: "Process Flow",
-        leadingIcon: "uil:process",
-        iconColor: "text-green-500",
-      },
+      // {
+      //   isActive: false,
+      //   href: "/settings/processFlow",
+      //   label: "Process Flow",
+      //   leadingIcon: "uil:process",
+      //   iconColor: "text-green-500",
+      // },
       {
         isActive: false,
         href: "#",

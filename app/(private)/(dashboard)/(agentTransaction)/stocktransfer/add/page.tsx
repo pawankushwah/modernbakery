@@ -80,7 +80,7 @@ export default function StockTransfer() {
 
                 setItemData(mappedData);
             } catch (error) {
-                console.error(error);
+                // console.error(error);
                 showSnackbar("Failed to fetch items", "error");
             } finally {
                 setLoading(false);
@@ -221,7 +221,7 @@ export default function StockTransfer() {
                     pageSize: itemData.length || 10,
                     showNestedLoading: false
                 }}
-                
+
             />
 
             {/* SUBMIT */}

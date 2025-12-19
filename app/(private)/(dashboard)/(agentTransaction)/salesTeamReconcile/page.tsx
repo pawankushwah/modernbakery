@@ -180,7 +180,7 @@ export default function SalesTeamReconciliationPage() {
                         actions: [
                             <SidebarBtn
                                 key="add"
-                                href="/salesTeamRecosite/add"
+                                href="/salesTeamReconcile/add"
                                 isActive
                                 leadingIcon="lucide:plus"
                                 label="Add"
