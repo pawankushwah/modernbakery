@@ -107,7 +107,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   ];
 
   const warehouseColors = [
-    '#00ffd5','#c77dff',  '#00c2ff', '#2979ff', '#7c4dff', '#ff6ec7'
+    '#00ff33ff','#fe5305ff','#7c07d5ff',  '#00c2ff', '#fc0511ff', '#e5f904ff',  '#2802ffff', '#eb0a85ff'
   ];
 
   const salesmanColors = [

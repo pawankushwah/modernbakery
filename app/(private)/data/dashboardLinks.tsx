@@ -565,7 +565,7 @@ export const initialLinkData: SidebarDataType[] = [
       {
         isActive: false,
         href: "#",
-        label: "Sales Report Dashboard",
+        label: "Reports",
         leadingIcon: "ri:dashboard-line",
         iconColor: "text-green-500",
         trailingIcon: "mdi-light:chevron-right",
@@ -573,7 +573,7 @@ export const initialLinkData: SidebarDataType[] = [
           {
             isActive: false,
             href: "/salesReportDashboard",
-            label: "Dashboard",
+            label: "Sales Report",
             leadingIcon: "mdi:adjust",
             iconColor: "text-cyan-500",
           },
