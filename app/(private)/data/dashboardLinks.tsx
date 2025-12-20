@@ -6,6 +6,7 @@ export type SidebarDataType = {
 };
 
 export type LinkDataType = {
+  id?: number | string;
   isActive: boolean;
   href: string;
   label: string;

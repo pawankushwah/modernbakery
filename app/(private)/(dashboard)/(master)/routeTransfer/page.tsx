@@ -7,8 +7,10 @@ import { useMemo, useState, useEffect } from "react";
 import { addRouteTransfer } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 export default function StockTransfer() {
+    const { can } = usePagePermissions("/routeTransfer");
     const { routeOptions = [], ensureRouteLoaded } = useAllDropdownListData();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
@@ -119,14 +121,16 @@ export default function StockTransfer() {
             </div>
 
             {/* ACTION */}
-            <div className="flex justify-end mt-6">
-                <button
-                    onClick={handleSubmit}
-                    className="bg-[#2563EB] text-white px-8 py-2 rounded-md hover:bg-[#1D4ED8]"
-                >
-                    Submit
-                </button>
-            </div>
+            {can("create") && (
+                <div className="flex justify-end mt-6">
+                    <button
+                        onClick={handleSubmit}
+                        className="bg-[#2563EB] text-white px-8 py-2 rounded-md hover:bg-[#1D4ED8]"
+                    >
+                        Submit
+                    </button>
+                </div>
+            )}
         </ContainerCard>
     );
 }
