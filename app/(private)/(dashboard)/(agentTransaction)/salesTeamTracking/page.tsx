@@ -67,6 +67,7 @@ const endPinIcon = new L.DivIcon({
   iconAnchor: [13, 26],
 });
 
+
 /* ================= ROUTE COMPONENT ================= */
 
 function RouteOnRoad({ route }: { route: RoutePoint[] }) {
@@ -87,19 +88,29 @@ function RouteOnRoad({ route }: { route: RoutePoint[] }) {
       draggableWaypoints: false,
       fitSelectedRoutes: true,
       showAlternatives: false,
+
+      // 🔥 GLOW + MAIN ROUTE STYLE
       lineOptions: {
         styles: [
+          // glow layer
+          {
+            color: "#FCA5A5",
+            weight: 12,
+            opacity: 0.35,
+          },
+          // main route
           {
             color: "#E10600",
             weight: 5,
-            opacity: 0.9,
+            opacity: 1,
           },
         ],
       },
+
       createMarker: () => null,
     }).addTo(map);
 
-    // ✅ IMPORTANT PART: decorate the ACTUAL road geometry
+    // ➡️ Direction arrows ON REAL ROAD
     routingControl.on("routesfound", (e: any) => {
       const coordinates = e.routes[0].coordinates;
 
@@ -107,7 +118,7 @@ function RouteOnRoad({ route }: { route: RoutePoint[] }) {
         .polylineDecorator(coordinates, {
           patterns: [
             {
-              offset: 30,
+              offset: 25,
               repeat: 60,
               symbol: (L as any).Symbol.arrowHead({
                 pixelSize: 12,
@@ -115,7 +126,7 @@ function RouteOnRoad({ route }: { route: RoutePoint[] }) {
                 pathOptions: {
                   fillColor: "#1E3A8A",
                   fillOpacity: 1,
-                  weight: 0,
+                  stroke: false,
                 },
               }),
             },
@@ -132,6 +143,7 @@ function RouteOnRoad({ route }: { route: RoutePoint[] }) {
 
   return null;
 }
+
 
 /* ================= MAIN COMPONENT ================= */
 
@@ -239,8 +251,8 @@ export default function SalesTrackingMap() {
               point.type === "start"
                 ? startPinIcon
                 : point.type === "end"
-                ? endPinIcon
-                : visitPinIcon;
+                  ? endPinIcon
+                  : visitPinIcon;
 
             return (
               <Marker
