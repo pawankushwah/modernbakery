@@ -518,7 +518,7 @@ export default function Planogram() {
                   label="Planogram Images"
                   name="images"
                   type="file"
-                  multiple
+                  multiple={true}
                   onChange={(e) => {
                     const files = Array.from(
                       (e.target as HTMLInputElement).files || []
