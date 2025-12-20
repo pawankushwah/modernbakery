@@ -52,11 +52,14 @@ const SalesReportDashboard = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [tableData, setTableData] = useState<any>(null);
   const [isLoadingTable, setIsLoadingTable] = useState(false);
+  const [apiCurrentPage, setApiCurrentPage] = useState<number | null>(null);
+  const [apiTotalPages, setApiTotalPages] = useState<number | null>(null);
+  const [apiTotalRows, setApiTotalRows] = useState<number | null>(null);
+  const [pageInput, setPageInput] = useState<string>('');
   const [selectedDataview, setSelectedDataview] = useState('default');
-  const [searchType, setSearchType] = useState(''); // 'amount' or 'quantity'
-  const [displayQuantity, setDisplayQuantity] = useState(''); // 'Free-Good' or 'Without-Free-Good'
-  const [currentPage, setCurrentPage] = useState(1);
-  const rowsPerPage = 50; // pagination size
+  const [searchType, setSearchType] = useState('quantity'); // default to 'quantity' ('amount' or 'quantity')
+  const [displayQuantity, setDisplayQuantity] = useState('with_free_good'); // default to 'with_free_good' ('with_free_good' or 'without_free_good')
+  
   
   // Dashboard API states
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -285,6 +288,26 @@ const data = await response.json();
     
 
       setAvailableFilters(transformedFilters);
+
+      // If the company filter exists, ensure it's dropped and default-select Hariss International Limited when available
+      try {
+        const companyFilter = transformedFilters.find(f => f.id === 'company');
+        if (companyFilter) {
+          // Add company to droppedFilters if not already present
+          setDroppedFilters(prev => (prev.some(f => f.id === 'company') ? prev : [...prev, companyFilter]));
+
+          // Find Hariss International Limited in the company child list (case-insensitive)
+          const harissItem = companyFilter.childData.find(cd => /hariss international limited/i.test(cd.name));
+          if (harissItem) {
+            setSelectedChildItems(prev => ({ ...prev, company: [harissItem.id] }));
+          } else {
+            // If not found, ensure company key exists so the UI shows the column
+            setSelectedChildItems(prev => (prev['company'] ? prev : { ...prev, company: [] }));
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to auto-select default company:', e);
+      }
     } catch (error) {
       console.error('Failed to fetch filters:', error);
       setFilterError(error instanceof Error ? error.message : 'Failed to load filters');
@@ -295,7 +318,7 @@ const data = await response.json();
   };
 
   // Fetch Table Data function
-  const handleTableView = async () => {
+  const handleTableView = async (page: number = 1) => {
     if (!startDate || !endDate) {
       showSnackbar('Please select a date range before loading table data', 'warning');
       return;
@@ -327,13 +350,14 @@ const data = await response.json();
         ...lowestLevelFilters // Spread only the lowest-level filter IDs
       };
 
+      // include `page` so backend returns the requested page
       const response = await fetch('http://172.16.6.205:8001/api/table', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ ...payload, page })
       });
 
       if (!response.ok) {
@@ -342,6 +366,10 @@ const data = await response.json();
 
       const data = await response.json();
       setTableData(data);
+      // store paging metadata if present
+      setApiCurrentPage(data.current_page ?? page);
+      setApiTotalPages(data.total_pages ?? null);
+      setApiTotalRows(data.total_rows ?? null);
     } catch (error) {
       console.error('Table fetch failed:', error);
       showSnackbar(error instanceof Error ? error.message : 'Failed to load table data', 'error');
@@ -376,6 +404,7 @@ const data = await response.json();
       // so backend can return the same columns as the on-screen table export.
       if (dataview === 'default') {
         const dynamicColumn = getDynamicFilterColumn();
+        const totalField = selectedSearchType === 'amount' ? 'total_amount' : 'total_quantity';
         const showFields: string[] = [
           'item_code',
           'item_name',
@@ -383,7 +412,7 @@ const data = await response.json();
           'invoice_date',
           // add dynamic columns' field names
           ...(dynamicColumn.columns || []).map((c: any) => c.field),
-          'total_quantity'
+          totalField
         ];
         // Deduplicate while preserving order
         payload.show = Array.from(new Set(showFields));
@@ -486,7 +515,8 @@ const data = await response.json();
       'items': { label: 'Item Name', field: 'item_name' }
     };
 
-    const singleColumn = lowestFilter ? filterColumnMap[lowestFilter] : { label: 'Filter Name', field: 'name' };
+    // Default to showing Company Name when no specific lowest filter is selected
+    const singleColumn = lowestFilter ? filterColumnMap[lowestFilter] : { label: 'Company Name', field: 'company_name' };
     return {
       type: 'single',
       columns: [singleColumn]
@@ -567,6 +597,14 @@ const data = await response.json();
   // Resolve a value for a dynamic column from a table row, with common API field fallbacks
   const resolveRowValue = (row: any, field: string) => {
     if (!row) return undefined;
+    // If company column requested but company filter is dropped with no selection,
+    // show default company name
+    if (field === 'company_name') {
+      if (row.company_name !== undefined && row.company_name !== null && row.company_name !== '') return row.company_name;
+      const companyDropped = droppedFilters.some(f => f.id === 'company');
+      const companySelectedCount = selectedChildItems['company']?.length ?? 0;
+      if (companyDropped && companySelectedCount === 0) return 'Hariss International Limited';
+    }
     // direct match
     if (row[field] !== undefined && row[field] !== null) return row[field];
 
@@ -629,6 +667,14 @@ const data = await response.json();
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, filter: Filter) => {
+    const alreadyDropped = droppedFilters.some(df => df.id === filter.id);
+    if (alreadyDropped) {
+      showSnackbar(`${filter.name} already added`, 'warning');
+      // prevent starting a drag for already-dropped filter
+      try { e.dataTransfer.clearData(); } catch (err) {}
+      return;
+    }
+
     setDraggedFilter(filter);
     e.dataTransfer.setData('text/plain', filter.id);
   };
@@ -636,8 +682,13 @@ const data = await response.json();
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (draggedFilter) {
-      // setAvailableFilters(prev => prev.filter(f => f.id !== draggedFilter.id));
-      
+      // Prevent duplicates in case of race or unexpected re-drop
+      if (droppedFilters.some(f => f.id === draggedFilter.id)) {
+        showSnackbar(`${draggedFilter.name} is already selected`, 'warning');
+        setDraggedFilter(null);
+        return;
+      }
+
       setDroppedFilters(prev => [...prev, draggedFilter]);
       setSelectedChildItems(prev => ({ ...prev, [draggedFilter.id]: [] }));
       setSearchTerms(prev => ({ ...prev, [draggedFilter.id]: '' }));
@@ -679,6 +730,36 @@ const data = await response.json();
     setSelectedChildItems({});
     setSearchTerms({});
     setOpenDropdown(null);
+  };
+
+  // Auto-add core filters (company, region, area, warehouse) into the dropped filters
+  const handleAutoAddFilters = () => {
+    const coreIds = ['company', 'region', 'area', 'warehouse'];
+
+    setDroppedFilters(prev => {
+      const existingIds = new Set(prev.map(p => p.id));
+      const allCandidates = [...availableFilters, ...prev];
+      const toAdd = coreIds
+        .filter(id => !existingIds.has(id))
+        .map(id => allCandidates.find(f => f.id === id))
+        .filter(Boolean) as Filter[];
+
+      if (toAdd.length === 0) {
+        showSnackbar('Selected core filters are already added', 'info');
+        return prev;
+      }
+
+      showSnackbar('Core filters added', 'success');
+      return [...prev, ...toAdd];
+    });
+
+    setSelectedChildItems(prev => {
+      const copy = { ...prev };
+      ['company', 'region', 'area', 'warehouse'].forEach(id => {
+        if (!copy[id]) copy[id] = [];
+      });
+      return copy;
+    });
   };
 
   const handleChildItemToggle = (filterId: string, childItemId: string) => {
@@ -726,6 +807,10 @@ const data = await response.json();
     'ri:home-smile-2-line', 'proicons:person', 'streamline:transfer-van', 'pajamas:package',
     'lucide:network', 'bx:file', 'proicons:bookmark', 'solar:dollar-broken'
   ];
+
+  // Precompute dynamic columns and current rows for table rendering
+  const dynamicColumn = getDynamicFilterColumn();
+  const rows = tableData?.data || tableData?.rows || [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -798,7 +883,7 @@ const data = await response.json();
                     onChange={(e) => setSearchType(e.target.value)}
                     className="px-4 py-2 pr-10 bg-white border border-gray-200 rounded-lg appearance-none cursor-pointer text-sm w-full sm:w-auto"
                   >
-                    <option value="">Search Type</option>
+                    {/* <option value="">Search Type</option> */}
                     <option value="amount"> Amount</option>
                     <option value="quantity"> Quantity</option>
                   </select>
@@ -810,7 +895,7 @@ const data = await response.json();
                     onChange={(e) => setDisplayQuantity(e.target.value)}
                     className="px-4 py-2 pr-10 bg-white border border-gray-200 rounded-lg appearance-none cursor-pointer text-sm w-full sm:w-auto"
                   >
-                    <option value=""> Display Quantity</option>
+                    {/* <option value=""> Display Quantity</option> */}
                     <option value="with_free_good"> With Free Good</option>
                     <option value="without_free_good">Without Free Good</option>
                   </select>
@@ -838,7 +923,7 @@ const data = await response.json();
               <button 
                 onClick={() => {
                   setViewType('table');
-                  handleTableView();
+                  handleTableView(1);
                 }} 
                 disabled={isLoadingTable}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg flex-1 sm:flex-none justify-center ${viewType === 'table' ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
@@ -896,13 +981,20 @@ const data = await response.json();
 </div>
 
                   <div className="flex flex-wrap gap-2 flex-1 w-full">
-                    {visibleFilters.map(filter => (
-                      <div key={filter.id} draggable onDragStart={(e) => handleDragStart(e, filter)} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#D1D5DB] rounded-[8px] cursor-grab hover:bg-gray-50">
-                        <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
-                        <span className="text-xs sm:text-sm font-medium text-[#414651] whitespace-nowrap">{filter.name}</span>
-                        <Icon icon="ph:dots-six-vertical-bold" width="14" height="14" className="sm:w-4 sm:h-4" style={{color: '#A4A7AE'}} />
-                      </div>
-                    ))}
+                    {visibleFilters.map(filter => {
+                      const disabled = droppedFilters.some(df => df.id === filter.id);
+                      return (
+                        <div
+                          key={filter.id}
+                          draggable={!disabled}
+                          onDragStart={(e) => !disabled && handleDragStart(e, filter)}
+                          className={`flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#D1D5DB] rounded-[8px] ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-grab hover:bg-gray-50'}`}>
+                          <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                          <span className="text-xs sm:text-sm font-medium text-[#414651] whitespace-nowrap">{filter.name}</span>
+                          <Icon icon="ph:dots-six-vertical-bold" width="14" height="14" className="sm:w-4 sm:h-4" style={{color: '#A4A7AE'}} />
+                        </div>
+                      );
+                    })}
                  
 
                 
@@ -914,15 +1006,18 @@ const data = await response.json();
                         {searchbyopen && (
                           <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
                             <div className="p-2">
-                              {searchby.map(filter => (
-                                <div key={filter.id} draggable onDragStart={(e) => handleDragStart(e, filter)} className="flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 cursor-grab">
-                                  <div className='flex gap-2 sm:gap-4 items-center'>
-                                    <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
-                                    <span className="text-xs sm:text-sm text-gray-700">{filter.name}</span>
+                              {searchby.map(filter => {
+                                const disabled = droppedFilters.some(df => df.id === filter.id);
+                                return (
+                                  <div key={filter.id} draggable={!disabled} onDragStart={(e) => !disabled && handleDragStart(e, filter)} className={`flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-grab'}`}>
+                                    <div className='flex gap-2 sm:gap-4 items-center'>
+                                      <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                                      <span className="text-xs sm:text-sm text-gray-700">{filter.name}</span>
+                                    </div>
+                                    <Icon icon="ph:dots-six-vertical-bold" width="14" height="14" className="sm:w-4 sm:h-4" style={{color: '#A4A7AE'}} />
                                   </div>
-                                  <Icon icon="ph:dots-six-vertical-bold" width="14" height="14" className="sm:w-4 sm:h-4" style={{color: '#A4A7AE'}} />
-                                </div>
-                              ))}
+                                );
+                              })}
                             </div>
                           </div>
                         )}
@@ -937,14 +1032,9 @@ const data = await response.json();
                           <div className="absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
                             <div className="p-2">
                               {moreFilters.map(filter => {
-                                const isUndraggable = viewType === 'table' && ['items', 'item-category'].includes(filter.id);
+                                const disabled = droppedFilters.some(df => df.id === filter.id);
                                 return (
-                                  <div 
-                                    key={filter.id} 
-                                    draggable={!isUndraggable} 
-                                    onDragStart={!isUndraggable ? (e) => handleDragStart(e, filter) : undefined} 
-                                    className={`flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 ${isUndraggable ? 'cursor-not-allowed opacity-50' : 'cursor-grab'}`}
-                                  >
+                                  <div key={filter.id} draggable={!disabled} onDragStart={(e) => !disabled && handleDragStart(e, filter)} className={`flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50 cursor-grab'}`}>
                                     <div className='flex gap-2 sm:gap-4 items-center'>
                                       <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
                                       <span className="text-xs sm:text-sm text-gray-700">{filter.name}</span>
@@ -1017,7 +1107,10 @@ const data = await response.json();
                           })}
                         </div>
                         {droppedFilters.length > 0 && (
-                          <button onClick={handleClearAllFilters} className="text-[#252B37] italic text-xs sm:text-sm underline hover:text-red-600 whitespace-nowrap mt-2 sm:mt-0 self-start sm:self-auto">Clear Filter</button>
+                          <div className="flex items-center gap-3 mt-2 sm:mt-0 self-start sm:self-auto">
+                            <button onClick={handleClearAllFilters} className="text-[#252B37] italic text-xs sm:text-sm underline hover:text-red-600 whitespace-nowrap">Clear Filter</button>
+                            <button onClick={handleAutoAddFilters} className="bg-blue-600 text-white text-xs sm:text-sm px-3 py-1 rounded hover:bg-blue-700">Filter</button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -1042,70 +1135,79 @@ const data = await response.json();
                       <span className="ml-3 text-gray-600">Loading table data...</span>
                     </div>
                   ) : tableData && (tableData.data || tableData.rows)?.length > 0 ? (
-                    (() => {
-                      const dynamicColumn = getDynamicFilterColumn();
-                      const rows = tableData.data || tableData.rows || [];
-                      const totalRows = rows.length;
-                      const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
-                      const startIdx = (currentPage - 1) * rowsPerPage;
-                      const endIdx = Math.min(startIdx + rowsPerPage, totalRows);
-                      const paginated = rows.slice(startIdx, endIdx);
-
-                      const changePage = (page: number) => {
-                        if (page < 1) page = 1;
-                        if (page > totalPages) page = totalPages;
-                        setCurrentPage(page);
-                      };
-
-                      return (
-                        <div>
-                          <div className="overflow-x-auto">
-                            <table className="w-full border-collapse">
-                              <thead>
-                                <tr className="bg-gray-100 border-b border-gray-200">
-                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Code</th>
-                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
-                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Category</th>
-                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Invoice Date</th>
-                                  {dynamicColumn.columns.map((col: any, idx: number) => (
-                                    <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{col.label}</th>
-                                  ))}
-                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Total Quantity</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {paginated.map((row: any, rowIdx: number) => (
-                                  <tr key={startIdx + rowIdx} className="border-b border-gray-200 hover:bg-gray-50">
-                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_code || '-'}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_name || '-'}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_category || '-'}</td>
-                                    <td className="px-4 py-3 text-sm text-gray-700">{row.invoice_date || '-'}</td>
-                                    {dynamicColumn.columns.map((col: any, idx: number) => (
-                                      <td key={idx} className="px-4 py-3 text-sm text-gray-700">{resolveRowValue(row, col.field) || '-'}</td>
-                                    ))}
-                                    <td className="px-4 py-3 text-sm text-gray-700">{getTotalValue(row)}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-
-                          {/* Pagination controls */}
-                          <div className="flex items-center justify-between mt-3 px-2">
-                            <div className="text-sm text-gray-600">Showing {startIdx + 1} - {endIdx} of {totalRows}</div>
+                    <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm text-gray-600">{apiCurrentPage !== null ? `Page ${apiCurrentPage} of ${apiTotalPages} — Showing ${rows.length} rows (total ${apiTotalRows})` : `Showing ${rows.length} rows`}</div>
                             <div className="flex items-center gap-2">
-                              <button onClick={() => changePage(currentPage - 1)} disabled={currentPage === 1} className="px-3 py-1 bg-white border rounded disabled:opacity-50">Prev</button>
-                              {/* Simple page buttons */}
-                              {Array.from({ length: totalPages }).slice(0, 10).map((_, i) => (
-                                <button key={i} onClick={() => changePage(i + 1)} className={`px-3 py-1 border rounded ${currentPage === i + 1 ? 'bg-gray-900 text-white' : 'bg-white'}`}>{i + 1}</button>
-                              ))}
-                              {totalPages > 10 && <span className="px-2">...</span>}
-                              <button onClick={() => changePage(currentPage + 1)} disabled={currentPage === totalPages} className="px-3 py-1 bg-white border rounded disabled:opacity-50">Next</button>
+                              <button
+                                onClick={() => {
+                                  const prev = (apiCurrentPage ?? tableData?.current_page ?? 1) - 1;
+                                  if (prev >= 1) handleTableView(prev);
+                                }}
+                                disabled={isLoadingTable || (apiCurrentPage ?? tableData?.current_page ?? 1) <= 1}
+                                className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+                              >Prev</button>
+
+                              <div className="flex items-center gap-1">
+                                <input type="number" min={1} value={pageInput} onChange={(e) => setPageInput(e.target.value)} placeholder="Page" className="w-20 px-2 py-1 border rounded text-sm" />
+                                <button
+                                  onClick={() => {
+                                    const maxP = apiTotalPages ?? tableData?.total_pages ?? null;
+                                    let p = parseInt(pageInput || '') || apiCurrentPage || tableData?.current_page || 1;
+                                    if (maxP) p = Math.min(Math.max(1, p), maxP);
+                                    if (p >= 1) {
+                                      handleTableView(p);
+                                      setPageInput('');
+                                    }
+                                  }}
+                                  disabled={isLoadingTable}
+                                  className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+                                >Go</button>
+                              </div>
+
+                              <button
+                                onClick={() => {
+                                  const next = (apiCurrentPage ?? tableData?.current_page ?? 1) + 1;
+                                  const maxP = apiTotalPages ?? tableData?.total_pages ?? null;
+                                  if (!maxP || next <= maxP) handleTableView(next);
+                                }}
+                                disabled={isLoadingTable || (!!(apiTotalPages ?? tableData?.total_pages) && (apiCurrentPage ?? tableData?.current_page ?? 1) >= (apiTotalPages ?? tableData?.total_pages ?? 1))}
+                                className="px-3 py-1 bg-white border rounded disabled:opacity-50"
+                              >Next</button>
                             </div>
                           </div>
+
+                          <div className="overflow-x-auto">
+                          <table className="w-full border-collapse">
+                            <thead>
+                              <tr className="bg-gray-100 border-b border-gray-200">
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Code</th>
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Category</th>
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Invoice Date</th>
+                                {dynamicColumn.columns.map((col: any, idx: number) => (
+                                  <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{col.label}</th>
+                                ))}
+                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{searchType === 'amount' ? 'Total Amount' : 'Total Quantity'}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {rows.map((row: any, rowIdx: number) => (
+                                <tr key={rowIdx} className="border-b border-gray-200 hover:bg-gray-50">
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_code || '-'}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_name || '-'}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_category || '-'}</td>
+                                  <td className="px-4 py-3 text-sm text-gray-700">{row.invoice_date || '-'}</td>
+                                  {dynamicColumn.columns.map((col: any, idx: number) => (
+                                    <td key={idx} className="px-4 py-3 text-sm text-gray-700">{resolveRowValue(row, col.field) || '-'}</td>
+                                  ))}
+                                  <td className="px-4 py-3 text-sm text-gray-700">{getTotalValue(row)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
-                      );
-                    })()
+                    </div>
                   ) : (
                     <div className="flex flex-col justify-center items-center py-12 text-gray-500">
                       <Table size={48} className="mb-4 opacity-30" />
