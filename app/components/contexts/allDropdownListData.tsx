@@ -795,7 +795,7 @@ export const AllDropdownListDataProvider = ({ children }: { children: ReactNode 
   const ensureMenuListLoaded = useCallback(() => {
     // if (fetchedRef.current.has('menuList') || fetchingRef.current.has('menuList')) return;
     // fetchingRef.current.add('menuList');
-    getMenuList({ dropdown: 'true' }).then(res => {
+    getMenuList().then(res => {
       setMenuList(normalizeResponse(res) as MenuList[]);
       fetchedRef.current.add('menuList');
       fetchingRef.current.delete('menuList');
