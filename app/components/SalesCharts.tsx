@@ -1030,7 +1030,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               {selectedMaxView === 'regionVisited' && 'Visit Customer Trend - Region Details'}
               {selectedMaxView === 'warehouseSales' && 'Warehouse Sales Details'}
               {selectedMaxView === 'area' && 'Area Sales Details'}
-              {selectedMaxView === 'areaItems' && 'Area Contribution (Top Items)'}
+              {selectedMaxView === 'areaItems' && 'Area Contribution'}
               {selectedMaxView === 'areaPerformance' && 'Area Performance Details'}
               {selectedMaxView === 'areaVisited' && 'Area Visited Customers Details'}
               {selectedMaxView === 'areaTrend' && 'Area Sales Trend Details'}
@@ -1366,7 +1366,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                                   key={an}
                                   type="monotone"
                                   dataKey={an}
-                                  stroke={areaColors[idx % areaColors.length]}
+                                  stroke={neonAreaColors[idx % neonAreaColors.length].line}
                                   strokeWidth={2}
                                   dot={{ r: 3 }}
                                   activeDot={{ r: 5 }}
@@ -1569,7 +1569,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             {selectedMaxView === 'areaItems' && (areaContributionData.length > 0) && (
               <>
                 <div className="bg-white p-6 border rounded-lg shadow-sm">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Area Contribution (Top Items)</h3>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Area Contribution</h3>
                   <MaximizedExplodedPieChart
                     data={areaContributionData.map((r: any) => ({ name: `${r.areaName} - ${r.itemName}`, value: r.value || 0, color: r.color }))}
                     
@@ -2567,7 +2567,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           {/* Left: Area Contribution by Top Item (aggregate by area) */}
           <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Area Contribution (Top Items)</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Area Contribution</h3>
               <button onClick={() => setSelectedMaxView('areaItems')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
             <div className="w-full h-80">

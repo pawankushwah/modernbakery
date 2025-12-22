@@ -807,7 +807,7 @@ const data = await response.json();
         <section className="flex-1 p-4 lg:p-6 pb-20 lg:pb-6">
           <div className="mb-6">
             <h1 className="text-xl lg:text-2xl flex gap-2 lg:gap-4 font-semibold items-center text-gray-900">
-              <Icon icon="lucide:arrow-left" width="20" height="20" className="lg:w-6 lg:h-6" />
+              {/* <Icon icon="lucide:arrow-left" width="20" height="20" className="lg:w-6 lg:h-6" /> */}
               Sales Report Dashboard
             </h1>
           </div>

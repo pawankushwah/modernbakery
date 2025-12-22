@@ -190,6 +190,8 @@ export default function StepPromotion({
                     required={true}
                     type="select"
                     isSingle={false}
+                    searchable={true}
+                    multiSelectChips={true}
                     options={itemDropdownMap["Item Category"] ? [{ label: `Select Item Category`, value: "" }, ...itemDropdownMap["Item Category"]] : [{ label: `Select Item Category`, value: "" }]}
                     value={keyValue["Item Category"] || []}
                     onChange={e => {

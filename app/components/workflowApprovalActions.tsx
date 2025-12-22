@@ -241,7 +241,7 @@ export default function WorkflowApprovalActions({
       <div
         ref={dragNodeRef}
         style={{ zIndex: 30 }}
-        className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-md bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px] w-fit cursor-grab active:cursor-grabbing"
+        className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-md bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px] cursor-grab active:cursor-grabbing"
       >
       {comment.show && (
         <div className="w-full p-5 bg-white rounded-lg mb-4 opacity-100">
@@ -252,7 +252,7 @@ export default function WorkflowApprovalActions({
               setComment({ ...comment, show: false });
             }}
           >
-            <span className="mbs-5">{camelToTitleCase(comment.action || "")}</span>
+            <span className="mb-5">{camelToTitleCase(comment.action || "")}</span>
             <InputFields
               type="textarea"
               label="Comment"
