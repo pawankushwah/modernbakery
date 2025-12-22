@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 
@@ -13,6 +13,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { campaignInformationList,exportCompaignData } from "@/app/services/merchandiserApi";
 import { div } from "framer-motion/client";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 
 
@@ -22,10 +23,18 @@ const dropdownDataList = [
 ];
 
 export default function CampaignPage() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
 
   const { showSnackbar } = useSnackbar();
   const router = useRouter();

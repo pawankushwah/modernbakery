@@ -7,13 +7,15 @@ import { useMemo, useState, useEffect } from "react";
 import { addRouteTransfer } from "@/app/services/allApi";
 import { useLoading } from "@/app/services/loadingContext";
 import { useSnackbar } from "@/app/services/snackbarContext";
-import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation"; import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+
 export default function StockTransfer() {
+    const { can } = usePagePermissions();
     const { routeOptions = [], ensureRouteLoaded } = useAllDropdownListData();
     const { setLoading } = useLoading();
     const { showSnackbar } = useSnackbar();
- const router = useRouter();
-const [routeoptions, setRouteOptions] = useState(true);
+    const router = useRouter();
+    const [routeoptions, setRouteOptions] = useState(true);
 
     const [form, setForm] = useState({
         source_warehouse: "",
@@ -25,7 +27,7 @@ const [routeoptions, setRouteOptions] = useState(true);
         destination_warehouse: "",
     });
 
-      useEffect(() => {
+    useEffect(() => {
         if (routeOptions && routeOptions.length > 0) {
             setRouteOptions(false);
         }
@@ -103,7 +105,7 @@ const [routeoptions, setRouteOptions] = useState(true);
             console.error("Route transfer error:", error);
             showSnackbar("Something went wrong", "error");
         } finally {
-            setLoading(false); 
+            setLoading(false);
         }
     };
 
@@ -131,7 +133,7 @@ const [routeoptions, setRouteOptions] = useState(true);
                         showSearchInDropdown={true}
                         placeholder="Search route"
                         error={errors.source_warehouse}
-                        //    showSkeleton={routeoptions}
+                    //    showSkeleton={routeoptions}
                     />
                 </div>
                 <div className="mb-0">
@@ -149,15 +151,16 @@ const [routeoptions, setRouteOptions] = useState(true);
                         showSearchInDropdown={true}
                         placeholder="Search sub route"
                         error={errors.destination_warehouse}
-                         showSkeleton={routeoptions}
+                        showSkeleton={routeoptions}
                     />
                 </div>
-            </div> 
-            
+            </div>
+
 
             {/* ACTION */}
-           <div className="flex justify-end mt-6 gap-4">
-  {/* <button
+            {can("create") && (
+                <div className="flex justify-end mt-6 gap-4">
+                    {/* <button
     onClick={() => router.push("/routeTransfer")}
     type="button"
     className="px-6 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
@@ -165,14 +168,15 @@ const [routeoptions, setRouteOptions] = useState(true);
     Cancel
   </button> */}
 
-  <button
-    onClick={handleSubmit}
-    className="px-6 py-2 bg-red-600 text-white rounded-md"
-  >
-    Submit
-  </button>
-</div>
+                    <button
+                        onClick={handleSubmit}
+                        className="px-6 py-2 bg-red-600 text-white rounded-md"
+                    >
+                        Submit
+                    </button>
+                </div>
 
+            )}
         </ContainerCard>
     );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Icon } from "@iconify-icon/react";
 
@@ -16,6 +16,7 @@ import BorderIconButton from "@/app/components/borderIconButton";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { competitorList,exportCompetitor  } from "@/app/services/merchandiserApi";
+import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
 
 const dropdownDataList = [
   { icon: "lucide:radio", label: "Inactive", iconWidth: 20 },
@@ -23,11 +24,19 @@ const dropdownDataList = [
 ];
 
 export default function Competitor() {
+  const { can, permissions } = usePagePermissions();
   const { setLoading } = useLoading();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [popupImages, setPopupImages] = useState<string[]>([]);
+
+  // Refresh table when permissions load
+  useEffect(() => {
+    if (permissions.length > 0) {
+      setRefreshKey((prev) => prev + 1);
+    }
+  }, [permissions]);
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();

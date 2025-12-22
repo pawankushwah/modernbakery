@@ -5,6 +5,7 @@ import axios from 'axios';
 import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';
 import { useSnackbar } from '@/app/services/snackbarContext';
+import { usePagePermissions } from '@/app/(private)/utils/usePagePermissions';
 
 
 // Define TypeScript interfaces
@@ -29,6 +30,7 @@ interface SearchTerms {
 }
 
 const SalesReportDashboard = () => {
+  const { can, permissions } = usePagePermissions();
   const { showSnackbar } = useSnackbar();
   const [viewType, setViewType] = useState('');
   const [dateRange, setDateRange] = useState('dd-mm-yyyy - dd-mm-yyyy');
@@ -857,12 +859,14 @@ const data = await response.json();
           <div className="bg-white w-full rounded-lg shadow-sm">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between py-3 px-4 border-b border-[#E9EAEB] gap-3">
               <h2 className="font-semibold text-lg text-[#181D27]">Sales Reports</h2>
-              <ExportButtons 
-                onExportXLSX={handleExportXLSX}
-                isLoading={isExporting}
-                searchType={searchType}
-                displayQuantity={displayQuantity}
-              />
+              {can("export") && (
+                <ExportButtons 
+                  onExportXLSX={handleExportXLSX}
+                  isLoading={isExporting}
+                  searchType={searchType}
+                  displayQuantity={displayQuantity}
+                />
+              )}
             </div>
 
             <div className="p-4 border border-[#E9EAEB]">
