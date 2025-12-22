@@ -56,9 +56,9 @@ export default function Pricing() {
     const { can, permissions } = usePagePermissions();
     const { setLoading } = useLoading();
     const [showDropdown, setShowDropdown] = useState<boolean>(false);
-    const [showDeletePopup, setShowDeletePopup] = useState(false);
-    const [selectedRow, setSelectedRow] = useState<PricingItem | null>(null);
-    const [refreshKey, setRefreshKey] = useState(0);
+    const [showDeletePopup, setShowDeletePopup] = useState<boolean>(false);
+    const [selectedRow, setSelectedRow] = useState<TableDataType | null>(null);
+    const [refreshKey, setRefreshKey] = useState<number>(0);
 
     // Refresh table when permissions load
     useEffect(() => {
@@ -229,7 +229,7 @@ export default function Pricing() {
                 />
             </div>
 
-            {showDeletePopup && (
+            {/* {showDeletePopup && (
                 <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50">
                     <DeleteConfirmPopup
                         title="Promotion"
@@ -237,7 +237,7 @@ export default function Pricing() {
                         onConfirm={handleConfirmDelete}
                     />
                 </div>
-            )}
+            )} */}
         </>
     );
 }
