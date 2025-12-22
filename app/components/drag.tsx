@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronDown, Calendar, BarChart3, Table } from 'lucide-react';
-import { Icon } from "@iconify/react";
+import { Icon } from "@iconify-icon/react";
 import axios from 'axios';
 import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';
-import TopBar from '../(private)/(dashboard)/topBar';
-import { useSnackbar } from '../services/snackbarContext';
+import { useSnackbar } from '@/app/services/snackbarContext';
 
 
 // Define TypeScript interfaces
@@ -56,6 +55,8 @@ const SalesReportDashboard = () => {
   const [selectedDataview, setSelectedDataview] = useState('default');
   const [searchType, setSearchType] = useState(''); // 'amount' or 'quantity'
   const [displayQuantity, setDisplayQuantity] = useState(''); // 'Free-Good' or 'Without-Free-Good'
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 50; // pagination size
   
   // Dashboard API states
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -294,7 +295,7 @@ const data = await response.json();
   };
 
   // Fetch Table Data function
-  const handleTableView = async () => {
+  const handleTableView = async (page?: number) => {
     if (!startDate || !endDate) {
       showSnackbar('Please select a date range before loading table data', 'warning');
       return;
@@ -326,13 +327,13 @@ const data = await response.json();
         ...lowestLevelFilters // Spread only the lowest-level filter IDs
       };
 
-      const response = await fetch('http://172.16.6.205:8001/api/table', {
+      const response = await fetch(`http://172.16.6.205:8001/api/table?page=${page || 1}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('authToken') || ''}`
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -583,6 +584,16 @@ const data = await response.json();
     }
 
     return undefined;
+  };
+
+  // Determine display value for total column depending on selected search type
+  const getTotalValue = (row: any) => {
+    if (!row) return '-';
+    const amountCandidates = [row.total_amount, row.total_value, row.total_quantity, row.total_qty];
+    const quantityCandidates = [row.total_quantity, row.total_qty, row.total_amount, row.total_value];
+    const candidates = searchType === 'amount' ? amountCandidates : quantityCandidates;
+    const found = candidates.find(v => v !== undefined && v !== null && v !== '');
+    return found !== undefined ? found : '-';
   };
 
   // Fetch on mount
@@ -885,7 +896,9 @@ const data = await response.json();
 </div>
 
                   <div className="flex flex-wrap gap-2 flex-1 w-full">
-                    {visibleFilters.map(filter => (
+                    {visibleFilters
+                      .filter(filter => !droppedFilters.some(df => df.id === filter.id))
+                      .map(filter => (
                       <div key={filter.id} draggable onDragStart={(e) => handleDragStart(e, filter)} className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#D1D5DB] rounded-[8px] cursor-grab hover:bg-gray-50">
                         <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
                         <span className="text-xs sm:text-sm font-medium text-[#414651] whitespace-nowrap">{filter.name}</span>
@@ -1033,36 +1046,139 @@ const data = await response.json();
                   ) : tableData && (tableData.data || tableData.rows)?.length > 0 ? (
                     (() => {
                       const dynamicColumn = getDynamicFilterColumn();
+                      const rows = tableData.data || tableData.rows || [];
+                      
+                      // Use server-side pagination data
+                      const totalRows = tableData.total_rows || rows.length;
+                      const totalPages = tableData.total_pages || Math.max(1, Math.ceil(totalRows / rowsPerPage));
+                      const apiCurrentPage = tableData.current_page || currentPage;
+                      const startIdx = ((apiCurrentPage - 1) * rowsPerPage) + 1;
+                      const endIdx = Math.min(apiCurrentPage * rowsPerPage, totalRows);
+
+                      const changePage = (page: number) => {
+                        console.log('Change to page:', page);
+                        if (page < 1) page = 1;
+                        if (page > totalPages) page = totalPages;
+                        setCurrentPage(page);
+                        handleTableView(page);
+                      };
+
                       return (
-                        <div className="overflow-x-auto">
-                          <table className="w-full border-collapse">
-                            <thead>
-                              <tr className="bg-gray-100 border-b border-gray-200">
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Code</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Category</th>
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Invoice Date</th>
-                                {dynamicColumn.columns.map((col: any, idx: number) => (
-                                  <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{col.label}</th>
-                                ))}
-                                <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Total Quantity</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {(tableData.data || tableData.rows)?.map((row: any, rowIdx: number) => (
-                                <tr key={rowIdx} className="border-b border-gray-200 hover:bg-gray-50">
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_code || '-'}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_name || '-'}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.item_category || '-'}</td>
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.invoice_date || '-'}</td>
-                                      {dynamicColumn.columns.map((col: any, idx: number) => (
-                                        <td key={idx} className="px-4 py-3 text-sm text-gray-700">{resolveRowValue(row, col.field) || '-'}</td>
-                                        ))}
-                                  <td className="px-4 py-3 text-sm text-gray-700">{row.total_quantity || '-'}</td>
+                        <div>
+                          <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                              <thead>
+                                <tr className="bg-gray-100 border-b border-gray-200">
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Code</th>
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Name</th>
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Item Category</th>
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Invoice Date</th>
+                                  {dynamicColumn.columns.map((col: any, idx: number) => (
+                                    <th key={idx} className="px-4 py-3 text-left text-sm font-semibold text-gray-700">{col.label}</th>
+                                  ))}
+                                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">Total Quantity</th>
                                 </tr>
-                              ))}
-                            </tbody>
-                          </table>
+                              </thead>
+                              <tbody>
+                                {rows.map((row: any, rowIdx: number) => (
+                                  <tr key={rowIdx} className="border-b border-gray-200 hover:bg-gray-50">
+                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_code || '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_name || '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700">{row.item_category || '-'}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-700">{row.invoice_date || '-'}</td>
+                                    {dynamicColumn.columns.map((col: any, idx: number) => (
+                                      <td key={idx} className="px-4 py-3 text-sm text-gray-700">{resolveRowValue(row, col.field) || '-'}</td>
+                                    ))}
+                                    <td className="px-4 py-3 text-sm text-gray-700">{getTotalValue(row)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+
+                          {/* Pagination controls */}
+                          <div className="flex items-center justify-between mt-3 px-2">
+                            <div className="text-sm text-gray-600">Showing {startIdx} - {endIdx} of {totalRows}</div>
+                            <div className="flex items-center gap-2">
+                              <button 
+                                onClick={() => changePage(apiCurrentPage - 1)} 
+                                disabled={!tableData.previous_page || apiCurrentPage === 1} 
+                                className="px-3 py-1 bg-white border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Prev
+                              </button>
+                              
+                              {/* Smart pagination with groups of 5 */}
+                              {(() => {
+                                // Adjust to 0-indexed for logic (API returns 1-indexed)
+                                const cPage = apiCurrentPage - 1;
+                                const pages = [];
+                                
+                                // If 6 or fewer pages, show all
+                                if (totalPages <= 6) {
+                                  for (let i = 1; i <= totalPages; i++) {
+                                    pages.push(
+                                      <button 
+                                        key={i} 
+                                        onClick={() => changePage(i)} 
+                                        className={`px-3 py-1 border rounded ${apiCurrentPage === i ? 'bg-gray-900 text-white' : 'bg-white'}`}
+                                      >
+                                        {i}
+                                      </button>
+                                    );
+                                  }
+                                  return pages;
+                                }
+                                
+                                // More than 6 pages: smart pagination
+                                const elems: (number | string)[] = [];
+                                
+                                // If near the start, show first up to five pages then ellipsis + last
+                                if (cPage <= 2) {
+                                  const end = Math.min(totalPages - 1, 4); // pages 0..4 (display 1..5)
+                                  for (let i = 0; i <= end; i++) elems.push(i);
+                                  if (end < totalPages - 1) elems.push("...", totalPages - 1);
+                                }
+                                // If near the end, show first, ellipsis, then last up to five pages
+                                else if (cPage >= totalPages - 3) {
+                                  const start = Math.max(0, totalPages - 5); // show last 5 pages
+                                  elems.push(0);
+                                  if (start > 1) elems.push("...");
+                                  for (let i = start; i <= totalPages - 1; i++) elems.push(i);
+                                }
+                                // Middle: show first page, ellipsis, two before/after current, ellipsis, last page
+                                else {
+                                  elems.push(0, "...");
+                                  const start = Math.max(0, cPage - 2);
+                                  const end = Math.min(totalPages - 1, cPage + 2);
+                                  for (let i = start; i <= end; i++) elems.push(i);
+                                  elems.push("...", totalPages - 1);
+                                }
+                                
+                                return elems.map((p, idx) =>
+                                  typeof p === "string" ? (
+                                    <span key={`e-${idx}`} className="px-2 text-gray-500">{p}</span>
+                                  ) : (
+                                    <button 
+                                      key={p} 
+                                      onClick={() => changePage(p + 1)} 
+                                      className={`px-3 py-1 border rounded ${apiCurrentPage === p + 1 ? 'bg-gray-900 text-white' : 'bg-white'}`}
+                                    >
+                                      {p + 1}
+                                    </button>
+                                  )
+                                );
+                              })()}
+                              
+                              <button 
+                                onClick={() => changePage(apiCurrentPage + 1)} 
+                                disabled={!tableData.next_page || apiCurrentPage === totalPages} 
+                                className="px-3 py-1 bg-white border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Next
+                              </button>
+                            </div>
+                          </div>
                         </div>
                       );
                     })()

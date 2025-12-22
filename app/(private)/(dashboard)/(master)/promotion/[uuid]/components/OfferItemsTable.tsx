@@ -144,7 +144,7 @@ export default function OfferItemsTable({ offerItems, setOfferItems, selectItemF
                           placeholder="Select Item"
                           showSkeleton={itemLoading}
                           options={[{ label: `Select Item`, value: "" }, ...itemOptions]}
-                          value={Array.isArray(row.itemCode) ? row.itemCode : (row.itemCode ? [String(row.itemCode)] : [""])}
+                          value={Array.isArray(row.itemCode) ? row.itemCode : (row.itemCode ? [String(row.itemCode)] : [])}
                           onChange={e => {
                             const val = e.target.value;
                             let selectedValues: string[];

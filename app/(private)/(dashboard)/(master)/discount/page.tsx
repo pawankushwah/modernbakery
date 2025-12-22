@@ -26,34 +26,29 @@ import StatusBtn from "@/app/components/statusBtn2";
 interface Discount {
     uuid?: string;
     id?: string | number;
-    osa_code?: string;
-    item?: {
-        id?: number;
-        code?: string;
-        name?: string;
-    };
-    item_category?: { id?: number; category_name?: string; category_code?: string };
-    customer?: {
-        id?: number;
-        name?: string;
-        osa_code?: string;
-    };
-    outlet_channel?: {
-        id?: number;
-        outlet_channel?: string;
-        outlet_channel_code?: string;
-    };
-    discount_type?: {
-        id?: number;
-        discount_code?: string;
-        discount_name?: string;
-    };
-    discount_value?: string;
-    min_quantity?: string;
-    min_order_value?: string;
-    start_date?: string;
-    end_date?: string;
+    discount_name?: string;
+    discount_apply_on?: string;
+    discount_type?: string;
+    bundle_combination?: string;
     status?: string | number;
+    from_date?: string;
+    to_date?: string;
+    sales_team_type?: string[];
+    project_list?: string[];
+    items?: any[];
+    item_category?: any[];
+    location?: string[];
+    customer?: string[];
+    header?: {
+        headerMinAmount?: string | null;
+        headerRate?: string | null;
+    };
+    discount_details?: any[];
+    key?: {
+        Location?: string[];
+        Customer?: string[];
+        Item?: string[];
+    };
 }
 
 // 🔹 Dropdown menu data
@@ -64,69 +59,12 @@ const dropdownDataList = [
 
 // 🔹 Table columns
 const columns = [
-    { key: "osa_code", label: "Discount Code",
-        render: (row: TableDataType) => (
-            <span className="font-semibold text-[#181D27] text-[14px]">
-                {row.osa_code}
-            </span>
-        ),
-     },
     {
-        key: "item",
-        label: "Item",
-        render: (data: TableDataType) => {
-            const discountObj =
-                typeof data.item === "string"
-                    ? JSON.parse(data.item)
-                    : data.item;
-            return discountObj?.name || "-";
-        },
+        key: "discount_name",
+        label: "Discount Name",
     },
-    {
-        key: "item_category",
-        label: "Item Category",
-        render: (data: TableDataType) => {
-            const discountObj =
-                typeof data.item_category === "string"
-                    ? JSON.parse(data.item_category)
-                    : data.item_category;
-            return discountObj?.category_name || "-";
-        },
-    },
-    { key: "customer", label: "Customer", 
-        render: (row: TableDataType) => {
-            const discountObj =
-                typeof row.customer === "string"
-                    ? JSON.parse(row.customer)
-                    : row.customer;
-            return discountObj?.name || "-";
-        }
-     },
-    { key: "outlet_channel", label: "Customer Channel", 
-        render: (row: TableDataType) => {
-            const discountObj =
-                typeof row.outlet_channel === "string"
-                    ? JSON.parse(row.outlet_channel)
-                    : row.outlet_channel;
-            return discountObj?.outlet_channel || "-";
-        }
-     },
-    { key: "discount_value", label: "Discount Value" },
-    {
-        key: "discount_type",
-        label: "Discount Type",
-        render: (data: TableDataType) => {
-            const discountObj =
-                typeof data.discount_type === "string"
-                    ? JSON.parse(data.discount_type)
-                    : data.discount_type;
-            return discountObj?.discount_name || "-";
-        },
-    },
-    { key: "min_quantity", label: "Min Quantity" },
-    { key: "min_order_value", label: "Min Order Value" },
-    { key: "start_date", label: "Start Date" },
-    { key: "end_date", label: "End Date" },
+    { key: "from_date", label: "Start Date" },
+    { key: "to_date", label: "End Date" },
     {
         key: "status",
         label: "Status",

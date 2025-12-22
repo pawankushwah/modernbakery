@@ -1966,7 +1966,7 @@ export const deleteDiscount = async (uuid: string) => {
 
 export const getDiscountById = async (uuid?: string) => {
   try {
-    const res = await API.get(`/api/master/discount/discount/${uuid}`);
+    const res = await API.get(`/api/master/discount/${uuid}`);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -1974,7 +1974,7 @@ export const getDiscountById = async (uuid?: string) => {
 };
 export const updateDiscount = async (uuid: string, body: object) => {
   try {
-    const res = await API.put(`/api/master/discount/update/${uuid}`, body);
+    const res = await API.put(`/api/master/discount/${uuid}`, body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);
@@ -2089,7 +2089,7 @@ export const warehouseStocksKpi = async (id: string) => {
 
 export const warehouseLowStocksKpi = async (id: string) => {
   try {
-    const res = await API.get(`/api/settings/warehouse-stocks/46/low-items`);
+    const res = await API.get(`/api/settings/warehouse-stocks/${id}/low-items`);
 
     return res.data;
   } catch (error: unknown) {
@@ -3792,31 +3792,23 @@ export const editBrand = async (uuid: string, payload: object) => {
     return handleError(error);
   }
 };
-
 export const getWarehouseStockDetails = async (id: string) => {
   try {
     const res = await API.get(`/api/settings/warehouse-stocks/${id}/stock-details`);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
   }
-  catch(err){
-    console.log(err)
+};
+
+export const getFilters = async (params?: Params) => {
+  try {
+    const res =await API.post(`/api/filters`, { params: params });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
   }
-}
-
-
-    export const getFilters = async (params?: Params) => {
-      try {
-        const res = await API.post(`/api/filters`, { params: params });
-
-        return res.data;
-      } catch (error: unknown) {
-        return handleError(error);
-      }
-    }
-  
-
-
-
-//project
+};
 
 export const addProject = async (body: object) => {
   try {

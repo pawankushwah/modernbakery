@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 import { promotionHeaderById } from "@/app/services/allApi";
 import { PromotionState, KeyComboType, PercentageDiscountType, OrderItemType, OfferItemType } from "../types";
+import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
 
 type UsePromotionDataProps = {
   isEditMode: boolean;
@@ -14,11 +15,12 @@ type UsePromotionDataProps = {
   setOrderTables: React.Dispatch<React.SetStateAction<OrderItemType[][]>>;
   setOfferItems: React.Dispatch<React.SetStateAction<OfferItemType[][]>>;
   fetchItemsCategoryWise: (categories: string) => Promise<any>;
+  router: AppRouterInstance;
 };
 
 export function usePromotionData({
   isEditMode, id, setPromotion, setKeyCombo, setKeyValue, 
-  setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, fetchItemsCategoryWise
+  setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, fetchItemsCategoryWise,router
 }: UsePromotionDataProps) {
   
   const [loading, setLoading] = useState(false);
@@ -151,6 +153,7 @@ export function usePromotionData({
         }
       } catch (err) {
         // showSnackbar("Failed to fetch promotion data for edit mode", "error");
+        router.push("/promotion");
         console.error(err);
       }
       setLoading(false);

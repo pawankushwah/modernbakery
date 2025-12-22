@@ -5,7 +5,7 @@ import Snackbar from "../components/Snackbar";
 
 type SnackbarType = "success" | "error" | "warning" | "info";
 
-type SnackbarContextProps = {
+export type SnackbarContextProps = {
   showSnackbar: (message: string, type?: SnackbarType) => void;
   closeSnackbar: () => void;
 };
