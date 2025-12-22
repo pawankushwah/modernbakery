@@ -167,6 +167,19 @@ const SalesReportDashboard = () => {
     }
   };
 
+  const handleDashboardClick = () => {
+    const searchByIds = ['salesman', 'route'];
+    const moreFilterIds = moreFilters.map(f => f.id);
+    const blockedIds = [...searchByIds, ...moreFilterIds];
+    const hasBlockedSelection = blockedIds.some(id => (selectedChildItems[id] || []).length > 0);
+    if (hasBlockedSelection) {
+      showSnackbar('Dashboard not allowed with Search By/More filters. Clear them to view the dashboard.', 'warning');
+      return;
+    }
+    setViewType('graph');
+    fetchDashboardData();
+  };
+
   // Fetch filters from API
   const fetchFiltersData = async () => {
     setIsLoadingFilters(true);
@@ -870,10 +883,7 @@ const data = await response.json();
 
             <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
               <button 
-                onClick={() => {
-                  setViewType('graph');
-                  fetchDashboardData();
-                }} 
+                onClick={handleDashboardClick}
                 disabled={isLoadingDashboard}
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg flex-1 sm:flex-none justify-center ${viewType === 'graph' ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200'} disabled:opacity-50 disabled:cursor-not-allowed`}
               >
