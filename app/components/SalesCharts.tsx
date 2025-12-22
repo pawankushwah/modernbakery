@@ -103,7 +103,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   ];
 
   const areaColors = [
-    '#6366f1','#ff6ec7', '#8b5cf6', '#c084fc', '#e879f9', '#fb7185', '#f97316', '#facc15',  '#2dd4bf', '#38bdf8', '#60a5fa', '#22d3ee'
+    '#6366f1','#ff6ec7', '#29e53bff', '#c084fc', '#e879f9', '#fb7185', '#f97316', '#facc15',  '#2dd4bf', '#38bdf8', '#60a5fa', '#22d3ee'
   ];
 
   const warehouseColors = [
@@ -381,6 +381,14 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       sliced: !!d.sliced,
     }));
 
+    const [hiddenNames, setHiddenNames] = useState<string[]>([]);
+
+    const toggleLegend = (name: string) => {
+      setHiddenNames(prev => prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]);
+    };
+
+    const visibleSeriesData = seriesData.filter(s => !hiddenNames.includes(s.name));
+
     const isQuantity = searchType === 'quantity';
 
     const options: any = {
@@ -392,7 +400,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       },
       credits: { enabled: false },
       title: { text: title || null },
-      legend: { enabled: true, align: 'center', verticalAlign: 'top', layout: 'horizontal', itemStyle: { fontSize: '10px' }, y: 8 },
+      // Disable the built-in Highcharts legend (we render a custom interactive legend above)
+      legend: { enabled: false },
       tooltip: { pointFormat: isQuantity ? '<b>{point.percentage:.1f}%</b><br/>{point.y:,.0f} Qty' : '<b>{point.percentage:.1f}%</b><br/>UGX {point.y:,.0f}' },
       plotOptions: {
         pie: {
@@ -406,12 +415,38 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           showInLegend: true,
         },
       },
-      series: [{ name: title || 'Data', data: seriesData }],
+      series: [{ name: title || 'Data', data: visibleSeriesData }],
     };
 
+    const legendItems = seriesData;
+
     return (
-      <div style={{ width: '100%', height: '100%' }}>
-        <HighchartsReact highcharts={Highcharts} options={options} />
+      <div style={{ width: '100%' }}>
+        {/* Interactive legend at top with small font */}
+        {legendItems.length > 0 && (
+          <div className="mb-2 w-full">
+            <div className="flex flex-wrap gap-x-2 gap-y-1 items-center text-[10px] text-gray-700">
+              {legendItems.map((item: any, idx: number) => {
+                const hidden = hiddenNames.includes(item.name);
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => toggleLegend(item.name)}
+                    className={`inline-flex items-center gap-2 px-1 py-0.5 truncate focus:outline-none ${hidden ? 'opacity-40' : ''}`}
+                    title={item.name}
+                  >
+                    <span style={{ width: 10, height: 10, borderRadius: 6, backgroundColor: item.color || '#ccc', display: 'inline-block', flex: '0 0 auto' }} />
+                    <span className="truncate max-w-[140px]">{item.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <div style={{ height: '100%' }}>
+          <HighchartsReact highcharts={Highcharts} options={options} />
+        </div>
       </div>
     );
   };
@@ -581,6 +616,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             Please select one of the valid filters above to view the dashboard
           </p>
         </div>
+
       </div>
     );
   }
@@ -736,32 +772,46 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             margin={{ top: 20, right: 30, left: 10, bottom: 20 }}
           >
             <defs>
-              {/* Create gradient definitions for each area */}
+              {/* Create gradient definitions and colored glow filters for each area */}
               {areas.map((areaName: string, index: number) => {
                 const colorSet = neonAreaColors[index % neonAreaColors.length];
+                const idSafe = (`gradient-${areaName}`).replace(/[^a-z0-9-_]/gi, '-');
+                const glowId = (`glow-${areaName}`).replace(/[^a-z0-9-_]/gi, '-');
                 return (
-                  <linearGradient
-                    key={`gradient-${areaName}`}
-                    id={`gradient-${areaName}`}
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor={colorSet.line} stopOpacity={0.15} />
-                    <stop offset="95%" stopColor={colorSet.line} stopOpacity={0.02} />
-                  </linearGradient>
+                  <React.Fragment key={areaName}>
+                    <linearGradient
+                      id={idSafe}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor={colorSet.line} stopOpacity={0.28} />
+                      <stop offset="60%" stopColor={colorSet.fill} stopOpacity={0.15} />
+                      <stop offset="100%" stopColor={colorSet.fill} stopOpacity={0.03} />
+                    </linearGradient>
+
+                    <filter id={glowId} x="-80%" y="-80%" width="260%" height="260%">
+                     
+                      <feGaussianBlur in="SourceGraphic" stdDeviation="28" result="blur" />
+                   
+                      <feFlood floodColor={colorSet.glow || colorSet.line} floodOpacity="1" result="color" />
+                      <feComposite in="color" in2="blur" operator="in" result="coloredBlur" />
+                     
+                      <feGaussianBlur in="coloredBlur" stdDeviation="12" result="soft" />
+                     
+                      <feComponentTransfer in="soft" result="boosted">
+                        <feFuncA type="table" tableValues="0 0.95" />
+                      </feComponentTransfer>
+                     
+                      <feMerge>
+                        <feMergeNode in="boosted" />
+                        <feMergeNode in="SourceGraphic" />
+                      </feMerge>
+                    </filter>
+                  </React.Fragment>
                 );
               })}
-              
-              {/* Glow filter for lines */}
-              <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="3" result="blur" />
-                <feMerge>
-                  <feMergeNode in="blur" />
-                  <feMergeNode in="SourceGraphic" />
-                </feMerge>
-              </filter>
             </defs>
 
             {/* White background grid */}
@@ -838,7 +888,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             {/* Render each area with neon styling */}
             {areas.map((areaName: string, index: number) => {
               const colorSet = neonAreaColors[index % neonAreaColors.length];
-              
+              const idSafe = (`gradient-${areaName}`).replace(/[^a-z0-9-_]/gi, '-');
+              const glowId = (`glow-${areaName}`).replace(/[^a-z0-9-_]/gi, '-');
+
               return (
                 <Area
                   key={areaName}
@@ -846,8 +898,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   dataKey={areaName}
                   stroke={colorSet.line}
                   strokeWidth={3}
-                  fill={`url(#gradient-${areaName})`}
-                  fillOpacity={0.2}
+                  fill={`url(#${idSafe})`}
+                  fillOpacity={0.35}
+                  filter={`url(#${glowId})`}
                   dot={{
                     r: 4,
                     fill: colorSet.line,
@@ -938,9 +991,11 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             <h2 className="text-2xl font-bold text-gray-800">
               {selectedMaxView === 'company' && 'Company Sales Details'}
               {selectedMaxView === 'region' && 'Region Sales Details'}
+              {selectedMaxView === 'regionItems' && 'Top Items Distribution'}
               {selectedMaxView === 'regionVisited' && 'Visit Customer Trend - Region Details'}
               {selectedMaxView === 'warehouseSales' && 'Warehouse Sales Details'}
               {selectedMaxView === 'area' && 'Area Sales Details'}
+              {selectedMaxView === 'areaItems' && 'Area Contribution (Top Items)'}
               {selectedMaxView === 'areaPerformance' && 'Area Performance Details'}
               {selectedMaxView === 'areaVisited' && 'Area Visited Customers Details'}
               {selectedMaxView === 'areaTrend' && 'Area Sales Trend Details'}
@@ -1117,8 +1172,44 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                     </div>
                   </>
                 )
-              )
-            )}
+              ))}
+
+              {/* Region Contribution (Top Items) Maximized View */}
+              {selectedMaxView === 'regionItems' && (regionContributionData.length > 0) && (
+                <>
+                  <div className="bg-white p-6 border rounded-lg shadow-sm">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Region Contribution (Top Items)</h3>
+                    <MaximizedExplodedPieChart
+                      data={regionContributionData.map((r: any) => ({ name: `${r.regionName} - ${r.itemName}`, value: r.value || 0, color: r.color }))}
+                      title="Region Contribution (Top Items)"
+                      outerRadius={200}
+                    />
+                  </div>
+                  <div className="bg-white p-6 border rounded-lg shadow-sm">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Region Contribution Table</h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b-2 border-gray-200">
+                          <tr>
+                            <th className="px-6 py-4 text-left font-semibold text-gray-700">Rank</th>
+                            <th className="px-6 py-4 text-left font-semibold text-gray-700">Region - Item</th>
+                            <th className="px-6 py-4 text-right font-semibold text-gray-700">Sales Value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {regionContributionData.map((row: any, index: number) => (
+                            <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="px-6 py-4 text-gray-600">{index + 1}</td>
+                              <td className="px-6 py-4 text-gray-800 font-medium">{`${row.regionName} - ${row.itemName}`}</td>
+                              <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row.value || 0).toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              )}
 
             {/* Trend View - Shows both Graph and Table */}
             {selectedMaxView === 'trend' && trendData.length > 0 && (
@@ -1187,12 +1278,49 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               </>
             )}
 
+            {/* Area Contribution (Top Items) Maximized View */}
+            {selectedMaxView === 'areaItems' && (areaContributionData.length > 0) && (
+              <>
+                <div className="bg-white p-6 border rounded-lg shadow-sm">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Area Contribution (Top Items)</h3>
+                  <MaximizedExplodedPieChart
+                    data={areaContributionData.map((r: any) => ({ name: `${r.areaName} - ${r.itemName}`, value: r.value || 0, color: r.color }))}
+                    
+                    outerRadius={200}
+                  />
+                </div>
+                <div className="bg-white p-6 border rounded-lg shadow-sm">
+                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Area Contribution Table</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead className="bg-gray-50 border-b-2 border-gray-200">
+                        <tr>
+                          <th className="px-6 py-4 text-left font-semibold text-gray-700">Rank</th>
+                          <th className="px-6 py-4 text-left font-semibold text-gray-700">Area - Item</th>
+                          <th className="px-6 py-4 text-right font-semibold text-gray-700">Sales Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {areaContributionData.map((row: any, index: number) => (
+                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="px-6 py-4 text-gray-600">{index + 1}</td>
+                            <td className="px-6 py-4 text-gray-800 font-medium">{`${row.areaName} - ${row.itemName}`}</td>
+                            <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row.value || 0).toLocaleString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* Salesmen View */}
             {selectedMaxView === 'salesmen' && (
               <>
                 <div className="bg-white p-6 border rounded-lg shadow-sm">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Salesmen Distribution</h3>
-                  <MaximizedExplodedPieChart data={topSalesmenChartData} title="Top Salesmen" outerRadius={180} />
+                  <MaximizedExplodedPieChart data={topSalesmenChartData}  outerRadius={180} />
                 </div>
                 <div className="bg-white p-6 border rounded-lg shadow-sm">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Salesmen Table</h3>
@@ -1231,7 +1359,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <>
                 <div className="bg-white p-6 border rounded-lg shadow-sm">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Warehouses Distribution</h3>
-                  <MaximizedExplodedPieChart data={topWarehousesChartData} title="Top Warehouses" outerRadius={180} />
+                  <MaximizedExplodedPieChart data={topWarehousesChartData} outerRadius={180} />
                 </div>
                 <div className="bg-white p-6 border rounded-lg shadow-sm">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Warehouses Table</h3>
@@ -1268,10 +1396,12 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             {/* Customers View */}
             {selectedMaxView === 'customers' && (
               <>
-                <div className="bg-white p-6 border rounded-lg shadow-sm">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Customers Distribution</h3>
-                  <MaximizedExplodedPieChart data={topCustomersChartData} title="Top Customers" outerRadius={180} />
-                </div>
+                    <div className="bg-white p-6 border rounded-lg shadow-sm">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Customers Distribution</h3>
+                      <div className="w-full h-[500px]">
+                        <Column3DChart data={topCustomersChartData}  xAxisKey="name" yAxisKey="value" colors={['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6', '#fb7185', '#fdba74', '#fde047']} height="480px" />
+                      </div>
+                    </div>
                 <div className="bg-white p-6 border rounded-lg shadow-sm">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Customers Table</h3>
                   <div className="overflow-x-auto">
@@ -1307,10 +1437,30 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             {/* Items View */}
             {selectedMaxView === 'items' && topItemsChartData.length > 0 && (
               <>
-                <div className="bg-white p-6 border rounded-lg shadow-sm">
-                  <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Items Distribution</h3>
-                  <MaximizedExplodedPieChart data={topItemsChartData} title="Top Items" outerRadius={180} />
-                </div>
+                    <div className="bg-white p-6 border rounded-lg shadow-sm">
+                      <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Items Distribution</h3>
+                      <div className="w-full h-[500px]">
+                        {dashboardData?.charts?.region_contribution && dashboardData.charts.region_contribution.length > 0 ? (
+                          <MaximizedExplodedPieChart
+                            data={dashboardData.charts.region_contribution.map((r: any, i: number) => ({
+                              name: r.region_name || r.region_label || 'Unknown',
+                              value: r.value || 0,
+                              color: regionColors[i % regionColors.length]
+                            }))}
+                            title="Top Items Distribution"
+                            outerRadius={200}
+                          />
+                        ) : regionContributionData && regionContributionData.length > 0 ? (
+                          <MaximizedExplodedPieChart
+                            data={regionContributionData.map((r: any) => ({ name: `${r.regionName} - ${r.itemName}`, value: r.value || 0, color: r.color }))}
+                            title="Region Contribution (Top Items)"
+                            outerRadius={200}
+                          />
+                        ) : (
+                          <Column3DChart data={topItemsChartData}  xAxisKey="name" yAxisKey="value" colors={['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#ec4899']} height="480px" />
+                        )}
+                      </div>
+                    </div>
                 <div className="bg-white p-6 border rounded-lg shadow-sm">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">Top Items Table</h3>
                   <div className="overflow-x-auto">
@@ -1318,24 +1468,53 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                       <thead className="bg-gray-50 border-b-2 border-gray-200">
                         <tr>
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Rank</th>
-                          <th className="px-6 py-4 text-left font-semibold text-gray-700">Item Name</th>
+                          <th className="px-6 py-4 text-left font-semibold text-gray-700">Item / Region</th>
                           <th className="px-6 py-4 text-right font-semibold text-gray-700">{searchType === 'quantity' ? 'Quantity' : 'Sales Value'}</th>
                           <th className="px-6 py-4 text-right font-semibold text-gray-700">Percentage</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {topItemsChartData.map((item: any, index: number) => (
-                          <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                            <td className="px-6 py-4 text-gray-600">{index + 1}</td>
-                            <td className="px-6 py-4 text-gray-800 font-medium">{item.name}</td>
-                            <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              {searchType === 'quantity' ? `${item.value?.toLocaleString()} Qty` : `UGX ${item.value?.toLocaleString()}`}
-                            </td>
-                            <td className="px-6 py-4 text-right text-gray-600">
-                              {((item.value / totalItems) * 100).toFixed(2)}%
-                            </td>
-                          </tr>
-                        ))}
+                        {(() => {
+                          // Prefer API region_contribution if present
+                          if (dashboardData?.charts?.region_contribution && dashboardData.charts.region_contribution.length > 0) {
+                            const rows = dashboardData.charts.region_contribution;
+                            const total = rows.reduce((s: number, r: any) => s + (r.value || 0), 0) || 1;
+                            return rows.map((r: any, index: number) => (
+                              <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                                <td className="px-6 py-4 text-gray-600">{index + 1}</td>
+                                <td className="px-6 py-4 text-gray-800 font-medium">{r.region_name || r.region_label || 'Unknown'}</td>
+                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(r.value || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 text-right text-gray-600">{(((r.value || 0) / total) * 100).toFixed(2)}%</td>
+                              </tr>
+                            ));
+                          }
+
+                          // Next prefer regionContributionData if available
+                          if (regionContributionData && regionContributionData.length > 0) {
+                            const rows = regionContributionData;
+                            const total = rows.reduce((s: number, r: any) => s + (r.value || 0), 0) || 1;
+                            return rows.map((row: any, index: number) => (
+                              <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                                <td className="px-6 py-4 text-gray-600">{index + 1}</td>
+                                <td className="px-6 py-4 text-gray-800 font-medium">{`${row.regionName} - ${row.itemName}`}</td>
+                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row.value || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 text-right text-gray-600">{(((row.value || 0) / total) * 100).toFixed(2)}%</td>
+                              </tr>
+                            ));
+                          }
+
+                          // Fallback to topItemsChartData
+                          const rows = topItemsChartData;
+                          const total = rows.reduce((s: number, r: any) => s + (r.value || 0), 0) || 1;
+                          return rows.map((item: any, index: number) => (
+                            <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                              <td className="px-6 py-4 text-gray-600">{index + 1}</td>
+                              <td className="px-6 py-4 text-gray-800 font-medium">{item.name}</td>
+                              <td className="px-6 py-4 text-right text-gray-800 font-semibold">{searchType === 'quantity' ? `${item.value?.toLocaleString()} Qty` : `UGX ${item.value?.toLocaleString()}`}</td>
+                              <td className="px-6 py-4 text-right text-gray-600">{(((item.value || 0) / total) * 100).toFixed(2)}%</td>
+                            </tr>
+                          ));
+                        })()}
                       </tbody>
                     </table>
                   </div>
@@ -1486,21 +1665,12 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
 
   // If API returned region-level data, render the region-specific 4-row layout
   if (dataLevel === 'region') {
-    // Prepare region contribution data for pie chart
-    const regionContributionPieData = (() => {
-      const data = (dashboardData?.charts?.region_contribution_top_item || []).reduce((acc: any, it: any) => {
-        const key = it.region_name || 'Unknown';
-        acc[key] = (acc[key] || 0) + (it.value || 0);
-        return acc;
-      }, {} as Record<string, number>);
-      
-      // Convert object to array for pie chart
-      return Object.entries(data).map(([name, value], i) => ({
-        name,
-        value,
-        color: areaColors[i % areaColors.length]
-      }));
-    })();
+    // Prepare region contribution data for pie chart (use region + item labels)
+    const regionContributionPieData = (dashboardData?.charts?.region_contribution_top_item || []).map((it: any, i: number) => ({
+      name: `${it.region_name || 'Unknown'} - ${it.item_name || ''}`,
+      value: it.value || 0,
+      color: areaColors[i % areaColors.length]
+    }));
 
     // Prepare region performance data
     const regionPerformanceData = (dashboardData?.tables?.region_performance || []).map((r: any, i: number) => ({ 
@@ -1531,7 +1701,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800">Region Contribution (Top Items)</h3>
-              <button onClick={() => setSelectedMaxView('items')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
+              <button onClick={() => setSelectedMaxView('regionItems')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
             <div className="w-full h-80">
               <ExplodedPieChart 
@@ -1612,11 +1782,55 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Top Customers</h3>
               <button onClick={() => setSelectedMaxView('customers')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-80">
-              <ExplodedPieChart data={topCustomersChartData} outerRadius={90} />
+            <div className="w-full h-[420px]">
+              {topCustomersChartData.length === 0 ? (
+                <div className="flex items-center justify-center text-gray-500 text-sm">
+                  <AlertCircle size={16} className="mr-2" /> No data available
+                </div>
+              ) : (
+                <Column3DChart data={topCustomersChartData}  xAxisKey="name" yAxisKey="value" colors={regionColors} height="420px" />
+              )}
             </div>
           </div>
         </div>
+
+        {/* Row 5 - Top Items + Top Warehouses */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Items */}
+          <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Top Items</h3>
+              <button onClick={() => setSelectedMaxView('items')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
+            </div>
+            <div className="w-full h-[420px]">
+              {topItemsChartData.length === 0 ? (
+                <div className="flex items-center justify-center text-gray-500 text-sm">
+                  <AlertCircle size={16} className="mr-2" /> No data available
+                </div>
+              ) : (
+                <Column3DChart data={topItemsChartData}  xAxisKey="name" yAxisKey="value" colors={['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#ec4899']} height="420px" />
+              )}
+            </div>
+          </div>
+
+          {/* Top Warehouses */}
+          <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Top Warehouses</h3>
+              <button onClick={() => setSelectedMaxView('warehouses')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
+            </div>
+            <div className="w-full h-[350px]">
+              {topWarehousesChartData.length === 0 ? (
+                <div className="flex items-center justify-center text-gray-500 text-sm">
+                  <AlertCircle size={16} className="mr-2" /> No data available
+                </div>
+              ) : (
+                <ExplodedPieChart data={topWarehousesChartData} outerRadius={80} />
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     );
   }
@@ -1937,7 +2151,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Top Items</h3>
               <button onClick={() => setSelectedMaxView('items')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-[300px]">
+            <div className="w-full h-[420px]">
               { (dashboardData?.tables?.top_items || []).length === 0 ? (
                 <div className="flex items-center justify-center text-gray-500 text-sm">
                   <AlertCircle size={16} className="mr-2" /> No data available
@@ -1949,7 +2163,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                     value: t.value || 0, 
                     color: areaColors[i % areaColors.length] 
                   }))}
-                  outerRadius={80}
+                  outerRadius={100}
                 />
               )}
             </div>
@@ -1960,7 +2174,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Top Customers</h3>
               <button onClick={() => setSelectedMaxView('customers')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-[300px]">
+            <div className="w-full h-[420px]">
               { (dashboardData?.tables?.top_customers || []).length === 0 ? (
                 <div className="flex items-center justify-center text-gray-500 text-sm">
                   <AlertCircle size={16} className="mr-2" /> No data available
@@ -1976,7 +2190,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   xAxisKey="name"
                   yAxisKey="value"
                   colors={regionColors}
-                  height="260px"
+                  height="420px"
                 />
               )}
             </div>
@@ -1991,7 +2205,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
     // Prepare area contribution data for pie chart
     const areaContributionPieData = (() => {
       const data = areaContributionData.reduce((acc: any, it: any) => {
-        const key = it.area_name || 'Unknown';
+        const key = it.areaName || it.area_name || 'Unknown';
         acc[key] = (acc[key] || 0) + (it.value || 0);
         return acc;
       }, {} as Record<string, number>);
@@ -2033,7 +2247,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-800">Area Contribution (Top Items)</h3>
-              <button onClick={() => setSelectedMaxView('items')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
+              <button onClick={() => setSelectedMaxView('areaItems')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
             <div className="w-full h-80">
               {areaContributionPieData.length === 0 ? (
@@ -2143,17 +2357,62 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Top Customers</h3>
               <button onClick={() => setSelectedMaxView('customers')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-80">
+            <div className="w-full h-[420px]">
               {topCustomersChartData.length === 0 ? (
                 <div className="flex items-center justify-center text-gray-500 text-sm">
                   <AlertCircle size={16} className="mr-2" /> No data available
                 </div>
               ) : (
-                <Column3DChart data={topCustomersChartData} title="" xAxisKey="name" yAxisKey="value" colors={['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6', '#fb7185', '#fdba74', '#fde047']} height="280px" />
+                <Column3DChart data={topCustomersChartData} title="" xAxisKey="name" yAxisKey="value" colors={['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6', '#fb7185', '#fdba74', '#fde047']} height="420px" />
               )}
             </div>
           </div>
         </div>
+
+        {/* Row 5 - Top Items + Top Warehouses */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Top Items */}
+          <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Top Items</h3>
+              <button onClick={() => setSelectedMaxView('items')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
+            </div>
+            <div className="w-full h-[420px]">
+              {topItemsChartData.length === 0 ? (
+                <div className="flex items-center justify-center text-gray-500 text-sm">
+                  <AlertCircle size={16} className="mr-2" /> No data available
+                </div>
+              ) : (
+                <Column3DChart
+                  data={topItemsChartData}
+                  // title="Top Items"
+                  xAxisKey="name"
+                  yAxisKey="value"
+                  colors={areaColors}
+                  height="420px"
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Top Warehouses */}
+          <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Top Warehouses</h3>
+              <button onClick={() => setSelectedMaxView('warehouses')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
+            </div>
+            <div className="w-full h-[350px]">
+              {topWarehousesChartData.length === 0 ? (
+                <div className="flex items-center justify-center text-gray-500 text-sm">
+                  <AlertCircle size={16} className="mr-2" /> No data available
+                </div>
+              ) : (
+                <ExplodedPieChart data={topWarehousesChartData} outerRadius={80} />
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     );
   }
@@ -2340,8 +2599,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                 <Maximize2 size={16} />
               </button>
             </div>
-            <div className="w-full h-[350px]">
-              <Column3DChart data={topCustomersChartData} title="" xAxisKey="name" yAxisKey="value" colors={['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6', '#fb7185', '#fdba74', '#fde047']} height="310px" />
+            <div className="w-full h-[420px]">
+              <Column3DChart data={topCustomersChartData} title="" xAxisKey="name" yAxisKey="value" colors={['#f43f5e', '#fb923c', '#facc15', '#4ade80', '#22d3ee', '#a78bfa', '#f472b6', '#fb7185', '#fdba74', '#fde047']} height="420px" />
             </div>
           </div>
         )}
@@ -2358,8 +2617,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                 <Maximize2 size={16} />
               </button>
             </div>
-            <div className="w-full h-[300px]">
-              <Column3DChart data={topItemsChartData} title="" xAxisKey="name" yAxisKey="value" colors={['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#ec4899']} height="260px" />
+            <div className="w-full h-[420px]">
+              <Column3DChart data={topItemsChartData} title="Top Items" xAxisKey="name" yAxisKey="value" colors={['#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#84cc16', '#eab308', '#f59e0b', '#f97316', '#ef4444', '#ec4899']} height="420px" />
             </div>
           </div>
         )}
