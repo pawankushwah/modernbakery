@@ -82,14 +82,17 @@ export default function WorkflowApprovalActions({
 
   // Load persisted workflow data if caller didn't supply permissions/message
   useEffect(() => {
+    // Only fetch if we don't have permissions passed as props and we have the required data
+    if (permissions || !model || !requestStepId) return;
+    
     (async () => {
       try {
-        const res = await workFlowRequest({ model });
+        const res = await workFlowRequest({ model, request_step_id: requestStepId?.toString() });
         setOrderData(res.data[0]);
       } catch (e) {
         // ignore parse issues
     }})();
-  }, [model, uuid]);
+  }, [model, requestStepId, permissions]);
   const effectivePermissions = useMemo(
     () => permissions ?? orderData.permissions ?? [],
     [permissions, orderData?.permissions]
@@ -241,7 +244,7 @@ export default function WorkflowApprovalActions({
       <div
         ref={dragNodeRef}
         style={{ zIndex: 30 }}
-        className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-md bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px] cursor-grab active:cursor-grabbing"
+        className="absolute bottom-20 left-1/2 -translate-x-1/2 backdrop-blur-xs bg-black/10 border border-white/30 shadow-lg rounded-xl p-8 text-black z-[60px] cursor-grab active:cursor-grabbing select-none"
       >
       {comment.show && (
         <div className="w-full p-5 bg-white rounded-lg mb-4 opacity-100">

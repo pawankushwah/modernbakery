@@ -17,13 +17,14 @@ import { isValidDate } from "@/app/utils/formatDate";
 import { downloadFile } from "@/app/services/allApi";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import WorkflowApprovalActions from "@/app/components/workflowApprovalActions";
+import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 
 const baseColumns = [
     { key: "index", label: "#" },
     { key: "item_name", label: "Item Name", render: (value: TableDataType) => <>{value.item_code ? `${value.item_code}` : ""} {value.item_code && value.item_name ? " - " : ""} {value.item_name ? value.item_name : ""}</> },
     { key: "uom_name", label: "UOM" },
-    { key: "quantity", label: "Quantity" },
-    { key: "receive_qty", label: "Collected Quantity" },
+    { key: "quantity", label: "Quantity", render: (value: TableDataType) => <>{value.quantity ? toInternationalNumber(value.quantity, {minimumFractionDigits: 0}) : "0"}</> },
+    { key: "receive_qty", label: "Collected Quantity", render: (value: TableDataType) => <>{value.receive_qty ? toInternationalNumber(value.receive_qty, {minimumFractionDigits: 0}) : "0"}</> },
     // { key: "receive_amount", label: "Received Amount",render:(value: TableDataType) => <>{value.receive_amount ? parseFloat(value.receive_amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "0.00"}</> },
     { key: "remarks", label: "Remarks" },
 ];

@@ -51,6 +51,7 @@ const SalesReportDashboard = () => {
   const [availableFilters, setAvailableFilters] = useState<Filter[]>([]);
   const [isLoadingFilters, setIsLoadingFilters] = useState(false);
   const [filterError, setFilterError] = useState<string | null>(null);
+  const [loadingFilterIds, setLoadingFilterIds] = useState<Set<string>>(new Set());
   const [isExporting, setIsExporting] = useState(false);
   const [tableData, setTableData] = useState<any>(null);
   const [isLoadingTable, setIsLoadingTable] = useState(false);
@@ -81,6 +82,20 @@ const SalesReportDashboard = () => {
     'display-quantity': { name: 'Display Quantity', icon: 'mdi:numeric' },
     amount: { name: 'Amount', icon: 'mdi:currency-usd' }
   };
+
+  const hierarchyOrder = [
+    'company',
+    'region',
+    'area',
+    'warehouse',
+    'route',
+    'salesman',
+    'item-category',
+    'items',
+    'channel-categories',
+    'customer-category',
+    'customer'
+  ];
 
   // Filter hierarchy - defines which filters should be cleared when parent changes
   const filterHierarchy: Record<string, string[]> = {
@@ -183,9 +198,28 @@ const SalesReportDashboard = () => {
   };
 
   // Fetch filters from API
-  const fetchFiltersData = async () => {
-    setIsLoadingFilters(true);
+  const fetchFiltersData = async (currentFilterId?: string) => {
     setFilterError(null);
+
+    // Determine which filters need to be loaded based on selections
+    const filtersToLoad = new Set<string>();
+    let hierarchyReached = false;
+    hierarchyOrder.filter(filterId => {
+      if (!hierarchyReached && currentFilterId && filterId === currentFilterId) {
+        hierarchyReached = true;
+        return false;
+      }
+      if(hierarchyReached) {
+        if (droppedFilters.find(f => f.id === filterId)) {
+          filtersToLoad.add(filterId);
+        }
+        return true;
+      }
+    });
+
+    if(filtersToLoad.size === 0) return;
+    // Set loading state for specific filters
+    setLoadingFilterIds(filtersToLoad);
 
     try {
       // Build query params
@@ -213,26 +247,24 @@ const SalesReportDashboard = () => {
       if (selectedChildItems['channel-categories']?.length) {
         const channelIds = selectedChildItems['channel-categories'].join(',');
         params.append('channel_category_ids', channelIds);
-        params.append('customer_channel_ids', channelIds); // Send both parameters for channel-based customer filtering
+        params.append('customer_channel_ids', channelIds);
       }
       if (selectedChildItems['customer-category']?.length) {
         params.append('customer_category_ids', selectedChildItems['customer-category'].join(','));
       }
 
-   const queryString = params.toString();
-const url = `http://172.16.6.205:8001/api/filters${queryString ? `?${queryString}` : ''}`;
+      const queryString = params.toString();
+      const url = `http://172.16.6.205:8001/api/filters${queryString ? `?${queryString}` : ''}`;
 
-const response = await fetch(url, {
-  method: 'GET',
-  // ❌ DO NOT SEND HEADERS in GET unless needed
-});
+      const response = await fetch(url, {
+        method: 'GET',
+      });
 
-if (!response.ok) {
-  throw new Error(`HTTP error! status: ${response.status}`);
-}
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
-const data = await response.json();
-
+      const data = await response.json();
 
       // Transform API response to Filter format
       const transformedFilters: Filter[] = [];
@@ -242,10 +274,9 @@ const data = await response.json();
         regions: 'region',
         areas: 'area',
         warehouses: 'warehouse',
-      
         item_categories: 'item-category',
         items: 'items',
-          routes: 'route',
+        routes: 'route',
         salesmen: 'salesman',
         channel_categories: 'channel-categories',
         customer_categories: 'customer-category',
@@ -257,9 +288,8 @@ const data = await response.json();
         const metadata = filterMetadata[filterId];
         
         if (metadata && Array.isArray(items)) {
-          // Debug logging for route, salesman and channel categories data
           if (apiKey === 'routes' || apiKey === 'salesmen' || apiKey === 'channel_categories') {
-            console.log(`${apiKey} data from API:`, items.slice(0, 2)); // Log first 2 items
+            console.log(`${apiKey} data from API:`, items.slice(0, 2));
           }
           
           transformedFilters.push({
@@ -267,13 +297,11 @@ const data = await response.json();
             name: metadata.name,
             icon: metadata.icon,
             childData: items.map((item: any) => {
-              // Extract ID from various possible field names
               const id = item.company_id || item.region_id || item.area_id || item.warehouse_id || 
                          item.route_id || item.salesman_id || item.item_category_id || item.item_id ||
                          item.channel_category_id || item.customer_category_id || item.customer_id ||
                          item.id || item.code || item.route_code || item.salesman_code;
               
-              // Extract Name/Label with comprehensive field checking
               let name = item.company_name || item.region_name || item.area_name || item.warehouse_name ||
                          item.route_name || item.route_label || item.route_title || 
                          item.salesman_name || item.salesman_label || item.salesman_title ||
@@ -282,7 +310,6 @@ const data = await response.json();
                          item.customer_category_name || item.customer_name || 
                          item.name || item.label || item.title;
               
-              // Additional fallback for route/salesman/channel_categories
               if (!name && (apiKey === 'routes' || apiKey === 'salesmen' || apiKey === 'channel_categories')) {
                 name = item.description || item.full_name || item.display_name;
                 console.warn(`${apiKey} missing standard name field, using fallback:`, item);
@@ -297,15 +324,13 @@ const data = await response.json();
         }
       });
 
-    
-
       setAvailableFilters(transformedFilters);
+      setLoadingFilterIds(new Set());
     } catch (error) {
       console.error('Failed to fetch filters:', error);
       setFilterError(error instanceof Error ? error.message : 'Failed to load filters');
       setAvailableFilters([]);
-    } finally {
-      setIsLoadingFilters(false);
+      setLoadingFilterIds(new Set());
     }
   };
 
@@ -473,13 +498,11 @@ const data = await response.json();
       if (selectedChildItems['channel-categories']?.length > 0) {
         // API may return channel category under several keys; prefer the explicit key used elsewhere
         columns.push({ label: 'Channel Name', field: 'channel_category_name' });
-        columns.push({ label: 'Customer Name', field: 'customer_name' });
       }
       if (selectedChildItems['customer-category']?.length > 0) {
         columns.push({ label: 'Customer Category', field: 'customer_category_name' });
-        columns.push({ label: 'Customer Name', field: 'customer_name' });
       }
-      if (selectedChildItems['customer']?.length > 0) {
+      if (selectedChildItems['customer']?.length > 0 || selectedChildItems['customer-category']?.length > 0 || selectedChildItems['channel-categories']?.length > 0) {
         columns.push({ label: 'Customer Name', field: 'customer_name' });
       }
       
@@ -645,16 +668,16 @@ const data = await response.json();
   }, [openDropdown, showMoreFilters, searchbyopen, showDatePicker]);
 
   // Refetch when selections change with hierarchical logic
-  useEffect(() => {
-    if (droppedFilters.length > 0) {
-      // Only refetch if there are actual selections
-      const hasSelections = Object.values(selectedChildItems).some(items => items.length > 0);
-      if (hasSelections) {
-        const timer = setTimeout(() => fetchFiltersData(), 300);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [selectedChildItems, droppedFilters.length]);
+  // useEffect(() => {
+  //   if (droppedFilters.length > 0) {
+  //     // Only refetch if there are actual selections
+  //     const hasSelections = Object.values(selectedChildItems).some(items => items.length > 0);
+  //     if (hasSelections) {
+  //       const timer = setTimeout(() => fetchFiltersData(), 300);
+  //       return () => clearTimeout(timer);
+  //     }
+  //   }
+  // }, [selectedChildItems, droppedFilters.length]);
 
   const chartData = {
     salesTrend: Array.from({length: 5}, (_, i) => ({ year: `${2021+i}`, sales: [2, 6, 3, 8, 6][i] })),
@@ -717,11 +740,13 @@ const data = await response.json();
   };
 
   const handleClearAllFilters = () => {
-    setAvailableFilters([...availableFilters, ...droppedFilters]);
+    // Don't add dropped filters back to available filters
     setDroppedFilters([]);
     setSelectedChildItems({});
     setSearchTerms({});
     setOpenDropdown(null);
+    // Refetch filters to reset to initial state
+    fetchFiltersData();
   };
 
   const handleChildItemToggle = (filterId: string, childItemId: string) => {
@@ -833,7 +858,7 @@ const data = await response.json();
               <div className="relative w-full sm:w-auto">
                 <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg cursor-pointer w-full sm:w-auto" onClick={() => setShowDatePicker(!showDatePicker)}>
                   <Calendar size={18} className="text-gray-600" />
-                  <input type="text" value={dateRange} className="border-none outline-none text-sm cursor-pointer bg-transparent w-full" readOnly />
+                  <input type="text" value={dateRange} className="border-none outline-none text-sm cursor-pointer bg-transparent w-full sm:w-auto" readOnly />
                 </div>
                 {showDatePicker && (
                   <div id="date-picker-dropdown" className="filter-dropdown absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg z-20 p-4 w-full sm:w-80">
@@ -938,14 +963,14 @@ const data = await response.json();
                   <span className="font-semibold text-gray-800 text-sm sm:text-base whitespace-nowrap">Drag & Drop Filter</span>
                   
                  <div className="flex h-auto sm:h-[28px] justify-center items-center w-full sm:w-auto">
-  {isLoadingFilters && (
+  {/* {isLoadingFilters && (
     <div className="h-auto sm:h-[28px] px-3 py-1 bg-blue-50 border border-blue-200 rounded-lg text-xs sm:text-sm text-blue-700 flex items-center gap-2">
       <div className="animate-spin w-3 h-3 rounded-full border-b-2 border-blue-700"></div>
       <span className="whitespace-nowrap">Loading filters...</span>
     </div>
-  )}
+  )} */}
 
-  {filterError && (
+  {/* {filterError && (
     <div className="h-auto sm:h-[28px] flex justify-center items-center px-3 py-1 bg-red-50 border border-red-200 rounded-lg text-xs sm:text-sm text-red-700">
       <span className="truncate">{filterError}</span>
       <button
@@ -955,7 +980,7 @@ const data = await response.json();
         Retry
       </button>
     </div>
-  )}
+  )} */}
 </div>
 
                   <div className="flex flex-wrap gap-2 flex-1 w-full">
@@ -973,7 +998,12 @@ const data = await response.json();
                 
                            {searchby.length > 0 && (
                       <div className="relative">
-                        <button className="dropdown-trigger flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setSearchbyclose(!searchbyopen)}>
+                        <button className="dropdown-trigger flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => {
+                          // Close other dropdowns when opening search by
+                          setOpenDropdown(null);
+                          setShowMoreFilters(false);
+                          setSearchbyclose(!searchbyopen);
+                        }}>
                           Search by <ChevronDown size={14} />
                         </button>
                         {searchbyopen && (
@@ -995,7 +1025,12 @@ const data = await response.json();
                     )}
  {moreFilters.length > 0 && (
                       <div className="relative">
-                        <button className="dropdown-trigger flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => setShowMoreFilters(!showMoreFilters)}>
+                        <button className="dropdown-trigger flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-600 hover:text-gray-900 bg-white border border-[#D1D5DB] rounded-[8px] whitespace-nowrap" onClick={() => {
+                          // Close other dropdowns when opening more
+                          setOpenDropdown(null);
+                          setSearchbyclose(false);
+                          setShowMoreFilters(!showMoreFilters);
+                        }}>
                           More <ChevronDown size={14} />
                         </button>
                         {showMoreFilters && (
@@ -1040,21 +1075,31 @@ const data = await response.json();
                         <div className="flex flex-wrap gap-2 flex-1 w-full">
                           {droppedFilters.map(filter => {
                             const selectedCount = getSelectedCount(filter.id);
+                            const isLoading = loadingFilterIds.has(filter.id);
                             return (
                               <div key={filter.id} className="relative w-full sm:w-auto">
-                                <div className="dropdown-trigger flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#414651] rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => setOpenDropdown(openDropdown === filter.id ? null : filter.id)}>
-                                  <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                                <div className="dropdown-trigger flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 bg-white border border-[#414651] rounded-lg hover:bg-gray-50 cursor-pointer" onClick={() => {
+                                  // Close search by and more filters when opening a filter dropdown
+                                  setSearchbyclose(false);
+                                  setShowMoreFilters(false);
+                                  setOpenDropdown(openDropdown === filter.id ? null : filter.id);
+                                }}>
+                                  {isLoading ? (
+                                    <Icon icon="eos-icons:loading" width="16" height="16" className="sm:w-[18px] sm:h-[18px] text-blue-600" />
+                                  ) : (
+                                    <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
+                                  )}
                                   <span className="text-xs sm:text-sm font-medium text-[#414651] whitespace-nowrap">
                                     {filter.name}
                                     {selectedCount > 0 && <span className="bg-[#252B37] text-white text-[10px] sm:text-xs px-1 sm:px-1.5 py-0.5 rounded-full ml-1">{selectedCount}</span>}
                                   </span>
                                   <ChevronDown size={12} className={`sm:w-[14px] sm:h-[14px] text-[#414651] ${openDropdown === filter.id ? 'rotate-180' : ''}`} />
-                                  <button onClick={(e) => { e.stopPropagation(); handleRemoveFilter(filter); }} className="text-[#414651] hover:text-red-600 ml-1">
+                                  <button onClick={(e) => { e.stopPropagation(); handleRemoveFilter(filter); }} className="text-[#414651] hover:text-red-600 ml-1 flex items-center">
                                     <Icon icon="mdi:close" width="14" height="14" className="sm:w-4 sm:h-4" />
                                   </button>
                                 </div>
 
-                                {openDropdown === filter.id && (
+                                {openDropdown === filter.id && !isLoading && (
                                   <div id={`filter-dropdown-${filter.id}`} className="filter-dropdown absolute top-full left-0 mt-1 w-full min-w-[200px] sm:w-[240px] bg-white border border-gray-200 rounded-lg shadow-lg z-10">
                                     <div className="p-3">
                                       <input type="text" placeholder="Search here..." value={searchTerms[filter.id] || ''} onChange={(e) => setSearchTerms(prev => ({ ...prev, [filter.id]: e.target.value }))} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -1089,7 +1134,7 @@ const data = await response.json();
                                             const isSelected = (selectedChildItems[filter.id] || []).includes(childItem.id);
                                             return (
                                               <label key={childItem.id} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                                <input type="checkbox" checked={isSelected} onChange={() => handleChildItemToggle(filter.id, childItem.id)} className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500" />
+                                                <input type="checkbox" checked={isSelected} onChange={() => { handleChildItemToggle(filter.id, childItem.id); fetchFiltersData(filter.id) }} className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500" />
                                                 <span className="text-sm text-gray-700">{childItem.name}</span>
                                               </label>
                                             );
