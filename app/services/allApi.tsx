@@ -2185,7 +2185,7 @@ export const workFlowAssignmentStatusChange = async (body: object) => {
   }
 };
 
-export const workFlowRequest = async (params: Params) => {
+export const workFlowRequest = async (params?: Params) => {
   try {
     const res = await API.get(`/api/master/approval/workflow/requests`, { params });
     return res.data;
@@ -3884,6 +3884,15 @@ export const outletChannelList = async (params?: Params) => {
 export const custCatByChId = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/outlet-channels/get-outlet-based`,{params});
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const changePassword = async (body?: Object) => {
+  try {
+    const res = await API.post(`/api/master/change-password`,body);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

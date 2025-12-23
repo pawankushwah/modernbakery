@@ -224,7 +224,6 @@ export default function TopBar({
         <ResetPasswordSidebar
             show={showResetPasswordSidebar}
             onClose={() => setShowResetPasswordSidebar(false)}
-            onSubmit={handleResetPasswordSubmit}
             setFieldValue={handleResetPasswordField}
             values={resetPasswordValues}
         />

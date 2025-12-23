@@ -829,7 +829,6 @@ export default function ProfilePage() {
           <ResetPasswordSidebar
             show={showSidebar}
             onClose={() => setShowSidebar(false)}
-            onSubmit={formik.handleSubmit}
             setFieldValue={setFieldValue}
             values={values}
           />

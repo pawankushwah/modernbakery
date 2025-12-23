@@ -26,20 +26,12 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
 
-/* -------------------------------------------------------------------------- */
-/*                                   TYPES                                    */
-/* -------------------------------------------------------------------------- */
-
 interface ItemRow {
     item_id: string;
     uom_id: string;
     capacity: string;
     UOM: { label: string; value: string }[];
 }
-
-/* -------------------------------------------------------------------------- */
-/*                              VALIDATION SCHEMA                             */
-/* -------------------------------------------------------------------------- */
 
 const itemRowSchema = Yup.object({
     item_id: Yup.string().required("Item is required"),
@@ -56,10 +48,6 @@ const validationSchema = Yup.object({
     to: Yup.string().required(),
     customer: Yup.array().min(1, "Select at least one customer"),
 });
-
-/* -------------------------------------------------------------------------- */
-/*                                   PAGE                                     */
-/* -------------------------------------------------------------------------- */
 
 export default function StockInStoreAddPage() {
     const router = useRouter();
@@ -87,10 +75,6 @@ const [searchedItemOptions, setSearchedItemOptions] = useState<any[]>([]);
     const [itemData, setItemData] = useState<ItemRow[]>([
         { item_id: "", uom_id: "", capacity: "", UOM: [] },
     ]);
-
-    /* -------------------------------------------------------------------------- */
-    /*                                  EFFECTS                                   */
-    /* -------------------------------------------------------------------------- */
 
     useEffect(() => {
         ensureCompanyCustomersLoaded();
@@ -199,10 +183,6 @@ const handleItemChange = (index: number, itemId: string) => {
         if (itemData.length === 1) return;
         setItemData((prev) => prev.filter((_, i) => i !== index));
     };
-
-    /* -------------------------------------------------------------------------- */
-    /*                                ITEM SEARCH                                 */
-    /* -------------------------------------------------------------------------- */
 
 const fetchItems = async (search: string) => {
   const res = await itemGlobalSearch({ query: search, per_page: "50" });
