@@ -27,6 +27,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   const [selectedWarehouses, setSelectedWarehouses] = useState<string[]>([]);
   const [is3DLoaded, setIs3DLoaded] = useState(false);
   const [hiddenWarehouses, setHiddenWarehouses] = useState<string[]>([]);
+  const CURRENCY = localStorage.getItem('country') + " " || ' ';
 
   // Load Highcharts 3D module
   useEffect(() => {
@@ -905,7 +906,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               align="right"
               wrapperStyle={{
                 paddingBottom: '20px',
-                color: '#1f2937'
+                color: '#1f2937',
+                height: '80px',
+                overflowY: 'auto'
               }}
               onClick={(e) => e.value && handleLegendClick(e.value)}
               formatter={(value) => (
@@ -1074,7 +1077,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                           <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                           <td className="px-6 py-4 text-gray-800 font-medium">{company.name}</td>
                           <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                            UGX {company.value?.toLocaleString()}
+                            {company.value?.toLocaleString()}
                           </td>
                           <td className="px-6 py-4 text-right text-gray-600">
                             {((company.value / totalCompany) * 100).toFixed(2)}%
@@ -1164,7 +1167,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                                 <td className="px-6 py-4 text-gray-800 font-medium">{row.region_name}</td>
-                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX { (row.value || 0).toLocaleString() }</td>
+                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">{ (row.value || 0).toLocaleString() }</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1195,7 +1198,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                               <td className="px-6 py-4 text-gray-800 font-medium">{region.name}</td>
                               <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                                UGX {region.value?.toLocaleString()}
+                                {region.value?.toLocaleString()}
                               </td>
                               <td className="px-6 py-4 text-right text-gray-600">
                                 {((region.value / totalRegion) * 100).toFixed(2)}%
@@ -1226,7 +1229,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                     return (
                       <>
                         <div className="bg-white p-6 border rounded-lg shadow-sm">
-                          <h3 className="text-xl font-semibold text-gray-800 mb-4">Region Contribution (Top Items)</h3>
+                          <h3 className="text-xl font-semibold text-gray-800 mb-4">Region Contribution</h3>
                           <MaximizedExplodedPieChart data={chartData} outerRadius={200} />
                         </div>
                         <div className="bg-white p-6 border rounded-lg shadow-sm">
@@ -1245,7 +1248,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                     <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                                     <td className="px-6 py-4 text-gray-800 font-medium">{row.name}</td>
-                                    <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row.value || 0).toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right text-gray-800 font-semibold">{CURRENCY}{(row.value || 0).toLocaleString()}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1321,9 +1324,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                                   <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
                                     <td className="px-6 py-4 text-gray-800 font-medium">{row.period}</td>
                                     {regionNames.map((rn: string, i: number) => (
-                                      <td key={i} className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row[rn] || 0).toLocaleString()}</td>
+                                      <td key={i} className="px-6 py-4 text-right text-gray-800 font-semibold">{(row[rn] || 0).toLocaleString()}</td>
                                     ))}
-                                    <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {total.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right text-gray-800 font-semibold">{total.toLocaleString()}</td>
                                   </tr>
                                 );
                               })}
@@ -1397,9 +1400,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                                   <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
                                     <td className="px-6 py-4 text-gray-800 font-medium">{row.period}</td>
                                     {areaNames.map((an: string, i: number) => (
-                                      <td key={i} className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row[an] || 0).toLocaleString()}</td>
+                                      <td key={i} className="px-6 py-4 text-right text-gray-800 font-semibold">{(row[an] || 0).toLocaleString()}</td>
                                     ))}
-                                    <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {total.toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right text-gray-800 font-semibold">{total.toLocaleString()}</td>
                                   </tr>
                                 );
                               })}
@@ -1496,9 +1499,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                                     <tr key={idx} className="border-b border-gray-100 hover:bg-gray-50">
                                       <td className="px-6 py-4 text-gray-800 font-medium">{row.period}</td>
                                       {warehouseNames.map((wn: string, i: number) => (
-                                        <td key={i} className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row[wn] || 0).toLocaleString()}</td>
+                                        <td key={i} className="px-6 py-4 text-right text-gray-800 font-semibold">{(row[wn] || 0).toLocaleString()}</td>
                                       ))}
-                                      <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {total.toLocaleString()}</td>
+                                      <td className="px-6 py-4 text-right text-gray-800 font-semibold">{total.toLocaleString()}</td>
                                     </tr>
                                   );
                                 })}
@@ -1547,7 +1550,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             {trendData.map((item: any, index: number) => (
                               <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-6 py-4 text-gray-800 font-medium">{item.period}</td>
-                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {item.value?.toLocaleString()}</td>
+                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">{item.value?.toLocaleString()}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -1592,7 +1595,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                           <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{`${row.areaName} - ${row.itemName}`}</td>
-                            <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row.value || 0).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-right text-gray-800 font-semibold">{(row.value || 0).toLocaleString()}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1629,7 +1632,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{salesman.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              {searchType === 'quantity' ? `${salesman.value?.toLocaleString()} Qty` : `UGX ${salesman.value?.toLocaleString()}`}
+                              {searchType === 'quantity' ? `${salesman.value?.toLocaleString()} Qty` : `${salesman.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((salesman.value / totalSalesmen) * 100).toFixed(2)}%
@@ -1670,7 +1673,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{warehouse.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              {searchType === 'quantity' ? `${warehouse.value?.toLocaleString()} Qty` : `UGX ${warehouse.value?.toLocaleString()}`}
+                              {searchType === 'quantity' ? `${warehouse.value?.toLocaleString()} Qty` : `${warehouse.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((warehouse.value / totalWarehouses) * 100).toFixed(2)}%
@@ -1711,7 +1714,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{customer.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              {searchType === 'quantity' ? `${customer.value?.toLocaleString()} Qty` : `UGX ${customer.value?.toLocaleString()}`}
+                              {searchType === 'quantity' ? `${customer.value?.toLocaleString()} Qty` : `${customer.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((customer.value / totalCustomers) * 100).toFixed(2)}%
@@ -1748,7 +1751,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             ) : regionContributionData && regionContributionData.length > 0 ? (
                               <MaximizedExplodedPieChart
                                 data={regionContributionData.map((r: any) => ({ name: `${r.regionName} - ${r.itemName}`, value: r.value || 0, color: r.color }))}
-                                title="Region Contribution (Top Items)"
+                                title="Region Contribution"
                                 outerRadius={200}
                               />
                             ) : (
@@ -1780,7 +1783,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                                 <td className="px-6 py-4 text-gray-800 font-medium">{r.item_name || r.name}</td>
-                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">{searchType === 'quantity' ? `${(r.value || 0).toLocaleString()} Qty` : `UGX ${(r.value || 0).toLocaleString()}`}</td>
+                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">{searchType === 'quantity' ? `${(r.value || 0).toLocaleString()} Qty` : `${(r.value || 0).toLocaleString()}`}</td>
                                 <td className="px-6 py-4 text-right text-gray-600">{(((r.value || 0) / total) * 100).toFixed(2)}%</td>
                               </tr>
                             ));
@@ -1794,7 +1797,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                                 <td className="px-6 py-4 text-gray-800 font-medium">{r.region_name || r.region_label || 'Unknown'}</td>
-                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(r.value || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">{(r.value || 0).toLocaleString()}</td>
                                 <td className="px-6 py-4 text-right text-gray-600">{(((r.value || 0) / total) * 100).toFixed(2)}%</td>
                               </tr>
                             ));
@@ -1808,7 +1811,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                                 <td className="px-6 py-4 text-gray-800 font-medium">{`${row.regionName} - ${row.itemName}`}</td>
-                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">UGX {(row.value || 0).toLocaleString()}</td>
+                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">{(row.value || 0).toLocaleString()}</td>
                                 <td className="px-6 py-4 text-right text-gray-600">{(((row.value || 0) / total) * 100).toFixed(2)}%</td>
                               </tr>
                             ));
@@ -1821,7 +1824,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                               <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                               <td className="px-6 py-4 text-gray-800 font-medium">{item.name}</td>
-                              <td className="px-6 py-4 text-right text-gray-800 font-semibold">{searchType === 'quantity' ? `${item.value?.toLocaleString()} Qty` : `UGX ${item.value?.toLocaleString()}`}</td>
+                              <td className="px-6 py-4 text-right text-gray-800 font-semibold">{searchType === 'quantity' ? `${item.value?.toLocaleString()} Qty` : `${item.value?.toLocaleString()}`}</td>
                               <td className="px-6 py-4 text-right text-gray-600">{(((item.value || 0) / total) * 100).toFixed(2)}%</td>
                             </tr>
                           ));
@@ -1866,7 +1869,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{area.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              UGX {area.value?.toLocaleString()}
+                              {area.value?.toLocaleString()}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((area.value / totalPerformance) * 100).toFixed(2)}%
@@ -1956,7 +1959,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{area.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              UGX {area.value?.toLocaleString()}
+                              {area.value?.toLocaleString()}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((area.value / totalContribution) * 100).toFixed(2)}%
@@ -2012,7 +2015,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           {/* Left: Region Contribution by Top Item (aggregate by region) */}
           <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Region Contribution (Top Items)</h3>
+              <h3 className="text-lg font-semibold text-gray-800">Region Contribution</h3>
               <button onClick={() => setSelectedMaxView('regionItems')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
             <div className="w-full h-[420px]">
@@ -2321,7 +2324,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Area Contribution</h3>
               <button onClick={() => setSelectedMaxView('area')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-80">
+            <div className="w-full">
               {areaContributionPieData.length === 0 ? (
                 <div className="flex items-center justify-center text-gray-500 text-sm">
                   <AlertCircle size={16} className="mr-2" /> No data available
@@ -2341,7 +2344,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         {filteredWarehouses.length >= 10 ? (
           <>
             {/* 3D Column Chart for 10+ warehouses */}
-            <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            {/* <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <h3 className="text-lg font-semibold text-gray-800">Warehouse Sales</h3>
@@ -2365,10 +2368,10 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   />
                 )}
               </div>
-            </div>
+            </div> */}
 
             {/* Table for 10+ warehouses */}
-            <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            {/* <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Warehouse Sales Table</h3>
               </div>
@@ -2390,7 +2393,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                           <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                           <td className="px-6 py-4 text-gray-800 font-medium">{warehouse.warehouse_label}</td>
                           <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                            UGX {(warehouse.value || 0).toLocaleString()}
+                            {(warehouse.value || 0).toLocaleString()}
                           </td>
                           <td className="px-6 py-4 text-right text-gray-600">
                             {((warehouse.value / totalSales) * 100).toFixed(2)}%
@@ -2401,11 +2404,12 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   </tbody>
                 </table>
               </div>
-            </div>
+            </div> */}
           </>
         ) : filteredWarehouses.length > 0 ? (
           /* Table only for < 10 warehouses */
-          <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+          <>
+          {/* <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <h3 className="text-lg font-semibold text-gray-800">Warehouse Sales</h3>
@@ -2431,7 +2435,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                         <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                         <td className="px-6 py-4 text-gray-800 font-medium">{warehouse.warehouse_label}</td>
                         <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                          UGX {(warehouse.value || 0).toLocaleString()}
+                          {(warehouse.value || 0).toLocaleString()}
                         </td>
                         <td className="px-6 py-4 text-right text-gray-600">
                           {((warehouse.value / totalSales) * 100).toFixed(2)}%
@@ -2442,7 +2446,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                 </tbody>
               </table>
             </div>
-          </div>
+          </div> */}
+          </>
         ) : null}
 
         {/* Row 3 - Sales Trend: Neon Area Chart split by warehouse_label */}
@@ -2570,7 +2575,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Area Contribution</h3>
               <button onClick={() => setSelectedMaxView('areaItems')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-80">
+            <div className="w-full">
               {areaContributionPieData.length === 0 ? (
                 <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
                   <AlertCircle size={16} className="mr-2" /> No data available
@@ -2590,7 +2595,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               <h3 className="text-lg font-semibold text-gray-800">Area Performance</h3>
               <button onClick={() => setSelectedMaxView('areaPerformance')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
             </div>
-            <div className="w-full h-80">
+            <div className="w-full">
               {areaPerformanceData.length === 0 ? (
                 <div className="flex items-center justify-center text-gray-500 text-sm">
                   <AlertCircle size={16} className="mr-2" /> No data available

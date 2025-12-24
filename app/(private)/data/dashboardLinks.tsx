@@ -332,13 +332,13 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
-          {
-            isActive: false,
-            href: "/tmpReturn",
-            label: "Temporary Return",
-            leadingIcon: "hugeicons:invoice",
-            iconColor: "text-cyan-500"
-          },
+          // {
+          //   isActive: false,
+          //   href: "/tmpReturn",
+          //   label: "Temporary Return",
+          //   leadingIcon: "hugeicons:invoice",
+          //   iconColor: "text-cyan-500"
+          // },
           {
             isActive: false,
             href: "/caps",

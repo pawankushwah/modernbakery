@@ -2185,7 +2185,7 @@ export const workFlowAssignmentStatusChange = async (body: object) => {
   }
 };
 
-export const workFlowRequest = async (params: Params) => {
+export const workFlowRequest = async (params?: Params) => {
   try {
     const res = await API.get(`/api/master/approval/workflow/requests`, { params });
     return res.data;
