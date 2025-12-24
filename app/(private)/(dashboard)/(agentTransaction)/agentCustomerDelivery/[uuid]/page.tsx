@@ -9,23 +9,16 @@ import { useRouter } from "next/navigation";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import KeyValueData from "@/app/components/keyValueData";
 import InputFields from "@/app/components/inputFields";
-<<<<<<< HEAD
 import AutoSuggestion from "@/app/components/autoSuggestion";
 import { genearateCode, itemGlobalSearch, saveFinalCode, warehouseListGlobalSearch } from "@/app/services/allApi";
 import { addAgentOrder, agentOrderList } from "@/app/services/agentTransaction";
 import { Formik, FormikHelpers, FormikProps, FormikValues } from "formik";
 import * as Yup from "yup";
-=======
-import {warehouseListGlobalSearch, itemList} from "@/app/services/allApi";
-import { createDelivery,deliveryByUuid,updateDelivery,agentOrderList } from "@/app/services/agentTransaction";
-import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
->>>>>>> 5810a973fbd0cd1be5bed2c47bca832355299d5e
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { useLoading } from "@/app/services/loadingContext";
 import toInternationalNumber from "@/app/(private)/utils/formatNumber";
 import { toTitleCase } from "@/app/(private)/utils/text";
 
-<<<<<<< HEAD
 interface FormData {
   id: number,
   erp_code: string,
@@ -62,25 +55,6 @@ interface FormData {
   has_excies: boolean,
   item_weight: string,
   volume: number
-=======
-// TypeScript interfaces
-interface DeliveryDetail {
-  item?: {
-    id: number;
-    code: string;
-    name: string;
-  };
-  uom_id: number;
-  uom_name?: string;
-  item_price: string;
-  quantity: number;
-  vat: string;
-  discount: string;
-  excise?: string;
-  gross_total: string;
-  net_total: string;
-  total: string;
->>>>>>> 5810a973fbd0cd1be5bed2c47bca832355299d5e
 }
 
 interface OrderData {
@@ -157,7 +131,6 @@ interface ItemData {
   [key: string]: string | { label: string; value: string; price?: string }[] | undefined;
 }
 
-<<<<<<< HEAD
 export default function DeliveryAddEditPage() {
   const itemRowSchema = Yup.object({
     item_id: Yup.string().required("Please select an item"),
@@ -174,66 +147,6 @@ export default function DeliveryAddEditPage() {
     note: Yup.string().max(1000, "Note is too long"),
     items: Yup.array().of(itemRowSchema),
   });
-=======
-interface OrderRow {
-  id: number;
-  uuid: string;
-  order_code: string;
-  warehouse_id: number;
-  warehouse_code: string;
-  warehouse_name: string;
-  customer_id: number;
-  customer_code: string;
-  customer_name: string;
-  delivery_date?: string;
-  comment?: string;
-  status?: string;
-  route_id?: number; // added optional route_id from API example
-  salesman_id?: number; // added optional salesman_id from API example
-  details?: OrderDetailRow[];
-}
-
-// Strongly typed item/uom structures for search and UOM population (avoid `any`)
-type ItemUom = { id: string; name: string; price: string };
-type FullItem = { id: string; item_code?: string; name?: string; uom?: ItemUom[] };
-
-export default function OrderAddEditPage() {
-  const { warehouseOptions, agentCustomerOptions, itemOptions, fetchAgentCustomerOptions } = useAllDropdownListData();
-  const { showSnackbar } = useSnackbar();
-  const { setLoading } = useLoading();
-  const router = useRouter();
-  const params = useParams();
-  
-  const uuid = params?.uuid as string | undefined;
-  const isEditMode = uuid !== undefined && uuid !== "add";
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState({
-    warehouse: "",
-    delivery: "",
-    delivery_date: "",
-    note: "",
-    transactionType: "1",
-    paymentTerms: "1",
-    paymentTermsUnit: "1",
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [searchedWarehouseOptions, setSearchedWarehouseOptions] = useState<Array<{value: string; label: string; uuid?: string}>>([]);
-  const [orderOptions, setOrderOptions] = useState<Array<{value: string; label: string}>>([]);
-  const [orderLoading, setOrderLoading] = useState(false);
-  const [ordersById, setOrdersById] = useState<Record<string, OrderRow>>({});
-  const [filteredWarehouseOptions, setFilteredWarehouseOptions] = useState<{ label: string; value: string }[]>([]);
-  const [filteredOrderOptions, setFilteredOrderOptions] = useState<{ label: string; value: string }[]>([]);
-   const [skeleton, setSkeleton] = useState({
-      route: false,
-      customer: false,
-      item: false,
-    });
-  // Store UOM options for each row
-  const [rowUomOptions, setRowUomOptions] = useState<Record<string, { value: string; label: string; price?: string }[]>>({});
-  // Store full item data for UOM lookup (used by AutoSuggestion onSelect)
-  const [fullItemsData, setFullItemsData] = useState<Record<string, FullItem>>({});
->>>>>>> 5810a973fbd0cd1be5bed2c47bca832355299d5e
 
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
@@ -308,248 +221,9 @@ export default function OrderAddEditPage() {
             delete copy[index];
             return copy;
           });
-<<<<<<< HEAD
         } else {
           setItemErrors((prev) => ({ ...prev, [index]: partialErrors }));
         }
-=======
-          
-          if (data?.details && Array.isArray(data.details) && data.details.length > 0) {
-            const newRowUomOptions: Record<string, { value: string; label: string; price?: string }[]> = {};
-            const loadedItemData = data.details.map((detail: DeliveryDetail, index: number) => {
-              const itemId = detail.item?.id ? String(detail.item.id) : "";
-              const uomId = detail.uom_id ? String(detail.uom_id) : "";
-              const rowIdx = index.toString();
-
-              // Build display label from API response (code - name)
-              const codeFromApi = detail.item?.code || "";
-              const nameFromApi = detail.item?.name || "";
-              const itemLabel = codeFromApi && nameFromApi ? `${codeFromApi} - ${nameFromApi}` : itemId;
-
-              // Prefer UOMs from itemOptions if present; otherwise fallback to single UOM from detail
-              const selectedItem = itemOptions.find(item => item.value === itemId);
-              if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
-                const uomOpts = selectedItem.uoms.map(uom => ({
-                  value: uom.id || "",
-                  label: uom.name || "",
-                  price: uom.price || "0"
-                }));
-                newRowUomOptions[rowIdx] = uomOpts;
-              } else if (uomId) {
-                newRowUomOptions[rowIdx] = [{ value: uomId, label: detail.uom_name || "", price: String(detail.item_price || "0") }];
-              }
-
-              const qty = detail.quantity || 0;
-              const price = Number(detail.item_price || 0);
-              const discount = Number(detail.discount || 0);
-              const total = (qty * price) - discount;
-              const vat = total * 0.18;
-              const net = total - vat;
-
-              return {
-                item_id: itemId,
-                itemName: itemLabel,
-                UOM: uomId,
-                uom_id: uomId,
-                Quantity: String(qty),
-                Price: (Number(price) || 0).toFixed(2),
-                Excise: detail.excise || "0.00",
-                Discount: (Number(discount) || 0).toFixed(2),
-                Net: net.toFixed(2),
-                Vat: vat.toFixed(2),
-                Total: total.toFixed(2),
-              };
-            });
-
-            setRowUomOptions(newRowUomOptions);
-            setItemData(loadedItemData);
-          }
-        } catch (error) {
-          console.error("Error fetching delivery data:", error);
-          
-          // Extract error message from API response
-          let errorMessage = "Failed to fetch delivery details";
-          
-          if (error && typeof error === 'object') {
-            // Check for error message in response
-            if ('response' in error && error.response && typeof error.response === 'object') {
-              const response = error.response as { data?: { message?: string } };
-              if (response.data?.message) {
-                errorMessage = response.data.message;
-              }
-            } else if ('data' in error && error.data && typeof error.data === 'object') {
-              const data = error.data as { message?: string };
-              if (data.message) {
-                errorMessage = data.message;
-              }
-            } else if ('message' in error && typeof error.message === 'string') {
-              errorMessage = error.message;
-            }
-          }
-          
-          showSnackbar(errorMessage, "error");
-        } finally {
-          setLoading(false);
-        }
-      })();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, uuid ?? ""]);
-
-  // Item search for AutoSuggestion (same approach as invoice page)
-  const handleItemSearch = useCallback(async (searchText: string) => {
-    try {
-      const response = await itemList({ name: searchText, per_page: "50" });
-      const resObj = (response && typeof response === 'object') ? (response as Record<string, unknown>) : {};
-      const rawArr = Array.isArray(resObj.data)
-        ? (resObj.data as unknown[])
-        : (Array.isArray(response) ? (response as unknown[]) : []);
-
-      const itemsMap: Record<string, FullItem> = {};
-      const options: { value: string; label: string; code?: string; name?: string; uoms?: ItemUom[] }[] = [];
-
-      for (const raw of rawArr) {
-        if (raw && typeof raw === 'object') {
-          const obj = raw as Record<string, unknown>;
-          const id = String(obj.id ?? '');
-          if (!id) continue;
-          const item_code = (typeof obj.item_code === 'string') ? obj.item_code : String(obj.item_code ?? '');
-          const name = (typeof obj.name === 'string') ? obj.name : String(obj.name ?? '');
-          const uomRaw = obj.uom;
-          const uoms: ItemUom[] = Array.isArray(uomRaw)
-            ? (uomRaw as unknown[])
-                .map((u) => {
-                  if (u && typeof u === 'object') {
-                    const uu = u as Record<string, unknown>;
-                    const uid = String(uu.id ?? '');
-                    if (!uid) return null;
-                    return {
-                      id: uid,
-                      name: String(uu.name ?? ''),
-                      price: String(uu.price ?? '0'),
-                    } as ItemUom;
-                  }
-                  return null;
-                })
-                .filter((v): v is ItemUom => v !== null)
-            : [];
-
-          const full: FullItem = { id, item_code, name, uom: uoms };
-          itemsMap[id] = full;
-          options.push({
-            value: id,
-            label: `${item_code || ''} - ${name || ''}`,
-            code: item_code,
-            name,
-            uoms,
-          });
-        }
-      }
-
-      setFullItemsData((prev) => ({ ...prev, ...itemsMap }));
-      return options;
-    } catch (error) {
-      console.error('Error fetching items:', error);
-      showSnackbar('Failed to search items', 'error');
-      return [];
-    }
-  }, [showSnackbar]);
-
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-
-    // When delivery_date changes, refetch orders using both warehouse and delivery_date
-    if (name === "delivery_date") {
-      if (form.warehouse) {
-        // Reset dependent order selection and table while fetching filtered orders
-        setForm((prev) => ({ ...prev, delivery: "" }));
-        setOrderOptions([]);
-        setOrdersById({});
-        setRowUomOptions({});
-        setItemData([
-          {
-            item_id: "",
-            itemName: "",
-            UOM: "",
-            uom_id: "",
-            Quantity: "1",
-            Price: "",
-            Excise: "",
-            Discount: "",
-            Net: "",
-            Vat: "",
-            Total: "",
-          },
-        ]);
-        fetchOrdersByWarehouse(String(form.warehouse), value);
-      }
-      return;
-    }
-
-    // When an order (delivery) is selected, populate table rows from the order details
-    if (name === "delivery" && value) {
-      const selectedOrder = ordersById[value];
-      if (selectedOrder && Array.isArray(selectedOrder.details)) {
-        const newRowUomOptions: Record<string, { value: string; label: string; price?: string }[]> = {};
-
-        const loadedItemData = selectedOrder.details.map((detail, index) => {
-          const itemId = String(detail.item_id ?? "");
-          const uomId = String(detail.uom_id ?? "");
-          const codeFromApi = detail.item_code || "";
-          const nameFromApi = detail.item_name || "";
-          const itemLabel = codeFromApi && nameFromApi ? `${codeFromApi} - ${nameFromApi}` : itemId;
-
-          // UOM options from itemOptions if present; else fallback to the specific UOM from order detail
-          const selectedItem = itemOptions.find((it) => it.value === itemId);
-          if (selectedItem && selectedItem.uoms && selectedItem.uoms.length > 0) {
-            const uomOpts = selectedItem.uoms.map((uom) => ({
-              value: uom.id || "",
-              label: uom.name || "",
-              price: uom.price || "0",
-            }));
-            newRowUomOptions[index.toString()] = uomOpts;
-          } else if (uomId) {
-            newRowUomOptions[index.toString()] = [{ value: uomId, label: detail.uom_name || "", price: String(detail.item_price || "0") }];
-          }
-
-          const qty = Number(detail.quantity ?? 0);
-          const price = Number(detail.item_price ?? 0);
-          const apiTotal = detail.total != null ? Number(detail.total) : qty * price;
-          const apiVat = detail.vat != null ? Number(detail.vat) : apiTotal * 0.18;
-          const apiNet = detail.net_total != null ? Number(detail.net_total) : apiTotal - apiVat;
-          const apiDiscount = detail.discount != null ? Number(detail.discount) : 0;
-
-          return {
-            item_id: itemId,
-            itemName: itemLabel,
-            UOM: uomId,
-            uom_id: uomId,
-            Quantity: String(qty || 1),
-            Price: (Number(price) || 0).toFixed(2),
-            Excise: "0.00",
-            Discount: (Number(apiDiscount) || 0).toFixed(2),
-            Net: (Number(apiNet) || 0).toFixed(2),
-            Vat: (Number(apiVat) || 0).toFixed(2),
-            Total: (Number(apiTotal) || 0).toFixed(2),
-          };
-        });
-
-        setRowUomOptions(newRowUomOptions);
-        setItemData(loadedItemData);
-
-        if (selectedOrder.comment) {
-          setForm((prev) => ({ ...prev, note: selectedOrder.comment || prev.note }));
-        }
-        const orderDate = selectedOrder.delivery_date || "";
-        setForm(prev => ({ ...prev, delivery_date: orderDate }));
->>>>>>> 5810a973fbd0cd1be5bed2c47bca832355299d5e
       } else {
         await itemRowSchema.validate(toValidate, { abortEarly: false });
         // clear errors for this row
@@ -742,7 +416,6 @@ export default function OrderAddEditPage() {
   );
   const finalTotal = grossTotal + totalVat;
 
-<<<<<<< HEAD
   const generatePayload = (values?: FormikValues) => {
     return {
       order_code: code,
@@ -750,24 +423,9 @@ export default function OrderAddEditPage() {
       customer_id: Number(values?.customer_id) || null,
       delivery_date: values?.delivery_date || form.delivery_date,
       // gross_total: Number(grossTotal.toFixed(2)),
-=======
-  // --- Create Payload for API
-  const generatePayload = () => {
-    const selectedOrder = ordersById[form.delivery];
-    return {
-      warehouse_id: Number(form.warehouse),
-      order_id: Number(form.delivery),
-      // delivery_date removed as per new requirement
-      route_id: selectedOrder?.route_id ? Number(selectedOrder.route_id) : undefined,
-      salesman_id: selectedOrder?.salesman_id ? Number(selectedOrder.salesman_id) : undefined,
-      customer_id: selectedOrder?.customer_id ? Number(selectedOrder.customer_id) : undefined,
-      gross_total: Number(grossTotal.toFixed(2)),
-      discount: Number(discount.toFixed(2)),
->>>>>>> 5810a973fbd0cd1be5bed2c47bca832355299d5e
       vat: Number(totalVat.toFixed(2)),
       net_amount: Number(netAmount.toFixed(2)),
       total: Number(finalTotal.toFixed(2)),
-<<<<<<< HEAD
       // discount: Number(discount.toFixed(2)),
       comment: values?.note || "",
       status: 1,
@@ -783,22 +441,6 @@ export default function OrderAddEditPage() {
         net_total: Number(item.Net) || null,
         total: Number(item.Total) || null,
       })),
-=======
-      comment: form.note || "",
-      details: itemData
-        .filter(item => item.item_id && item.uom_id)
-        .map((item) => ({
-          item_id: Number(item.item_id),
-          uom_id: Number(item.uom_id),
-          quantity: Number(item.Quantity) || 0,
-          item_price: Number(item.Price) || 0,
-          vat: Number(item.Vat) || 0,
-          discount: Number(item.Discount) || 0,
-          gross_total: Number(item.Total) || 0,
-          net_total: Number(item.Net) || 0,
-          total: Number(item.Total) || 0,
-        })),
->>>>>>> 5810a973fbd0cd1be5bed2c47bca832355299d5e
     };
   };
 
@@ -939,7 +581,6 @@ export default function OrderAddEditPage() {
         </div>
         <hr className="w-full text-[#D5D7DA]" />
 
-<<<<<<< HEAD
         <Formik<FormikValues>
           initialValues={form}
           onSubmit={handleSubmit}
@@ -973,189 +614,6 @@ export default function OrderAddEditPage() {
                           setFieldValue("warehouse", opt.value);
                           setSkeleton((prev) => ({ ...prev, delivery: true }));
                           setFieldValue("delivery", "");
-=======
-        {/* --- Form Fields --- */}
-        <div className="flex flex-col sm:flex-row gap-4 mt-10 mb-10 flex-wrap">
-           
-            <AutoSuggestion
-                                  required
-                                  label="Warehouse"
-                                  name="warehouse"
-                                  placeholder="Search warehouse"
-                                  onSearch={(q) => fetchWarehouse(q)}
-                                  initialValue={filteredWarehouseOptions.find(o => o.value === String(form.warehouse))?.label || ""}
-                                  onSelect={(opt) => {
-                                    if (form.warehouse !== opt.value) {
-                                      setForm((prev) => ({ ...prev, warehouse: opt.value }));
-                                      setSkeleton((prev) => ({ ...prev, customer: true }));
-                                      setFilteredOrderOptions([]);
-                                      fetchOrdersByWarehouse?.(String(opt.value));
-                                    } else {
-                                      setForm((prev) => ({ ...prev, warehouse: opt.value }));
-                                    }
-                                  }}
-                                  onClear={() => {
-                                    setForm((prev) => ({ ...prev, warehouse: "" }));
-                                    setFilteredOrderOptions([]);
-                                    setSkeleton((prev) => ({ ...prev, customer: false }));
-                                  }}
-                                  error={
-                                    (errors.warehouse as string)
-                                  }
-                                />
-            
-            <InputFields
-              required
-              label="Delivery Date"
-              name="delivery_date"
-              type="date"
-              value={form.delivery_date}
-              onChange={handleChange}
-              error={errors.delivery_date}
-            />
-            <InputFields
-              required
-              label="Customer"
-              name="delivery"
-              searchable={true}
-              value={form.delivery}
-              options={orderOptions}
-              onChange={handleChange}
-              error={errors.delivery}
-              disabled={!form.delivery_date}
-            />
-            
-           
-           
-</div>
-        {/* --- Table --- */}
-        <Table
-          data={itemData.map((row, idx) => ({ ...row, idx: idx.toString() }))}
-          config={{
-            columns: [
-              {
-                key: "itemName",
-                label: "Item Name",
-                 width: 390,
-                render: (row) => (
-                  <div style={{ minWidth: '390px', maxWidth: '390px' }}>
-                  <AutoSuggestion
-                    // key forces remount when item changes so initialValue is applied
-                    key={`${row.idx}-${row.item_id || row.itemName}`}
-                    placeholder="Search item..."
-                    initialValue={row.itemName}
-                    onSearch={handleItemSearch}
-                    onSelect={(option) => {
-                      const selectedItemId = option.value;
-                      const newData = [...itemData];
-                      const index = Number(row.idx);
-                      newData[index].item_id = selectedItemId;
-                      newData[index].itemName = option.label;
-
-                      // Get the full item data to access UOMs
-                      const selectedItem = fullItemsData[selectedItemId];
-                      if (selectedItem?.uom && selectedItem.uom.length > 0) {
-                        const uomOpts = selectedItem.uom.map((uom) => ({
-                          value: String(uom.id ?? ""),
-                          label: uom.name ?? "",
-                          price: uom.price ?? "0",
-                        }));
-
-                        setRowUomOptions(prev => ({
-                          ...prev,
-                          [row.idx]: uomOpts
-                        }));
-
-                        const firstUom = uomOpts[0];
-                        if (firstUom) {
-                          newData[index].uom_id = firstUom.value;
-                          newData[index].UOM = firstUom.value;
-                          newData[index].Price = firstUom.price || "0";
-                        }
-                      } else {
-                        setRowUomOptions(prev => {
-                          const newOpts = { ...prev };
-                          delete newOpts[row.idx];
-                          return newOpts;
-                        });
-                        newData[index].uom_id = "";
-                        newData[index].UOM = "";
-                        newData[index].Price = "0";
-                      }
-
-                      setItemData(newData);
-                      recalculateItem(index, "itemName", selectedItemId);
-                    }}
-                    onClear={() => {
-                      const newData = [...itemData];
-                      const index = Number(row.idx);
-                      newData[index].item_id = "";
-                      newData[index].itemName = "";
-                      newData[index].uom_id = "";
-                      newData[index].UOM = "";
-                      newData[index].Price = "0";
-                      setRowUomOptions(prev => {
-                        const newOpts = { ...prev };
-                        delete newOpts[row.idx];
-                        return newOpts;
-                      });
-                      setItemData(newData);
-                    }}
-                  />
-                  </div>
-                ),
-              },
-              {
-                key: "UOM",
-                label: "UOM",
-                width: 120,
-                render: (row) => {
-                  const uomOptions = rowUomOptions[row.idx] || [];
-                  return (
-                    <div style={{ minWidth: '120px', maxWidth: '120px' }}>  
-                    <InputFields
-                      label=""
-                      name="UOM"
-                      options={uomOptions}
-                      value={row.uom_id}
-                      disabled={uomOptions.length === 0}
-                      onChange={(e) => {
-                        const selectedUomId = e.target.value;
-                        const selectedUom = uomOptions.find(uom => uom.value === selectedUomId);
-                        const newData = [...itemData];
-                        const index = Number(row.idx);
-                        newData[index].uom_id = selectedUomId;
-                        newData[index].UOM = selectedUomId;
-                        if (selectedUom) {
-                          newData[index].Price = selectedUom.price || "0";
-                        }
-                        setItemData(newData);
-                        recalculateItem(index, "UOM", selectedUomId);
-                      }}
-                    />
-                    </div>
-                  );
-                },
-              },
-              {
-                key: "Quantity",
-                label: "Qty",
-                width: 100,
-                render: (row) => (
-                  <div style={{ minWidth: '100px', maxWidth: '100px' }}>  
-                  <InputFields
-                    label=""
-                    type="number"
-                    name="Quantity"
-                    value={row.Quantity}
-                    onChange={(e) => {
-                        const value = e.target.value;
-                        const numValue = parseFloat(value);
-                        if (value === "") {
-                          recalculateItem(Number(row.idx), "Quantity", value);
-                        } else if (numValue <= 0) {
-                          recalculateItem(Number(row.idx), "Quantity", "1");
->>>>>>> 5810a973fbd0cd1be5bed2c47bca832355299d5e
                         } else {
                           setFieldValue("warehouse", opt.value);
                         }

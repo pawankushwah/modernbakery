@@ -19,8 +19,6 @@
     "date-fns": "^4.1.0",
     "formik": "^2.4.6",
     "framer-motion": "^12.23.12",
-    "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.3",
     "next": "^15.5.3",
     "react": "^19.1.1",
     "react-chartjs-2": "^5.3.0",
@@ -31,7 +29,7 @@
   },
   "optionalDependencies": {
     "html2canvas": "^1.4.1",
-    "jspdf": "^2.5.2"
+    "jspdf": "^3.0.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

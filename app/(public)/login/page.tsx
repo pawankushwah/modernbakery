@@ -54,7 +54,7 @@ const LoginPage = () => {
                                 <Logo twClass="m-auto" />
                                 <div className="text-center">
                                     <h1 className="text-3xl font-semibold text-gray-900 mb-[12px]">
-                                        Welcome back
+                                        Welcome
                                     </h1>
                                     <p className="text-gray-600 text-[16px]">
                                         Please log in with your details to

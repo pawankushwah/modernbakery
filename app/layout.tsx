@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Hariss International",
+  title: "Modern Bakery",
   description: "",
 };
 

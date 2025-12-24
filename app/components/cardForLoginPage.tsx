@@ -5,7 +5,7 @@ export default function CardForLoginPage() {
     return (
         <div className="relative overflow-hidden rounded-[20px] xl:w-full h-[calc(100vh-48px)]">
             <Image
-                src="/loginImage.png"
+                src="/logo.jpg"
                 alt="Login Illustration"
                 width={696}
                 height={912}
