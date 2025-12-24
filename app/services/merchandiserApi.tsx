@@ -523,3 +523,16 @@ export const addStockInStore = async (body: object) => {
     return handleError(error);
   }
 };
+
+export const updateStockInStore = async (uuid: string, body: object) => {
+  try {
+    console.log(uuid)
+    const res = await APIFormData.put(
+      `/api/merchendisher/stockinstore/update/${uuid}`,
+      body
+    );
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

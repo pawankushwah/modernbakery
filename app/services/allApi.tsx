@@ -3889,3 +3889,12 @@ export const custCatByChId = async (params?: Params) => {
     return handleError(error);
   }
 };
+
+export const changePassword = async (body?: Object) => {
+  try {
+    const res = await API.post(`/api/master/change-password`,body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};

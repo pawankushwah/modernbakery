@@ -1,11 +1,12 @@
-import React from "react";
+import React,{useEffect} from "react";
 import { Icon } from "@iconify-icon/react";
 import CustomPasswordInput from "@/app/components/customPasswordInput";
-
+import {changePassword} from "@/app/services/allApi";
+import { useSnackbar } from "@/app/services/snackbarContext";
 interface ResetPasswordSidebarProps {
   show: boolean;
   onClose: () => void;
-  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  // onSubmit will be handled internally
   setFieldValue: (field: string, value: any) => void;
   values: {
     oldPassword?: string;
@@ -17,11 +18,11 @@ interface ResetPasswordSidebarProps {
 const ResetPasswordSidebar: React.FC<ResetPasswordSidebarProps> = ({
   show,
   onClose,
-  onSubmit,
   setFieldValue,
   values,
 }) => {
-  if (!show) return null;
+  // All hooks must be called unconditionally and before any return
+  const [loading, setLoading] = React.useState(false);
   const [touched, setTouched] = React.useState({
     newPassword: false,
     confirmPassword: false,
@@ -32,6 +33,34 @@ const ResetPasswordSidebar: React.FC<ResetPasswordSidebarProps> = ({
     !values.newPassword ||
     !values.confirmPassword ||
     !passwordsMatch;
+  if (!show) return null;
+  const { showSnackbar } = useSnackbar();
+  
+    
+  // Handle password update
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await changePassword({
+        old_password: values.oldPassword,
+        new_password: values.newPassword,
+        new_password_confirmation: values.confirmPassword,
+      });
+      if (res?.error) {
+        showSnackbar(res?.message || "Failed to update password","error");
+      } else {
+        // Optionally show a toast here
+        onClose();
+      }
+      showSnackbar("Password updated successfully", "success");
+    } catch (err: any) {
+      showSnackbar(err?.message || "Failed to update password","error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       {/* Overlay */}
@@ -47,7 +76,7 @@ const ResetPasswordSidebar: React.FC<ResetPasswordSidebarProps> = ({
             <Icon icon="lucide:x" width={22} />
           </button>
         </div>
-        <form onSubmit={onSubmit} className="p-7 space-y-6">
+        <form onSubmit={handleSubmit} className="p-7 space-y-6">
           <CustomPasswordInput
             required
             label="Old Password"
@@ -79,13 +108,14 @@ const ResetPasswordSidebar: React.FC<ResetPasswordSidebarProps> = ({
                 : undefined
             }
           />
+         
           <div className="flex justify-start">
             <button
               type="submit"
               className="bg-red-600 text-white w-[160px] py-3 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              disabled={isDisabled}
+              disabled={isDisabled || loading}
             >
-              Update Password
+              {loading ? "Updating..." : "Update Password"}
             </button>
           </div>
         </form>

@@ -6,8 +6,8 @@ import SalesCharts from './SalesCharts';
 import ExportButtons from './ExportButtons';
 import { useSnackbar } from '@/app/services/snackbarContext';
 import { usePagePermissions } from '@/app/(private)/utils/usePagePermissions';
-
-
+import { useLoading } from '../services/loadingContext';
+import Loading from './Loading'
 // Define TypeScript interfaces
 interface FilterChildItem {
   id: string;
@@ -30,6 +30,7 @@ interface SearchTerms {
 }
 
 const SalesReportDashboard = () => {
+  const { setLoading: setGlobalLoading } = useLoading();
   const { can, permissions } = usePagePermissions();
   const { showSnackbar } = useSnackbar();
   const [viewType, setViewType] = useState('');
@@ -56,7 +57,7 @@ const SalesReportDashboard = () => {
   const [tableData, setTableData] = useState<any>(null);
   const [isLoadingTable, setIsLoadingTable] = useState(false);
   const [selectedDataview, setSelectedDataview] = useState('default');
-  const [searchType, setSearchType] = useState('amount'); // 'amount' or 'quantity'
+  const [searchType, setSearchType] = useState('quantity'); // 'amount' or 'quantity'
   const [displayQuantity, setDisplayQuantity] = useState('with_free_good'); // 'Free-Good' or 'Without-Free-Good'
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 50; // pagination size
@@ -629,6 +630,8 @@ const SalesReportDashboard = () => {
           payload.customer_category_ids = selectedChildItems['customer-category'].map(id => parseInt(id));
           break;
         case 'customer':
+          payload.customer_channel_ids = selectedChildItems['channel-categories']?.map(id => parseInt(id));
+          payload.customer_category_ids = selectedChildItems['customer-category'].map(id => parseInt(id));
           payload.customer_ids = selectedChildItems['customer'].map(id => parseInt(id));
           break;
       }
@@ -792,18 +795,31 @@ const SalesReportDashboard = () => {
     setSelectedChildItems(prev => {
       const current = prev[filterId] || [];
       const newValue = current.includes(childItemId) ? current.filter(id => id !== childItemId) : [...current, childItemId];
-      
       // Create new state with updated filter
-      const newState = { ...prev, [filterId]: newValue };
-      
-      // Clear all dependent filters based on hierarchy
-      const dependentFilters = filterHierarchy[filterId] || [];
-      dependentFilters.forEach(dependentId => {
-        if (newState[dependentId]) {
-          newState[dependentId] = [];
-        }
-      });
-      
+      let newState = { ...prev, [filterId]: newValue };
+
+      // Custom hierarchy reset for company, region, area
+      if (filterId === 'company') {
+        // Reset region, area, warehouse
+        ['region', 'area', 'warehouse'].forEach(dep => { if (newState[dep]) newState[dep] = []; });
+      } else if (filterId === 'region') {
+        // Reset area, warehouse
+        ['area', 'warehouse'].forEach(dep => { if (newState[dep]) newState[dep] = []; });
+      } else if (filterId === 'area') {
+        // Reset warehouse
+        if (newState['warehouse']) newState['warehouse'] = [];
+      } else if (filterId === 'item-category') {
+        // Reset items
+        if (newState['items']) newState['items'] = [];
+      } else {
+        // Default: Clear all dependent filters based on hierarchy
+        const dependentFilters = filterHierarchy[filterId] || [];
+        dependentFilters.forEach(dependentId => {
+          if (newState[dependentId]) {
+            newState[dependentId] = [];
+          }
+        });
+      }
       return newState;
     });
   };
@@ -847,6 +863,7 @@ const SalesReportDashboard = () => {
   const visibleFilters = availableFilters.filter(f => ['company', 'region', 'area', 'warehouse'].includes(f.id));
   const searchby = availableFilters.filter(f => ['salesman', 'route'].includes(f.id));
   // const searchtype = availableFilters.filter(f => ['display-quantity', 'amount'].includes(f.id));
+  // Show all moreFilters, but mark 'customer' as disabled unless 'customer-category' is dropped
   const moreFilters = availableFilters.filter(f => 
     !['company', 'region', 'area', 'warehouse', 'salesman', 'route', 'display-quantity', 'amount'].includes(f.id)
   );
@@ -1075,13 +1092,18 @@ const SalesReportDashboard = () => {
                           <div id="morefilters-dropdown" className="filter-dropdown absolute top-full left-0 sm:left-auto sm:right-0 mt-1 w-[calc(100vw-2rem)] sm:w-64 max-w-xs bg-white border border-gray-200 rounded-lg shadow-lg z-30 max-h-80 overflow-y-auto">
                             <div className="p-2">
                               {moreFilters.map(filter => {
-                                const isUndraggable = viewType === 'table' && ['items', 'item-category'].includes(filter.id);
+                                let isUndraggable = viewType === 'table' && droppedFilters.length === 0;
+                                // Disable 'customer' unless 'customer-category' is dropped
+                                if (filter.id === 'customer' && !droppedFilters.some(f => f.id === 'customer-category')) {
+                                  isUndraggable = true;
+                                }
                                 return (
                                   <div 
                                     key={filter.id} 
                                     draggable={!isUndraggable} 
-                                    onDragStart={!isUndraggable ? (e) => { handleDragStart(e, filter); setShowMoreFilters(!showMoreFilters); } : undefined} 
+                                    onDragStart={!isUndraggable ? (e) => { handleDragStart(e, filter);  } : undefined} 
                                     className={`flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 ${isUndraggable ? 'cursor-not-allowed opacity-50' : 'cursor-grab'}`}
+                                    title={filter.id === 'customer' && !droppedFilters.some(f => f.id === 'customer-category') ? 'Select Customer Category first' : ''}
                                   >
                                     <div className='flex gap-2 sm:gap-4 items-center'>
                                       <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />
@@ -1207,9 +1229,8 @@ const SalesReportDashboard = () => {
               ) : (
                 <div className="mt-4">
                   {isLoadingTable ? (
-                    <div className="flex justify-center items-center py-12">
-                      <Icon icon="eos-icons:loading" width="40" height="40" className="text-blue-600" />
-                      <span className="ml-3 text-gray-600">Loading table data...</span>
+                    <div className="flex flex-col justify-center items-center py-20 mt-5 h-80">
+                      <Loading />
                     </div>
                   ) : tableData && (tableData.data || tableData.rows)?.length > 0 ? (
                     (() => {

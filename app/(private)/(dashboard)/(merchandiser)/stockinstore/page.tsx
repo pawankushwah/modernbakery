@@ -241,11 +241,11 @@ export default function StockInStore() {
               onClick: (data: TableDataType) =>
                 router.push(`/stockinstore/view/${data.uuid}`),
             },
-            // {
-            //   icon: "lucide:edit-2",
-            //   onClick: (data: TableDataType) =>
-            //     router.push(`/stockinstore/${data.uuid}`),
-            // },
+            {
+              icon: "lucide:edit-2",
+              onClick: (data: TableDataType) =>
+                router.push(`/stockinstore/${data.uuid}`),
+            },
             // {
             //   icon: "lucide:trash-2",
             //   onClick: (data: TableDataType) => {

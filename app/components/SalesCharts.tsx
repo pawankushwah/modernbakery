@@ -5,7 +5,7 @@ import { Icon } from "@iconify-icon/react";
 import Highcharts from 'highcharts';
 import HighchartsReact from 'highcharts-react-official';
 import { useSnackbar } from '../services/snackbarContext';
-
+import Loading from './Loading';
 interface ChartData {
   salesTrend: { year: string; sales: number }[];
   companies: { name: string; sales: number; color: string }[];
@@ -130,8 +130,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
     }
 
     const isQuantity = searchType === 'quantity';
-    const yAxisLabel = isQuantity ? 'Quantity' : 'Sales Value (UGX)';
-    const valuePrefix = isQuantity ? '' : 'UGX ';
+    const yAxisLabel = isQuantity ? 'Quantity' : `Sales Value`;
+    const valuePrefix = isQuantity ? '' : ' ';
     const valueSuffix = isQuantity ? ' Qty' : '';
 
     const options: Highcharts.Options = {
@@ -180,11 +180,12 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       xAxis: {
         categories: data.map((item: any) => item[xAxisKey]),
         labels: {
-          skew3d: true,
-          style: {
-            fontSize: '11px',
-            color: '#4b5563'
-          }
+          // skew3d: true,
+          // style: {
+          //   fontSize: '11px',
+          //   color: '#4b5563'
+          // }
+          enabled:false
         },
         title: {
           text: ''
@@ -199,7 +200,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         },
         labels: {
           formatter: function() {
-            return `UGX ${((this.value as number) / 1000000).toFixed(1)}M`;
+            return ` ${((this.value as number) / 100000).toFixed(2)}L`;
           },
           style: {
             color: '#4b5563'
@@ -207,11 +208,13 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         }
       },
       tooltip: {
+        // pointFormat: isQuantity ? '<b>{point.percentage:.1f}%</b><br/>{point.y:,.0f} Qty' : '<b>{point.percentage:.1f}%</b><br/> {point.y:,.0f}',
         formatter: function() {
-          if (isQuantity) {
-            return `<b>${this.key}</b><br/>${this.y?.toLocaleString()} Qty`;
+             if (isQuantity) {
+            return `<b>${this.series && this.series.name ? this.series.name : this.key}</b><br/>${this.y?.toLocaleString()} Qty`;
           }
-          return `<b>${this.key}</b><br/>UGX ${this.y?.toLocaleString()}`;
+
+          return `<b>${this.series && this.series.name ? this.series.name : this.key}</b><br/>UGX ${this.y?.toLocaleString()}`;
         },
         style: {
           fontSize: '12px'
@@ -225,7 +228,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           groupPadding: 0.1,
           dataLabels: {
             // enabled: true,
-            format: isQuantity ? '{y:,.0f} Qty' : 'UGX {y:,.0f}',
+            format: isQuantity ? '{y:,.0f} Qty' : ' {y:,.0f}',
             style: {
               fontSize: '10px',
               textOutline: 'none'
@@ -317,9 +320,17 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
     shared: true,
     formatter: function() {
       let tooltip = `<b>${this.x}</b><br/>`;
-      this.points?.forEach((point: any) => {
-        tooltip += `<span style="color:${point.color}">●</span> ${point.series.name}: <b>${point.y?.toLocaleString()}</b><br/>`;
-      });
+      if (this.points) {
+        this.points.forEach((point: any) => {
+          // Use point.index to get the correct data item
+          const dataItem = point.point && point.point.index !== undefined ? data[point.point.index] : undefined;
+          if (point.series.name === series2Name && dataItem && dataItem.visited_percentage !== undefined) {
+            tooltip += `<span style="color:${point.color}">●</span> ${point.series.name}: <b>${point.y?.toLocaleString()}</b> (${dataItem.visited_percentage}% Visited)<br/>` ;
+          } else {
+            tooltip += `<span style="color:${point.color}">●</span> ${point.series.name}: <b>${point.y?.toLocaleString()}</b><br/>`;
+          }
+        });
+      }
       return tooltip;
     },
     style: {
@@ -351,7 +362,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
     data: data.map((item: any) => item[series2Key] || 0),
     color: '#10b981', // Emerald
     pointWidth: 25 // Even thinner for individual series
-  }]
+  
+  }
+]
 };
 
     return (
@@ -408,7 +421,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
       title: { text: title || null },
       // Disable the built-in Highcharts legend (we render a custom interactive legend above)
       legend: { enabled: false },
-      tooltip: { pointFormat: isQuantity ? '<b>{point.percentage:.1f}%</b><br/>{point.y:,.0f} Qty' : '<b>{point.percentage:.1f}%</b><br/>UGX {point.y:,.0f}' },
+      tooltip: { pointFormat: isQuantity ? '<b>{point.percentage:.1f}%</b><br/>{point.y:,.0f} Qty' : '<b>{point.percentage:.1f}%</b><br/> {point.y:,.0f}' },
       plotOptions: {
         pie: {
           allowPointSelect: true,
@@ -562,10 +575,11 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex flex-col justify-center items-center py-20 mt-5">
-        <Icon icon="eos-icons:loading" width="48" height="48" className="text-blue-600 mb-4" />
+      <div className="flex flex-col justify-center items-center py-20 mt-5 h-80">
+        <Loading/>
+        {/* <Icon icon="eos-icons:loading" width="48" height="48" className="text-blue-600 mb-4" />
         <p className="text-lg font-medium text-gray-700">Loading dashboard data...</p>
-        <p className="text-sm text-gray-500 mt-2">Please wait while we fetch your data</p>
+        <p className="text-sm text-gray-500 mt-2">Please wait while we fetch your data</p> */}
       </div>
     );
   }
@@ -653,7 +667,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   }));
 
   const topWarehousesChartData = topWarehousesTable.slice(0, 10).map((warehouse: any, idx: number) => ({
-    name: warehouse['?column?'] || warehouse.warehouse_name,
+    name:  warehouse.warehouse_label || warehouse.warehouse_name,
     value: warehouse.value || 0,
     color: warehouseColors[idx % warehouseColors.length]
   }));
@@ -765,8 +779,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
           <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 30 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
             <XAxis dataKey="name" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" height={40} />
-            <YAxis tickFormatter={(v) => (searchType === 'quantity' ? v : `UGX ${v.toLocaleString()}`)} />
-            <Tooltip formatter={(value: any) => (searchType === 'quantity' ? `${value.toLocaleString()} Qty` : `UGX ${value.toLocaleString()}`)} />
+            <YAxis tickFormatter={(v) => (searchType === 'quantity' ? v : ` ${v.toLocaleString()}`)} />
+            <Tooltip formatter={(value: any) => (searchType === 'quantity' ? `${value.toLocaleString()} Qty` : ` ${value.toLocaleString()}`)} />
             <Bar dataKey="value">
               {data.map((entry: any, idx: number) => (
                 <Cell key={`cell-${idx}`} fill={entry.color || neonColors[idx % neonColors.length]} />
@@ -779,7 +793,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   };
 
   // Neon Trend Area Chart Component with White Background
-  const NeonTrendAreaChart = ({ data, areas, title = 'Weekly Area Sales Trend' }: any) => {
+  const NeonTrendAreaChart = ({ data, areas, title = 'Area Sales Trend' }: any) => {
     const [hiddenAreas, setHiddenAreas] = useState<string[]>([]);
 
     if (!data || data.length === 0) {
@@ -871,7 +885,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               axisLine={{ stroke: '#d1d5db' }}
               tick={{ fill: '#4b5563', fontSize: 11 }}
               tickLine={{ stroke: '#d1d5db' }}
-              tickFormatter={(value) => isQuantity ? `${value.toLocaleString()}` : `UGX ${(value / 1000000).toFixed(1)}M`}
+              tickFormatter={(value) => isQuantity ? `${value.toLocaleString()}` : ` ${(value / 100000).toFixed(2)}L`}
             />
             
             {/* Custom tooltip with light theme */}
@@ -890,7 +904,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               }}
               formatter={(value: any, name: any) => [
                 <span key="value" style={{ color: neonAreaColors[areas.indexOf(name) % neonAreaColors.length]?.line || '#00f2fe' }}>
-                  {isQuantity ? `${value.toLocaleString()} Qty` : `UGX ${value.toLocaleString()}`}
+                  {isQuantity ? `${value.toLocaleString()} Qty` : ` ${value.toLocaleString()}`}
                 </span>,
                 <span key="name" style={{ color: '#6b7280' }}>
                   {name}
@@ -1029,7 +1043,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
             <h2 className="text-2xl font-bold text-gray-800">
               {selectedMaxView === 'company' && 'Company Sales Details'}
               {selectedMaxView === 'region' && 'Region Sales Details'}
-              {selectedMaxView === 'regionItems' && 'Top Items Distribution'}
+              {selectedMaxView === 'regionItems' && 'Region Sales Details'}
               {selectedMaxView === 'regionVisited' && 'Visit Customer Trend - Region Details'}
               {selectedMaxView === 'warehouseSales' && 'Warehouse Sales Details'}
               {selectedMaxView === 'area' && 'Area Sales Details'}
@@ -1116,6 +1130,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                           <th className="px-6 py-4 text-left font-semibold text-gray-700">Region</th>
                           <th className="px-6 py-4 text-right font-semibold text-gray-700">Visited Customers</th>
                           <th className="px-6 py-4 text-right font-semibold text-gray-700">Total Customers</th>
+                          <th className="px-6 py-4 text-right font-semibold text-gray-700">Visited Percentage (%)</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1124,6 +1139,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-800">{r.region_name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">{(r.visited_customers || 0).toLocaleString()}</td>
                             <td className="px-6 py-4 text-right text-gray-800">{(r.total_customers || 0).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-right text-gray-800">{(r.visited_percentage || 0).toLocaleString()}%</td>
                           </tr>
                         ))}
                       </tbody>
@@ -1216,8 +1232,9 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               {selectedMaxView === 'regionItems' && (
                   (() => {
                     const source = props.regionContributionData || (dashboardData?.charts?.region_contribution_top_item || []);
+                    console.log('Region Contribution Data for Maximized View:', (dashboardData?.charts?.region_contribution_top_item || []));
                     const chartData = (Array.isArray(source) ? source : []).map((it: any, i: number) => ({
-                      name: `${it.region_name || it.region_label || 'Unknown'} - ${it.item_name || it.item_name || ''}`,
+                      name: `${it.region_name || it.region_label || it.name}`,
                       value: it.value || 0,
                       color: areaColors[i % areaColors.length]
                     }));
@@ -1239,7 +1256,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               <thead className="bg-gray-50 border-b-2 border-gray-200">
                                 <tr>
                                   <th className="px-6 py-4 text-left font-semibold text-gray-700">Rank</th>
-                                  <th className="px-6 py-4 text-left font-semibold text-gray-700">Region - Item</th>
+                                  <th className="px-6 py-4 text-left font-semibold text-gray-700">Region</th>
                                   <th className="px-6 py-4 text-right font-semibold text-gray-700">Sales Value</th>
                                 </tr>
                               </thead>
@@ -1248,7 +1265,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                                   <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                     <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                                     <td className="px-6 py-4 text-gray-800 font-medium">{row.name}</td>
-                                    <td className="px-6 py-4 text-right text-gray-800 font-semibold">{CURRENCY}{(row.value || 0).toLocaleString()}</td>
+                                    <td className="px-6 py-4 text-right text-gray-800 font-semibold">{(row.value || 0).toLocaleString()}</td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1285,8 +1302,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <LineChart data={trendSeries} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                               <XAxis dataKey="period" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                              <YAxis tickFormatter={(value) => `UGX ${(value / 1000000).toFixed(1)}M`} tick={{ fontSize: 13 }} />
-                              <Tooltip formatter={(value: any) => `UGX ${value.toLocaleString()}`} />
+                              <YAxis tickFormatter={(value) => `${(value / 100000).toFixed(2)}L`} tick={{ fontSize: 13 }} />
+                              <Tooltip formatter={(value: any) => `${value.toLocaleString()}`} />
                               <Legend />
                               {regionNames.map((rn: string, idx: number) => (
                                 <Line
@@ -1361,8 +1378,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <LineChart data={trendSeries} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
                               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                               <XAxis dataKey="period" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                              <YAxis tickFormatter={(value) => `UGX ${(value / 1000000).toFixed(1)}M`} tick={{ fontSize: 13 }} />
-                              <Tooltip formatter={(value: any) => `UGX ${value.toLocaleString()}`} />
+                              <YAxis tickFormatter={(value) => ` ${(value / 100000).toFixed(2)}L`} tick={{ fontSize: 13 }} />
+                              <Tooltip formatter={(value: any) => ` ${value.toLocaleString()}`} />
                               <Legend />
                               {areaNames.map((an: string, idx: number) => (
                                 <Line
@@ -1459,8 +1476,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               <LineChart data={trendSeries} margin={{ top: 20, right: 30, left: 10, bottom: 20 }}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                                 <XAxis dataKey="period" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                                <YAxis tickFormatter={(value) => `UGX ${(value / 1000000).toFixed(1)}M`} tick={{ fontSize: 13 }} />
-                                <Tooltip formatter={(value: any) => `UGX ${value.toLocaleString()}`} />
+                                <YAxis tickFormatter={(value) => ` ${(value / 100000).toFixed(2)}L`} tick={{ fontSize: 13 }} />
+                                <Tooltip formatter={(value: any) => ` ${value.toLocaleString()}`} />
                                 <Legend />
                                 {warehouseNames.map((wn: string, idx: number) => (
                                   <Line
@@ -1530,8 +1547,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               </defs>
                               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                               <XAxis dataKey="period" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
-                              <YAxis tickFormatter={(value) => `UGX ${(value / 1000000).toFixed(1)}M`} tick={{ fontSize: 13 }} />
-                              <Tooltip formatter={(value: any) => `UGX ${value.toLocaleString()}`} />
+                              <YAxis tickFormatter={(value) => ` ${(value / 100000).toFixed(2)}L`} tick={{ fontSize: 13 }} />
+                              <Tooltip formatter={(value: any) => ` ${value.toLocaleString()}`} />
                               <Area type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={3} fill="url(#trendGradientMax)" dot={{ r: 5 }} activeDot={{ r: 7 }} />
                             </AreaChart>
                           </ResponsiveContainer>
@@ -1673,7 +1690,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{warehouse.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              {searchType === 'quantity' ? `${warehouse.value?.toLocaleString()} Qty` : `${warehouse.value?.toLocaleString()}`}
+                              {searchType === 'quantity' ? `${warehouse.value?.toLocaleString()}` : `${warehouse.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((warehouse.value / totalWarehouses) * 100).toFixed(2)}%
@@ -1714,7 +1731,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                             <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                             <td className="px-6 py-4 text-gray-800 font-medium">{customer.name}</td>
                             <td className="px-6 py-4 text-right text-gray-800 font-semibold">
-                              {searchType === 'quantity' ? `${customer.value?.toLocaleString()} Qty` : `${customer.value?.toLocaleString()}`}
+                              {searchType === 'quantity' ? `${customer.value?.toLocaleString()}` : `${customer.value?.toLocaleString()}`}
                             </td>
                             <td className="px-6 py-4 text-right text-gray-600">
                               {((customer.value / totalCustomers) * 100).toFixed(2)}%
@@ -1783,7 +1800,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                               <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
                                 <td className="px-6 py-4 text-gray-600">{index + 1}</td>
                                 <td className="px-6 py-4 text-gray-800 font-medium">{r.item_name || r.name}</td>
-                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">{searchType === 'quantity' ? `${(r.value || 0).toLocaleString()} Qty` : `${(r.value || 0).toLocaleString()}`}</td>
+                                <td className="px-6 py-4 text-right text-gray-800 font-semibold">{searchType === 'quantity' ? `${(r.value || 0).toLocaleString()}` : `${(r.value || 0).toLocaleString()}`}</td>
                                 <td className="px-6 py-4 text-right text-gray-600">{(((r.value || 0) / total) * 100).toFixed(2)}%</td>
                               </tr>
                             ));
@@ -2070,11 +2087,11 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         {/* Row 3 - Sales Trend: Neon Area Chart split by region_name */}
         <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Weekly Region Sales Trend</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Region Sales Trend</h3>
             <button onClick={() => setSelectedMaxView('trend')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
           </div>
           <div className="w-full h-[380px]">
-            <NeonTrendAreaChart data={trendSeries} areas={regionNames} title="Weekly Region Sales Trend" />
+            <NeonTrendAreaChart data={trendSeries} areas={regionNames} title="Region Sales Trend" />
           </div>
         </div>
 
@@ -2160,6 +2177,8 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
   if (dataLevel === 'warehouse') {
     const warehouseTrend = dashboardData?.charts?.warehouse_trend || [];
     const warehouseSales = dashboardData?.charts?.warehouse_sales || [];
+    const topWarehouses = dashboardData?.charts?.top_warehouses || [];
+    const topSalesman = dashboardData?.charts?.top_salesmen || [];
     const regionContribution = dashboardData?.charts?.region_contribution || [];
     const areaContribution = dashboardData?.charts?.area_contribution || [];
 
@@ -2239,7 +2258,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                     />
                     <span className="text-sm text-gray-700 truncate flex-1">{warehouse.warehouse_label}</span>
                     <span className="text-xs text-gray-500 ml-2">
-                      UGX {((warehouse.value || 0) / 1000000).toFixed(1)}M
+                       {((warehouse.value || 0) / 1000000).toFixed(1)}M
                     </span>
                   </label>
                 ))}
@@ -2344,7 +2363,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         {filteredWarehouses.length >= 10 ? (
           <>
             {/* 3D Column Chart for 10+ warehouses */}
-            {/* <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                   <h3 className="text-lg font-semibold text-gray-800">Warehouse Sales</h3>
@@ -2368,10 +2387,10 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   />
                 )}
               </div>
-            </div> */}
+            </div>
 
             {/* Table for 10+ warehouses */}
-            {/* <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-800">Warehouse Sales Table</h3>
               </div>
@@ -2404,7 +2423,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   </tbody>
                 </table>
               </div>
-            </div> */}
+            </div>
           </>
         ) : filteredWarehouses.length > 0 ? (
           /* Table only for < 10 warehouses */
@@ -2453,7 +2472,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         {/* Row 3 - Sales Trend: Neon Area Chart split by warehouse_label */}
         <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Weekly Warehouse Sales Trend</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Warehouse Sales Trend</h3>
             <button onClick={() => setSelectedMaxView('trend')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
           </div>
           <div className="w-full h-[500px]">
@@ -2462,7 +2481,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                 <AlertCircle size={16} className="mr-2" /> No data available
               </div>
             ) : (
-              <NeonTrendAreaChart data={trendSeries} areas={warehouseNames} title="Weekly Warehouse Sales Trend" />
+              <NeonTrendAreaChart data={trendSeries} areas={warehouseNames} title="Warehouse Sales Trend" />
             )}
           </div>
         </div>
@@ -2521,6 +2540,48 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
               )}
             </div>
           </div>
+        </div>
+
+        {/* Row 5 - Top Warehouses and Top Salesman (Full width) */}
+        <div className="grid md:grid-cols-2 grid-cols-1 gap-6">
+          {/* Top Warehouses Chart */}
+          {topWarehousesChartData.length > 0 ? 
+          <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Top Warehouses</h3>
+              <button onClick={() => setSelectedMaxView('warehouses')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
+            </div>
+            <div className="w-full h-[420px]">
+              
+                <Column3DChart data={topWarehousesChartData} xAxisKey="name" yAxisKey="value" colors={warehouseColors} height="420px" />
+             
+            </div>
+            {/* If more than 10 warehouses, show a message or scroll */}
+            {topWarehousesChartData.length > 10 && (
+              <div className="mt-2 text-xs text-gray-500">Showing top 10 warehouses. Use filters to see more.</div>
+            )}
+          </div> : null
+  }
+
+          {/* Top Salesman Chart */}
+          {topSalesmenChartData.length > 0 ?
+          <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-800">Top Salesman</h3>
+              <button onClick={() => setSelectedMaxView('salesmen')} className="p-1 hover:bg-gray-100 rounded"><Maximize2 size={16} /></button>
+            </div>
+            <div className="w-full h-[420px]">
+              
+                <Column3DChart data={topSalesmenChartData} xAxisKey="name" yAxisKey="value" colors={salesmanColors} height="420px" />
+             
+            </div>
+            {/* If more than 10 salesmen, show a message or scroll */}
+            {topSalesmenChartData.length > 10 && (
+              <div className="mt-2 text-xs text-gray-500">Showing top 10 salesmen. Use filters to see more.</div>
+            )}
+          </div>  
+          : null
+          }
         </div>
       </div>
     );
@@ -2639,7 +2700,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
         {/* Row 3 - Sales Trend: Neon Area Chart split by area_name */}
         <div className="bg-white p-5 border rounded-lg shadow-sm border-gray-200">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xl font-semibold text-gray-800">Weekly Area Sales Trend</h3>
+            <h3 className="text-xl font-semibold text-gray-800">Area Sales Trend</h3>
             <button 
               onClick={() => setSelectedMaxView('trend')} 
               className="p-1 hover:bg-gray-100 rounded transition-colors"
@@ -2653,7 +2714,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                 No data available
               </div>
             ) : (
-              <NeonTrendAreaChart data={areaTrendSeries} areas={areaNames} title="Weekly Area Sales Trend" />
+              <NeonTrendAreaChart data={areaTrendSeries} areas={areaNames} title="Area Sales Trend" />
             )}
           </div>
         </div>
@@ -2850,11 +2911,11 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                   height={70}
                 />
                 <YAxis 
-                  tickFormatter={(value) => `UGX ${(value / 1000000).toFixed(1)}M`}
+                  tickFormatter={(value) => `${(value / 100000).toFixed(2)}L`}
                   tick={{ fontSize: 12 }}
                 />
                 <Tooltip 
-                  formatter={(value: any) => `UGX ${value.toLocaleString()}`}
+                  formatter={(value: any) => `${value.toLocaleString()}`}
                   labelFormatter={(label) => `${label}`}
                 />
                 <Area 
@@ -2917,7 +2978,7 @@ const SalesCharts: React.FC<SalesChartsProps> = ({ chartData, dashboardData, isL
                         <span style={{ width: 12, height: 12, borderRadius: 12, backgroundColor: w.color || warehouseColors[i % warehouseColors.length], display: 'inline-block', flex: '0 0 auto', marginTop: 3 }} />
                         <div className="leading-tight text-left">
                           <div className="text-[11px] text-gray-800">{w.name}</div>
-                          <div className="text-[11px] text-gray-500">{searchType === 'quantity' ? `x ${w.value?.toLocaleString()}` : `UGX ${ (w.value || 0).toLocaleString() }`}</div>
+                          <div className="text-[11px] text-gray-500">{searchType === 'quantity' ? `x ${w.value?.toLocaleString()}` : ` ${ (w.value || 0).toLocaleString() }`}</div>
                         </div>
                       </button>
                     );
