@@ -45,15 +45,14 @@ export default function AddPricing() {
     percentageDiscounts, setPercentageDiscounts,
     updateOrderItem, updateOfferItem, selectItemForOffer
   } = usePromotionForm();
-  console.log(percentageDiscounts,"percentageDiscounts")
   // 2. Data Fetching Hook (Dropdowns & Edit Data)
   const {
-    companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions,
-    customerCategoryOptions, companyCustomersOptions, itemCategoryOptions, fetchRegionOptions,
+    agentCustomerOptions, companyOptions, regionOptions, warehouseOptions, uomOptions, areaOptions, channelOptions,
+    customerCategoryOptions, customerSubCategoryOptions,  itemCategoryOptions, fetchRegionOptions,
     fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions,
-    fetchCompanyCustomersOptions, fetchItemsCategoryWise, salesmanTypeOptions, projectOptions,
-    ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded,
-    ensureProjectLoaded, ensureUomLoaded
+    fetchItemsCategoryWise, salesmanTypeOptions, projectOptions,
+    ensureAgentCustomerLoaded, ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded,
+    ensureProjectLoaded, ensureUomLoaded, ensureCustomerSubCategoryLoaded
   } = useAllDropdownListData();
 
   const [itemOptions, setItemOptions] = useState<any[]>([]);
@@ -62,7 +61,7 @@ export default function AddPricing() {
 
   const { loading: dataLoading } = usePromotionData({
     isEditMode, id, copyFromId, setPromotion, setKeyCombo: setRawKeyCombo, setKeyValue,
-    setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems, 
+    setPercentageDiscounts, setSelectedUom, setOrderTables, setOfferItems,
     setItemLoading, fetchItemsCategoryWise, router
   });
 
@@ -77,8 +76,9 @@ export default function AddPricing() {
   const customerDropdownMap = useMemo(() => ({
     Channel: channelOptions,
     "Customer Category": customerCategoryOptions,
-    Customer: companyCustomersOptions,
-  }), [channelOptions, customerCategoryOptions, companyCustomersOptions]);
+    "Customer SubCategory": customerSubCategoryOptions,
+    Customer: agentCustomerOptions,
+  }), [channelOptions, customerCategoryOptions, customerSubCategoryOptions, agentCustomerOptions]);
 
   const itemDropdownMap = useMemo(() => ({
     "Item Category": itemCategoryOptions,
@@ -93,7 +93,8 @@ export default function AddPricing() {
     ensureSalesmanTypeLoaded();
     ensureProjectLoaded();
     ensureUomLoaded();
-  }, [ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureUomLoaded]);
+    ensureCustomerSubCategoryLoaded();
+  }, [ensureCompanyLoaded, ensureChannelLoaded, ensureItemCategoryLoaded, ensureSalesmanTypeLoaded, ensureProjectLoaded, ensureUomLoaded, ensureCustomerSubCategoryLoaded]);
 
   // Cascading Dropdown Effects
   useEffect(() => {
@@ -102,8 +103,9 @@ export default function AddPricing() {
     fetchWarehouseOptions("");
     fetchRouteOptions("")
     fetchCustomerCategoryOptions("");
-    fetchCompanyCustomersOptions("")
-  }, [fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, fetchCompanyCustomersOptions])
+    ensureAgentCustomerLoaded();
+    ensureCustomerSubCategoryLoaded();
+  }, [fetchRegionOptions, fetchAreaOptions, fetchWarehouseOptions, fetchRouteOptions, fetchCustomerCategoryOptions, ensureAgentCustomerLoaded, ensureCustomerSubCategoryLoaded])
 
 
   // Item Category -> Items
@@ -172,7 +174,7 @@ export default function AddPricing() {
   // Filter percentageDiscounts
   useEffect(() => {
     if (itemLoading || keyCombo.Item !== "Item") return;
-    
+
     // Prevent clearing keys if options haven't loaded yet but we have categories selected
     const itemCategories = keyValue["Item Category"] || [];
     if (itemOptions.length === 0 && itemCategories.length > 0) return;
