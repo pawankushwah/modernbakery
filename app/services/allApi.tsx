@@ -2129,7 +2129,7 @@ export const warehouseStockTopOrders = async (id: string, params?: Params) => {
   }
 };
 
-export const warehouseStock = async (params?: Params) => {
+export const returnWarehouseStock = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/warehouse-stocks/stockitemdetails`, { params });
 
