@@ -863,7 +863,8 @@ const SalesReportDashboard = () => {
   const visibleFilters = availableFilters.filter(f => ['company', 'region', 'area', 'warehouse'].includes(f.id));
   const searchby = availableFilters.filter(f => ['salesman', 'route'].includes(f.id));
   // const searchtype = availableFilters.filter(f => ['display-quantity', 'amount'].includes(f.id));
-  // Show all moreFilters, but mark 'customer' as disabled unless 'customer-category' is dropped
+  // Show all moreFilters, but mark 'customer' as disabled unless 'channel-categories' or 'customer-category' is dropped
+  const isCustomerEnabled = droppedFilters.some(f => f.id === 'channel-categories' || f.id === 'customer-category');
   const moreFilters = availableFilters.filter(f => 
     !['company', 'region', 'area', 'warehouse', 'salesman', 'route', 'display-quantity', 'amount'].includes(f.id)
   );
@@ -1093,8 +1094,8 @@ const SalesReportDashboard = () => {
                             <div className="p-2">
                               {moreFilters.map(filter => {
                                 let isUndraggable = viewType === 'table' && droppedFilters.length === 0;
-                                // Disable 'customer' unless 'customer-category' is dropped
-                                if (filter.id === 'customer' && !droppedFilters.some(f => f.id === 'customer-category')) {
+                                // Disable 'customer' unless 'channel-categories' or 'customer-category' is dropped
+                                if (filter.id === 'customer' && !isCustomerEnabled) {
                                   isUndraggable = true;
                                 }
                                 return (
@@ -1103,7 +1104,7 @@ const SalesReportDashboard = () => {
                                     draggable={!isUndraggable} 
                                     onDragStart={!isUndraggable ? (e) => { handleDragStart(e, filter);  } : undefined} 
                                     className={`flex items-center gap-2 px-2 sm:px-3 py-2 justify-between rounded hover:bg-gray-50 ${isUndraggable ? 'cursor-not-allowed opacity-50' : 'cursor-grab'}`}
-                                    title={filter.id === 'customer' && !droppedFilters.some(f => f.id === 'customer-category') ? 'Select Customer Category first' : ''}
+                                    title={filter.id === 'customer' && !isCustomerEnabled ? 'Select Customer Channel or Customer Category first' : ''}
                                   >
                                     <div className='flex gap-2 sm:gap-4 items-center'>
                                       <Icon icon={filter.icon} width="16" height="16" className="sm:w-[18px] sm:h-[18px]" style={{color: '#414651'}} />

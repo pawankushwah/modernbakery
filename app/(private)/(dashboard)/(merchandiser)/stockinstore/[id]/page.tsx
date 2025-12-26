@@ -1,26 +1,26 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
-import { Formik, FormikValues } from "formik";
-import * as Yup from "yup";
 import { Icon } from "@iconify-icon/react";
+import { Formik, FormikValues } from "formik";
 import { useParams, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import * as Yup from "yup";
 
 import ContainerCard from "@/app/components/containerCard";
-import InputFields from "@/app/components/inputFields";
 import Table from "@/app/components/customTable";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
+import InputFields from "@/app/components/inputFields";
 
 import { genearateCode, itemGlobalSearch } from "@/app/services/allApi";
 import {
     addStockInStore,
-    updateStockInStore,
     stockInStoreById,
+    updateStockInStore,
 } from "@/app/services/merchandiserApi";
 
-import { useSnackbar } from "@/app/services/snackbarContext";
-import { useLoading } from "@/app/services/loadingContext";
 import { useAllDropdownListData } from "@/app/components/contexts/allDropdownListData";
+import { useLoading } from "@/app/services/loadingContext";
+import { useSnackbar } from "@/app/services/snackbarContext";
 
 interface ItemRow {
     item_id: string;
@@ -94,15 +94,21 @@ export default function StockInStoreAddPage() {
 
     // Generate code (ADD only)
     useEffect(() => {
-        if (isEditMode || codeGeneratedRef.current) return;
+    if (isEditMode || codeGeneratedRef.current) return;
 
-        codeGeneratedRef.current = true;
+    codeGeneratedRef.current = true;
 
-        (async () => {
-            const res = await genearateCode({ model_name: "stock_code" });
-            if (res?.code) setCode(res.code);
-        })();
-    }, [isEditMode]);
+    (async () => {
+        const res = await genearateCode({ model_name: "code" });
+        if (res?.code) {
+            setInitialFormikValues((prev) => ({
+                ...prev,
+                code: res.code,
+            }));
+        }
+    })();
+}, [isEditMode]);
+
 
     // Load edit data
     useEffect(() => {
@@ -114,6 +120,7 @@ export default function StockInStoreAddPage() {
             try {
                 const res = await stockInStoreById(id);
                 const data = res.data;
+                console.log(res.data, "res");
 
                 setCode(data.code ?? "");
 
@@ -123,16 +130,13 @@ export default function StockInStoreAddPage() {
                     activity_name: data.activity_name ?? "",
                     from: data.date_range?.from ?? "",
                     to: data.date_range?.to ?? "",
-                    customer: data?.assign_customers?.map((c: any) => ({
-                        label: c.name,
-                        value: c.id,
-                    })) ?? [],
+                    customer: data?.assign_customers?.map((c: any) => c.id.toString()) ?? [],
                 });
 
                 // hydrate table rows + UOMs
                 const rows: ItemRow[] =
                     data.inventories?.map((inv: any) => {
-                        const uoms = inv.item?.item_uoms || [];
+                        const uoms = inv.all_uom || [];
 
                         setItemUomMap((prev) => ({
                             ...prev,
@@ -158,6 +162,7 @@ export default function StockInStoreAddPage() {
             }
         })();
     }, [id, isEditMode]);
+    console.log(itemData, "itemData");
 
     /* -------------------------------------------------------------------------- */
     /*                               ITEM HANDLERS                                */
@@ -182,7 +187,7 @@ export default function StockInStoreAddPage() {
                 uom_id: "",
                 UOM: uoms.map((u: any) => ({
                     label: u.name,
-                    value: String(u.id),
+                    value: String(u.uom_id),
                 })),
             };
             return copy;
@@ -243,8 +248,7 @@ export default function StockInStoreAddPage() {
 
             setLoading(true);
 
-            const payload = {
-                code,
+            const basePayload = {
                 activity_name: values.activity_name,
                 date_from: values.from,
                 date_to: values.to,
@@ -255,6 +259,10 @@ export default function StockInStoreAddPage() {
                     capacity: Number(i.capacity),
                 })),
             };
+
+            const payload = isEditMode
+                ? basePayload
+                : { ...basePayload, code };
 
             const res = isEditMode
                 ? await updateStockInStore(id as string, payload)
@@ -275,6 +283,7 @@ export default function StockInStoreAddPage() {
             setLoading(false);
         }
     };
+
 
     /* -------------------------------------------------------------------------- */
     /*                                   RENDER                                   */
@@ -341,11 +350,12 @@ export default function StockInStoreAddPage() {
                                     name="customer"
                                     options={companyCustomersOptions}
                                     value={values.customer}
-                                    onChange={(e) =>
+                                    onChange={(e) => {
                                         handleChange({
                                             target: { name: "customer", value: e.target.value },
-                                        })
-                                    }
+                                        });
+                                        console.log(e.target.value, "e.target.value");
+                                    }}
                                 />
                             </div>
 
@@ -353,6 +363,7 @@ export default function StockInStoreAddPage() {
                                 <Table
                                     data={itemData.map((r, i) => ({ ...r, idx: i }))}
                                     config={{
+                                        showNestedLoading: false,
                                         columns: [
                                             {
                                                 key: "item_id",
