@@ -503,9 +503,9 @@ export const merchandiserData = async (params?: Params) => {
     return handleError(error);
   }
 };
-export const getCustomerByMerchandiser = async (merchandiser_id: string) => {
+export const getCustomerByMerchandiser = async (merchandiser_id: string, params?: Params) => {
   try {
-    const res = await API.get(`/api/master/route-visits/customerlist/${merchandiser_id}`);
+    const res = await API.get(`/api/master/route-visits/customerlist/${merchandiser_id}`, { params });
     return res.data;
   } catch (error) {
     return handleError(error);
@@ -513,13 +513,15 @@ export const getCustomerByMerchandiser = async (merchandiser_id: string) => {
 };
 
 export const getRouteVisitList = async (params: {
-  from_date: string | null;
-  to_date: string | null;
-  customer_type: string | null;
-  status: string | null;
+  from_date?: string | null;
+  to_date?: string | null;
+  customer_type?: string | null;
+  status?: string | null;
+  page?: number | string;
+  limit?: number | string;
 }) => {
   try {
-    const res = await API.get("/api/master/route-visits/list");
+    const res = await API.get("/api/master/route-visits/list", { params });
     return res.data;
   } catch (error) {
     return handleError(error);
