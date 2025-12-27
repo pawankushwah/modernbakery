@@ -51,11 +51,16 @@ export default function FilterComponent(filterProps: FilterComponentProps) {
   const {
     customerSubCategoryOptions,
     companyOptions,
-    salesmanOptions,
-    channelOptions,
     ensureCompanyLoaded,
-    ensureSalesmanLoaded
+    salesmanOptions,
+    ensureSalesmanLoaded,
+    channelOptions,
   } = useAllDropdownListData();
+
+  useEffect(() => {
+    ensureCompanyLoaded();
+    ensureSalesmanLoaded();
+  }, [ensureCompanyLoaded, ensureSalesmanLoaded]);
   const { onlyFilters } = filterProps;
 
   useEffect(() => {
@@ -232,7 +237,7 @@ export default function FilterComponent(filterProps: FilterComponentProps) {
     fetchRoutes();
   }, [warehouseVal.join(",")]);
 
-  console.log("FilterComponent payload:", payload);
+  // console.log("FilterComponent payload:", payload);
 
   // Helper to check if a filter should be shown
   const showFilter = (key: string) => {

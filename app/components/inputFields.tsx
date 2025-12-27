@@ -1641,7 +1641,38 @@ export default function InputFields({
           />
         );
 
-      case "number":
+      case "number": {
+        // Use local state for input value to avoid replacing on each keystroke
+        const [localValue, setLocalValue] = useState(value ?? "");
+        useEffect(() => {
+          setLocalValue(value ?? "");
+        }, [value]);
+        const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+          // Allow only digits
+          let val = e.target.value.replace(/[^0-9]/g, "");
+          // Optionally restrict to maxLength
+          if (maxLength && val.length > maxLength) {
+            val = val.slice(0, maxLength);
+          }
+          setLocalValue(val);
+          // Do not call safeOnChange here, only onBlur
+        };
+        const handleNumberBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+          let val = e.target.value.replace(/[^0-9]/g, "");
+          // Clamp to min/max if provided
+          if (min !== undefined && val !== "" && Number(val) < Number(min)) {
+            val = String(min);
+          }
+          if (max !== undefined && val !== "" && Number(val) > Number(max)) {
+            val = String(max);
+          }
+          setLocalValue(val);
+          // Now call safeOnChange with clamped value
+          safeOnChange({
+            target: { value: val, name },
+          } as React.ChangeEvent<HTMLInputElement>);
+          if (typeof onBlur === "function") onBlur(e);
+        };
         return (
           <div
             style={{ width: width }}
@@ -1652,27 +1683,27 @@ export default function InputFields({
               id={id ?? name}
               name={name}
               type="number"
-              value={value ?? ""}
-              onChange={safeOnChange}
-              onKeyDown={handleNumberKeyDown}
-              inputMode={integerOnly ? "numeric" : undefined}
-              step={step ? step : undefined}
+              value={localValue}
+              min={min}
+              max={max}
+              step={step}
               disabled={disabled}
-              onBlur={onBlur}
+              onChange={handleNumberChange}
+              onBlur={handleNumberBlur}
+              autoComplete="off"
               className={`h-full w-full px-3 rounded-md text-gray-900 placeholder-gray-400 disabled:cursor-not-allowed disabled:bg-gray-100 focus:outline-none`}
               placeholder={placeholder ? placeholder : label ? `Enter ${label}` : undefined}
               // autoFocus={true}
               maxLength={maxLength}
-              min={min}
-              max={max}
             />
-            {trailingElement && (
+            {!disabled && trailingElement && (
               <div className="flex items-center w-full px-3 text-gray-500 bg-gray-100">
                 {trailingElement}
               </div>
             )}
           </div>
         );
+      }
 
       case "textarea":
         return (
