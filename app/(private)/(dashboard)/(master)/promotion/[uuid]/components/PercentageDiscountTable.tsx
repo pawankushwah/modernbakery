@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Table from "@/app/components/customTable";
 import InputFields from "@/app/components/inputFields";
 import { Icon } from "@iconify-icon/react";
@@ -18,6 +18,10 @@ export default function PercentageDiscountTable({ percentageDiscounts, setPercen
   const dropdownOptions = isCategoryMode
     ? (itemDropdownMap["Item Category"] ? [ ...itemDropdownMap["Item Category"]] : [])
     : (itemDropdownMap["Item"] ? [ ...itemDropdownMap["Item"]] : []);
+
+    useEffect(() => { 
+      console.log(percentageDiscounts,"percentageDiscounts")
+    },[percentageDiscounts])
 
   return (
     <div className="mb-6 mt-8">

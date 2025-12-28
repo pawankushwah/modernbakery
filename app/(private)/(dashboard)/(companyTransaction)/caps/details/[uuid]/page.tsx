@@ -79,7 +79,7 @@ export default function CapsDetailPage() {
     // Keep edited values aligned with details order (array)
     const [editValues, setEditValues] = useState<Array<{ receive_qty: string; remarks: string }>>([]);
     const params = useParams();
-    const UUID = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid ?? "";
+    const UUID = Array.isArray(params?.uuid) ? params?.uuid[0] : params?.uuid ?? "";
     const CURRENCY = localStorage.getItem("country") || "";
     const PATH = `/caps/details/`;
     const backBtnUrl = "/caps";

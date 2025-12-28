@@ -17,6 +17,7 @@ import { useCallback, useEffect, useState } from "react";
 import { downloadFile } from "@/app/services/allApi";
 import ApprovalStatus from "@/app/components/approvalStatus";
 import { usePagePermissions } from "@/app/(private)/utils/usePagePermissions";
+import FilterComponent from "@/app/components/filterComponent";
 
 interface SalesmanLoadRow {
   osa_code?: string;
@@ -239,9 +240,9 @@ export default function SalemanLoad() {
     setLoading(true);
   }, [setLoading]);
 
-  useEffect(() => {
-    setRefreshKey(refreshKey + 1);
-  }, [regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions]);
+  // useEffect(() => {
+  //   setRefreshKey(refreshKey + 1);
+  // }, [regionOptions, warehouseOptions, routeOptions, channelOptions, itemCategoryOptions, customerSubCategoryOptions]);
 
 
   const downloadPdf = async (uuid: string) => {
@@ -308,63 +309,7 @@ export default function SalemanLoad() {
                 onClick: () => !threeDotLoading.xlsx && exportFile("xlsx"),
               },
             ],
-
-            filterByFields: [
-              {
-                key: "start_date",
-                label: "From Date",
-                type: "date",
-              },
-              {
-                key: "end_date",
-                label: "To Date",
-                type: "date",
-              },
-              {
-                key: "warehouse",
-                label: "Warehouse",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(warehouseOptions) ? warehouseOptions : [],
-              },
-
-              {
-                key: "region_id",
-                label: "Region",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(regionOptions) ? regionOptions : [{ value: "1", label: "Rajneesh" }],
-              },
-              {
-                key: "route_id",
-                label: "Route",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(routeOptions) ? routeOptions : [],
-              },
-              {
-                key: "outlet_channel_id",
-                label: "Outlet Channel",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(channelOptions) ? channelOptions : [],
-              },
-              {
-                key: "category_id",
-                label: "Category",
-                type: "select",
-                options: Array.isArray(itemCategoryOptions) ? itemCategoryOptions : [],
-                isSingle: false,
-                multiSelectChips: true,
-              },
-              {
-                key: "subcategory_id",
-                label: "Subcategory",
-                isSingle: false,
-                multiSelectChips: true,
-                options: Array.isArray(customerSubCategoryOptions) ? customerSubCategoryOptions : [],
-              },
-            ],
+            filterRenderer: FilterComponent,
             actions: can("create") ? [
               <SidebarBtn
                 key={0}

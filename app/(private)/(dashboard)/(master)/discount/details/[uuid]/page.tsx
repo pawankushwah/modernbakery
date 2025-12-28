@@ -53,7 +53,7 @@ const backBtnUrl = "/discount";
 
 export default function ViewPage() {
     const params = useParams();
-    const uuid = Array.isArray(params.uuid) ? (params.uuid[0] || '') : (params.uuid as string || '');
+    const uuid = Array.isArray(params?.uuid) ? (params?.uuid[0] || '') : (params?.uuid as string || '');
 
     // state variables
     const [isChecked, setIsChecked] = useState(false);

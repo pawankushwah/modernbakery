@@ -58,7 +58,7 @@ interface Shelf {
 }
 
 export default function Page() {
-  const { uuid } = useParams<{ uuid: string }>();
+  const { uuid }:any = useParams<{ uuid: string }>();
   const { showSnackbar } = useSnackbar();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(0);

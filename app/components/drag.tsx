@@ -229,34 +229,34 @@ const SalesReportDashboard = () => {
       const params = new URLSearchParams();
       
       if (selectedChildItems['company']?.length) {
-        params.append('company_ids', selectedChildItems['company'].join(','));
+        params?.append('company_ids', selectedChildItems['company'].join(','));
       }
       if (selectedChildItems['region']?.length) {
-        params.append('region_ids', selectedChildItems['region'].join(','));
+        params?.append('region_ids', selectedChildItems['region'].join(','));
       }
       if (selectedChildItems['area']?.length) {
-        params.append('area_ids', selectedChildItems['area'].join(','));
+        params?.append('area_ids', selectedChildItems['area'].join(','));
       }
       if (selectedChildItems['warehouse']?.length) {
-        params.append('warehouse_ids', selectedChildItems['warehouse'].join(','));
+        params?.append('warehouse_ids', selectedChildItems['warehouse'].join(','));
       }
       if (selectedChildItems['route']?.length || selectedChildItems['salesman']?.length) {
         const searchBy = [...(selectedChildItems['route'] || []), ...(selectedChildItems['salesman'] || [])].join(',');
-        if (searchBy) params.append('search_by', searchBy);
+        if (searchBy) params?.append('search_by', searchBy);
       }
       if (selectedChildItems['item-category']?.length) {
-        params.append('item_category_ids', selectedChildItems['item-category'].join(','));
+        params?.append('item_category_ids', selectedChildItems['item-category'].join(','));
       }
       if (selectedChildItems['channel-categories']?.length) {
         const channelIds = selectedChildItems['channel-categories'].join(',');
-        params.append('channel_category_ids', channelIds);
-        params.append('customer_channel_ids', channelIds);
+        params?.append('channel_category_ids', channelIds);
+        params?.append('customer_channel_ids', channelIds);
       }
       if (selectedChildItems['customer-category']?.length) {
-        params.append('customer_category_ids', selectedChildItems['customer-category'].join(','));
+        params?.append('customer_category_ids', selectedChildItems['customer-category'].join(','));
       }
 
-      const queryString = params.toString();
+      const queryString = params?.toString();
       const url = `http://172.16.6.205:8001/api/filters${queryString ? `?${queryString}` : ''}`;
 
       const response = await fetch(url, {

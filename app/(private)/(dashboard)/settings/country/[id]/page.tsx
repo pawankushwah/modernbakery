@@ -49,12 +49,12 @@ export default function AddEditCountry() {
 
   // ✅ Fetch data if editing
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params?.id && params?.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await countryById(String(params.id));
+          const res = await countryById(String(params?.id));
           if (res?.data) {
             setInitialValues({
               country_code: res.data.country_code || "",
@@ -100,7 +100,7 @@ export default function AddEditCountry() {
 
     let res;
     if (isEditMode && params?.id !== "add") {
-      res = await editCountry(String(params.id), payload); // 👈 API call
+      res = await editCountry(String(params?.id), payload); // 👈 API call
     } else {
       res = await addCountry(payload);
       try {

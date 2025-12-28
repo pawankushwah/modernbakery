@@ -1992,6 +1992,26 @@ export const addDiscount = async (body: object) => {
   }
 };
 
+export const importCustomerExcel = async (body: FormData) => {
+  try {
+    const res = await APIFormData.post("api/master/promotion-headers/customers/upload-xlsx", body);
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getPromotionCustomerDetails = async (customerIds: string) => {
+  try {
+    const res = await API.get(`/api/master/promotion-headers/customerdetails`, {
+      params: { customer_id: customerIds },
+    });
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
 export const customerCategoryGlobalSearch = async (params?: Params) => {
   try {
     const res = await API.get(`/api/settings/customer-category/global_search`, {
@@ -2850,6 +2870,16 @@ export const addPricingHeader = async (payload: object) => {
 export const pricingHeaderById = async (uuid: string) => {
   try {
     const res = await API.get(`/api/master/pricing-headers/${uuid}`);
+
+    return res.data;
+  } catch (error: unknown) {
+    return handleError(error);
+  }
+};
+
+export const getPromotionByWherehouses = async (uuid: string) => {
+  try {
+    const res = await API.get(`/api/master/promotion-headers/warehouse?warehouse_id=${uuid}`);
 
     return res.data;
   } catch (error: unknown) {

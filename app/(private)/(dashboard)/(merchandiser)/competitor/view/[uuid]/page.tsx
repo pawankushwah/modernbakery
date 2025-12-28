@@ -25,7 +25,7 @@ export const tabs = [
 
 export default function Page() {
   const router = useRouter();
-  const { uuid: uuid } = useParams();
+  const { uuid: uuid }:any = useParams();
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(false);
   const [compititor, setCompititorData] = useState<compititor | null>(null);

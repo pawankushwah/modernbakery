@@ -1666,7 +1666,7 @@ export default function InputFields({
               min={min}
               max={max}
             />
-            {trailingElement && (
+            {!disabled && trailingElement && (
               <div className="flex items-center w-full px-3 text-gray-500 bg-gray-100">
                 {trailingElement}
               </div>

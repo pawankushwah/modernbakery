@@ -32,7 +32,7 @@ interface ProcessCard {
 
 const ProcessFlow = () => {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const searchParams:any = useSearchParams();
   const order_code = searchParams.get("order_code") || undefined;
 
   const [processData, setProcessData] = useState<any>(null);

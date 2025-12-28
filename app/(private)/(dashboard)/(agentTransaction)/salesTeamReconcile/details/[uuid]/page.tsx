@@ -38,11 +38,11 @@ export default function SalesmanLoadDetailsUI() {
     /* -------- FETCH DATA -------- */
     useEffect(() => {
         const fetchDetails = async () => {
-            if (!params.uuid) return;
+            if (!params?.uuid) return;
 
             try {
                 setLoading(true);
-                const res = await salesTeamRecontionOrderByUuid(String(params.uuid));
+                const res = await salesTeamRecontionOrderByUuid(String(params?.uuid));
                 console.log("Details Response:", res);
 
                 if (res?.data) {
@@ -83,7 +83,7 @@ export default function SalesmanLoadDetailsUI() {
         };
 
         fetchDetails();
-    }, [params.uuid, showSnackbar]);
+    }, [params?.uuid, showSnackbar]);
 
     /* -------- MEMOIZED TABLE DATA -------- */
     const tableData = useMemo(() => {

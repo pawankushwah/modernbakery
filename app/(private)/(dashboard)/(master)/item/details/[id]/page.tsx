@@ -79,7 +79,7 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState("overview");
   // const { id, tabName } = useParams();
   const params = useParams<{ id: string }>();
-  const id = params.id;
+  const id = params?.id;
 
   const { setLoading } = useLoading();
   const [item, setItem] = useState<Item | null>(null);

@@ -654,8 +654,8 @@ export const exportExchangeData = async (params?: Params) => {
 
 export const getAgentCustomerBySalesId = async (uuid: string, params: Params) => {
   try {
-    if (params.from_date) {
-      const res = await API.get(`/api/agent_transaction/invoices/agent-customer/${uuid}?from_date=${params.to_date}&to_date=${params.from_date}`,);
+    if (params?.from_date) {
+      const res = await API.get(`/api/agent_transaction/invoices/agent-customer/${uuid}?from_date=${params?.to_date}&to_date=${params?.from_date}`,);
       return res.data;
 
     }
@@ -672,7 +672,7 @@ export const getAgentCustomerBySalesId = async (uuid: string, params: Params) =>
 
 export const getAgentCustomerByReturnId = async (uuid: string, params: Params) => {
   try {
-    const res = await API.get(`/api/agent_transaction/returns/agent-customer/${uuid}?from_date=${params.to_date}&to_date=${params.from_date}`,);
+    const res = await API.get(`/api/agent_transaction/returns/agent-customer/${uuid}?from_date=${params?.to_date}&to_date=${params?.from_date}`,);
     return res.data;
   } catch (error: unknown) {
     return handleError(error);

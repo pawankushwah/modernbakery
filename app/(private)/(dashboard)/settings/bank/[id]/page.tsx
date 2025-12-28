@@ -71,9 +71,9 @@ export default function AddBankPage() {
         console.log("Submitting payload:", payload);
 
         let res;
-        if (isEditMode && params?.id && params.id !== "add") {
+        if (isEditMode && params?.id && params?.id !== "add") {
           // Update existing bank - body first, then uuid
-          res = await updateBankbyId(payload, String(params.id));
+          res = await updateBankbyId(payload, String(params?.id));
         } else {
           // Create new bank - body only (uuid is optional for create)
           res = await createBank(payload);
@@ -117,12 +117,12 @@ export default function AddBankPage() {
 
   // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params?.id && params?.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await getbankDetailbyId(String(params.id));
+          const res = await getbankDetailbyId(String(params?.id));
           if (res?.data) {
             formik.setValues({
               osa_code: res.data.osa_code || "",

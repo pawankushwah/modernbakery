@@ -106,7 +106,7 @@ export default function Planogram() {
     { id: 2, label: "Merchandisher & Customers" },
   ];
 
-  const { id } = useParams<{ id?: string }>();
+  const { id }:any = useParams<{ id?: string }>();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 

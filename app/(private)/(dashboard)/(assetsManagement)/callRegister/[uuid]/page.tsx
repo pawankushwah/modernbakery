@@ -42,9 +42,9 @@ export default function AddOrEditChiller() {
     console.log(params)
     const { setLoading } = useLoading();
 
-    const isEditMode = params?.uuid && params.uuid !== "add";
+    const isEditMode = params?.uuid && params?.uuid !== "add";
     console.log(isEditMode)
-    const chillerId = isEditMode ? String(params.uuid) : null;
+    const chillerId = isEditMode ? String(params?.uuid) : null;
 
     /* ----------------------------------------------------
        INITIAL VALUES

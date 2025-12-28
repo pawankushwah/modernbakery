@@ -74,9 +74,9 @@ interface OverviewProps {
 
 export default function Overview({ pricing }: OverviewProps) {
   const params = useParams();
-  const uuid = Array.isArray(params.uuid)
-    ? params.uuid[0] || ""
-    : (params.uuid as string) || "";
+  const uuid = Array.isArray(params?.uuid)
+    ? params?.uuid[0] || ""
+    : (params?.uuid as string) || "";
 
   const [isChecked, setIsChecked] = useState(false);
   const { showSnackbar } = useSnackbar();

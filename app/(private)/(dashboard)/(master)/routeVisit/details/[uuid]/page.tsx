@@ -60,9 +60,9 @@ export function getPaymentType(value: string): string {
 }
 export default function ViewPage() {
   const params = useParams();
-  const uuid = Array.isArray(params.uuid)
-    ? params.uuid[0] || ""
-    : (params.uuid as string) || "";
+  const uuid = Array.isArray(params?.uuid)
+    ? params?.uuid[0] || ""
+    : (params?.uuid as string) || "";
 
   const [customer, setCustomer] = useState<CustomerItem | null>(null);
   const [isChecked, setIsChecked] = useState(false);

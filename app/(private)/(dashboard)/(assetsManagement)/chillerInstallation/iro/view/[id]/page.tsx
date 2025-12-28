@@ -133,9 +133,9 @@ export default function CustomerInvoicePage() {
     const { setLoading } = useLoading();
     const router = useRouter();
     const params = useParams();
-    const id: string = Array.isArray(params.id)
-        ? params.id[0]
-        : (params.id as string);
+    const id: string = Array.isArray(params?.id)
+        ? params?.id[0]
+        : (params?.id as string);
     const [threeDotLoading, setThreeDotLoading] = useState({
         csv: false,
         xlsx: false,

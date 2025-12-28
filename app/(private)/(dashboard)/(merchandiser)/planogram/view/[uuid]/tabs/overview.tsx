@@ -25,7 +25,7 @@ type planogramfData = {
 };
 
 export const OverviewTab = () => {
-  const { uuid } = useParams<{ uuid: string }>();
+  const { uuid }:any = useParams<{ uuid: string }>();
   const [planogramData, setShelfData] = useState<planogramfData | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageObjects, setImageObject] = useState<

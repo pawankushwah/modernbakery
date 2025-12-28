@@ -106,9 +106,9 @@ export default function AddOrEditChiller() {
     { value: string; label: string }[]
   >([]);
 
-  const isEditMode = params?.id && params.id !== "add";
+  const isEditMode = params?.id && params?.id !== "add";
   console.log(isEditMode)
-  const chillerId = isEditMode ? String(params.id) : null;
+  const chillerId = isEditMode ? String(params?.id) : null;
 
   /* ----------------------------------------------------
      INITIAL VALUES

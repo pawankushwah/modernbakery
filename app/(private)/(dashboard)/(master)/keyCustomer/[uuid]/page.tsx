@@ -304,7 +304,7 @@ export default function AddCompanyCustomer() {
   useEffect(() => {
     setLoading(true);
     if (!params?.uuid) return;
-    const idStr = params.uuid.toString().trim().toLowerCase();
+    const idStr = params?.uuid.toString().trim().toLowerCase();
     if (idStr !== "add") {
       setIsEditMode(true);
       fetchData().finally(() => setLoading(false));
@@ -411,7 +411,7 @@ export default function AddCompanyCustomer() {
       let res;
       setLoading(true);
       if (isEditMode) {
-        res = await updateCompanyCustomer(String(params.uuid), payload);
+        res = await updateCompanyCustomer(String(params?.uuid), payload);
       } else {
         res = await addCompanyCustomers(payload);
       }

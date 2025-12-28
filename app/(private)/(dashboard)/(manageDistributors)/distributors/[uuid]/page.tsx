@@ -119,7 +119,7 @@ const stepSchemas = [
 
 export default function AddEditWarehouse() {
     const params = useParams();
-    const warehouseId = params.uuid as string | undefined;
+    const warehouseId = params?.uuid as string | undefined;
     const isEditMode = warehouseId !== undefined && warehouseId !== "add";
     const steps: StepperStep[] = [
         { id: 1, label: "Distributor Details" },

@@ -32,7 +32,7 @@ type ShelfData = {
 };
 
 export const CustomerData = () => {
-  const { uuid } = useParams<{ uuid?: string }>();
+  const { uuid }:any = useParams<{ uuid?: string }>();
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
 

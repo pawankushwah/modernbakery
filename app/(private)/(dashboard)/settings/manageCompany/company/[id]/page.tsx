@@ -200,12 +200,12 @@ export default function AddEditCompany() {
   // Load company for edit mode or generate code for add mode
   const codeGeneratedRef = useRef(false);
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params?.id && params?.id !== "add") {
       setIsEditMode(true);
       (async () => {
         setLoading(true);
         try {
-          const res = await getCompanyById(params.id as string);
+          const res = await getCompanyById(params?.id as string);
           if (res && !res.error) {
             setInitialValues({
               ...res.data,
@@ -318,7 +318,7 @@ export default function AddEditCompany() {
 
       let res;
       if (isEditMode) {
-        res = await updateCompany(params.id as string, formData);
+        res = await updateCompany(params?.id as string, formData);
       } else {
         res = await addCompany(formData);
       }
