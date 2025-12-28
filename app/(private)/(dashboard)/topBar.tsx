@@ -1,3 +1,4 @@
+import { useTheme } from "../../contexts/themeContext";
 import { Icon } from "@iconify-icon/react";
 import SearchBar from "../../components/searchBar";
 import IconButton from "../../components/iconButton";
@@ -12,6 +13,7 @@ import NotificationPopover from "@/app/components/notificationPopover";
 import { logout } from "@/app/services/allApi";
 import { useSnackbar } from "@/app/services/snackbarContext";
 import { initialLinkData } from "../data/dashboardLinks";
+import ResetPasswordSidebar from "@/app/components/ResetPasswordSidebar";
 
 export default function TopBar({
     horizontalSidebar,
@@ -29,6 +31,23 @@ export default function TopBar({
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const router = useRouter();
+    const [showResetPasswordSidebar, setShowResetPasswordSidebar] = useState(false);
+    const [resetPasswordValues, setResetPasswordValues] = useState({
+        oldPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+    });
+
+    const handleResetPasswordField = (field: string, value: any) => {
+        setResetPasswordValues(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleResetPasswordSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        // TODO: Implement password update logic here (API call etc.)
+        setShowResetPasswordSidebar(false);
+        setResetPasswordValues({ oldPassword: "", newPassword: "", confirmPassword: "" });
+    };
     const [searchBarValue, setSearchBarValue] = useState("");
 
     const paddingIfOpen = isOpen ? "pl-[250px]" : "pl-[80px]";
@@ -73,6 +92,7 @@ export default function TopBar({
         return () => document.removeEventListener("fullscreenchange", handler);
     }, []);
 
+    const { mode } = useTheme();
     return (
         <div
             className={`absolute w-full flex flex-col items-center ${paddingLeft} peer-hover:pl-[250px]`}
@@ -81,20 +101,20 @@ export default function TopBar({
             <div className="w-full h-[60px] flex">
                 {/* Logo on horizontal sidebar */}
                 {horizontalSidebar && (
-                    <div className="w-[230px] px-[16px] py-[14px] bg-white border-b border-[#E9EAEB]">
+                    <div className="w-[230px] px-[16px] py-[14px] bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                         <Logo width={128} height={35} />
                     </div>
                 )}
 
                 {/* Top bar main content */}
-                <div className="w-full h-full px-[16px] py-[14px] flex justify-between items-center gap-1 sm:gap-0 bg-white border-b border-[#E9EAEB]">
+                <div className="w-full h-full px-[16px] py-[14px] flex justify-between items-center gap-1 sm:gap-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
                     <div className="flex items-center gap-[20px]">
                         {!horizontalSidebar && (
                             <Icon
                                 icon="heroicons-outline:menu-alt-1"
                                 width={24}
                                 onClick={toggleOpen}
-                                className="cursor-pointer"
+                                className="cursor-pointer text-primary"
                             />
                         )}
                         <div className="w-full hidden sm:w-[320px] sm:block">
@@ -119,7 +139,7 @@ export default function TopBar({
                                 { title: "Payment received" },
                                 { title: "Delivery assigned" },
                             ]}
-                            buttonClassName="bg-[#F5F5F5] text-black"
+                            buttonClassName="bg-primary/10 text-primary dark:bg-primary/20"
                         />
                         <IconButton
                             icon="mi:settings"
@@ -169,9 +189,7 @@ export default function TopBar({
                                                 label: "Change Password",
                                                 onClick: () => {
                                                     setIsOpenDropdown(false);
-                                                    router.push(
-                                                        "/settings/changePassword"
-                                                    );
+                                                    setShowResetPasswordSidebar(true);
                                                 },
                                             },
                                             {
@@ -204,6 +222,13 @@ export default function TopBar({
                     onClickHandler={(href) => router.push(href)}
                 />
             )}
+        {/* Reset Password Sidebar */}
+        <ResetPasswordSidebar
+            show={showResetPasswordSidebar}
+            onClose={() => setShowResetPasswordSidebar(false)}
+            setFieldValue={handleResetPasswordField}
+            values={resetPasswordValues}
+        />
         </div>
     );
 }

@@ -78,8 +78,8 @@ export default function AddWarehouseStockPage() {
         };
 
         let res;
-        if (isEditMode && params?.uuid && params.uuid !== "add") {
-          res = await editWarehouseStock(String(params.uuid), payload);
+        if (isEditMode && params?.uuid && params?.uuid !== "add") {
+          res = await editWarehouseStock(String(params?.uuid), payload);
         } else {
           res = await addWarehouseStock(payload);
         }
@@ -120,12 +120,12 @@ export default function AddWarehouseStockPage() {
 
   // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
-    if (params?.uuid && params.uuid !== "add") {
+    if (params?.uuid && params?.uuid !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await getWarehouseStockById(String(params.uuid));
+          const res = await getWarehouseStockById(String(params?.uuid));
           if (res?.data) {
             formik.setValues({
               warehouse_stock_code: res.data.osa_code || "",

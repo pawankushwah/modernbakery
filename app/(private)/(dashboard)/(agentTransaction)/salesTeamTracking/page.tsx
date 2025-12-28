@@ -215,6 +215,7 @@ export default function SalesTrackingMap() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <InputFields
             label="Distributor"
+            searchable={true}
             value={form.warehouse}
             options={warehouseOptions}
             onChange={(e) => handleChange("warehouse", e)}
@@ -223,6 +224,7 @@ export default function SalesTrackingMap() {
 
           <InputFields
             label="Sales Team"
+            searchable={true}
             value={form.salesman}
             options={salesmanOptions}
             onChange={(e) => handleChange("salesman", e)}
@@ -239,7 +241,7 @@ export default function SalesTrackingMap() {
               : [28.6139, 77.209]
           }
           zoom={14}
-          style={{ height: "100%", width: "100%" }}
+          style={{ height: "100%", width: "100%", zIndex: 40 }}
         >
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

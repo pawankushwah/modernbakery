@@ -42,9 +42,9 @@ const title = "Assets Request Details";
 
 export default function ViewPage() {
   const params = useParams();
-  const uuid: string = Array.isArray(params.uuid)
-    ? params.uuid[0]
-    : (params.uuid as string);
+  const uuid: string = Array.isArray(params?.uuid)
+    ? params?.uuid[0]
+    : (params?.uuid as string);
 
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();

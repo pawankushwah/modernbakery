@@ -88,7 +88,7 @@ export default function OrderDetailPage() {
   const [data, setData] = useState<OrderData | null>(null);
   const [loading, setLoadingState] = useState<boolean>(false);
   const params = useParams();
-  const UUID = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid ?? "";
+  const UUID = Array.isArray(params?.uuid) ? params?.uuid[0] : params?.uuid ?? "";
   const CURRENCY = localStorage.getItem("country") || "";
   const PATH = `/order/details/`;
 

@@ -106,9 +106,9 @@ export default function AddOrEditChiller() {
     { value: string; label: string }[]
   >([]);
 
-  const isEditMode = params?.id && params.id !== "add";
+  const isEditMode = params?.id && params?.id !== "add";
   console.log(isEditMode)
-  const chillerId = isEditMode ? String(params.id) : null;
+  const chillerId = isEditMode ? String(params?.id) : null;
 
   /* ----------------------------------------------------
      INITIAL VALUES
@@ -454,7 +454,6 @@ export default function AddOrEditChiller() {
                 required
                 label="Status"
                 name="status"
-                type="radio"
                 options={assetsStatusOptions}
                 value={values.status}
                 onChange={(e) => setFieldValue("status", e.target.value)}

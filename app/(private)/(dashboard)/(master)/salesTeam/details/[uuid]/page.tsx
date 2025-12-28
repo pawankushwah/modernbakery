@@ -153,7 +153,7 @@ export function formatDate(dateString:string) {
 }
 
 export default function Page() {
-  const { id, tabName } = useParams();
+  const { id, tabName }:any = useParams();
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { setLoading: setGlobalLoading } = useLoading();
@@ -165,9 +165,9 @@ export default function Page() {
   //   setActiveTab(index);
   // };
   const params = useParams();
-  const uuid = Array.isArray(params.uuid)
-    ? params.uuid[0] || ""
-    : (params.uuid as string) || "";
+  const uuid = Array.isArray(params?.uuid)
+    ? params?.uuid[0] || ""
+    : (params?.uuid as string) || "";
   const [salesman, setSalesman] = useState<Salesman | null>(null);
 
 
@@ -456,7 +456,7 @@ export default function Page() {
             params[k] = String(v);
           }
         });
-        result = await getOrderOfSalesmen(uuid, { from: params.start_date, to: params.end_date });
+        result = await getOrderOfSalesmen(uuid, { from: params?.start_date, to: params?.end_date });
       } finally {
         setLoading(false);
       }
@@ -491,7 +491,7 @@ export default function Page() {
             params[k] = String(v);
           }
         });
-        result = await getSalesmanBySalesId(uuid, { from: params.start_date, to: params.end_date,page:params.page });
+        result = await getSalesmanBySalesId(uuid, { from: params?.start_date, to: params?.end_date,page:params?.page });
       } finally {
         setLoading(false);
       }

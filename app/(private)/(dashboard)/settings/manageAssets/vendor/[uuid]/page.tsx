@@ -55,11 +55,11 @@ export default function AddEditVendor() {
 
   // Safely extract uuid
   let uuid = "";
-  if (params.uuid) {
-    if (Array.isArray(params.uuid)) {
-      uuid = params.uuid[0] || "";
+  if (params?.uuid) {
+    if (Array.isArray(params?.uuid)) {
+      uuid = params?.uuid[0] || "";
     } else {
-      uuid = params.uuid as string;
+      uuid = params?.uuid as string;
     }
   }
 

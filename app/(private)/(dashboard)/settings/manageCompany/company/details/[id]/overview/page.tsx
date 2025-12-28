@@ -48,9 +48,9 @@ interface Company {
 
 export default function ViewPage() {
   const params = useParams();
-  const id = Array.isArray(params.id)
-    ? params.id[0] || ""
-    : (params.id as string) || "";
+  const id = Array.isArray(params?.id)
+    ? params?.id[0] || ""
+    : (params?.id as string) || "";
 
   const [company, setCompany] = useState<Company | null>(null);
   const [isChecked, setIsChecked] = useState(false);

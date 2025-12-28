@@ -146,8 +146,8 @@ export default function AddEditCustomerSubCategory() {
 
     try {
       let res;
-      if (isEditMode && params?.id && params.id !== "add") {
-        res = await updateCustomerSubCategory(String(params.id), payload);
+      if (isEditMode && params?.id && params?.id !== "add") {
+        res = await updateCustomerSubCategory(String(params?.id), payload);
       } else {
         res = await addCustomerSubCategory(payload);
         try {

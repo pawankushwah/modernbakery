@@ -56,8 +56,8 @@ export default function AddEditOutletChannel() {
           status: values.status === "active" ? 1 : 0,
         };
         let res;
-        if (isEditMode && params?.id && params.id !== "add") {
-          res = await updateOutletChannel(String(params.id), payload);
+        if (isEditMode && params?.id && params?.id !== "add") {
+          res = await updateOutletChannel(String(params?.id), payload);
         } else {
           res = await addOutletChannel(payload);
           if (!res?.error) {
@@ -90,12 +90,12 @@ export default function AddEditOutletChannel() {
 
   // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params?.id && params?.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await getOutletChannelById(String(params.id));
+          const res = await getOutletChannelById(String(params?.id));
           if (res?.data) {
             formik.setValues({
               outlet_channel_code: res.data.outlet_channel_code || "",

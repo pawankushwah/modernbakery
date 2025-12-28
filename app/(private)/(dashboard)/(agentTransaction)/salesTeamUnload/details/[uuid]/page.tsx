@@ -69,16 +69,16 @@ interface CustomerItem {
 
 export default function ViewPage() {
   const params = useParams();
-  const uuid = Array.isArray(params.uuid)
-    ? params.uuid[0] || ""
-    : (params.uuid as string) || "";
+  const uuid = Array.isArray(params?.uuid)
+    ? params?.uuid[0] || ""
+    : (params?.uuid as string) || "";
 
   const [customer, setCustomer] = useState<CustomerItem | null>(null);
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();
 
   const title = `Unload #${customer?.osa_code || "-"}`;
-  const backBtnUrl = "/salesmanUnload";
+  const backBtnUrl = "/salesTeamUnload";
 
   // Tab logic
   const [activeTab, setActiveTab] = useState("overview");

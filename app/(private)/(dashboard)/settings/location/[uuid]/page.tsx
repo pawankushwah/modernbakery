@@ -44,12 +44,12 @@ export default function AddEditLocation() {
   // ✅ Fetch data if editing
   useEffect(() => {
     // Check if we have a uuid parameter (edit mode)
-    if (params?.uuid && params.uuid !== "add") {
+    if (params?.uuid && params?.uuid !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await LocationById(String(params.uuid));
+          const res = await LocationById(String(params?.uuid));
           console.log("Location fetch response:", res);
           if (res?.data) {
             setInitialValues({
@@ -101,7 +101,7 @@ export default function AddEditLocation() {
 
       let res;
       if (isEditMode && params?.uuid !== "add") {
-        res = await editLocation(String(params.uuid), payload);
+        res = await editLocation(String(params?.uuid), payload);
       } else {
         res = await addLocation(payload);
         // Save the final code

@@ -30,7 +30,7 @@ type CompititorData = {
 };
 
 export const OverviewTab = () => {
-  const { uuid } = useParams<{ uuid: string }>();
+  const { uuid }:any = useParams<{ uuid: string }>();
   const [compititorData, setCompititorData] = useState<CompititorData | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageModal, setImageModal] = useState<{

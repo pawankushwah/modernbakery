@@ -13,6 +13,7 @@ export type LinkDataType = {
   leadingIcon: IconifyIcon | string;
   trailingIcon?: IconifyIcon | string;
   iconColor?: string;
+  permissions?:[]
   children?: LinkDataType[];
 };
 
@@ -134,11 +135,18 @@ export const initialLinkData: SidebarDataType[] = [
           },
           {
             isActive: false,
+            href: "/distributorsOverview",
+            label: "Distributors Overview",
+            leadingIcon: "carbon:delivery-parcel",
+            iconColor: "text-cyan-500"
+          },
+          {
+            isActive: false,
             href: "/distributorsStock",
             label: "Distributors Stock",
             leadingIcon: "carbon:delivery-parcel",
             iconColor: "text-cyan-500"
-          }
+          },
 
         ]
       },
@@ -332,13 +340,13 @@ export const initialLinkData: SidebarDataType[] = [
             leadingIcon: "hugeicons:invoice",
             iconColor: "text-cyan-500"
           },
-          {
-            isActive: false,
-            href: "/tmpReturn",
-            label: "Temporary Return",
-            leadingIcon: "hugeicons:invoice",
-            iconColor: "text-cyan-500"
-          },
+          // {
+          //   isActive: false,
+          //   href: "/tmpReturn",
+          //   label: "Temporary Return",
+          //   leadingIcon: "hugeicons:invoice",
+          //   iconColor: "text-cyan-500"
+          // },
           {
             isActive: false,
             href: "/caps",
@@ -473,6 +481,13 @@ export const initialLinkData: SidebarDataType[] = [
             isActive: false,
             href: "/assetsRequest",
             label: "Assets Request",
+            leadingIcon: "si:pull-request-duotone",
+            iconColor: "text-cyan-500",
+          },
+          {
+            isActive: false,
+            href: "/fridgeUpdateCustomer",
+            label: "Fridge Update Customer",
             leadingIcon: "si:pull-request-duotone",
             iconColor: "text-cyan-500",
           },

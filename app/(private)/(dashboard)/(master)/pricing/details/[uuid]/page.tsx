@@ -35,9 +35,9 @@ interface PricingItem {
 
 export default function Page() {
   const params = useParams();
-  const uuid = Array.isArray(params.uuid)
-    ? params.uuid[0] || ""
-    : (params.uuid as string) || "";
+  const uuid = Array.isArray(params?.uuid)
+    ? params?.uuid[0] || ""
+    : (params?.uuid as string) || "";
   const [activeTab, setActiveTab] = useState(1);
   const [pricing, setpricing] = useState<PricingItem | null>(null);
   const { setLoading } = useLoading();

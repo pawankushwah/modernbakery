@@ -71,11 +71,11 @@ export default function CustomerDetails() {
 
     const params = useParams();
     let uuid: string = "";
-    if (params.uuid) {
-        if (Array.isArray(params.uuid)) {
-            uuid = params.uuid[0] || "";
+    if (params?.uuid) {
+        if (Array.isArray(params?.uuid)) {
+            uuid = params?.uuid[0] || "";
         } else {
-            uuid = params.uuid as string;
+            uuid = params?.uuid as string;
         }
     }
     const { showSnackbar } = useSnackbar();
@@ -365,7 +365,7 @@ export default function CustomerDetails() {
                         params[k] = String(v);
                     }
                 });
-                result = await getAgentCustomerBySalesId(uuid, { from_date: params.start_date, to_date: params.end_date });
+                result = await getAgentCustomerBySalesId(uuid, { from_date: params?.start_date, to_date: params?.end_date });
             } finally {
                 setLoading(false);
             }
@@ -400,7 +400,7 @@ export default function CustomerDetails() {
                         params[k] = String(v);
                     }
                 });
-                result = await getAgentCustomerByReturnId(uuid, { from_date: params.start_date, to_date: params.end_date });
+                result = await getAgentCustomerByReturnId(uuid, { from_date: params?.start_date, to_date: params?.end_date });
             } finally {
                 setLoading(false);
             }

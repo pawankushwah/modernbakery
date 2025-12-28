@@ -74,11 +74,11 @@ export default function AddEditRole() {
     (async () => {
       setLoading(true);
       try {
-        if (params?.uuid && params.uuid !== "add") {
+        if (params?.uuid && params?.uuid !== "add") {
           // 🟩 EDIT MODE
           setIsEditMode(true);
           const [roleRes, menuRes, submenuRes] = await Promise.all([
-            getRoleById(String(params.uuid)),
+            getRoleById(String(params?.uuid)),
             menuList(),
             submenuList(),
           ]);
@@ -253,12 +253,12 @@ export default function AddEditRole() {
     // 🔄 ADD or EDIT MODE
     if (isEditMode && params?.uuid !== "add") {
       // ✏️ EDIT MODE
-      res = await editRoles(String(params.uuid), payload);
+      res = await editRoles(String(params?.uuid), payload);
 
       if (res?.error)
         throw new Error(res?.data?.message || "Failed to update role");
 
-      permissionRes = await assignPermissionsToRole(String(params.uuid), {
+      permissionRes = await assignPermissionsToRole(String(params?.uuid), {
         permissions: permissionsPayload,
       });
 

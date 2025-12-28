@@ -54,12 +54,12 @@ export default function AddEditSubRegion() {
     // Load region dropdown data
     ensureRegionLoaded();
 
-    if (params?.id && params.id !== "add") {
+    if (params?.id && params?.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await getAreaById(String(params.id));
+          const res = await getAreaById(String(params?.id));
           if (res?.data) {
             setInitialValues({
               area_code: res.data.area_code || "",
@@ -105,7 +105,7 @@ export default function AddEditSubRegion() {
 
     let res;
     if (isEditMode && params?.id !== "add") {
-      res = await updateAreaById(String(params.id), payload);
+      res = await updateAreaById(String(params?.id), payload);
     } else {
       res = await addArea(payload);
       try {

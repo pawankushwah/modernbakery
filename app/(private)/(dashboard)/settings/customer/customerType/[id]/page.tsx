@@ -58,8 +58,8 @@ export default function AddCustomerTypePage() {
         };
 
         let res;
-        if (isEditMode && params?.id && params.id !== "add") {
-          res = await updateCustomerType(String(params.id), payload);
+        if (isEditMode && params?.id && params?.id !== "add") {
+          res = await updateCustomerType(String(params?.id), payload);
         } else {
           res = await addCustomerType(payload);
         }
@@ -92,12 +92,12 @@ export default function AddCustomerTypePage() {
 
   // ✅ Load existing data for edit mode and generate code in add mode
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params?.id && params?.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await getCustomerTypeById(String(params.id));
+          const res = await getCustomerTypeById(String(params?.id));
           if (res?.data) {
             formik.setValues({
               code: res.data.code || "",

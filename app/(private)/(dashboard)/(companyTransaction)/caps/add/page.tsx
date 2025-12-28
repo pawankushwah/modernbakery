@@ -1113,18 +1113,14 @@ export default function CapsAddPage() {
                   const safeUpc = Number.isFinite(upc) && upc > 0 ? upc : 1;
                   // Secondary (e.g. CSE): show only full units. Remainder stays in primary (PCS).
                   const displayQty = isSecondary ? Math.floor(baseQty / safeUpc) : baseQty;
-                  return String(displayQty);
+                  return toInternationalNumber(String(displayQty), {minimumFractionDigits: 0});
                 },
               },
               {
                 key: "deposit_qty",
                 label: "Deposit Quantity",
-                render: (row) => (
-                  <div>
-                  <InputFields
-                    type="number"
-                    min={0}
-                    max={getRemainingQtyForRow(
+                render: (row) => {
+                  const max = getRemainingQtyForRow(
                       tableData.map((r, i) => ({ ...r, idx: i })),
                       Number(row.idx),
                       String(row.item_id ?? ""),
@@ -1139,7 +1135,12 @@ export default function CapsAddPage() {
                         // Secondary (e.g. CSE): limit to full units only.
                         return isSecondary ? Math.floor(baseQty / safeUpc) : baseQty;
                       })()
-                    )}
+                    );
+                  return <div className="pt-5">
+                  <InputFields
+                    type="number"
+                    min={0}
+                    max={max}
                     integerOnly={true}
                     placeholder="Enter Quantity"
                     value={row.deposit_qty}
@@ -1149,8 +1150,11 @@ export default function CapsAddPage() {
                     }
                     width={"200px"}
                   />
+                  <span className="text-xs text-gray-500 mt-1">
+                    In Stock: {max ? toInternationalNumber(String(max), {minimumFractionDigits: 0}) : "0"}
+                  </span>
                   </div>
-                ),
+                },
               },
               {
                 key: "price",

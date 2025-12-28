@@ -16,7 +16,7 @@ const backBtnUrl = "/assetsManagement/callRegister";
 
 export default function ViewPage() {
     const params = useParams();
-    const uuid = Array.isArray(params.uuid) ? params.uuid[0] : params.uuid;
+    const uuid = Array.isArray(params?.uuid) ? params?.uuid[0] : params?.uuid;
 
     const { showSnackbar } = useSnackbar();
     const { setLoading } = useLoading();

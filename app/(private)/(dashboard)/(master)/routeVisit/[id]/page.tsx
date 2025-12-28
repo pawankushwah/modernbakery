@@ -24,7 +24,7 @@ import { useSnackbar } from "@/app/services/snackbarContext";
 import { Icon } from "@iconify-icon/react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as yup from "yup";
 import Table from "./toggleTable";
 
@@ -97,8 +97,8 @@ type ApiResponse<T> = {
   error?: boolean;
   message?: string;
   pagination?: {
-    totalPages?: number;
-    page?: number;
+    last_page?: number;
+    current_page?: number;
     limit?: number;
   };
 };
@@ -142,6 +142,13 @@ export default function AddEditRouteVisit() {
   const [companyOptions, setCompanyOptions] = useState<DropdownOption[]>([]);
   const [merchandiserOptions, setMerchandiserOptions] = useState<DropdownOption[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [customerPagination, setCustomerPagination] = useState({
+    current_page: 1,
+    last_page: 1,
+    loadingMore: false,
+    hasMore: false
+  });
+  console.log(customerPagination,"customerPagination")
   const [customerSchedules, setCustomerSchedules] = useState<CustomerSchedules>(
     {}
   );
@@ -263,7 +270,7 @@ export default function AddEditRouteVisit() {
       !isEditMode && setLoading(true);
       // Fetch companies
       setSkeleton({ ...skeleton, company: true });
-      const companies: ApiResponse<Company[]> = await companyList();
+      const companies: ApiResponse<Company[]> = await companyList({ ...(!isEditMode && { allData: "true" }), dropdown: 'true' });
       setCompanyOptions(
         companies?.data?.map((c: Company) => ({
           value: String(c.id),
@@ -273,7 +280,7 @@ export default function AddEditRouteVisit() {
       setSkeleton({ ...skeleton, company: false });
       // Fetch merchandiser list for merchandiser dropdown
       try {
-        const merchRes: ApiResponse<Merchandiser[]> = await merchandiserData();
+        const merchRes: ApiResponse<Merchandiser[]> = await merchandiserData({ ...(!isEditMode && { allData: "true" }), });
         const merchOpts = (merchRes?.data || merchRes || []) as Merchandiser[];
         setMerchandiserOptions(
           merchOpts.map((m: Merchandiser) => ({
@@ -364,66 +371,92 @@ export default function AddEditRouteVisit() {
     }
   };
 
-  useEffect(() => {
-    // Only fetch customers if a route is selected
-    if (!form.route || !form.route.length) {
-      setCustomers([]);
-      return;
-    }
-    // Pass all selected route IDs as comma-separated string
-    const route_id = Array.isArray(form.route) && form.route.length > 0 ? form.route.join(",") : undefined;
-    if (!route_id) {
-      setCustomers([]);
-      return;
+  const fetchCustomers = useCallback(async (current_page: number = 1, isAppend: boolean = false) => {
+    const USE_total_DATA = false; // 👈 Set to false when done testing
+
+    if (isAppend) {
+      setCustomerPagination(prev => ({ ...prev, loadingMore: true }));
+    } else {
+      setLoading(true);
+      setCustomers([]); // Clear existing customers on fresh fetch
     }
 
-    const fetchCustomersForAgent = async () => {
-      try {
-        let res: ApiResponse<Customer[]> | null = null;
-        if (isEditMode) {
-          res = await getAgentCusByRoute(route_id);
-        } else {
-          res = await getAgentCusByRoute(route_id);
+    try {
+      let res: ApiResponse<Customer[]> | null = null;
+
+      // if (USE_total_DATA) {
+      //   // Simulate network delay
+      //   await new Promise(resolve => setTimeout(resolve, 800));
+        
+      //   const last_page = 10; // Test with 10 current_pages
+      //   const itemsPerPage = 50;
+        
+      //   const totalData = Array.from({ length: itemsPerPage }, (_, i) => ({
+      //     id: (current_page - 1) * itemsPerPage + i + 5000, // Offset IDs to avoid conflicts
+      //     name: `Test Customer ${(current_page - 1) * itemsPerPage + i + 1} (Page ${current_page})`,
+      //     owner_name: `Owner ${(current_page - 1) * itemsPerPage + i + 1}`,
+      //     osa_code: `CODE-${current_page}-${i + 1}`
+      //   }));
+
+      //   res = {
+      //     data: totalData as any,
+      //     pagination: {
+      //       current_page: current_page,
+      //       last_page: last_page,
+      //       limit: itemsPerPage
+      //     }
+      //   };
+      // } else {
+        const salesmanType = form.salesman_type;
+        const merchId = form.merchandiser;
+        const route_id = Array.isArray(form.route) && form.route.length > 0 ? form.route.join(",") : undefined;
+
+        if (salesmanType === "2") {
+          if (!merchId) {
+            setCustomers([]);
+            setLoading(false);
+            return;
+          }
+          const normalizedId = String(merchId).trim().replace(/\\/g, "").replace(/^"+|"+$/g, "").replace(/^'+|'+$/g, "");
+          res = await getCustomerByMerchandiser(normalizedId, { page: String(current_page), limit: "50" });
+        } else if (salesmanType && route_id) {
+          res = await getAgentCusByRoute(String(route_id), { page: String(current_page), limit: "50" });
         }
-        console.log("Fetched customers (agent):", res);
-        setCustomers((res && res.data) || []);
-      } catch (error) {
-        console.error("Error fetching agent customers:", error);
-        setCustomers([]);
-      }
-    };
+      // }
 
-    const fetchCustomersForMerchandiser = async (merchId?: string) => {
-      if (!merchId) {
-        setCustomers([]);
-        return;
-      }
-      try {
-        const normalizedId = String(merchId)
-          .trim()
-          .replace(/\\\\/g, "")
-          .replace(/^"+|"+$/g, "")
-          .replace(/^'+|'+$/g, "");
-        // If getCustomerByMerchandiser also needs route_id, add it here as a param
-        const res = await getCustomerByMerchandiser(normalizedId);
-        console.log("Fetched customers (merchandiser):", res);
-        // API might return array or { data: [] }
-        const list = (res && (Array.isArray(res) ? res : (res.data || []))) as Customer[];
-        setCustomers(list || []);
-      } catch (error) {
-        console.error("Error fetching merchandiser customers:", error);
-        setCustomers([]);
-      }
-    };
+      if (res) {
+        const newData = (Array.isArray(res) ? res : (res.data || [])) as Customer[];
+        const pagination = res.pagination || { last_page: 1, current_page: 1 };
 
-    if (form.salesman_type === "2") {
-      // Merchandiser path: fetch merchandiser-specific customers when a merchandiser is selected
-      fetchCustomersForMerchandiser(form.merchandiser);
-    } else if (form.salesman_type) {
-      // Agent customer path
-      fetchCustomersForAgent();
+        setCustomers(prev => isAppend ? [...prev, ...newData] : newData);
+        setCustomerPagination({
+          current_page: Number(pagination.current_page) || current_page,
+          last_page: Number(pagination.last_page) || 1,
+          loadingMore: false,
+          hasMore: (Number(pagination.current_page) || current_page) < (Number(pagination.last_page) || 1)
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      if (!isAppend) setCustomers([]);
+    } finally {
+      setLoading(false);
+      setCustomerPagination(prev => ({ ...prev, loadingMore: false }));
     }
-  }, [form.salesman_type, form.merchandiser, form.company, form.region, isEditMode, form.route]);
+  }, [form.salesman_type, form.merchandiser, form.route, setLoading]);
+
+  const handleLoadMoreCustomers = useCallback(() => {
+    if (customerPagination.hasMore && !customerPagination.loadingMore) {
+      fetchCustomers(customerPagination.current_page + 1, true);
+    }
+  }, [customerPagination, fetchCustomers]);
+
+  useEffect(() => {
+    // Only fetch customers if route/merchandiser is selected and we are on step 2
+    if (currentStep === 2) {
+      fetchCustomers(1, false);
+    }
+  }, [form.salesman_type, form.merchandiser, form.route, currentStep, fetchCustomers]);
 
   // ✅ When Company changes → Fetch Regions
   useEffect(() => {
@@ -446,7 +479,8 @@ export default function AddEditRouteVisit() {
         // In edit mode, pass allData = true to get all regions
         const regions: ApiResponse<Region[]> = await regionList({
           company_id: form.company.join(","),
-          ...(isEditMode && { allData: "true" }),
+          dropdown: 'true',
+          ...(!isEditMode && { allData: "true" }),
         });
         setRegionOptions(
           regions?.data?.map((r: Region) => ({
@@ -476,7 +510,10 @@ export default function AddEditRouteVisit() {
       try {
         setSkeleton({ ...skeleton, area: true });
         const res: ApiResponse<{ data: Area[] } | Area[]> = await subRegionList(
-          { region_id: form.region.join(",") }
+          { region_id: form.region.join(",") ,
+             dropdown: 'true',
+            ...(!isEditMode && { allData: "true" }),
+          }
         );
         const areaList =
           (res as { data: Area[] })?.data || (res as Area[]) || [];
@@ -508,8 +545,14 @@ export default function AddEditRouteVisit() {
     const fetchWarehouses = async () => {
       try {
         setSkeleton({ ...skeleton, warehouse: true });
-        const res: ApiResponse<{ data: Warehouse[] } | Warehouse[]> =
-          await warehouseList({ area_id: form.area.join(",") });
+        let res;
+       if(!isEditMode){ 
+        res =
+          await warehouseList({ area_id: form.area.join(","),dropdown :"true"});
+        } else{
+          res =
+          await warehouseList({ area_id: form.area.join(","), dropdown: 'true' });
+        }
         const warehousesList =
           (res as { data: Warehouse[] })?.data || (res as Warehouse[]) || [];
 
@@ -543,6 +586,8 @@ export default function AddEditRouteVisit() {
         setSkeleton({ ...skeleton, route: true });
         const res: ApiResponse<{ data: Route[] } | Route[]> = await routeList({
           warehouse_id: form.warehouse.join(","),
+          ...(!isEditMode && { allData: "true" }),
+          dropdown: 'true'
         });
         console.log(res);
         const routeListData =
@@ -976,6 +1021,9 @@ export default function AddEditRouteVisit() {
                 )}
                 editMode={isEditMode}
                 visitUuid={visitId} // Pass the visit ID when in edit mode
+                hasMore={customerPagination.hasMore}
+                onLoadMore={handleLoadMoreCustomers}
+                isLoadingMore={customerPagination.loadingMore}
               />
             </div>
           </div>

@@ -101,7 +101,7 @@ export default function ShelfDisplay() {
     { id: 2, label: "Merchandiser & Customers" },
   ];
 
-  const { id } = useParams<{ id?: string }>();
+  const { id } :any= useParams<{ id?: string }>();
   const router = useRouter();
   const { showSnackbar } = useSnackbar();
 

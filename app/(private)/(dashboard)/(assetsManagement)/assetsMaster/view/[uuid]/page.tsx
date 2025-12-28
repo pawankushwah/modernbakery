@@ -44,7 +44,7 @@ const title = "Assets Details";
 
 export default function ViewPage() {
   const params = useParams();
-  const uuid = params.uuid as string;
+  const uuid = params?.uuid as string;
 
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();

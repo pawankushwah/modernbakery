@@ -44,9 +44,9 @@ const title = "Vehicle Details";
 export default function ViewPage() {
   const params = useParams();
   const uuid =
-    Array.isArray(params.uuid) && params.uuid.length > 0
-      ? params.uuid[0]
-      : (params.uuid as string);
+    Array.isArray(params?.uuid) && params?.uuid.length > 0
+      ? params?.uuid[0]
+      : (params?.uuid as string);
 
   const { showSnackbar } = useSnackbar();
   const { setLoading } = useLoading();

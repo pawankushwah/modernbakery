@@ -44,12 +44,12 @@ export default function AddEditBrand() {
   // ✅ Fetch data if editing OR generate code if adding
   useEffect(() => {
     // Check if we have a uuid parameter (edit mode)
-    if (params?.uuid && params.uuid !== "add") {
+    if (params?.uuid && params?.uuid !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await BrandById(String(params.uuid));
+          const res = await BrandById(String(params?.uuid));
           console.log("Brand fetch response:", res);
           if (res?.data) {
             setInitialValues({
@@ -105,7 +105,7 @@ export default function AddEditBrand() {
 
       let res;
       if (isEditMode && params?.uuid !== "add") {
-        res = await editBrand(String(params.uuid), payload);
+        res = await editBrand(String(params?.uuid), payload);
       } else {
         res = await addBrand(payload);
         // Save the final code

@@ -177,9 +177,10 @@ export default function AddCompanyCustomer() {
     regionOptions,
     areaOptions,
     companyTypeOptions,
+    allCompanyTypeOptions,
     channelOptions,
     fetchAreaOptions,
-   ensureAreaLoaded, ensureChannelLoaded, ensureCompanyTypeLoaded, ensureRegionLoaded} = useAllDropdownListData();
+   ensureAreaLoaded, ensureChannelLoaded, ensureCompanyTypeLoaded, ensureRegionLoaded,ensureAllCompanyTypesLoaded} = useAllDropdownListData();
 
   // Load dropdown data
   useEffect(() => {
@@ -187,6 +188,9 @@ export default function AddCompanyCustomer() {
     ensureChannelLoaded();
     ensureCompanyTypeLoaded();
     ensureRegionLoaded();
+    if(!isEditMode){
+      ensureAllCompanyTypesLoaded();
+    }
   }, [ensureAreaLoaded, ensureChannelLoaded, ensureCompanyTypeLoaded, ensureRegionLoaded]);
   const [skeleton, setSkeleton] = useState({
     area_id: false,
@@ -300,7 +304,7 @@ export default function AddCompanyCustomer() {
   useEffect(() => {
     setLoading(true);
     if (!params?.uuid) return;
-    const idStr = params.uuid.toString().trim().toLowerCase();
+    const idStr = params?.uuid.toString().trim().toLowerCase();
     if (idStr !== "add") {
       setIsEditMode(true);
       fetchData().finally(() => setLoading(false));
@@ -407,7 +411,7 @@ export default function AddCompanyCustomer() {
       let res;
       setLoading(true);
       if (isEditMode) {
-        res = await updateCompanyCustomer(String(params.uuid), payload);
+        res = await updateCompanyCustomer(String(params?.uuid), payload);
       } else {
         res = await addCompanyCustomers(payload);
       }
@@ -557,7 +561,7 @@ export default function AddCompanyCustomer() {
                   onChange={(e) =>
                     setFieldValue("company_type", e.target.value)
                   }
-                  options={companyTypeOptions}
+                  options={isEditMode ? allCompanyTypeOptions : companyTypeOptions}
                   error={touched.company_type && errors.company_type}
                 />
               </div>

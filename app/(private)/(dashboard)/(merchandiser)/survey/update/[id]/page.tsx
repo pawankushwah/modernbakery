@@ -72,7 +72,7 @@ interface Question {
 export default function UpdateSurveyTabs(): JSX.Element {
   const router = useRouter();
   const params = useParams<{ id: string }>();
-  const surveyId = params.id;
+  const surveyId = params?.id;
   const { showSnackbar } = useSnackbar();
 
   const [showDeletePopup, setShowDeletePopup] = useState(false);

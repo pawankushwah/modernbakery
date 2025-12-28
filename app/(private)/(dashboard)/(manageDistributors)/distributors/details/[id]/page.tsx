@@ -78,11 +78,11 @@ export default function ViewPage() {
 
     const params = useParams();
     let id: string = "";
-    if (params.id) {
-        if (Array.isArray(params.id)) {
-            id = params.id[0] || "";
+    if (params?.id) {
+        if (Array.isArray(params?.id)) {
+            id = params?.id[0] || "";
         } else {
-            id = params.id as string;
+            id = params?.id as string;
         }
     }
 
@@ -1115,7 +1115,7 @@ export default function ViewPage() {
                         params[k] = String(v);
                     }
                 });
-                result = await getAgentCustomerBySalesId(uuid, { from_date: params.start_date, to_date: params.end_date });
+                result = await getAgentCustomerBySalesId(uuid, { from_date: params?.start_date, to_date: params?.end_date });
             } finally {
                 setLoading(false);
             }

@@ -49,12 +49,12 @@ export default function AddEditDiscountType() {
   const codeGeneratedRef = useRef(false);
 
   useEffect(() => {
-    if (params?.id && params.id !== "add") {
+    if (params?.id && params?.id !== "add") {
       setIsEditMode(true);
       setLoading(true);
       (async () => {
         try {
-          const res = await getDiscountTypeById(String(params.id));
+          const res = await getDiscountTypeById(String(params?.id));
           if (res?.data) {
             setInitialValues({
               discount_type_code: res.data.discount_code || "",
@@ -99,7 +99,7 @@ export default function AddEditDiscountType() {
     try {
       let res;
       if (isEditMode && params?.id !== "add") {
-        res = await updateDiscountType(String(params.id), payload);
+        res = await updateDiscountType(String(params?.id), payload);
       } else {
         res = await createDiscountType(payload);
       }
