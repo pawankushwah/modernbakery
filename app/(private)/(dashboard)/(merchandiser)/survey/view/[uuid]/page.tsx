@@ -1,4 +1,4 @@
-  // ...existing code...
+// ...existing code...
 
 "use client";
 
@@ -49,11 +49,11 @@ import Table, { TableDataType } from "@/app/components/customTable";
 import { formatDate } from "@/app/(private)/(dashboard)/(master)/salesTeam/details/[uuid]/page";
 import SidebarBtn from "@/app/components/dashboardSidebarBtn";
 import { customer } from "@/app/(private)/data/customerDetails";
-import { getSurveyById , updateSurvey,getSurveyShowById} from "@/app/services/allApi";
+import { getSurveyById, updateSurvey, getSurveyShowById } from "@/app/services/allApi";
 
 // ...existing code...
-  // Sidebar state for viewing answers
- 
+// Sidebar state for viewing answers
+
 
 interface Customer {
   customer_code: string;
@@ -63,6 +63,13 @@ interface Customer {
 interface Merchandiser {
   osa_code: string;
   name: string;
+}
+
+interface SurveyQuestion {
+  id: number;
+  question: string;
+  question_type: string;
+  question_based_selected: string | null;
 }
 
 interface Survey {
@@ -75,7 +82,9 @@ interface Survey {
   customers?: Customer[];
   merchandisers?: Merchandiser[];
   assets?: any[];
+  questions?: SurveyQuestion[]; // 👈 add this
 }
+
 
 export default function Page() {
   const params = useParams();
@@ -86,7 +95,7 @@ export default function Page() {
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const [surveyData, setSurveyData] = useState<Survey | null>(null);
- const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<any[]>([]);
   const onTabClick = (index: number) => setActiveTab(index);
 
@@ -169,6 +178,8 @@ export default function Page() {
               customer_code: c.osa_code,
               owner_name: c.business_name,
             })) || [],
+
+          questions: rawData?.questions || [],
         };
 
         setSurveyData(normalizedData);
@@ -237,6 +248,38 @@ export default function Page() {
                   },
                 ]}
               />
+            </ContainerCard>
+            <ContainerCard>
+              <h1 className="text-lg font-semibold text-gray-800 mb-3">
+                Survey Questions
+              </h1>
+
+              {surveyData?.questions && surveyData.questions.length > 0 ? (
+                <ul className="space-y-3">
+                  {surveyData.questions.map((q, index) => (
+                    <li
+                      key={q.id}
+                      className="border-gray-300 border rounded-lg p-3 hover:bg-gray-100 transition"
+                    >
+                      <div className="font-semibold">
+                        Q{index + 1}. {q.question}
+                      </div>
+
+                      <div className="text-sm text-gray-600 mt-1">
+                        Type: <span className="capitalize">{q.question_type}</span>
+                      </div>
+
+                      {q.question_based_selected && (
+                        <div className="text-sm text-gray-500 mt-1">
+                          Options: {q.question_based_selected}
+                        </div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-gray-500">No questions added.</div>
+              )}
             </ContainerCard>
           </div>
         </div>
