@@ -44,8 +44,6 @@ export default function PaymentListPage() {
   const { warehouseOptions, salesmanOptions, routeOptions, regionOptions, areaOptions, companyOptions, ensureAreaLoaded, ensureCompanyLoaded, ensureRegionLoaded, ensureRouteLoaded, ensureSalesmanLoaded, ensureWarehouseLoaded } = useAllDropdownListData();
 
   const [refreshKey, setRefreshKey] = useState(0);
-
-  // Refresh table when permissions load
   useEffect(() => {
     if (permissions.length > 0) {
       setRefreshKey((prev) => prev + 1);
