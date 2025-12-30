@@ -71,7 +71,7 @@ export default function SalesMapGoogle() {
     try {
       setLoading(true);
       const res = await axios.get(
-        `${process.env.DASHBOARD_URL}/api/salesmen?page=${page}`
+        `http://172.16.6.205:8003/api/salesmen?page=${page}`
       );
       setSalesmen(res.data.data);
       setTotalPages(res.data.total_pages);

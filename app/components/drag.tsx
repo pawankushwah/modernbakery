@@ -162,7 +162,7 @@ const SalesReportDashboard = () => {
       console.log('Dashboard API Payload:', payload);
 
       const response = await axios.post(
-        `${process.env.DASHBOARD_URL}/api/dashboard`,
+        `http://172.16.6.205:8003/api/dashboard`,
         payload,
         {
           headers: {
@@ -262,7 +262,7 @@ const SalesReportDashboard = () => {
       }
 
       const queryString = params?.toString();
-      const url = `${process.env.DASHBOARD_URL}/api/filters${queryString ? `?${queryString}` : ''}`;
+      const url = `http://172.16.6.205:8003/api/filters${queryString ? `?${queryString}` : ''}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -408,7 +408,7 @@ const SalesReportDashboard = () => {
         ...lowestLevelFilters // Spread only the lowest-level filter IDs
       };
 
-      const response = await fetch(`${process.env.DASHBOARD_URL}/api/table?page=${page || 1}`, {
+      const response = await fetch(`http://172.16.6.205:8003/api/table?page=${page || 1}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -472,7 +472,7 @@ const SalesReportDashboard = () => {
 
       console.log('Export Payload (lowest-level filter only):', payload);
 
-      const response = await fetch(`${process.env.DASHBOARD_URL}/api/export`, {
+      const response = await fetch(`http://172.16.6.205:8003/api/export`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
